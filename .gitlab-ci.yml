@@ -1,0 +1,41 @@
+stages:
+  - build
+  - test
+  - package
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository
+
+build:
+  stage: build
+  image: maven:3.9.9-eclipse-temurin-21-alpine
+  script:
+    - mvn clean compile -B
+  artifacts:
+    paths:
+      - target/
+
+#test:
+#  stage: test
+#  image: maven:3.9.9-eclipse-temurin-21-alpine
+#  script:
+#    - mvn test -B
+#  artifacts:
+#    reports:
+#      junit: target/surefire-reports/TEST-*.xml
+#    paths:
+#      - target/surefire-reports/
+
+#package:
+#  stage: package
+#  image: maven:3.9.9-eclipse-temurin-21-alpine
+#  script:
+#    - mvn package -B -DskipTests
+#  artifacts:
+#    paths:
+#      - target/*.jar
