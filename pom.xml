@@ -86,7 +86,7 @@
   <modules>
     <module>IHM</module>
     <module>AnalyseMinijaja</module>
-    <module>InterpretationMinijaja</module>
+    <module>AnalyseJajacode</module>
     <module>Memoire</module>
   </modules>
 </project>
