@@ -6,7 +6,7 @@
   <packaging>pom</packaging>
   <name>minijaja</name>
   <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7/</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.7</maven.compiler.source>
