@@ -1,6 +1,5 @@
 package fr.ufrst.m1info.gl.groupe7;
 
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
