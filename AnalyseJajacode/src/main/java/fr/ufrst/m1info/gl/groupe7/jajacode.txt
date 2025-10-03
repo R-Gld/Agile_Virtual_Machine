@@ -1,0 +1,11 @@
+0 init;
+1 push(2);
+2 load(x);
+3 mul;
+4 load(y);
+5 push(3);
+6 sub;
+7 push(3);
+8 div;
+9 add;
+6 jcstop;
