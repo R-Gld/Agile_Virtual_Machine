@@ -4,6 +4,10 @@ stages:
   - test
   - package
 
+default:
+  tags:
+    - avm_groupe7
+
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
