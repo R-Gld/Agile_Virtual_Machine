@@ -5,9 +5,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
@@ -21,18 +18,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class JajaCodeVisitorUnitTest {
 
-    @Spy
-    @InjectMocks
     private JajaCodeVisitor jajaCodeVisitor;
-
-    @Mock
     private JajaCodeParser.InstrContext instrContext;
 
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
     @BeforeEach
-    public void setUpStreams() {
+    public void setupTest() {
+        jajaCodeVisitor = spy(new JajaCodeVisitor());
+        instrContext = mock(JajaCodeParser.InstrContext.class);
         System.setOut(new PrintStream(outContent));
     }
 
