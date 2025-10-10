@@ -6,7 +6,7 @@ program
     ;
 
 classe
-    : adresse instr SEMI classe
+    : adresse instr classe
     |
     ;
 

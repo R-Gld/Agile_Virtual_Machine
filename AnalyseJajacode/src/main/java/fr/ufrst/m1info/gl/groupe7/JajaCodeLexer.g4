@@ -43,7 +43,6 @@ AND: 'and' ;
 // Séparateurs et Symboles
 LPAREN : '(' ;
 RPAREN : ')' ;
-SEMI : ';' ;
 COMA : ',' ;
 
 // Types de données
