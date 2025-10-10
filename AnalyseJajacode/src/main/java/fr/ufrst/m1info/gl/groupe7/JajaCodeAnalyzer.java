@@ -24,7 +24,9 @@ public class JajaCodeAnalyzer {
 
             ParseTreeWalker walker = new ParseTreeWalker();
             JajaCodeListener listener = new JajaCodeListener();
+            JajaCodeVisitor visitor = new JajaCodeVisitor();
             walker.walk(listener, tree);
+            visitor.visit(tree);
 
             System.out.println("Analyse terminée avec succès");
         } catch (NoSuchFileException e) {
@@ -32,6 +34,5 @@ public class JajaCodeAnalyzer {
         } catch (IOException e) {
             System.err.println("Erreur d'E/S: " + e.getMessage());
         }
-
     }
 }
