@@ -8,6 +8,7 @@
     <packaging>pom</packaging>
     <name>minijaja</name>
     <url>https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7/</url>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
