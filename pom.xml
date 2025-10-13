@@ -22,7 +22,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release>21</maven.compiler.release>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
-        <junit.jupiter.version>5.9.2</junit.jupiter.version>
+        <junit.jupiter.version>5.13.4</junit.jupiter.version>
     </properties>
 
     <!-- Dependencies (available for all modules) -->

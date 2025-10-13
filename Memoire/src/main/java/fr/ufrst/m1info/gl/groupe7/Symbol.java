@@ -1,10 +1,10 @@
 package fr.ufrst.m1info.gl.groupe7;
 
 public class Symbol {
-    private String name;
-    private String type;
-    private String kind;
-    private Object value;
+    final String name;
+    final String type;
+    final String kind;
+    final Object value;
 
     public Symbol(String name, String type, String kind, Object value) {
         this.name = name;
