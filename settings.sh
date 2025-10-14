@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z $HOME ]]; then
+  echo "Error: HOME environment variable is not set." >&2
+  exit 1
+fi
+
 cat <<EOF > settings.xml
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
   <servers>
@@ -65,7 +70,7 @@ cat <<EOF > settings.xml
 EOF
 
 # Move settings.xml to the .m2 directory of the runner's container
-mv settings.xml /root/.m2/settings.xml
+mv settings.xml "$HOME"/.m2/settings.xml
 
 # Create the settings-security.xml file from a template
 cat <<EOF > settings-security.xml
@@ -75,4 +80,4 @@ cat <<EOF > settings-security.xml
 EOF
 
 # Move settings-security.xml to the .m2 directory of the runner's container
-mv settings-security.xml /root/.m2/settings-security.xml
+mv settings-security.xml "$HOME"/.m2/settings-security.xml
