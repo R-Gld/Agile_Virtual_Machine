@@ -3,6 +3,7 @@ stages:
   - build
   - test
   - package
+  - deploy
 
 default:
   tags:
@@ -19,6 +20,11 @@ cache:
 build:
   stage: build
   image: maven:3.9.9-eclipse-temurin-21-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn clean compile -B
   artifacts:
@@ -28,6 +34,11 @@ build:
 test:
   stage: test
   image: maven:3.9.9-eclipse-temurin-21-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn test -B
   artifacts:
@@ -39,6 +50,11 @@ test:
 package:
   stage: package
   image: maven:3.9.9-eclipse-temurin-21-alpine
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn package -B -DskipTests
   artifacts:
@@ -56,7 +72,24 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script:
-    - mvn verify sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7' -X
+    - mvn verify sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH == 'dev'
+
+deploy:
+  stage: deploy
+  image: maven:3.9.9-eclipse-temurin-21-alpine
+  script:
+    - chmod +x settings.sh
+    - ./settings.sh
+    - mvn -s settings.xml -B -DskipTests=true deploy -DaltDeploymentRepository=nexus-deptinfo::default::${NEXUS_URL}/repository/${NEXUS_REPO}
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_TAG
+  needs:
+    - package
+  artifacts:
+    expire_in: One week
+    paths:
+      - target/
