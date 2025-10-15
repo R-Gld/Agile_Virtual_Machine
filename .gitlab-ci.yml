@@ -115,7 +115,7 @@ deploy:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
 
 deploy:manual:
-  stage: deploy
+  stage: .pre
   retry: 2
   rules:
     - when: manual
