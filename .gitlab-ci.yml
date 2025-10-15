@@ -9,6 +9,9 @@ default:
   image: maven:3.9.9-eclipse-temurin-21-alpine
   tags:
     - avm_groupe7
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
@@ -28,9 +31,6 @@ build:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} clean compile
   artifacts:
@@ -45,9 +45,6 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
@@ -68,9 +65,6 @@ package:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests package
   artifacts:
@@ -93,11 +87,8 @@ sonarqube-check:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
-    - mvn ${MAVEN_CLI_OPTS} verify sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests package sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   allow_failure: true
   needs:
     - test
@@ -114,9 +105,6 @@ deploy:
     expire_in: 1 week
     paths:
       - '**/target/'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
     - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests deploy
 
@@ -130,8 +118,5 @@ deploy:manual:
     expire_in: 1 week
     paths:
       - '**/target/'
-  before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
   script:
     - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests package deploy
