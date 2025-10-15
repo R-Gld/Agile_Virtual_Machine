@@ -106,7 +106,7 @@ deploy:
     paths:
       - '**/target/'
   script:
-    - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests deploy
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
 
 deploy:manual:
   stage: .pre
@@ -119,4 +119,4 @@ deploy:manual:
     paths:
       - '**/target/'
   script:
-    - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests package deploy
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests package deploy
