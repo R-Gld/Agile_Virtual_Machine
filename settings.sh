@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ -z $HOME ]]; then
   echo "Error: HOME environment variable is not set." >&2
