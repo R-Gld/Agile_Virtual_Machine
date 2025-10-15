@@ -106,7 +106,7 @@ deploy:
     - chmod +x settings.sh
     - ./settings.sh
   script:
-    - mvn -s "$HOME/.m2/settings.xml" ${MAVEN_CLI_OPTS} -DskipTests deploy
+    - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests deploy
 
 deploy:manual:
   stage: .pre
@@ -122,4 +122,4 @@ deploy:manual:
     - chmod +x settings.sh
     - ./settings.sh
   script:
-    - mvn -s "$HOME/.m2/settings.xml" ${MAVEN_CLI_OPTS} -DskipTests package deploy
+    - mvn -s ".settings.xml" ${MAVEN_CLI_OPTS} -DskipTests package deploy
