@@ -139,6 +139,13 @@
         <module>Memoire</module>
     </modules>
 
+    <scm>
+        <developerConnection>
+            scm:git:https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7.git
+        </developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
     <distributionManagement>
         <repository>
             <id>nexus-deptinfo</id>
