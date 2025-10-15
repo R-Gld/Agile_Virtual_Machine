@@ -14,7 +14,7 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s '.settings.xml' --fail-at-end"
+  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s .settings.xml --fail-at-end"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
