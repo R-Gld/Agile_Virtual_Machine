@@ -87,8 +87,6 @@ sonarqube-check:
   script:
     - mvn ${MAVEN_CLI_OPTS} verify sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   allow_failure: true
-  needs:
-    - test
 
 deploy:
   stage: deploy
