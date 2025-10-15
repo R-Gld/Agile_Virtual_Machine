@@ -122,4 +122,4 @@ deploy:manual:
     - chmod +x settings.sh
     - ./settings.sh
   script:
-    - mvn -s settings.xml ${MAVEN_CLI_OPTS} -DskipTests package deploy -DaltDeploymentRepository=nexus-deptinfo::default::${NEXUS_URL}/repository/${NEXUS_REPO}
+    - mvn -s $HOME/.m2/settings.xml ${MAVEN_CLI_OPTS} -DskipTests package deploy -DaltDeploymentRepository=nexus-deptinfo::default::${NEXUS_URL}/repository/${NEXUS_REPO}
