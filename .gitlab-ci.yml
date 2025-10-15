@@ -1,8 +1,8 @@
 stages:
   - build
   - test
-  - package
   - sonarqube-check
+  - package
   - deploy
 
 default:
@@ -33,7 +33,7 @@ build:
   artifacts:
     paths:
       - target/
-    expire_in: 1 week
+    expire_in: One week
 
 test:
   stage: test
@@ -53,7 +53,7 @@ test:
     paths:
       - target/surefire-reports/
       - target/site/jacoco/jacoco.xml
-    expire_in: 1 week
+    expire_in: One week
 
 package:
   stage: package
@@ -67,7 +67,7 @@ package:
   artifacts:
     paths:
       - target/*.jar
-    expire_in: 1 week
+    expire_in: One week
   needs:
     - test
 
