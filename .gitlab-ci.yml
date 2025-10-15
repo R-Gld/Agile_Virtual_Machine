@@ -65,8 +65,7 @@ test:
         coverage_format: jacoco
         path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - '**/target/surefire-reports/'
-      - '**/target/site/jacoco/jacoco.xml'
+      - '**/target/'
     expire_in: 1 week
 
 package:
@@ -99,7 +98,7 @@ sonarqube-check:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   allow_failure: true
   needs:
     - test
