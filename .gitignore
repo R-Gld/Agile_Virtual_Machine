@@ -2,3 +2,6 @@
 .idea
 **/target/
 .mvn/
+
+# MacOS
+.DS_Store
