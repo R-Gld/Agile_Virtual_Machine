@@ -107,3 +107,19 @@ deploy:
     - ./settings.sh
   script:
     - mvn -s settings.xml ${MAVEN_CLI_OPTS} -DskipTests deploy -DaltDeploymentRepository=nexus-deptinfo::default::${NEXUS_URL}/repository/${NEXUS_REPO}
+
+deploy:manual:
+  stage: deploy
+  retry: 2
+  rules:
+    - when: manual
+      allow_failure: true
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - '**/target/'
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
+  script:
+    - mvn -s settings.xml ${MAVEN_CLI_OPTS} -DskipTests package deploy -DaltDeploymentRepository=nexus-deptinfo::default::${NEXUS_URL}/repository/${NEXUS_REPO}
