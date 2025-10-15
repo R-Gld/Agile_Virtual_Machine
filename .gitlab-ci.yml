@@ -10,12 +10,11 @@ default:
   tags:
     - avm_groupe7
   before_script:
-    - chmod +x settings.sh
-    - ./settings.sh
+    - chmod +x settings.sh && ./settings.sh
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s '.settings.xml'"
+  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s '.settings.xml' --fail-at-end"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -23,6 +22,18 @@ cache:
   paths:
     - .m2/repository
   when: on_success
+
+
+check-envvars:
+  stage: .pre
+  script:
+    - >
+      if [[ -z "$MAVEN_ENT_PASSWORD" ]]
+      || [[ -z "$MAVEN_ENT_USERNAME" ]]
+      || [[ -z "$MAVEN_MASTER_PASSWORD" ]]
+      || [[ -z "$SONAR_HOST_URL" ]]
+      || [[ -z "$SONAR_TOKEN" ]];
+      then echo "Missing env vars"; exit 1; fi
 
 build:
   stage: build
@@ -101,22 +112,14 @@ deploy:
     - if: $CI_COMMIT_BRANCH == 'main'
   needs:
     - package
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - '**/target/'
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
 
 deploy:manual:
-  stage: .pre
+  stage: deploy
   retry: 2
   rules:
     - when: manual
       allow_failure: true
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - '**/target/'
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests package deploy
