@@ -21,6 +21,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <!-- Dependencies (available for all modules) -->
@@ -58,7 +59,6 @@
                     <version>3.3.1</version>
                 </plugin>
 
-                <!-- ✅ Updated Compiler Plugin (supports Java 21) -->
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
@@ -68,7 +68,6 @@
                     </configuration>
                 </plugin>
 
-                <!-- ✅ Updated Surefire Plugin (for JUnit 5) -->
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.5</version>
@@ -116,6 +115,18 @@
                     </executions>
                 </plugin>
 
+                <!-- SonarQube and JaCoCo plugins -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>5.2.0.4988</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.14</version>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
@@ -127,5 +138,23 @@
         <module>AnalyseJajacode</module>
         <module>Memoire</module>
     </modules>
+
+    <scm>
+        <developerConnection>
+            scm:git:https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7.git
+        </developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus-deptinfo</id>
+            <url>https://disc.univ-fcomte.fr/cr700-nexus/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus-deptinfo-snapshots</id>
+            <url>https://disc.univ-fcomte.fr/cr700-nexus/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
