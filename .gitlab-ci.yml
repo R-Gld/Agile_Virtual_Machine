@@ -32,8 +32,8 @@ build:
     - mvn ${MAVEN_CLI_OPTS} clean compile
   artifacts:
     paths:
-      - target/
-    expire_in: One week
+      - '**/target/'
+    expire_in: 1 week
 
 test:
   stage: test
@@ -46,14 +46,14 @@ test:
     - mvn ${MAVEN_CLI_OPTS} test -X
   artifacts:
     reports:
-      junit: target/surefire-reports/TEST-*.xml
+      junit: '**/target/surefire-reports/TEST-*.xml'
       coverage_report:
         coverage_format: jacoco
-        path: target/site/jacoco/jacoco.xml
+        path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - target/surefire-reports/
-      - target/site/jacoco/jacoco.xml
-    expire_in: One week
+      - '**/target/surefire-reports/'
+      - '**/target/site/jacoco/jacoco.xml'
+    expire_in: 1 week
 
 package:
   stage: package
@@ -66,8 +66,8 @@ package:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests package
   artifacts:
     paths:
-      - target/*.jar
-    expire_in: One week
+      - '**/target/*.jar'
+    expire_in: 1 week
   needs:
     - test
 
@@ -101,7 +101,7 @@ deploy:
   artifacts:
     expire_in: 1 week
     paths:
-      - target/
+      - '**/target/'
   before_script:
     - chmod +x settings.sh
     - ./settings.sh
