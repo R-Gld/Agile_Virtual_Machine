@@ -12,7 +12,7 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C"
+  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s '.settings.xml'"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -28,6 +28,9 @@ build:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} clean compile
   artifacts:
@@ -42,6 +45,9 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
@@ -62,6 +68,9 @@ package:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests package
   artifacts:
@@ -84,6 +93,9 @@ sonarqube-check:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh
+    - ./settings.sh
   script:
     - mvn ${MAVEN_CLI_OPTS} verify sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   allow_failure: true
