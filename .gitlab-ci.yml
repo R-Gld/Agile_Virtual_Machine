@@ -43,7 +43,7 @@ test:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report -X
+    - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
