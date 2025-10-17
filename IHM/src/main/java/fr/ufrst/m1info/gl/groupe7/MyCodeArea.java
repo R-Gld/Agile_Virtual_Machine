@@ -14,10 +14,21 @@ import java.util.function.IntFunction;
 public class MyCodeArea extends AnchorPane {
     private final CodeArea codeArea;
 
+    /**
+     * Create a codeArea component with line number for javafx
+     *
+     * @param id the id of this component for javafx
+     *  */
     public MyCodeArea(String id) {
         this(id, "");
     }
 
+    /**
+     * Create a codeArea component with line number for javafx
+     *
+     * @param id the id of this component for javafx
+     * @param defaultValue A string to place in the codeArea
+     *  */
     public MyCodeArea(String id, String defaultValue) {
         this.setId(id);
 
