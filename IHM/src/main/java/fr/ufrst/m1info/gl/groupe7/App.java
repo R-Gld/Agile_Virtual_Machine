@@ -20,7 +20,8 @@ public class App extends Application {
         root.setTop(buildMenu());
         var scene = new Scene(root, 640, 480);
 
-        MyCodeArea codeArea = new MyCodeArea();
+        String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
+        MyCodeArea codeArea = new MyCodeArea("mjj-code", codeSample);
 
         root.setCenter(codeArea);
         stage.setScene(scene);
