@@ -15,7 +15,6 @@
     <name>MiniJAJA</name>
     <url>https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7/</url>
 
-    <!-- Properties -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
@@ -24,7 +23,6 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <!-- Dependencies (available for all modules) -->
     <dependencies>
         <!-- JUnit 5 -->
         <dependency>
@@ -39,6 +37,12 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>4.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.14.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -113,6 +117,9 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <listener>true</listener>
+                    </configuration>
                 </plugin>
 
                 <!-- SonarQube and JaCoCo plugins -->
