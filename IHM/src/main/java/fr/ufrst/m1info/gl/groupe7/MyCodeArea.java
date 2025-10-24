@@ -35,6 +35,8 @@ public class MyCodeArea extends AnchorPane {
         this.getStylesheets().add("code_area.css");
 
         codeArea = new CodeArea(defaultValue);
+        /* Used to detect code area with testfx */
+        codeArea.setId(id + "_code_area");
 
         /* Permet d'avoir les numéros de ligne sur notre code area */
         IntFunction<Node> numberFactory = LineNumberFactory.get(codeArea);
@@ -65,5 +67,13 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setLeftAnchor(scroll,0d);
         AnchorPane.setRightAnchor(scroll,0d);
         this.getChildren().add(scroll);
+    }
+
+    /**
+     * Function used to get the content of the code area
+     * @return the code written
+     */
+    public String getText(){
+        return codeArea.getText();
     }
 }
