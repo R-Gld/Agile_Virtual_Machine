@@ -56,18 +56,19 @@ build:
 
 test:
   stage: test
+  image: maven:3.9.9-eclipse-temurin-17
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   before_script:
+    - apt-get update && apt-get install -y xvfb libxext6 libxrender1 libxtst6 libxi6 libgtk-3-0 libgl1-mesa-glx
     - chmod +x settings.sh && ./settings.sh
-    - apk add xvfb libx11-dev xvfb-run gtk+3
-    - export DISPLAY=:0
-    - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
+    - export DISPLAY=:99
+    - Xvfb :99 -screen 0 1400x900x24 +extension RANDR &
   script:
-    - xvfb-run mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
