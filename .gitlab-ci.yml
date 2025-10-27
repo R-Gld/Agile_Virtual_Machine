@@ -15,6 +15,7 @@ default:
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s .settings.xml --fail-at-end"
+  MAVEN_HEADLESS_OPTS: "-Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dheadless=true -Djava.awt.headless=true"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -67,7 +68,7 @@ test:
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
