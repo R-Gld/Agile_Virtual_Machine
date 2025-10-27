@@ -61,6 +61,10 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - apk add xvfb libx11-dev
+    - export DISPLAY=:0
+    - xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
     - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
