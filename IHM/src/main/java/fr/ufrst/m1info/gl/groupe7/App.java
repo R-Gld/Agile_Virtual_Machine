@@ -3,6 +3,7 @@ package fr.ufrst.m1info.gl.groupe7;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -71,6 +72,7 @@ public class App extends Application {
      * Fonction pour gerer l'ouverture d'un fichier
      */
     private void loadFile() {
+
         /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
@@ -79,6 +81,7 @@ public class App extends Application {
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
         );
         File file = fileChooser.showOpenDialog(appStage);
+        if(file == null) return;
 
         /* Lecture du fichier selectionner depuis l'explorateur de fichier */
         StringBuilder fileContent = new StringBuilder();
@@ -88,7 +91,17 @@ public class App extends Application {
                 fileContent.append("\n");
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur lors de l'ouverture du fichier : ");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+            return;
+        } catch(Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Impossible de lire le fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+            return;
         }
 
         /* Chargement du texte dans l'interface */
@@ -105,12 +118,22 @@ public class App extends Application {
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
         );
         File file = fileChooser.showSaveDialog(appStage);
+        if(file == null) return;
+
         try {
             FileWriter fileWriter = new FileWriter(file);
             fileWriter.write(mjjCodeArea.getText());
             fileWriter.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur lors de la sauvegarde du fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Impossible de sauvegarder le fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
         }
     }
 
