@@ -62,13 +62,32 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  script:
+    - mvn ${MAVEN_CLI_OPTS} -pl '!IHM' jacoco:prepare-agent test jacoco:report
+  artifacts:
+    reports:
+      junit: '**/target/surefire-reports/TEST-*.xml'
+      coverage_report:
+        coverage_format: jacoco
+        path: '**/target/site/jacoco/jacoco.xml'
+    paths:
+      - '**/target/'
+    expire_in: 1 week
+
+testIHM:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
   before_script:
     - chmod +x settings.sh && ./settings.sh
     - apk add xvfb libx11-dev xvfb-run gtk+3.0
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'IHM' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
