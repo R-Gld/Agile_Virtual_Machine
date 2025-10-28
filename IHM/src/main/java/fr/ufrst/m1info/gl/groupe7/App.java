@@ -1,11 +1,19 @@
 package fr.ufrst.m1info.gl.groupe7;
 
 import javafx.application.Application;
+import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.awt.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 
 /**
@@ -13,28 +21,68 @@ import javafx.stage.Stage;
  */
 public class App extends Application {
 
+    private Stage appStage;
+    private MyCodeArea mjjCodeArea;
+
     @Override
     public void start(Stage stage) {
+        appStage = stage;
         // Structure de l'interface :
         BorderPane root = new BorderPane();
         root.setTop(buildMenu());
         var scene = new Scene(root, 640, 480);
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
-        MyCodeArea codeArea = new MyCodeArea("mjj-code", codeSample);
+        mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
 
-        root.setCenter(codeArea);
+        root.setCenter(mjjCodeArea);
         stage.setScene(scene);
         stage.show();
     }
 
+    /**
+     * Fonction pour construire le menu de l'ihm
+     * @return MenuBar le menu de l'application
+     */
     private MenuBar buildMenu() {
         MenuBar menuBar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
         menuBar.getMenus().add(fileMenu);
 
+        MenuItem saveItem = new MenuItem("Save");
+        MenuItem openItem = new MenuItem("Open");
+        openItem.setOnAction(e -> {
+            loadFile();
+        });
+
+        fileMenu.getItems().addAll(saveItem, openItem);
+
         return menuBar;
+    }
+
+    /**
+     * Fonction pour gerer l'ouverture d'un fichier
+     */
+    private void loadFile() {
+        /* Selection du ficher à ouvrir */
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("."));
+        File file = fileChooser.showOpenDialog(appStage);
+
+        /* Lecture du fichier selectionner depuis l'explorateur de fichier */
+        StringBuilder fileContent = new StringBuilder();
+        try(Scanner scanner = new Scanner(file)) {
+            while(scanner.hasNextLine()) {
+                fileContent.append(scanner.nextLine());
+                fileContent.append("\n");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        /* Chargement du texte dans l'interface */
+        mjjCodeArea.loadText(fileContent.toString());
     }
 
     public static void main(String[] args) {

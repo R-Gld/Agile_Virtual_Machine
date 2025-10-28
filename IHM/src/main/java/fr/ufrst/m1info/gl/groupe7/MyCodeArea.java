@@ -76,4 +76,12 @@ public class MyCodeArea extends AnchorPane {
     public String getText(){
         return codeArea.getText();
     }
+
+    /**
+     * Load text in code area
+     * @param string text to load
+     */
+    public void loadText(String string) {
+        codeArea.replaceText(string);
+    }
 }
