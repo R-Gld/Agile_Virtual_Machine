@@ -13,6 +13,8 @@ import javafx.stage.Stage;
 import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 
@@ -56,6 +58,10 @@ public class App extends Application {
             loadFile();
         });
 
+        saveItem.setOnAction(e -> {
+            saveFile();
+        });
+
         fileMenu.getItems().addAll(saveItem, openItem);
 
         return menuBar;
@@ -68,6 +74,10 @@ public class App extends Application {
         /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
+                new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
+        );
         File file = fileChooser.showOpenDialog(appStage);
 
         /* Lecture du fichier selectionner depuis l'explorateur de fichier */
@@ -83,6 +93,25 @@ public class App extends Application {
 
         /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
+    }
+
+    /**
+     * Sauvegarde du contenu de la code area dans un fichier
+     */
+    private void saveFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
+                new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
+        );
+        File file = fileChooser.showSaveDialog(appStage);
+        try {
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(mjjCodeArea.getText());
+            fileWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {
