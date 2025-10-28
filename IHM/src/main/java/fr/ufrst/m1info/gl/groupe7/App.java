@@ -2,8 +2,9 @@ package fr.ufrst.m1info.gl.groupe7;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 
@@ -14,13 +15,26 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
-        var javaVersion = SystemInfo.javaVersion();
-        var javafxVersion = SystemInfo.javafxVersion();
+        // Structure de l'interface :
+        BorderPane root = new BorderPane();
+        root.setTop(buildMenu());
+        var scene = new Scene(root, 640, 480);
 
-        var label = new Label("Hello, JavaFX " + javafxVersion + ", running on Java " + javaVersion + ".");
-        var scene = new Scene(new StackPane(label), 640, 480);
+        String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
+        MyCodeArea codeArea = new MyCodeArea("mjj-code", codeSample);
+
+        root.setCenter(codeArea);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private MenuBar buildMenu() {
+        MenuBar menuBar = new MenuBar();
+
+        Menu fileMenu = new Menu("File");
+        menuBar.getMenus().add(fileMenu);
+
+        return menuBar;
     }
 
     public static void main(String[] args) {

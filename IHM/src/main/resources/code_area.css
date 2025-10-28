@@ -1,0 +1,9 @@
+.lineno {
+    -fx-background-color: lightgray;
+    -fx-padding: 0 30 0 10;
+    -fx-fill: lightgray;
+}
+
+.lineno .text {
+    -fx-fill: #554;
+}
