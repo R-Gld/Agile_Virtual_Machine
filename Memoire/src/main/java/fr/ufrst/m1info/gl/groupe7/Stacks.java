@@ -1,9 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
-public class Pil {
+public class Stacks {
 
     /**
      * Inner class representing a memory cell (Quadruple)
@@ -58,11 +57,11 @@ public class Pil {
     // ------------------------------------------------------------
     // Main structure: a classic LIFO stack (Last In, First Out)
     // ------------------------------------------------------------
-    private Stack<Quad> stack;
+    private java.util.Stack<Quad> stack;
 
     // Constructor: create an empty stack
-    public Pil() {
-        stack = new Stack<>();
+    public Stacks() {
+        stack = new java.util.Stack<>();
     }
 
     // ============================================================
@@ -144,36 +143,23 @@ public class Pil {
     // VALUE ASSIGNMENT & ACCESS METHODS
     // ============================================================
 
-    /** Assign a new value to an existing identifier */
-    public void assignValue(String ident, Object newValue) {
-        boolean found = false;
-        Stack<Quad> temp = new Stack<>();
-
-        // Search for the variable by temporarily popping elements
-        while (!stack.isEmpty()) {
-            Quad q = stack.pop();
+    /** Assign a new value to an existing identifier return false if cst or not found*/
+    public boolean assignValue(String ident, Object newValue) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
             if (q.ident.equals(ident)) {
                 if (q.object.equals("cst")) {
                     System.out.println("Error: cannot modify a constant!");
+                    return false;
                 } else {
                     q.value = newValue;
                     System.out.println("Updated value of " + ident + " → " + newValue);
+                    return true;
                 }
-                temp.push(q);
-                found = true;
-                break;
             }
-            temp.push(q);
         }
-
-        // Restore stack order
-        while (!temp.isEmpty()) {
-            stack.push(temp.pop());
-        }
-
-        if (!found) {
-            System.out.println("Identifier not found: " + ident);
-        }
+        System.out.println("Identifier not found: " + ident);
+        return false;
     }
 
     /** Get the value of an identifier */
