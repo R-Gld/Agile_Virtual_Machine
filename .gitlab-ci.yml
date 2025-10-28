@@ -113,6 +113,7 @@ package:
     expire_in: 1 week
   needs:
     - test
+    - testIHM
 
 sonarqube-check:
   stage: sonarqube-check
@@ -132,6 +133,7 @@ sonarqube-check:
   allow_failure: true
   needs:
     - test
+    - testIHM
 
 deploy:
   stage: deploy
