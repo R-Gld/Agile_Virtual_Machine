@@ -3,17 +3,27 @@ package fr.ufrst.m1info.gl.groupe7;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the Symbol class.
+ */
 public class SymbolTest {
 
     @Test
-    public void testBasicSymbol() {
+    void testCreationAndGetters() {
+        Symbol s = new Symbol("x", "int", "var", 42);
+        assertEquals("x", s.getName());
+        assertEquals("int", s.getType());
+        assertEquals("var", s.getKind());
+        assertEquals(42, s.getValue());
+    }
 
-        Symbol x = new Symbol("x", "int", "var", 10);
-
-
-        assertEquals("x", x.getName());
-        assertEquals("int", x.getType());
-        assertEquals("var", x.getKind());
-        assertEquals(10, x.getValue());
+    @Test
+    void testToStringFormat() {
+        Symbol s = new Symbol("flag", "boolean", "const", true);
+        String str = s.toString();
+        assertTrue(str.contains("flag"));
+        assertTrue(str.contains("boolean"));
+        assertTrue(str.contains("const"));
+        assertTrue(str.contains("true"));
     }
 }

@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+/** Simple immutable symbol entry. */
 public class Symbol {
     final String name;
     final String type;
@@ -13,21 +14,10 @@ public class Symbol {
         this.value = value;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getKind() {
-        return kind;
-    }
-
-    public Object getValue() {
-        return value;
-    }
+    public String getName() { return name; }
+    public String getType() { return type; }
+    public String getKind() { return kind; }
+    public Object getValue() { return value; }
 
     @Override
     public String toString() {

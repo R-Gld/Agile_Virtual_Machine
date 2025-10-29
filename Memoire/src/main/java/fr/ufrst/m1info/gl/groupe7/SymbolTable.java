@@ -2,62 +2,49 @@ package fr.ufrst.m1info.gl.groupe7;
 
 import java.util.*;
 
+/**
+ * Flat symbol table for Release 1: no scopes, one map.
+ * Methods openScope/closeScope exist for compatibility but do nothing.
+ */
 public class SymbolTable {
 
-    // this is  Stack of scopes (each scope = HashMap of symbols)
-    private Stack<Map<String, Symbol>> scopes;
+    private final Map<String, Symbol> table = new LinkedHashMap<>();
 
-    public SymbolTable() {
-        scopes = new Stack<>();
-        openScope(); //
+    /** Add or replace a symbol in the single global map. */
+    public void addSymbol(Symbol s) {
+        table.put(s.getName(), s);
     }
 
-
-    public void openScope() {
-        scopes.push(new HashMap<>());
-    }
-
-    public void closeScope() {
-        if (!scopes.isEmpty()) {
-            scopes.pop();
-        }
-    }
-
-
-    public void addSymbol(Symbol symbol) {
-        if (!scopes.isEmpty()) {
-            scopes.peek().put(symbol.getName(), symbol);
-        }
-    }
-
+    /** Find by name, or null if absent. */
     public Symbol findSymbol(String name) {
-        for (int i = scopes.size() - 1; i >= 0; i--) {
-            Symbol s = scopes.get(i).get(name);
-            if (s != null) return s;
-        }
-        return null;
+        return table.get(name);
     }
 
-    public boolean containsSymbol(String name) {
-        return findSymbol(name) != null;
+    /** Update value keeping other attributes; returns previous or null. */
+    public Symbol setValue(String name, Object newValue) {
+        Symbol prev = table.get(name);
+        if (prev == null) return null;
+        Symbol updated = new Symbol(prev.getName(), prev.getType(), prev.getKind(), newValue);
+        table.put(name, updated);
+        return prev;
     }
 
-    public void removeSymbol(String name) {
-        if (!scopes.isEmpty()) {
-            scopes.peek().remove(name);
-        }
+    /** Remove a symbol by name. */
+    public Symbol remove(String name) {
+        return table.remove(name);
     }
 
+    /** For compatibility with former API: no-op (no scopes). */
+    public void openScope() { /* no-op */ }
+
+    /** For compatibility with former API: no-op (no scopes). */
+    public void closeScope() { /* no-op */ }
+
+    /** Debug print. */
     public void printTable() {
-        System.out.println("( ͡ᵔ ͜ʖ ͡ᵔ ) Symbol Table ( ͡ᵔ ͜ʖ ͡ᵔ )");
-        for (int i = 0; i < scopes.size(); i++) {
-            System.out.println("Scope " + i + ": " + scopes.get(i).values());
-        }
-        System.out.println("( ͡ᵔ ͜ʖ ͡ᵔ )");
+        System.out.println("Symbol Table (flat): " + table.values());
     }
 
-    //  Debug helper
-    public int getScopeCount() {
-        return scopes.size();
-    }
+    /** Size helper. */
+    public int size() { return table.size(); }
 }

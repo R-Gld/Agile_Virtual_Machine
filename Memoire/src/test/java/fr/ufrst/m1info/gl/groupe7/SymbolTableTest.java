@@ -1,17 +1,25 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the SymbolTable
+ */
 public class SymbolTableTest {
 
+    private SymbolTable table;
 
+    @BeforeEach
+    void setup() {
+        table = new SymbolTable();
+    }
 
     @Test
-    public void testAddAndFindSymbol() {
-        SymbolTable table = new SymbolTable();
-        Symbol x = new Symbol("x", "int", "var", 10);
-        table.addSymbol(x);
+    void testAddAndFindSymbol() {
+        Symbol s = new Symbol("x", "int", "var", 10);
+        table.addSymbol(s);
 
         Symbol found = table.findSymbol("x");
         assertNotNull(found);
@@ -20,28 +28,40 @@ public class SymbolTableTest {
     }
 
     @Test
-    public void testRemoveSymbol() {
-        SymbolTable table = new SymbolTable();
-        table.addSymbol(new Symbol("y", "boolean", "var", true));
-        assertTrue(table.containsSymbol("y"));
-
-        table.removeSymbol("y");
-        assertFalse(table.containsSymbol("y"));
+    void testReplaceSymbol() {
+        table.addSymbol(new Symbol("a", "int", "var", 1));
+        table.addSymbol(new Symbol("a", "int", "var", 99)); // replaces
+        assertEquals(99, table.findSymbol("a").getValue());
+        assertEquals(1, table.size());
     }
 
     @Test
-    public void testScopes() {
-        SymbolTable table = new SymbolTable();
-        table.addSymbol(new Symbol("a", "int", "var", 1));
+    void testSetValue() {
+        table.addSymbol(new Symbol("b", "int", "var", 5));
+        Symbol prev = table.setValue("b", 8);
+        assertNotNull(prev);
+        assertEquals(8, table.findSymbol("b").getValue());
+    }
 
+    @Test
+    void testRemoveSymbol() {
+        table.addSymbol(new Symbol("flag", "boolean", "var", false));
+        table.remove("flag");
+        assertNull(table.findSymbol("flag"));
+        assertEquals(0, table.size());
+    }
+
+    @Test
+    void testOpenCloseScopeNoEffect() {
+        table.addSymbol(new Symbol("x", "int", "var", 0));
         table.openScope();
-        table.addSymbol(new Symbol("b", "int", "var", 2));
-
-        assertNotNull(table.findSymbol("b")); // in inner scope
-        assertNotNull(table.findSymbol("a")); // from outer scope
-
         table.closeScope();
-        assertNull(table.findSymbol("b")); // b was removed
-        assertNotNull(table.findSymbol("a")); // a still exists
+        assertEquals(1, table.size());
+    }
+
+    @Test
+    void testPrintTable() {
+        table.addSymbol(new Symbol("v", "int", "var", 10));
+        table.printTable(); // Should not throw
     }
 }
