@@ -5,25 +5,38 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the Symbol class.
+ * This version matches the field names and methods:
+ *   id, obj, type, value.
  */
 public class SymbolTest {
 
     @Test
     void testCreationAndGetters() {
-        Symbol s = new Symbol("x", "int", "var", 42);
-        assertEquals("x", s.getName());
-        assertEquals("int", s.getType());
-        assertEquals("var", s.getKind());
+        Symbol s = new Symbol("x", "var", "entier", 42);
+
+        // Check basic field getters
+        assertEquals("x", s.getId());
+        assertEquals("var", s.getObj());
+        assertEquals("entier", s.getType());
         assertEquals(42, s.getValue());
     }
 
     @Test
+    void testValueSetter() {
+        Symbol s = new Symbol("flag", "cst", "booleen", false);
+        s.setValue(true);
+        assertTrue((Boolean) s.getValue());
+    }
+
+    @Test
     void testToStringFormat() {
-        Symbol s = new Symbol("flag", "boolean", "const", true);
-        String str = s.toString();
-        assertTrue(str.contains("flag"));
-        assertTrue(str.contains("boolean"));
-        assertTrue(str.contains("const"));
-        assertTrue(str.contains("true"));
+        Symbol s = new Symbol("arr", "tab", "entier", "[1,2,3]");
+        String repr = s.toString();
+
+        // Check that all components appear in string form
+        assertTrue(repr.contains("arr"));
+        assertTrue(repr.contains("tab"));
+        assertTrue(repr.contains("entier"));
+        assertTrue(repr.contains("[1,2,3]"));
     }
 }

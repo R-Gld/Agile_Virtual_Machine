@@ -1,6 +1,42 @@
 package fr.ufrst.m1info.gl.groupe7;
 
-/** Simple immutable symbol entry. */
+
+
+/**
+ * Represents a symbol entry in the symbol table.
+ * Each symbol contains its identifier, object type, data type, and value.
+ * No HashMap or external collection is used; this class is a simple data holder.
+ */
+public class Symbol {
+    private String id;
+    private String obj;   // "var", "tab", "cst", "meth"
+    private String type;  // "entier", "booleen", "void"
+    private Object value; // Value associated to the symbol
+
+    public Symbol(String id, String obj, String type, Object value) {
+        this.id = id;
+        this.obj = obj;
+        this.type = type;
+        this.value = value;
+    }
+
+    public String getId() { return id; }
+    public String getObj() { return obj; }
+    public String getType() { return type; }
+    public Object getValue() { return value; }
+
+    public void setValue(Object v) { this.value = v; }
+
+    @Override
+    public String toString() {
+        return "<" + id + ", " + obj + ", " + type + ", " + value + ">";
+    }
+}
+
+
+
+
+/**
 public class Symbol {
     final String name;
     final String type;
@@ -24,3 +60,4 @@ public class Symbol {
         return name + " : " + type + " (" + kind + ") = " + value;
     }
 }
+*/
