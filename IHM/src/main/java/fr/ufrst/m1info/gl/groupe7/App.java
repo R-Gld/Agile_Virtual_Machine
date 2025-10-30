@@ -7,15 +7,15 @@ import javafx.scene.control.*;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 
 
@@ -64,6 +64,23 @@ public class App extends Application {
         });
 
         fileMenu.getItems().addAll(saveItem, openItem);
+
+        /* Build button */
+        Menu buildMenu = new Menu("Build");
+        buildMenu.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
+
+        menuBar.getMenus().add(buildMenu);
+
+        /* Execute button */
+        Menu executeMenu = new Menu("Execute");
+        executeMenu.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
+
+        MenuItem executeMjj = new MenuItem("MiniJaja");
+        MenuItem executeJjc = new MenuItem("JajaCode");
+
+        executeMenu.getItems().addAll(executeMjj, executeJjc);
+
+        menuBar.getMenus().add(executeMenu);
 
         return menuBar;
     }
