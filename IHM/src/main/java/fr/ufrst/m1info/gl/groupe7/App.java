@@ -4,12 +4,16 @@ import javafx.application.Application;
 import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -26,6 +30,7 @@ public class App extends Application {
 
     private Stage appStage;
     private MyCodeArea mjjCodeArea;
+    private MyCodeArea jjcCodeArea;
 
     @Override
     public void start(Stage stage) {
@@ -37,8 +42,12 @@ public class App extends Application {
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
+        jjcCodeArea = new MyCodeArea("jjc-code");
+        jjcCodeArea.disable();
 
-        root.setCenter(mjjCodeArea);
+        SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
+
+        root.setCenter(splitPane);
 
         ConsoleOutput console = new ConsoleOutput("console");
         root.setBottom(console);
@@ -51,7 +60,9 @@ public class App extends Application {
      * Fonction pour construire le menu de l'ihm
      * @return MenuBar le menu de l'application
      */
-    private MenuBar buildMenu() {
+    private HBox buildMenu() {
+        HBox hbox = new HBox();
+        hbox.setSpacing(10);
         MenuBar menuBar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
@@ -69,24 +80,37 @@ public class App extends Application {
 
         fileMenu.getItems().addAll(saveItem, openItem);
 
-        /* Build button */
-        Menu buildMenu = new Menu("Build");
-        buildMenu.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
+        hbox.getChildren().add(menuBar);
 
-        menuBar.getMenus().add(buildMenu);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        hbox.getChildren().add(spacer);
+
+        /* Build button */
+        Button buildButton = new Button("");
+        buildButton.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
+        buildButton.setOnAction(e -> {
+            compile();
+        });
+        buildButton.setTooltip(new Tooltip("Compile file"));
+
+        hbox.getChildren().add(buildButton);
+
+        /* Select file to be interpreted */
+        ChoiceBox<String> choiceBox = new ChoiceBox<>();
+        choiceBox.getItems().addAll("MiniJaja", "Jajacode");
+        choiceBox.setValue("MiniJaja");
+
+        hbox.getChildren().add(choiceBox);
 
         /* Execute button */
-        Menu executeMenu = new Menu("Execute");
-        executeMenu.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
+        Button runButton = new Button("");
+        runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
+        runButton.setTooltip(new Tooltip("Run"));
 
-        MenuItem executeMjj = new MenuItem("MiniJaja");
-        MenuItem executeJjc = new MenuItem("JajaCode");
+        hbox.getChildren().add(runButton);
 
-        executeMenu.getItems().addAll(executeMjj, executeJjc);
-
-        menuBar.getMenus().add(executeMenu);
-
-        return menuBar;
+        return hbox;
     }
 
     /**
@@ -156,6 +180,14 @@ public class App extends Application {
             alert.setContentText(e.toString());
             alert.showAndWait();
         }
+    }
+
+    private void compile() {
+        String code = mjjCodeArea.getText();
+
+        // TODO: appel methode compilation
+        String compileResult = "init\n";
+        jjcCodeArea.loadText(compileResult);
     }
 
     public static void main(String[] args) {

@@ -84,4 +84,11 @@ public class MyCodeArea extends AnchorPane {
     public void loadText(String string) {
         codeArea.replaceText(string);
     }
+
+    /**
+     * Disable writting in the code area
+     */
+    public void disable() {
+        codeArea.setEditable(false);
+    }
 }
