@@ -486,7 +486,7 @@ public class SymbolTableFullTest {
     void testHashForNegativeValuePath() throws Exception {
         var method = SymbolTable.class.getDeclaredMethod("hash", String.class);
         method.setAccessible(true);
-        String s = "\uFFFF\uFFFF\uFFFF"; // تولید مقدار منفی در جمع
+        String s = "\uFFFF\uFFFF\uFFFF";
         int h = (int) method.invoke(table, s);
         assertTrue(h >= 0);
     }
@@ -541,7 +541,6 @@ public class SymbolTableFullTest {
     void testLengthOfPrintStackTraceExecuted() throws Exception {
         table.declareTab("boom", 3, "entier");
 
-        // دسترسی مستقیم به فیلد value برای تزریق شیء که هنگام toString خطا بدهد
         var tableField = SymbolTable.class.getDeclaredField("table");
         tableField.setAccessible(true);
         Object[] buckets = (Object[]) tableField.get(table);
