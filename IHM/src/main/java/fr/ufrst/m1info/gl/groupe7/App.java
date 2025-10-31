@@ -39,6 +39,10 @@ public class App extends Application {
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
 
         root.setCenter(mjjCodeArea);
+
+        ConsoleOutput console = new ConsoleOutput("console");
+        root.setBottom(console);
+
         stage.setScene(scene);
         stage.show();
     }
