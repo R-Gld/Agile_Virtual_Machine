@@ -1,74 +1,50 @@
 package fr.ufrst.m1info.gl.groupe7;
 
 /**
- * Simple symbol table without HashMap and without scope management.
- * Uses a fixed-size array to store symbols linearly.
- * Provides methods to add, lookup, check existence, and update values.
- * Debug output is printed to System.err (not System.out) to avoid CLI interference.
+ * SymbolTable facade that starts from the project's Pile (Stacks).
+ * - Declarations delegate to Stacks (var, cst, tab, meth).
+ * - Reads (get/find) are built from Stacks getters.
+ * - Updates delegate to Stacks.assignValue and respect const rule.
+ * No HashMap used here.
  */
+
 public class SymbolTable {
-    private static final int MAX_SIZE = 256;
-    private Symbol[] table;
-    private int size;
+    private final Stacks stacks;
 
-    public SymbolTable() {
-        this.table = new Symbol[MAX_SIZE];
-        this.size = 0;
+    public SymbolTable(Stacks stacks){
+        this.stacks = stacks;
     }
 
-    /** Adds a new symbol if it does not already exist. */
-    public void add(Symbol s) {
-        if (exists(s.getId())) {
-            System.err.println("[WARN] Identifier already declared: " + s.getId());
-            return;
-        }
-        if (size >= MAX_SIZE) {
-            System.err.println("[ERROR] Symbol table full!");
-            return;
-        }
-        table[size++] = s;
+    // ---- Declarations ----
+    public void declareVar(String name, Object value, String type){
+        stacks.declareVar(name, value, type);
+    }
+    public void declareCst(String name, Object value, String type){
+        stacks.declareCst(name, value, type);
+    }
+    public void declareTab(String name, int size, String type){
+        stacks.declareTab(name, size, type);
+    }
+    public void declareMeth(String name, Object body, String type){
+        stacks.declareMeth(name, body, type);
     }
 
-    /** Returns the symbol for a given identifier, or null if not found. */
-    public Symbol get(String id) {
-        for (int i = size - 1; i >= 0; i--) {
-            if (table[i].getId().equals(id)) {
-                return table[i];
-            }
-        }
-        return null;
+    // ---- Queries ----
+    public boolean contains(String name){
+        return stacks.getObjectType(name) != null;
+    }
+    public Symbol findSymbol(String name){
+        String kind = stacks.getObjectType(name);
+        if (kind == null) return null;
+        String type = stacks.getDataType(name);
+        Object val  = stacks.getValue(name);
+        return new Symbol(name, type, kind, val);
     }
 
-    /** Checks whether a given identifier already exists. */
-    public boolean exists(String id) {
-        for (int i = 0; i < size; i++) {
-            if (table[i].getId().equals(id)) return true;
-        }
-        return false;
+    // ---- Update ----
+    public boolean updateValue(String name, Object newValue){
+        return stacks.assignValue(name, newValue);
     }
-
-    /** Updates the value of an existing identifier, prints error if not found. */
-    public void update(String id, Object newVal) {
-        for (int i = size - 1; i >= 0; i--) {
-            if (table[i].getId().equals(id)) {
-                table[i].setValue(newVal);
-                return;
-            }
-        }
-        System.err.println("[ERROR] Unknown identifier: " + id);
-    }
-
-    /** Prints the entire symbol table content to System.err (for debug). */
-    public void printTable() {
-        System.err.println("=== Symbol Table ===");
-        for (int i = 0; i < size; i++) {
-            System.err.println("  " + table[i]);
-        }
-        System.err.println("====================");
-    }
-
-    /** Returns current number of symbols. */
-    public int getSize() { return size; }
 }
 
 

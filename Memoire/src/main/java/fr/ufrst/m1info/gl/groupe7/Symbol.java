@@ -8,28 +8,26 @@ package fr.ufrst.m1info.gl.groupe7;
  * No HashMap or external collection is used; this class is a simple data holder.
  */
 public class Symbol {
-    private String id;
-    private String obj;   // "var", "tab", "cst", "meth"
-    private String type;  // "entier", "booleen", "void"
-    private Object value; // Value associated to the symbol
+    final String name;
+    final String type;
+    final String kind;
+    final Object value;
 
-    public Symbol(String id, String obj, String type, Object value) {
-        this.id = id;
-        this.obj = obj;
+    public Symbol(String name, String type, String kind, Object value) {
+        this.name = name;
         this.type = type;
+        this.kind = kind;
         this.value = value;
     }
 
-    public String getId() { return id; }
-    public String getObj() { return obj; }
+    public String getName() { return name; }
     public String getType() { return type; }
+    public String getKind() { return kind; }
     public Object getValue() { return value; }
-
-    public void setValue(Object v) { this.value = v; }
 
     @Override
     public String toString() {
-        return "<" + id + ", " + obj + ", " + type + ", " + value + ">";
+        return name + " : " + type + " (" + kind + ") = " + value;
     }
 }
 
