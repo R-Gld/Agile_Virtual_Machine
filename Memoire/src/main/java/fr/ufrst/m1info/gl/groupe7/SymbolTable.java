@@ -1,13 +1,230 @@
 package fr.ufrst.m1info.gl.groupe7;
 
 /**
- * SymbolTable facade that starts from the project's Pile (Stacks).
- * - Declarations delegate to Stacks (var, cst, tab, meth).
- * - Reads (get/find) are built from Stacks getters.
- * - Updates delegate to Stacks.assignValue and respect const rule.
- * No HashMap used here.
+ * SymbolTable
+ * ----------------------------------------------------------------------------
+ * Implements a hash table using chained lists of Stacks.Quad.
+ * Each bucket contains a linked list of Quad elements (ident, value, object, type).
+ *
+ * - No HashMap or Collections are used.
+ * - Based on professor’s MiniJaja specification: “table de hachage avec chaînes de Quad”.
+ * - Compatible with project symbols (var, cst, tab, meth).
+ *
+ * Average complexity: O(1) for insert, search, and update operations.
  */
 
+
+public class SymbolTable {
+
+    /** Fixed size of the hash table (prime number for better distribution). */
+    private static final int TABLE_SIZE = 97;
+
+    /** Each bucket stores a linked list of Quad entries. */
+    private Node[] table;
+
+    /** Number of total symbols stored. */
+    private int count = 0;
+
+    /**
+     * Node represents a single linked element inside a bucket.
+     */
+    private static class Node {
+        Stacks.Quad quad;
+        Node next;
+        Node(Stacks.Quad q) { this.quad = q; }
+    }
+
+    /** Constructor: initialize all buckets to null. */
+    public SymbolTable() {
+        table = new Node[TABLE_SIZE];
+    }
+
+    // =========================================================================
+    // ======================== HASHING FUNCTION ===============================
+    // =========================================================================
+
+    /**
+     * Simple polynomial rolling hash based on identifier characters.
+     * @param ident identifier name
+     * @return integer index within [0, TABLE_SIZE)
+     */
+    private int hash(String ident) {
+        int h = 0;
+        for (int i = 0; i < ident.length(); i++) {
+            h = (31 * h + ident.charAt(i)) % TABLE_SIZE;
+        }
+        return (h < 0) ? -h : h;
+    }
+
+    // =========================================================================
+    // ======================== CORE UTILITIES =================================
+    // =========================================================================
+
+    /**
+     * Find a node by identifier name in the correct bucket.
+     * @param ident identifier name
+     * @return Node if found, otherwise null
+     */
+    private Node findNode(String ident) {
+        int index = hash(ident);
+        Node current = table[index];
+        while (current != null) {
+            if (current.quad.ident.equals(ident)) return current;
+            current = current.next;
+        }
+        return null;
+    }
+
+    /**
+     * Insert or replace a Quad in the hash table.
+     * If the identifier already exists → replace its Quad.
+     */
+    private void put(Stacks.Quad q) {
+        int index = hash(q.ident);
+        Node current = table[index];
+        if (current == null) {
+            table[index] = new Node(q);
+            count++;
+            return;
+        }
+        Node prev = null;
+        while (current != null) {
+            if (current.quad.ident.equals(q.ident)) {
+                current.quad = q; // replace existing entry
+                return;
+            }
+            prev = current;
+            current = current.next;
+        }
+        prev.next = new Node(q);
+        count++;
+    }
+
+    // =========================================================================
+    // ======================== PUBLIC API METHODS =============================
+    // =========================================================================
+
+    /** Declare a variable */
+    public void declareVar(String name, Object value, String type) {
+        put(new Stacks.Quad(name, value, "var", type));
+        System.err.println("Pushed: <" + name + ", " + value + ", var, " + type + ">");
+    }
+
+    /** Declare a constant */
+    public void declareCst(String name, Object value, String type) {
+        put(new Stacks.Quad(name, value, "cst", type));
+        System.err.println("Pushed: <" + name + ", " + value + ", cst, " + type + ">");
+    }
+
+    /** Declare an array (tab) */
+    public void declareTab(String name, int size, String type) {
+        put(new Stacks.Quad(name, "size=" + size, "tab", type));
+        System.err.println("Pushed: <" + name + ", size=" + size + ", tab, " + type + ">");
+    }
+
+    /** Declare a method (meth) */
+    public void declareMeth(String name, Object body, String type) {
+        put(new Stacks.Quad(name, body, "meth", type));
+        System.err.println("Pushed: <" + name + ", " + body + ", meth, " + type + ">");
+    }
+
+    /**
+     * Update an existing symbol’s value.
+     * Constants (cst) cannot be modified.
+     * @param name identifier to update
+     * @param newValue new value to assign
+     * @return true if success, false otherwise
+     */
+    public boolean updateValue(String name, Object newValue) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("Identifier not found: " + name);
+            return false;
+        }
+        if ("cst".equals(node.quad.object)) {
+            System.err.println("Error: cannot modify a constant!");
+            return false;
+        }
+        node.quad.value = newValue;
+        System.err.println("Updated value of " + name + " ? " + newValue);
+        return true;
+    }
+
+    /**
+     * Remove a symbol completely from the table.
+     * @param name identifier name
+     * @return true if the symbol was found and removed, false otherwise
+     */
+    public boolean remove(String name) {
+        int index = hash(name);
+        Node current = table[index];
+        Node prev = null;
+        while (current != null) {
+            if (current.quad.ident.equals(name)) {
+                if (prev == null)
+                    table[index] = current.next;
+                else
+                    prev.next = current.next;
+                count--;
+                System.err.println("Removed: " + name);
+                return true;
+            }
+            prev = current;
+            current = current.next;
+        }
+        System.err.println("Identifier not found for removal: " + name);
+        return false;
+    }
+
+    /** Check whether an identifier exists in the table */
+    public boolean contains(String name) {
+        return findNode(name) != null;
+    }
+
+    /**
+     * Return a Symbol object built from the corresponding Quad.
+     * @param name identifier name
+     * @return Symbol or null if not found
+     */
+    public Symbol findSymbol(String name) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("Identifier not found: " + name);
+            return null;
+        }
+        return new Symbol(node.quad.ident, node.quad.type, node.quad.object, node.quad.value);
+    }
+
+    /** Return the total number of entries in the table */
+    public int size() { return count; }
+
+    /**
+     * Print the full content of the table (for debugging or visualization).
+     */
+    public void printTable() {
+        System.err.println("\n--- Current Symbol Table (Hash) ---");
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node e = table[i];
+            if (e != null) {
+                System.err.print("[" + i + "] -> ");
+                while (e != null) {
+                    System.err.print("<" + e.quad.ident + ", " + e.quad.value +
+                            ", " + e.quad.object + ", " + e.quad.type + "> ");
+                    e = e.next;
+                }
+                System.err.println();
+            }
+        }
+        System.err.println("-----------------------------------\n");
+    }
+}
+
+
+
+
+
+
+/*
 public class SymbolTable {
     private final Stacks stacks;
 
@@ -46,6 +263,7 @@ public class SymbolTable {
         return stacks.assignValue(name, newValue);
     }
 }
+*/
 
 
 
