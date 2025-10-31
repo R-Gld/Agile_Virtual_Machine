@@ -603,6 +603,36 @@ public class SymbolTableFullTest {
         table.lengthOf("ERRTAB");
     }
 
+    @Test
+    void testLengthOfNullNodeBranch() {
+        // حالت node == null باید بررسی بشه
+        assertEquals(-1, table.lengthOf("notExistTab"));
+    }
 
+    @Test
+    void testRemoveFirstNodeBranch() {
+        // حالت prev == null
+        table.declareVar("x", 1, "entier");
+        table.declareVar("y", 2, "entier");
+        assertTrue(table.remove("x")); // head node حذف شود
+    }
+
+    @Test
+    void testRemoveMiddleNodeBranch() {
+        // حالت prev != null
+        table.declareVar("x", 1, "entier");
+        table.declareVar("y", 2, "entier");
+        table.declareVar("z", 3, "entier");
+        assertTrue(table.remove("y")); // middle node
+    }
+
+    @Test
+    void testHashFullBranches() throws Exception {
+        var method = SymbolTable.class.getDeclaredMethod("hash", String.class);
+        method.setAccessible(true);
+        assertEquals(0, (int) method.invoke(table, (Object) null)); // null branch
+        assertEquals(0, (int) method.invoke(table, "")); // empty branch
+        assertTrue((int) method.invoke(table, "abc") > 0); // normal branch
+    }
 
 }
