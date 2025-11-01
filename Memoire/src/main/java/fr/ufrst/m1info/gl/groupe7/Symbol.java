@@ -8,10 +8,10 @@ package fr.ufrst.m1info.gl.groupe7;
  * No HashMap or external collection is used; this class is a simple data holder.
  */
 public class Symbol {
-    final String name;
-    final String type;
-    final String kind;
-    final Object value;
+    private final String name;
+    private final String type;
+    private final String kind;
+    private final Object value;
 
     public Symbol(String name, String type, String kind, Object value) {
         this.name = name;
@@ -30,32 +30,3 @@ public class Symbol {
         return name + " : " + type + " (" + kind + ") = " + value;
     }
 }
-
-
-
-
-/**
-public class Symbol {
-    final String name;
-    final String type;
-    final String kind;
-    final Object value;
-
-    public Symbol(String name, String type, String kind, Object value) {
-        this.name = name;
-        this.type = type;
-        this.kind = kind;
-        this.value = value;
-    }
-
-    public String getName() { return name; }
-    public String getType() { return type; }
-    public String getKind() { return kind; }
-    public Object getValue() { return value; }
-
-    @Override
-    public String toString() {
-        return name + " : " + type + " (" + kind + ") = " + value;
-    }
-}
-*/
