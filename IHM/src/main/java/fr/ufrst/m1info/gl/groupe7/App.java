@@ -28,6 +28,7 @@ public class App extends Application {
     private Stage appStage;
     private MyCodeArea mjjCodeArea;
     private MyCodeArea jjcCodeArea;
+    private ChoiceBox<String> fileToRun;
 
     @Override
     public void start(Stage stage) {
@@ -94,16 +95,19 @@ public class App extends Application {
         hbox.getChildren().add(buildButton);
 
         /* Select file to be interpreted */
-        ChoiceBox<String> choiceBox = new ChoiceBox<>();
-        choiceBox.getItems().addAll("MiniJaja", "Jajacode");
-        choiceBox.setValue("MiniJaja");
+        fileToRun = new ChoiceBox<>();
+        fileToRun.getItems().addAll("MiniJaja", "Jajacode");
+        fileToRun.setValue("MiniJaja");
 
-        hbox.getChildren().add(choiceBox);
+        hbox.getChildren().add(fileToRun);
 
         /* Execute button */
         Button runButton = new Button("");
         runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
+        runButton.setOnAction(e -> {
+            run();
+        });
 
         hbox.getChildren().add(runButton);
 
@@ -179,12 +183,30 @@ public class App extends Application {
         }
     }
 
+    /**
+     * Fonction utiliser pour appeler les methodes necessaires à la compilation du minijaja
+     * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
+     */
     private void compile() {
         String code = mjjCodeArea.getText();
 
         // TODO: appel methode compilation
         String compileResult = "init\n";
         jjcCodeArea.loadText(compileResult);
+    }
+
+    /**
+     * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
+     */
+    private void run() {
+        if (fileToRun.getValue().equals("MiniJaja")) {
+            String mjj = mjjCodeArea.getText();
+            // Call minijaja interpretor
+        } else {
+            String jjc = jjcCodeArea.getText();
+            // call jajacode interpretor
+        }
+
     }
 
     public static void main(String[] args) {
