@@ -57,7 +57,7 @@ public class Stacks {
     // ------------------------------------------------------------
     // Main structure: a classic LIFO stack (Last In, First Out)
     // ------------------------------------------------------------
-    private java.util.Stack<Quad> stack;
+    private final java.util.Stack<Quad> stack;
 
     // Constructor: create an empty stack
     public Stacks() {

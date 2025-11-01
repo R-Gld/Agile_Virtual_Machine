@@ -634,5 +634,4 @@ public class SymbolTableFullTest {
         assertEquals(0, (int) method.invoke(table, "")); // empty branch
         assertTrue((int) method.invoke(table, "abc") > 0); // normal branch
     }
-
 }

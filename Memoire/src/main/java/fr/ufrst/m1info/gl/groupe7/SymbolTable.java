@@ -269,7 +269,9 @@ public class SymbolTable {
         return true;
     }
 
-    /** Return the length of an array symbol (tab). */
+    /**
+     * Return the length of an array symbol (tab).
+     */
     public int lengthOf(String name) {
         Node node = findNode(name);
         if (node == null || !"tab".equals(node.quad.object)) {
