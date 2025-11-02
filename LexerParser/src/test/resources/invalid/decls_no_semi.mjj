@@ -1,0 +1,11 @@
+class C {
+  int x = 1   // <-- manque ;
+  int y = 2 ;
+  main {
+    x = 3 ;
+  }
+
+  f(int t) {
+    t = 2;
+  }
+}

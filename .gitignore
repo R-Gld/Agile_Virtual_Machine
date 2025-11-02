@@ -2,7 +2,6 @@
 .idea
 **/target/
 .mvn/
-.mvn
-
-# MacOS
-.DS_Store
+**/*.class
+**/.DS_Store
+**/dependency-reduced-pom.xml

@@ -20,56 +20,36 @@
         <maven.compiler.release>21</maven.compiler.release>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
+        <mockito.version>5.14.2</mockito.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
-
-
-        <!-- JUnit 5 parameterized tests -->
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- JUnit 5 engine (runner) -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 
     <!-- Build configuration -->
     <build>
         <pluginManagement>
             <plugins>
-
-
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.12</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>report</id>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
 
                 <!-- Clean -->
                 <plugin>
@@ -87,8 +67,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                     <configuration>
-                        <source>21</source>
-                        <target>21</target>
+                        <source>${maven.compiler.release}</source>
+                        <target>${maven.compiler.release}</target>
                     </configuration>
                 </plugin>
 
@@ -125,23 +105,6 @@
                     <version>3.5.0</version>
                 </plugin>
 
-                <!-- ANTLR plugin -->
-                <plugin>
-                    <groupId>org.antlr</groupId>
-                    <artifactId>antlr4-maven-plugin</artifactId>
-                    <version>4.7.1</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>antlr4</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <listener>true</listener>
-                    </configuration>
-                </plugin>
-
                 <!-- SonarQube and JaCoCo plugins -->
                 <plugin>
                     <groupId>org.sonarsource.scanner.maven</groupId>
@@ -152,6 +115,23 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>0.8.14</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                            <configuration>
+                                <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
             </plugins>
@@ -161,8 +141,9 @@
     <!-- List of all modules -->
     <modules>
         <module>IHM</module>
-        <module>AnalyseMinijaja</module>
         <module>Memoire</module>
+        <module>LexerParser</module>
+        <module>compiler</module>
     </modules>
 
     <scm>
