@@ -1,20 +1,13 @@
 package fr.ufrst.m1info.gl.groupe7.compiler;
 
-import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaLexer;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.MiniJajaCompilerVisitor;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreterVisitor;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.classe.ClasseNode;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaCompiler.getMiniJajaCompilerVisitorFromString;
 
 /**
  * Compiler
@@ -70,8 +63,7 @@ public class Compiler implements Runnable {
      * without emitting anywhere.
      */
     public String compileToString() {
-        CharStream cs = CharStreams.fromString(inputMiniJaja);
-        MiniJajaCompilerVisitor compiler = getMiniJajaCompilerVisitor(cs);
+        MiniJajaCompilerVisitor compiler = getMiniJajaCompilerVisitorFromString(inputMiniJaja);
         return compiler.getJajaCodeBuilder().toString();
     }
 
@@ -107,26 +99,5 @@ public class Compiler implements Runnable {
      */
     public String getLastOutput() {
         return lastOutput;
-    }
-
-    /**
-     * Get a MiniJajaCompilerVisitor from a CharStream.
-     * @param cs the CharStream to parse
-     * @return a MiniJajaCompilerVisitor
-     */
-    public static MiniJajaCompilerVisitor getMiniJajaCompilerVisitor(CharStream cs) {
-        MiniJajaLexer lexer = new MiniJajaLexer(cs);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniJajaParser mjjparser = new MiniJajaParser(tokens);
-        MiniJajaParser.ClasseContext parseTree = mjjparser.classe();
-
-        SymbolTable symbolTable = new SymbolTable();
-        Stacks stack = new Stacks();
-        MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor(stack);
-        ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
-
-        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(symbolTable);
-        compiler.visit(ast);
-        return compiler;
     }
 }

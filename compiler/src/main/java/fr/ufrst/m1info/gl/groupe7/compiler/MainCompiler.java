@@ -8,8 +8,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
+import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaCompiler;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -69,8 +68,7 @@ public class MainCompiler {
         try (InputStream inStream = (inputFile != null) ? new FileInputStream(inputFile) : System.in;
                 OutputStream outStream = (outputFilepath != null) ? new FileOutputStream(outputFilepath) : System.out) {
 
-            CharStream cs = CharStreams.fromStream(inStream);
-            MiniJajaCompilerVisitor compiler = Compiler.getMiniJajaCompilerVisitor(cs);
+            MiniJajaCompilerVisitor compiler = MiniJajaCompiler.getMiniJajaCompilerVisitorFromStream(inStream);
             outStream.write(compiler.getJajaCodeBuilder().toString().getBytes());
         } catch (IOException e) {
             System.err.println("File error: " + e.getMessage());

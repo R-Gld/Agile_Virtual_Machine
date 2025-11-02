@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

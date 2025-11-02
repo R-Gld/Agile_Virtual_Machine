@@ -15,6 +15,7 @@ default:
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s .settings.xml --fail-at-end"
+  MAVEN_HEADLESS_OPTS: "-Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dheadless=true -Djava.awt.headless=true"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -62,7 +63,32 @@ test:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl '!IHM' jacoco:prepare-agent test jacoco:report
+  artifacts:
+    reports:
+      junit: '**/target/surefire-reports/TEST-*.xml'
+      coverage_report:
+        coverage_format: jacoco
+        path: '**/target/site/jacoco/jacoco.xml'
+    paths:
+      - '**/target/'
+    expire_in: 1 week
+
+testIHM:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add xvfb libx11-dev xvfb-run gtk+3.0
+    - export DISPLAY=:99
+    - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
+  script:
+    - mvn clean install -DskipTests
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'IHM' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
@@ -88,6 +114,7 @@ package:
     expire_in: 1 week
   needs:
     - test
+    - testIHM
 
 sonarqube-check:
   stage: sonarqube-check
@@ -107,6 +134,7 @@ sonarqube-check:
   allow_failure: true
   needs:
     - test
+    - testIHM
 
 deploy:
   stage: deploy

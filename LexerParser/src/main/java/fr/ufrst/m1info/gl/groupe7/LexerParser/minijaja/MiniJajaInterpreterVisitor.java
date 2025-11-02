@@ -34,7 +34,7 @@ import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
 
 /**
  * MiniJajaVisitor builds the Abstract Syntax Tree (AST) from the ANTLR parse
