@@ -208,7 +208,15 @@ public class App extends Application {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
             JajaCodeInterpreter jjcInterpretor = new JajaCodeInterpreter();
-            jjcInterpretor.run(jjc);
+            String[] lines = jjc.split("\\n");
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                result.append(i + 1)
+                        .append(" ")
+                        .append(lines[i])
+                        .append("\n");
+            }
+            jjcInterpretor.run(result.toString());
 
         }
 
