@@ -166,14 +166,14 @@ public class StacksTest {
     @Test
     void testAssignValueOnVar() {
         stacks.declareVar("x", 5, "integer");
-        stacks.assignValue("x", 20);
+        stacks.AffecterVal("x", 20);
         assertEquals(20, stacks.getValue("x"));
     }
 
     @Test
     void testAssignValueDoesNotAffectConst() {
         stacks.declareCst("PI", 3.14, "integer");
-        stacks.assignValue("PI", 10);
+        stacks.AffecterVal("PI", 10);
         assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
     }
     @Test
@@ -183,7 +183,7 @@ public class StacksTest {
     }
     @Test
     void topPil2(){
-        stacks.assignValue("PI", 10);
+        stacks.AffecterVal("PI", 10);
         stacks.declareVar("x", 5, "integer");
         assertEquals("x", stacks.getTop().ident);
     }
@@ -281,7 +281,7 @@ public class StacksTest {
     void testAssignValueToVariable() {
         stacks.declareVar("x", 1, "integer");
 
-        assertTrue(stacks.assignValue("x", 10));
+        assertTrue(stacks.AffecterVal("x", 10));
         assertEquals(10, stacks.getValue("x"));
     }
 
@@ -289,7 +289,7 @@ public class StacksTest {
     void testAssignValueToConstant() {
         stacks.declareCst("PI", 3.14, "integer");
 
-        assertFalse(stacks.assignValue("PI", 10));
+        assertFalse(stacks.AffecterVal("PI", 10));
         assertEquals(3.14, stacks.getValue("PI"));
     }
 
@@ -297,7 +297,7 @@ public class StacksTest {
     void testAssignValueIdentifierNotFound() {
         stacks.declareVar("x", 1, "integer");
 
-        assertFalse(stacks.assignValue("y", 10));
+        assertFalse(stacks.AffecterVal("y", 10));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -305,7 +305,7 @@ public class StacksTest {
     void testAssignValueCst() {
         stacks.declareVar("x", 1, "integer");
 
-        assertFalse(stacks.assignValue("y", 10));
+        assertFalse(stacks.AffecterVal("y", 10));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -316,7 +316,7 @@ public class StacksTest {
         stacks.declareVar("b", 2, "integer");
         stacks.declareVar("c", 3, "integer"); // top
 
-        stacks.assignValue("a", 10);
+        stacks.AffecterVal("a", 10);
 
         List<Stacks.Quad> stackList = stacks.getStackFromTopToBottom();
         assertEquals("c", stackList.get(0).ident);
@@ -328,7 +328,7 @@ public class StacksTest {
     @Test
     void testAssignValueOnEmptyStack() {
         // pile vide
-        stacks.assignValue("x", 10);
+        stacks.AffecterVal("x", 10);
         assertNull(stacks.getValue("x"));
     }
     /*
@@ -402,6 +402,107 @@ public class StacksTest {
         assertTrue(output.contains("--- Current Stack Content ---"));
         assertTrue(output.contains("------------------------------"));
     }
+    @Test
+    void testAffecterValBehavior() {
+        stacks.declareVar("x", 0, "int");
+        stacks.declareCst("PI", 3.14, "float");
+        stacks.printSymbolTable();
+        stacks.printSymbol("li");
+        stacks.printSymbol("PI");
+        // OK
+        assertTrue(stacks.AffecterVal("x", 12));
 
+        // Mauvais type
+        assertFalse(stacks.AffecterVal("x", "notAnInt"));
+
+        // Constante
+        assertFalse(stacks.AffecterVal("PI", 2.71));
+
+        // Variable inexistante
+        assertFalse(stacks.AffecterVal("y", 99));
+    }
+    @Test
+    void testIsTypeCompatible_IntegerVariants() {
+        assertTrue(invokeIsTypeCompatible("int", 10));
+        assertTrue(invokeIsTypeCompatible("integer", -5));
+        assertTrue(invokeIsTypeCompatible("entier", 0));
+
+        assertFalse(invokeIsTypeCompatible("int", true));
+        assertFalse(invokeIsTypeCompatible("int", "42"));
+        assertFalse(invokeIsTypeCompatible("int", 3.14));
+    }
+
+    // ===============================
+    // Tests pour le type "boolean" / "booleen"
+    // ===============================
+    @Test
+    void testIsTypeCompatible_BooleanVariants() {
+        assertTrue(invokeIsTypeCompatible("boolean", true));
+        assertTrue(invokeIsTypeCompatible("booleen", false));
+
+        assertFalse(invokeIsTypeCompatible("boolean", "true"));
+        assertFalse(invokeIsTypeCompatible("boolean", 1));
+    }
+
+    // ===============================
+    // Tests pour le type "string" / "chaine"
+    // ===============================
+    @Test
+    void testIsTypeCompatible_StringVariants() {
+        assertTrue(invokeIsTypeCompatible("string", "hello"));
+        assertTrue(invokeIsTypeCompatible("chaine", "bonjour"));
+
+        assertFalse(invokeIsTypeCompatible("string", 123));
+        assertFalse(invokeIsTypeCompatible("chaine", false));
+    }
+
+    // ===============================
+    // Tests pour le type "void"
+    // ===============================
+    @Test
+    void testIsTypeCompatible_VoidType() {
+        assertTrue(invokeIsTypeCompatible("void", null));
+        assertFalse(invokeIsTypeCompatible("void", 5));
+        assertFalse(invokeIsTypeCompatible("void", "text"));
+    }
+
+    // ===============================
+    // Tests pour les valeurs nulles (acceptées pour tous sauf void explicite)
+    // ===============================
+    @Test
+    void testIsTypeCompatible_NullValue() {
+        assertTrue(invokeIsTypeCompatible("int", null));
+        assertTrue(invokeIsTypeCompatible("boolean", null));
+        assertTrue(invokeIsTypeCompatible("string", null));
+        assertTrue(invokeIsTypeCompatible("chaine", null));
+        assertTrue(invokeIsTypeCompatible("entier", null));
+    }
+
+    // ===============================
+    // Tests pour les types inconnus
+    // ===============================
+    @Test
+    void testIsTypeCompatible_UnknownType() {
+        assertFalse(invokeIsTypeCompatible("float", 3.14));
+        assertFalse(invokeIsTypeCompatible("char", 'a'));
+        assertFalse(invokeIsTypeCompatible("randomType", "test"));
+
+    }
+
+    // ===============================
+    // Méthode utilitaire pour accéder à la méthode privée via réflexion
+    // ===============================
+    private boolean invokeIsTypeCompatible(String type, Object value) {
+        try {
+            var method = Stacks.class.getDeclaredMethod("isTypeCompatible", String.class, Object.class);
+            method.setAccessible(true);
+            return (boolean) method.invoke(stacks, type, value);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
+
+
+
 

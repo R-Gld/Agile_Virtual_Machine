@@ -1,16 +1,19 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import java.util.Arrays;
+
 /**
  * SymbolTable
  * ----------------------------------------------------------------------------
  * Implements a hash table using chained lists of Stacks.Quad.
- * Each bucket contains a linked list of Quad elements (ident, value, object, type).
+ * Each bucket contains a linked list of Quad elements (ident, value, object,
+ * type).
  * - No HashMap or Collections are used.
- * - Based on professor’s MiniJaja specification: “table de hachage avec chaînes de Quad”.
+ * - Based on professor’s MiniJaja specification: “table de hachage avec chaînes
+ * de Quad”.
  * - Compatible with project symbols (var, cst, tab, meth).
  * Average complexity: O(1) for insert, search, and update operations.
  */
-
 public class SymbolTable {
 
     /** Fixed size of the hash table (prime number for better distribution). */
@@ -28,7 +31,15 @@ public class SymbolTable {
     private static class Node {
         Stacks.Quad quad;
         Node next;
-        Node(Stacks.Quad q) { this.quad = q; }
+
+        Node(Stacks.Quad q) {
+            this.quad = q;
+        }
+
+        @Override
+        public String toString() {
+            return quad.toString();
+        }
     }
 
     /** Constructor: initialize all buckets to null. */
@@ -42,11 +53,13 @@ public class SymbolTable {
 
     /**
      * Simple polynomial rolling hash based on identifier characters.
+     * 
      * @param ident identifier name
      * @return integer index within [0, TABLE_SIZE)
      */
     private int hash(String ident) {
-        if (ident == null || ident.isEmpty()) return 0;
+        if (ident == null || ident.isEmpty())
+            return 0;
         int h = 0;
         for (int i = 0; i < ident.length(); i++) {
             h = (31 * h + ident.charAt(i)) % TABLE_SIZE;
@@ -60,6 +73,7 @@ public class SymbolTable {
 
     /**
      * Find a node by identifier name in the correct bucket.
+     * 
      * @param ident identifier name
      * @return Node if found, otherwise null
      */
@@ -67,7 +81,8 @@ public class SymbolTable {
         int index = hash(ident);
         Node current = table[index];
         while (current != null) {
-            if (current.quad.ident.equals(ident)) return current;
+            if (current.quad.ident.equals(ident))
+                return current;
             current = current.next;
         }
         return null;
@@ -103,37 +118,59 @@ public class SymbolTable {
     // =========================================================================
 
     /** Declare a variable */
-    public void declareVar(String name, Object value, String type) {
-        if (name == null || type == null) return;
+    public boolean declareVar(String name, Object value, String type) {
+        if (name == null || type == null) return false;
+        if(!this.contains(name)){
         put(new Stacks.Quad(name, value, "var", type));
+
         System.err.println("Pushed: <" + name + ", " + value + ", var, " + type + ">");
+        return true;
+        }else{
+            return false;
+        }
     }
 
     /** Declare a constant */
-    public void declareCst(String name, Object value, String type) {
-        if (name == null || type == null) return;
+    public boolean declareCst(String name, Object value, String type) {
+        if (name == null || type == null) return false;
+        if(!this.contains(name)){
         put(new Stacks.Quad(name, value, "cst", type));
+    
         System.err.println("Pushed: <" + name + ", " + value + ", cst, " + type + ">");
+        return true;
+        }else{
+            return false;
+        }
     }
 
     /** Declare an array (tab) */
-    public void declareTab(String name, int size, String type) {
-        if (name == null || type == null) return;
-        put(new Stacks.Quad(name, "size=" + size, "tab", type));
-        System.err.println("Pushed: <" + name + ", size=" + size + ", tab, " + type + ">");
+    public boolean declareTab(String name, int size, String type) {
+        if (name == null || type == null) return false;
+        // BEGIN: Fix stacks reference
+        if(!this.contains(name)){
+        // END: Fix stacks reference
+            put(new Stacks.Quad(name, "size=" + size, "tab", type));
+            System.err.println("Pushed: <" + name + ", size=" + size + ", tab, " + type + ">");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /** Declare a method (meth) */
-    public void declareMeth(String name, Object body, String type) {
-        if (name == null || type == null) return;
+    public boolean declareMeth(String name, Object body, String type) {
+        if (name == null || type == null)
+            return false;
         put(new Stacks.Quad(name, body, "meth", type));
         System.err.println("Pushed: <" + name + ", " + body + ", meth, " + type + ">");
+        return true;
     }
 
     /**
      * Update an existing symbol’s value.
      * Constants (cst) cannot be modified.
-     * @param name identifier to update
+     * 
+     * @param name     identifier to update
      * @param newValue new value to assign
      * @return true if success, false otherwise
      */
@@ -154,6 +191,7 @@ public class SymbolTable {
 
     /**
      * Remove a symbol completely from the table.
+     * 
      * @param name identifier name
      * @return true if the symbol was found and removed, false otherwise
      */
@@ -183,8 +221,19 @@ public class SymbolTable {
         return findNode(name) != null;
     }
 
+    /** return type of node */
+    public String type(String name) {
+        if (contains(name)) {
+            return findNode(name).quad.type;
+        } else {
+            return null;
+        }
+
+    }
+
     /**
      * Return a Symbol object built from the corresponding Quad.
+     * 
      * @param name identifier name
      * @return Symbol or null if not found
      */
@@ -198,7 +247,9 @@ public class SymbolTable {
     }
 
     /** Return the total number of entries in the table */
-    public int size() { return count; }
+    public int size() {
+        return count;
+    }
 
     /**
      * Print the full content of the table (for debugging or visualization).
@@ -253,10 +304,10 @@ public class SymbolTable {
     /** Check if a symbol is a constant (cst). */
     public boolean isConst(String name) {
         Node node = findNode(name);
-        if (node == null) return false;
+        if (node == null)
+            return false;
         return "cst".equals(node.quad.object);
     }
-
 
     public boolean updateType(String name, String newType) {
         Node node = findNode(name);
@@ -288,5 +339,13 @@ public class SymbolTable {
         }
 
         return -1;
+    }
+
+    @Override
+    public String toString() {
+        return "SymbolTable{" +
+                "table=" + Arrays.toString(table).replace("null, ", "") +
+                ", count=" + count +
+                '}';
     }
 }

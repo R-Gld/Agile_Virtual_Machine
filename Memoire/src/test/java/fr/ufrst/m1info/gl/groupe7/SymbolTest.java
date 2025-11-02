@@ -3,14 +3,6 @@ package fr.ufrst.m1info.gl.groupe7;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- //      ___     __    _   _
- //     / _ |__ / /__ (_) / /  ___  ___
- //    / __ / -_)  '_// / / /__/ -_)/ _ \
- //   /_/ |_\__/_/\_\/_/ /____/\__//_//_/
- //
-
- */
 public class SymbolTest {
 
     @Test
