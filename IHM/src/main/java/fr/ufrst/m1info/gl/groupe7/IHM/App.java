@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.IHM;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -190,8 +191,9 @@ public class App extends Application {
     private void compile() {
         String code = mjjCodeArea.getText();
 
-        // TODO: appel methode compilation
-        String compileResult = "init\n";
+        Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+
+        String compileResult = compiler.compileToString();
         jjcCodeArea.loadText(compileResult);
     }
 
