@@ -224,7 +224,9 @@ public class SymbolTable {
     /** return type of node */
     public String type(String name) {
         if (contains(name)) {
-            return findNode(name).quad.type;
+            Node node = findNode(name);
+            if (node == null) return null;
+            return node.quad.type;
         } else {
             return null;
         }
