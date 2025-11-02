@@ -142,9 +142,9 @@ public class SymbolTableFullTest {
     @Test
     void testDoubleDeclareReplacesExisting() {
         table.declareVar("dup", 1, "entier");
-        table.declareVar("dup", 2, "entier");
+        assertFalse(table.declareVar("dup", 2, "entier"));
         Symbol s = table.findSymbol("dup");
-        assertEquals(2, s.getValue());
+        assertEquals(1, s.getValue());
     }
 
     @Test
@@ -497,6 +497,7 @@ public class SymbolTableFullTest {
         m.setAccessible(true);
         assertNull(m.invoke(table, (Object) null));
     }
+
 
     @Test
     void testPrintTableMultipleBuckets() {

@@ -57,12 +57,15 @@ public class Stacks {
     // ------------------------------------------------------------
     // Main structure: a classic LIFO stack (Last In, First Out)
     // ------------------------------------------------------------
-    private final java.util.Stack<Quad> stack;
-
+    protected final java.util.Stack<Quad> stack;
+    private final SymbolTable symbolTable;
+    
     // Constructor: create an empty stack
     public Stacks() {
         stack = new java.util.Stack<>();
+        symbolTable = new SymbolTable();
     }
+
 
     // ============================================================
     // BASIC OPERATIONS
@@ -71,7 +74,7 @@ public class Stacks {
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
         stack.push(q);
-        System.out.println("Pushed: " + q);
+        System.err.println("Pushed: " + q);
     }
 
     /** Pop (Dépiler): remove the top element from the stack */
@@ -118,24 +121,28 @@ public class Stacks {
     /** Declare a variable */
     public void declareVar(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "var", type);
+        symbolTable.declareVar(ident, value,  type);
         push(q);
     }
 
     /** Declare a constant */
     public void declareCst(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "cst", type);
+        symbolTable.declareCst(ident, value,  type);
         push(q);
     }
 
     /** Declare an array (simulated here by its size) */
     public void declareTab(String ident, int size, String type) {
         Quad q = new Quad(ident, "size=" + size, "tab", type);
+        symbolTable.declareTab(ident, size, type);
         push(q);
     }
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, String type) {
         Quad q = new Quad(ident, body, "meth", type);
+        symbolTable.declareMeth(ident, body,  type);
         push(q);
     }
 
@@ -144,23 +151,6 @@ public class Stacks {
     // ============================================================
 
     /** Assign a new value to an existing identifier return false if cst or not found*/
-    public boolean assignValue(String ident, Object newValue) {
-        for (int i = stack.size() - 1; i >= 0; i--) {
-            Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
-                if (q.object.equals("cst")) {
-                    System.out.println("Error: cannot modify a constant!");
-                    return false;
-                } else {
-                    q.value = newValue;
-                    System.out.println("Updated value of " + ident + " → " + newValue);
-                    return true;
-                }
-            }
-        }
-        System.out.println("Identifier not found: " + ident);
-        return false;
-    }
 
     /** Get the value of an identifier */
     public Object getValue(String ident) {
@@ -168,7 +158,7 @@ public class Stacks {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) return q.value;
         }
-        return null;
+        return null;    
     }
 
     /** Get the object type (var, cst, tab, meth) */
@@ -188,7 +178,72 @@ public class Stacks {
         }
         return null;
     }
+    // ============================================================
+    // Axiome D'interpretation
+    // ============================================================
+    public boolean AffecterVal(String ident, Object newValue) {
+        if(!symbolTable.contains(ident)){
+            return false;
 
+        }
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                // Vérification de la compatibilité de type
+                if (!isTypeCompatible(q.type, newValue)) {
+                    System.out.println("Erreur : type incompatible pour " + ident +
+                            " (" + q.type + " attendu, mais " + newValue.getClass().getSimpleName() + " fourni)");
+                    return false;
+                }
+                if (q.object.equals("cst")) {
+                    System.out.println("Error: cannot modify a constant!");
+                    return false;
+                } else {
+                    q.value = newValue;
+                    System.err.println("Updated value of " + ident + " → " + newValue);
+                    return true;
+                }
+            }
+        }
+        System.out.println("Identifier not found should not go here l 207: " + ident);
+        return false;
+    }
+    /**
+     * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de String)
+     */
+    private boolean isTypeCompatible(String type, Object value) {
+        if (value == null) return true; // null accepté pour tous types
+
+        switch (type.toLowerCase()) {
+            case "entier":
+            case "integer":
+            case "int":
+                return value instanceof Integer;
+
+            case "booleen":
+            case "boolean":
+                return value instanceof Boolean;
+
+            case "chaine":
+            case "string":
+                return value instanceof String;
+
+            case "void":
+                return value == null;
+
+            default:
+                System.err.println("⚠️ Type inconnu : " + type);
+                return false;
+        }
+    }
+
+
+
+    
+
+    // ============================================================
+    // PRINT STACK CONTENT
+    // ============================================================
     /** Display the entire stack content */
     public void printStack() {
         System.out.println("\n--- Current Stack Content ---");
@@ -196,6 +251,28 @@ public class Stacks {
             System.out.println(stack.get(i));
         }
         System.out.println("------------------------------\n");
+    }
+    /**
+     * Affiche tout le contenu de la table des symboles.
+     */
+    public void printSymbolTable() {
+
+        symbolTable.printTable();
+    }
+
+    /**
+     * Affiche un symbole précis s’il existe.
+     */
+    public void printSymbol(String name) {
+
+        Symbol s = symbolTable.findSymbol(name);
+        if (s != null) {
+            System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
+                    " | objet=" + s.getKind() +
+                    " | valeur=" + s.getValue());
+        } else {
+            System.out.println(" Symbole non trouvé : " + name);
+        }
     }
 
 }
