@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.JajaCodeInterpreter;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -205,6 +206,9 @@ public class App extends Application {
         } else {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
+            JajaCodeInterpreter jjcInterpretor = new JajaCodeInterpreter();
+            jjcInterpretor.run(jjc);
+
         }
 
     }

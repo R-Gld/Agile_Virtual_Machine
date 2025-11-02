@@ -34,5 +34,23 @@ public class JajaCodeInterpreter {
         interpreteur.load(arbreJajaCode);
         interpreteur.run();
     }
+
+    /**
+     * Fonction utiliser par l'interface pour interpreter du jajacode
+     * @param jajaCode String du jajacode a interpréter
+     */
+    public void run(String jajaCode){
+        SymbolTable symbolTable = new SymbolTable();
+        CharStream stream = CharStreams.fromString(jajaCode);
+        JajaCodeLexer lexer = new JajaCodeLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        JajaCodeParser parser = new JajaCodeParser(tokens);
+        JajaCodeParser.ClasseContext arbreJajaCode = parser.classe();
+
+        JajaCodeInterpreterVisitor interpreteur = new JajaCodeInterpreterVisitor(symbolTable);
+
+        interpreteur.load(arbreJajaCode);
+        interpreteur.run();
+    }
 }
 
