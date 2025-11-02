@@ -1,0 +1,15 @@
+/********************************************/
+/* Programme MiniJaja                       */
+/* Validation de toutes les instructions	*/
+/* sans tableau, ni fonction                */
+/********************************************/
+
+class C {
+  int x = 0;
+
+  main {
+   }
+}
+
+
+	

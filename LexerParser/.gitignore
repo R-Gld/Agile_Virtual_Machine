@@ -1,0 +1,6 @@
+src/main/java/fr/ufrst/m1info/gl/groupe7/LexerParser/gen
+*.tokens
+*.interp
+MiniJaja*.tokens
+MiniJaja*.interp
+**/gen/*
