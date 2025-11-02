@@ -24,17 +24,8 @@ import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.MiniJajaCompilerVisitor;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.classe.ClasseNode;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.apache.commons.cli.*;
-import org.apache.commons.cli.help.HelpFormatter;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
 
 public class Main {
 

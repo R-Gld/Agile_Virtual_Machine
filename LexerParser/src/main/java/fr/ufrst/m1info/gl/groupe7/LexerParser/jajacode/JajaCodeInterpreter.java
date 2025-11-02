@@ -2,7 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.jajacode.JajaCodeLexer;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.jajacode.JajaCodeParser;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

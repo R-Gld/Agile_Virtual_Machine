@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

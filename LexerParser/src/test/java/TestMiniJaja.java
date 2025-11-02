@@ -7,7 +7,7 @@ import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
 
 public class TestMiniJaja {
   public static void main(String[] args) throws Exception {

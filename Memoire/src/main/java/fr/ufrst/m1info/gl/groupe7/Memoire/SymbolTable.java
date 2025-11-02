@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.Memoire;
 
 import java.util.Arrays;
 

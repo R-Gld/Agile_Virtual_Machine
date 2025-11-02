@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.IHM;
 
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;

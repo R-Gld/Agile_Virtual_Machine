@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.IHM;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.JajaCodeInterpreter;
 import javafx.application.Application;
@@ -16,7 +16,6 @@ import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.io.*;
 import java.util.Scanner;
 

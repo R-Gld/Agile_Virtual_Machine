@@ -42,7 +42,7 @@ import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.expressions.exp1.grea
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.expressions.exp2.plus.PlusNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.main.MainNode;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
 
 @ExtendWith(MockitoExtension.class)
 class MiniJajaInterpreterVisitorTest {
