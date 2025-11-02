@@ -274,6 +274,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             }
 
             @Override
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null || getClass() != obj.getClass()) return false;
+                JJCQuad quad = (JJCQuad) obj;
+                return value.equals(quad.value) && type.equals(quad.type);
+            }
+
+            @Override
             public String toString() {
                 return "<" + value + ", " + type + ">";
             }
