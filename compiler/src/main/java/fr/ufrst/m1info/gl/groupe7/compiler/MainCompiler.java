@@ -10,7 +10,6 @@ import java.nio.file.Path;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -19,24 +18,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.help.HelpFormatter;
 
-import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaLexer;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.MiniJajaCompilerVisitor;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreterVisitor;
-import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.classe.ClasseNode;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.apache.commons.cli.*;
-import org.apache.commons.cli.help.HelpFormatter;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-public class Main {
+public class MainCompiler {
 
     /**
      * Main of the compiler.
@@ -44,10 +28,10 @@ public class Main {
      * @param args the list of arguments.
      */
     public static void main(String[] args) {
-        new Main(args);
+        new MainCompiler(args);
     }
 
-    private Main(String[] args) {
+    private MainCompiler(String[] args) {
         Options options = getOptions();
 
         CommandLineParser parser = new DefaultParser();
@@ -86,7 +70,7 @@ public class Main {
                 OutputStream outStream = (outputFilepath != null) ? new FileOutputStream(outputFilepath) : System.out) {
 
             CharStream cs = CharStreams.fromStream(inStream);
-            MiniJajaCompilerVisitor compiler = getMiniJajaCompilerVisitor(cs);
+            MiniJajaCompilerVisitor compiler = Compiler.getMiniJajaCompilerVisitor(cs);
             outStream.write(compiler.getJajaCodeBuilder().toString().getBytes());
         } catch (IOException e) {
             System.err.println("File error: " + e.getMessage());
@@ -114,29 +98,13 @@ public class Main {
         return options;
     }
 
-    private MiniJajaCompilerVisitor getMiniJajaCompilerVisitor(CharStream cs) {
-        MiniJajaLexer lexer = new MiniJajaLexer(cs);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniJajaParser mjjparser = new MiniJajaParser(tokens);
-        MiniJajaParser.ClasseContext parseTree = mjjparser.classe();
-
-        SymbolTable symbolTable = new SymbolTable();
-        Stacks stack = new Stacks();
-        MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor(stack);
-        ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
-
-        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(symbolTable);
-        compiler.visit(ast);
-        return compiler;
-    }
-
     private void printHelp(Options options, String errMessage, int exitCode) {
         if (errMessage != null) {
             System.err.println("Error: " + errMessage);
             System.err.println();
         }
 
-        String jarPath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String jarPath = MainCompiler.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         String jarName = jarPath.substring(jarPath.lastIndexOf('/') + 1);
 
         HelpFormatter helpFormatter = HelpFormatter.builder().get();
