@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.IHM;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreter;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -37,7 +38,7 @@ public class App extends Application {
         // Structure de l'interface :
         BorderPane root = new BorderPane();
         root.setTop(buildMenu());
-        var scene = new Scene(root, 640, 480);
+        var scene = new Scene(root, 800, 600);
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
@@ -204,6 +205,8 @@ public class App extends Application {
         if (fileToRun.getValue().equals("MiniJaja")) {
             String mjj = mjjCodeArea.getText();
             // Call minijaja interpretor
+            MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
+            interpreter.run(mjj);
         } else {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
