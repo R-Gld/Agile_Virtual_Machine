@@ -43,7 +43,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>fr.ufrst.m1info.gl.groupe7.compiler.Main</mainClass>
+                                    <mainClass>fr.ufrst.m1info.gl.groupe7.compiler.MainCompiler</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

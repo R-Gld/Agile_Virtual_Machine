@@ -16,7 +16,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MainCompilerTest {
+public class MainCompilerCompilerTest {
 
     private static Path TEMP_DIR = null;
 
@@ -51,7 +51,7 @@ public class MainCompilerTest {
 
         preOptions.add("-cp");
         preOptions.add(System.getProperty("java.class.path"));
-        preOptions.add("fr.ufrst.m1info.gl.groupe7.compiler.Main");
+        preOptions.add("fr.ufrst.m1info.gl.groupe7.compiler.MainCompiler");
         preOptions.addAll(List.of(options));
         return new ProcessBuilder(preOptions)
                 .redirectErrorStream(redirectErrorStream);
@@ -218,7 +218,7 @@ public class MainCompilerTest {
      * @return the absolute path of the resource
      * @throws URISyntaxException Shouldn't happen, since the url is given by the ContextClassLoader.
      */
-    private static java.nio.file.Path resourceAsPath(String path) throws URISyntaxException {
+    public static java.nio.file.Path resourceAsPath(String path) throws URISyntaxException {
         URL url = Thread.currentThread().getContextClassLoader().getResource(path);
         if (url == null) throw new IllegalArgumentException("Resource not found: " + path);
         return java.nio.file.Path.of(url.toURI());
