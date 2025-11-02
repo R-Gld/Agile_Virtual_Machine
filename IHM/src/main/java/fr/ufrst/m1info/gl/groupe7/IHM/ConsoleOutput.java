@@ -17,7 +17,6 @@ public class ConsoleOutput extends AnchorPane {
         AnchorPane.setRightAnchor(console, 10.0);
 
         console.setEditable(false);
-        console.setText("\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj\nj");
 
         this.getChildren().add(console);
     }
