@@ -10,7 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.expressions.Fact.Nbre
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.ast.var.VarNode;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
 
 import java.util.Stack;
 

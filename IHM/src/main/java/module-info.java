@@ -1,7 +1,8 @@
-module fr.ufrst.m1info.gl.groupe7 {
+module IHM {
     requires javafx.controls;
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;
     requires java.desktop;
-    exports fr.ufrst.m1info.gl.groupe7;
+    requires compiler;
+    exports fr.ufrst.m1info.gl.groupe7.IHM;
 }

@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7;
 
+import fr.ufrst.m1info.gl.groupe7.Memoire.Symbol;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;

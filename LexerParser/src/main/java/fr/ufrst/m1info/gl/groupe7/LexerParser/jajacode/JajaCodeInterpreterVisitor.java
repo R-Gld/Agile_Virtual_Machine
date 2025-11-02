@@ -2,9 +2,9 @@ package fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.jajacode.JajaCodeParserBaseVisitor;
-import fr.ufrst.m1info.gl.groupe7.Stacks;
-import fr.ufrst.m1info.gl.groupe7.Symbol;
-import fr.ufrst.m1info.gl.groupe7.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Symbol;
+import fr.ufrst.m1info.gl.groupe7.Memoire.SymbolTable;
 
 import java.util.*;
 

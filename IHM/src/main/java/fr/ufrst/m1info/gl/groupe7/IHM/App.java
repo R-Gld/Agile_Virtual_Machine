@@ -1,21 +1,24 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.IHM;
 
+import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
-import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 
 
@@ -26,6 +29,8 @@ public class App extends Application {
 
     private Stage appStage;
     private MyCodeArea mjjCodeArea;
+    private MyCodeArea jjcCodeArea;
+    private ChoiceBox<String> fileToRun;
 
     @Override
     public void start(Stage stage) {
@@ -33,12 +38,20 @@ public class App extends Application {
         // Structure de l'interface :
         BorderPane root = new BorderPane();
         root.setTop(buildMenu());
-        var scene = new Scene(root, 640, 480);
+        var scene = new Scene(root, 800, 600);
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
+        jjcCodeArea = new MyCodeArea("jjc-code");
+        jjcCodeArea.disable();
 
-        root.setCenter(mjjCodeArea);
+        SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
+
+        root.setCenter(splitPane);
+
+        ConsoleOutput console = new ConsoleOutput("console");
+        root.setBottom(console);
+
         stage.setScene(scene);
         stage.show();
     }
@@ -47,7 +60,9 @@ public class App extends Application {
      * Fonction pour construire le menu de l'ihm
      * @return MenuBar le menu de l'application
      */
-    private MenuBar buildMenu() {
+    private HBox buildMenu() {
+        HBox hbox = new HBox();
+        hbox.setSpacing(10);
         MenuBar menuBar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
@@ -65,7 +80,40 @@ public class App extends Application {
 
         fileMenu.getItems().addAll(saveItem, openItem);
 
-        return menuBar;
+        hbox.getChildren().add(menuBar);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        hbox.getChildren().add(spacer);
+
+        /* Build button */
+        Button buildButton = new Button("");
+        buildButton.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
+        buildButton.setOnAction(e -> {
+            compile();
+        });
+        buildButton.setTooltip(new Tooltip("Compile file"));
+
+        hbox.getChildren().add(buildButton);
+
+        /* Select file to be interpreted */
+        fileToRun = new ChoiceBox<>();
+        fileToRun.getItems().addAll("MiniJaja", "Jajacode");
+        fileToRun.setValue("MiniJaja");
+
+        hbox.getChildren().add(fileToRun);
+
+        /* Execute button */
+        Button runButton = new Button("");
+        runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
+        runButton.setTooltip(new Tooltip("Run"));
+        runButton.setOnAction(e -> {
+            run();
+        });
+
+        hbox.getChildren().add(runButton);
+
+        return hbox;
     }
 
     /**
@@ -135,6 +183,46 @@ public class App extends Application {
             alert.setContentText(e.toString());
             alert.showAndWait();
         }
+    }
+
+    /**
+     * Fonction utiliser pour appeler les methodes necessaires à la compilation du minijaja
+     * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
+     */
+    private void compile() {
+        String code = mjjCodeArea.getText();
+
+        Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+
+        String compileResult = compiler.compileToString();
+        jjcCodeArea.loadText(compileResult);
+    }
+
+    /**
+     * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
+     */
+    private void run() {
+        if (fileToRun.getValue().equals("MiniJaja")) {
+            String mjj = mjjCodeArea.getText();
+            // Call minijaja interpretor
+            MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
+            interpreter.run(mjj);
+        } else {
+            String jjc = jjcCodeArea.getText();
+            // call jajacode interpretor
+            JajaCodeInterpreter jjcInterpretor = new JajaCodeInterpreter();
+            String[] lines = jjc.split("\\n");
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < lines.length; i++) {
+                result.append(i + 1)
+                        .append(" ")
+                        .append(lines[i])
+                        .append("\n");
+            }
+            jjcInterpretor.run(result.toString());
+
+        }
+
     }
 
     public static void main(String[] args) {

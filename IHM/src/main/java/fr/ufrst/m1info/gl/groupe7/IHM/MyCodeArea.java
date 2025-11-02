@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.IHM;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -83,5 +83,12 @@ public class MyCodeArea extends AnchorPane {
      */
     public void loadText(String string) {
         codeArea.replaceText(string);
+    }
+
+    /**
+     * Disable writting in the code area
+     */
+    public void disable() {
+        codeArea.setEditable(false);
     }
 }
