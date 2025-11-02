@@ -1,9 +1,14 @@
-/*
 package fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.LexerParser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.Symbol;
 import fr.ufrst.m1info.gl.groupe7.SymbolTable;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,9 +39,21 @@ class JajaCodeInterpreterVisitorUnitTest {
     // ------------------------
 
     private TerminalNode term(String text) {
-        TerminalNode t = mock(TerminalNode.class);
-        when(t.getText()).thenReturn(text);
-        return t;
+        /* Partial reimplementation of TerminalNode to avoid UnfinishedStubbing from mockito.*/
+        return new TerminalNode() {
+            @Override public Token getSymbol() { return null; }
+            @Override public String getText() { return text; }
+            @Override public ParseTree getParent() { return null; }
+            @Override public Object getPayload() { return null; }
+            @Override public Interval getSourceInterval() { return Interval.INVALID; }
+            @Override public <T> T accept(ParseTreeVisitor<? extends T> visitor) { return null; }
+            @Override public String toStringTree(Parser parser) { return text; }
+            @Override public String toStringTree() { return text; }
+            @Override public int getChildCount() { return 0; }
+            @Override public ParseTree getChild(int i) { return null; }
+            @Override public void setParent(RuleContext ruleContext) {}
+            @Override public String toString() { return text; }
+        };
     }
 
     private JajaCodeParser.InstrContext instrWithPush(int value) {
@@ -209,4 +226,3 @@ class JajaCodeInterpreterVisitorUnitTest {
         verifyNoInteractions(symbolTable);
     }
 }
-*/
