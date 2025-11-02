@@ -37,7 +37,9 @@ public class DeclsNode extends AstDecls {
        if (decls == null && decl == null) {
            sb.append("vnil");
        } else {
-           sb.append("decls (").append(decl.toStringTree()).append(",").append(decls.toStringTree()).append(")");
+           String declSpringTree = decl == null ? "vnil" : decl.toStringTree();
+           String declsSpringTree = decls == null ? "vnil" : decls.toStringTree();
+           sb.append("decls (").append(declSpringTree).append(",").append(declsSpringTree).append(")");
        }
         return sb.toString();
     }
