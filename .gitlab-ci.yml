@@ -87,7 +87,6 @@ testIHM:
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - mvn clean install -DskipTests
     - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'IHM' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
