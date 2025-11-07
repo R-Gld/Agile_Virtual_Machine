@@ -16,35 +16,6 @@
     <name>Memoire</name>
     <url>https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7/</url>
 
-    <!-- Dependencies -->
-    <dependencies>
-
-        <!-- JUnit 5 core API -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- JUnit 5 parameterized tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- JUnit 5 engine (runner) -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
-
 
     <!-- Build configuration -->
     <build>
