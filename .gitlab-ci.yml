@@ -11,6 +11,10 @@ default:
     - avm_groupe7
   before_script:
     - chmod +x settings.sh && ./settings.sh
+  retry:
+    max: 2
+    when:
+      - api_failure
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
