@@ -145,12 +145,3 @@ deploy:
     - package
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
-
-deploy:manual:
-  stage: .pre
-  retry: 2
-  rules:
-    - when: manual
-      allow_failure: true
-  script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package deploy
