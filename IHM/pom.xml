@@ -6,6 +6,7 @@
         <artifactId>MiniJAJA</artifactId>
         <version>1.1-SNAPSHOT</version>
     </parent>
+
     <artifactId>IHM</artifactId>
     <version>1.1-SNAPSHOT</version>
 
@@ -53,6 +54,7 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>

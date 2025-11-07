@@ -48,7 +48,6 @@
 
     <!-- Build configuration -->
     <build>
-
         <!-- Default plugin management (from the parent project) -->
         <pluginManagement>
             <plugins>
@@ -85,7 +84,6 @@
 
         <!-- Plugins actually used in this module -->
         <plugins>
-            <!-- Compiler Plugin for Java 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
