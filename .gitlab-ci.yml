@@ -73,6 +73,7 @@ test:
     paths:
       - '**/target/surefire-reports/TEST-*.xml'
       - '**/target/site/jacoco/jacoco.xml'
+      - '**/target/classes/'
     expire_in: 1 week
 
 testIHM:
@@ -98,6 +99,7 @@ testIHM:
     paths:
       - '**/target/surefire-reports/TEST-*.xml'
       - '**/target/site/jacoco/jacoco.xml'
+      - '**/target/classes/'
     expire_in: 1 week
 
 package:
@@ -134,6 +136,7 @@ sonarqube-check:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
 #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
+    - build
     - test
     - testIHM
 
