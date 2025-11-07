@@ -11,6 +11,10 @@ default:
     - avm_groupe7
   before_script:
     - chmod +x settings.sh && ./settings.sh
+  retry:
+    max: 2
+    when:
+      - api_failure
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
@@ -50,10 +54,6 @@ build:
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn ${MAVEN_CLI_OPTS} clean compile
-  artifacts:
-    paths:
-      - '**/target/'
-    expire_in: 1 week
 
 test:
   stage: test
@@ -71,7 +71,9 @@ test:
         coverage_format: jacoco
         path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - '**/target/'
+      - '**/target/surefire-reports/TEST-*.xml'
+      - '**/target/site/jacoco/jacoco.xml'
+      - '**/target/classes/'
     expire_in: 1 week
 
 testIHM:
@@ -95,7 +97,9 @@ testIHM:
         coverage_format: jacoco
         path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - '**/target/'
+      - '**/target/surefire-reports/TEST-*.xml'
+      - '**/target/site/jacoco/jacoco.xml'
+      - '**/target/classes/'
     expire_in: 1 week
 
 package:
@@ -132,6 +136,7 @@ sonarqube-check:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
 #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
+    - build
     - test
     - testIHM
 
@@ -145,12 +150,3 @@ deploy:
     - package
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
-
-deploy:manual:
-  stage: .pre
-  retry: 2
-  rules:
-    - when: manual
-      allow_failure: true
-  script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package deploy
