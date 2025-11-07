@@ -71,7 +71,8 @@ test:
         coverage_format: jacoco
         path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - '**/target/'
+      - '**/target/surefire-reports/TEST-*.xml'
+      - '**/target/site/jacoco/jacoco.xml'
     expire_in: 1 week
 
 testIHM:
@@ -95,7 +96,8 @@ testIHM:
         coverage_format: jacoco
         path: '**/target/site/jacoco/jacoco.xml'
     paths:
-      - '**/target/'
+      - '**/target/surefire-reports/TEST-*.xml'
+      - '**/target/site/jacoco/jacoco.xml'
     expire_in: 1 week
 
 package:
