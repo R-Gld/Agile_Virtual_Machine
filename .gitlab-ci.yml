@@ -54,10 +54,6 @@ build:
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn ${MAVEN_CLI_OPTS} clean compile
-  artifacts:
-    paths:
-      - '**/target/'
-    expire_in: 1 week
 
 test:
   stage: test
