@@ -153,6 +153,14 @@ public class SymbolTable {
         System.err.println("Updated value of " + name + " new position " + addressStack);
         return true;
     }
+    public int getAddressStack(String name) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("Identifier not found: " + name);
+            return -1;
+        }
+        return node.symbol.getAddressStack();
+    }
 
     /**
      * Remove a symbol completely from the table.

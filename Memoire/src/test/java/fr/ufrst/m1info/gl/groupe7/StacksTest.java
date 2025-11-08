@@ -1,12 +1,14 @@
 package fr.ufrst.m1info.gl.groupe7;
 
 import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.Memoire.Symbol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -491,8 +493,8 @@ public class StacksTest {
         assertFalse(invokeIsTypeCompatible("float", 3.14));
         assertFalse(invokeIsTypeCompatible("char", 'a'));
         assertFalse(invokeIsTypeCompatible("randomType", "test"));
-
     }
+
 
     // ===============================
     // Méthode utilitaire pour accéder à la méthode privée via réflexion
@@ -505,6 +507,61 @@ public class StacksTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    @Test
+    void testPushUpdatesSymbolTable() {
+        stacks.declareVar("a", 10, "integer");
+        stacks.declareVar("b", 20, "integer");
+
+        Symbol symbolA = stacks.getSymbolTable().findSymbol("a");
+        Symbol symbolB = stacks.getSymbolTable().findSymbol("b");
+
+        assertNotNull(symbolA);
+        assertNotNull(symbolB);
+
+
+        assertEquals(0, symbolA.getAddressStack());
+        assertEquals(1, symbolB.getAddressStack());
+    }
+
+    @Test
+    void testPopUpdatesSymbolTable() {
+        stacks.declareVar("a", 10, "integer");
+        stacks.declareVar("b", 20, "integer");
+
+        stacks.pop();
+
+        assertEquals(0, stacks.getSymbolTable().getAddressStack("a"));
+
+    }
+
+    @Test
+    void testSwapUpdatesSymbolTable() {
+        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("y", 2, "integer");
+
+        stacks.swap();
+
+        Symbol symbolX = stacks.getSymbolTable().findSymbol("x");
+        Symbol symbolY = stacks.getSymbolTable().findSymbol("y");
+
+        // Après swap, "y" est en bas (0) et "x" est en haut (1)
+        assertEquals(0, symbolY.getAddressStack());
+        assertEquals(1, symbolX.getAddressStack());
+    }
+
+    @Test
+    void testMultipleOperations() {
+        stacks.declareVar("a", 10, "integer");
+        stacks.declareVar("b", 20, "integer");
+        stacks.declareVar("c", 30, "integer");
+
+        stacks.pop();
+        stacks.swap();
+
+        assertEquals(1, stacks.getSymbolTable().getAddressStack("a"));
+        assertEquals(0, stacks.getSymbolTable().getAddressStack("b"));
+
     }
 }
 

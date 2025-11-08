@@ -75,6 +75,7 @@ public class Stacks {
     public void push(Quad q) {
         stack.push(q);
         System.err.println("Pushed: " + q);
+        updateSymbolPositions();
     }
 
     /** Pop (Dépiler): remove the top element from the stack */
@@ -82,6 +83,7 @@ public class Stacks {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
             System.out.println("Popped: " + q);
+            updateSymbolPositions(); // mise à jour des positions
             return q;
         } else {
             System.out.println("Stack is empty. Nothing to pop!");
@@ -97,6 +99,7 @@ public class Stacks {
             stack.push(q1);
             stack.push(q2);
             System.out.println("Swapped top elements: " + q1.ident + " and " + q2.ident);
+            updateSymbolPositions(); // mise à jour des positions
         } else {
             System.out.println("Cannot swap: not enough elements in the stack.");
         }
@@ -291,7 +294,23 @@ public class Stacks {
             System.out.println(" Symbole non trouvé : " + name);
         }
     }
-
+    // ------------------------------------------------------------
+    // UTILITY: Update SymbolTable positions after stack changes
+    // ------------------------------------------------------------
+    private void updateSymbolPositions() {
+        for (int i = 0; i < stack.size(); i++) {
+            Quad q = stack.get(i);
+            Symbol s = symbolTable.findSymbol(q.ident);
+            if (s != null) {
+                symbolTable.updateAddressStack(s.getName(),i);
+            }else{
+                System.out.println(" Symbole non trouvé : " + q.type);
+            }
+        }
+    }
+    public SymbolTable getSymbolTable() {
+        return symbolTable;
+    }
 }
 
 
