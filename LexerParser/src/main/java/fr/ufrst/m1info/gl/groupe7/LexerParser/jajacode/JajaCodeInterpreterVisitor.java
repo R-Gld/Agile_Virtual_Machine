@@ -126,7 +126,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         switch(ManageSTForInterp.Kind.fromString(kind)) {
             case VAR:
-                symbolTable.declareVar(ident, valeur.value, type);
+                symbolTable.creationVar(ident, valeur.value, type);
                 break;
             case METH:
                 symbolTable.declareCst(ident, valeur.value, type);

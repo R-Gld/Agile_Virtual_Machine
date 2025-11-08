@@ -21,8 +21,8 @@ public class SymbolTableFullTest {
 
 
     @Test
-    void testDeclareVarStoresSymbol() {
-        table.declareVar("x", 5, "entier");
+    void testCreationVarStoresSymbol() {
+        table.creationVar("x", 5, "entier");
         Symbol s = table.findSymbol("x");
         assertNotNull(s);
         assertEquals("x", s.getName());
@@ -37,7 +37,7 @@ public class SymbolTableFullTest {
         Symbol s = table.findSymbol("PI");
         assertNotNull(s);
         assertEquals("cst", s.getKind());
-        assertFalse(table.updateValue("PI", 42)); // constant should not change
+        assertFalse(table.updateAddressStack("PI", 42)); // constant should not change
     }
 
     @Test
@@ -62,28 +62,28 @@ public class SymbolTableFullTest {
 
 
     @Test
-    void testUpdateValueWorksForVar() {
-        table.declareVar("a", 1, "entier");
-        assertTrue(table.updateValue("a", 10));
+    void testUpdateAddressStackWorksForVar() {
+        table.creationVar("a", 1, "entier");
+        assertTrue(table.updateAddressStack("a", 10));
         Symbol s = table.findSymbol("a");
         assertEquals(10, s.getValue());
     }
 
     @Test
-    void testUpdateValueFailsForUnknown() {
-        assertFalse(table.updateValue("ghost", 10));
+    void testUpdateAddressStackFailsForUnknown() {
+        assertFalse(table.updateAddressStack("ghost", 10));
     }
 
     @Test
-    void testUpdateValueFailsForConst() {
+    void testUpdateAddressStackFailsForConst() {
         table.declareCst("C", 9, "entier");
-        assertFalse(table.updateValue("C", 0));
+        assertFalse(table.updateAddressStack("C", 0));
     }
 
 
     @Test
     void testRemoveExistingSymbol() {
-        table.declareVar("z", 1, "entier");
+        table.creationVar("z", 1, "entier");
         assertTrue(table.remove("z"));
         assertFalse(table.contains("z"));
     }
@@ -96,7 +96,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testContainsSymbol() {
-        table.declareVar("v", 2, "entier");
+        table.creationVar("v", 2, "entier");
         assertTrue(table.contains("v"));
         assertFalse(table.contains("x"));
     }
@@ -110,8 +110,8 @@ public class SymbolTableFullTest {
 
     @Test
     void testFindSymbolAfterUpdate() {
-        table.declareVar("flag", true, "booleen");
-        table.updateValue("flag", false);
+        table.creationVar("flag", true, "booleen");
+        table.updateAddressStack("flag", false);
         Symbol s = table.findSymbol("flag");
         assertEquals(false, s.getValue());
     }
@@ -120,7 +120,7 @@ public class SymbolTableFullTest {
     void testInsertManySymbolsAndCheckCount() {
         int n = 150;
         for (int i = 0; i < n; i++) {
-            table.declareVar("v" + i, i, "entier");
+            table.creationVar("v" + i, i, "entier");
         }
         assertEquals(n, table.size());
         for (int i = 0; i < n; i++) {
@@ -134,24 +134,24 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveThenReinsertSameName() {
-        table.declareVar("tmp", 1, "entier");
+        table.creationVar("tmp", 1, "entier");
         assertTrue(table.remove("tmp"));
-        table.declareVar("tmp", 9, "entier");
+        table.creationVar("tmp", 9, "entier");
         Symbol s = table.findSymbol("tmp");
         assertEquals(9, s.getValue());
     }
 
     @Test
     void testDoubleDeclareReplacesExisting() {
-        table.declareVar("dup", 1, "entier");
-        assertFalse(table.declareVar("dup", 2, "entier"));
+        table.creationVar("dup", 1, "entier");
+        assertFalse(table.creationVar("dup", 2, "entier"));
         Symbol s = table.findSymbol("dup");
         assertEquals(1, s.getValue());
     }
 
     @Test
     void testPrintTableRunsWithoutError() {
-        table.declareVar("x", 5, "entier");
+        table.creationVar("x", 5, "entier");
         table.declareCst("c", 1, "entier");
         table.printTable();
     }
@@ -169,9 +169,9 @@ public class SymbolTableFullTest {
     }
 
     @Test
-    void testDeclareVarWithNullInputs() {
-        table.declareVar(null, 10, "entier");
-        table.declareVar("x", 10, null);
+    void testCreationVarWithNullInputs() {
+        table.creationVar(null, 10, "entier");
+        table.creationVar("x", 10, null);
         assertEquals(0, table.size());
     }
 
@@ -209,14 +209,14 @@ public class SymbolTableFullTest {
 
     @Test
     void testLengthOfNonTabReturnsMinusOne() {
-        table.declareVar("x", 5, "entier");
+        table.creationVar("x", 5, "entier");
         assertEquals(-1, table.lengthOf("x"));
     }
 
     @Test
     void testLengthOfTabInvalidFormat() {
         table.declareTab("t", 5, "entier");
-        table.updateValue("t", "wrong");
+        table.updateAddressStack("t", "wrong");
         assertEquals(-1, table.lengthOf("t"));
     }
 
@@ -239,15 +239,15 @@ public class SymbolTableFullTest {
     @Test
     void testLengthOfTabTriggersException() {
         table.declareTab("tabErr", 3, "entier");
-        table.updateValue("tabErr", new Object());
+        table.updateAddressStack("tabErr", new Object());
         assertEquals(-1, table.lengthOf("tabErr"));
     }
 
     @Test
     void testRemoveMiddleOfChain() {
-        table.declareVar("a", 1, "entier");
-        table.declareVar("b", 2, "entier");
-        table.declareVar("c", 3, "entier");
+        table.creationVar("a", 1, "entier");
+        table.creationVar("b", 2, "entier");
+        table.creationVar("c", 3, "entier");
         assertTrue(table.remove("b"));
     }
 
@@ -259,7 +259,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testAssignNullValueAndUnknown() {
-        table.declareVar("v", 1, "entier");
+        table.creationVar("v", 1, "entier");
         assertFalse(table.assign("unknown", 2));
         assertTrue(table.assign("v", null));
     }
@@ -273,7 +273,7 @@ public class SymbolTableFullTest {
     }
     @Test
     void testDeclareWithNullsIgnored() {
-        table.declareVar(null, 1, "entier");
+        table.creationVar(null, 1, "entier");
         table.declareCst("z", 2, null);
         table.declareTab(null, 5, "entier");
         table.declareMeth(null, "body", "void");
@@ -290,48 +290,48 @@ public class SymbolTableFullTest {
     @Test
     void testUpdateTypeForUnknownAndNullType() {
         assertFalse(table.updateType("missing", "entier"));
-        table.declareVar("v", 1, "entier");
+        table.creationVar("v", 1, "entier");
         assertTrue(table.updateType("v", "booleen"));
     }
 
     @Test
     void testLengthOfTriggersCatch() {
         table.declareTab("t", 3, "entier");
-        table.updateValue("t", new Object());
+        table.updateAddressStack("t", new Object());
         assertEquals(-1, table.lengthOf("t"));
     }
 
     @Test
     void testRemoveMiddleChainScenario() {
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
-        table.declareVar("z", 3, "entier");
+        table.creationVar("x", 1, "entier");
+        table.creationVar("y", 2, "entier");
+        table.creationVar("z", 3, "entier");
         assertTrue(table.remove("y"));
     }
 
     @Test
-    void testUpdateValueUnknownSymbolReturnsFalse() {
-        assertFalse(table.updateValue("notExist", 123));
+    void testUpdateAddressStackUnknownSymbolReturnsFalse() {
+        assertFalse(table.updateAddressStack("notExist", 123));
     }
 
     @Test
     void testLengthOfWithoutSizePrefixReturnsMinusOne() {
         table.declareTab("weird", 4, "entier");
-        table.updateValue("weird", "wrongFormatValue");
+        table.updateAddressStack("weird", "wrongFormatValue");
         assertEquals(-1, table.lengthOf("weird"));
     }
 
     @Test
     void testRemoveLastElementInChain() {
-        table.declareVar("alpha", 1, "entier");
-        table.declareVar("beta", 2, "entier");
+        table.creationVar("alpha", 1, "entier");
+        table.creationVar("beta", 2, "entier");
         assertTrue(table.remove("beta"));
     }
 
     @Test
     void testLengthOfCatchBlockTriggered() {
         table.declareTab("badTab", 3, "entier");
-        table.updateValue("badTab", "size=abc");
+        table.updateAddressStack("badTab", "size=abc");
         assertEquals(-1, table.lengthOf("badTab"));
     }
 
@@ -346,7 +346,7 @@ public class SymbolTableFullTest {
     }
     @Test
     void testDeclareWithNullTypeAndName() {
-        table.declareVar(null, 10, null);
+        table.creationVar(null, 10, null);
         table.declareCst(null, 1, null);
         table.declareTab(null, 5, null);
         table.declareMeth(null, "body", null);
@@ -356,21 +356,21 @@ public class SymbolTableFullTest {
     @Test
     void testLengthOfCatchAndFallbackPath() {
         table.declareTab("t", 3, "entier");
-        table.updateValue("t", "size=oops");
+        table.updateAddressStack("t", "size=oops");
         assertEquals(-1, table.lengthOf("t"));
     }
 
     @Test
     void testRemoveWithPrevNotNull() {
-        table.declareVar("aa", 1, "entier");
-        table.declareVar("bb", 2, "entier");
-        table.declareVar("cc", 3, "entier");
+        table.creationVar("aa", 1, "entier");
+        table.creationVar("bb", 2, "entier");
+        table.creationVar("cc", 3, "entier");
         assertTrue(table.remove("bb"));
     }
     @Test
     void testDeclareNullsTriggersReturn() {
-        table.declareVar(null, 10, "entier");
-        table.declareVar("ok", 1, null);
+        table.creationVar(null, 10, "entier");
+        table.creationVar("ok", 1, null);
         table.declareCst(null, 2, "entier");
         table.declareTab(null, 3, "entier");
         table.declareMeth(null, "body", "entier");
@@ -380,16 +380,16 @@ public class SymbolTableFullTest {
     @Test
     void testLengthOfCatchBlockExecuted() {
         table.declareTab("broken", 4, "entier");
-        table.updateValue("broken", "size=abc");
+        table.updateAddressStack("broken", "size=abc");
         assertEquals(-1, table.lengthOf("broken"));
     }
 
 
     @Test
     void testRemoveChainMiddleElement() {
-        table.declareVar("x", 1, "entier");
-        table.declareVar("xx", 2, "entier");
-        table.declareVar("xxx", 3, "entier");
+        table.creationVar("x", 1, "entier");
+        table.creationVar("xx", 2, "entier");
+        table.creationVar("xxx", 3, "entier");
         assertTrue(table.remove("xx")); //
     }
 
@@ -397,7 +397,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testUpdateTypeWithNullType() {
-        table.declareVar("foo", 1, "entier");
+        table.creationVar("foo", 1, "entier");
         assertTrue(table.updateType("foo", null)); //
     }
 
@@ -415,7 +415,7 @@ public class SymbolTableFullTest {
     }
     @Test
     void testAssignNullValue() {
-        table.declareVar("n", 5, "entier");
+        table.creationVar("n", 5, "entier");
         assertTrue(table.assign("n", null));
     }
 
@@ -433,7 +433,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testLookupFound() {
-        table.declareVar("foundX", 11, "entier");
+        table.creationVar("foundX", 11, "entier");
         Symbol s = table.lookup("foundX");
         assertNotNull(s);
         assertEquals("foundX", s.getName());
@@ -454,8 +454,8 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveHeadOfNonSingletonChain() {
-        table.declareVar("a", 1, "entier");
-        table.declareVar("aa", 2, "entier");
+        table.creationVar("a", 1, "entier");
+        table.creationVar("aa", 2, "entier");
         assertTrue(table.remove("a"));
         assertTrue(table.contains("aa"));
         assertFalse(table.contains("a"));
@@ -473,7 +473,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testPrintTableAfterInsert() {
-        table.declareVar("a", 1, "entier");
+        table.creationVar("a", 1, "entier");
         table.printTable();
     }
     @Test
@@ -504,7 +504,7 @@ public class SymbolTableFullTest {
     @Test
     void testPrintTableMultipleBuckets() {
         for (int i = 0; i < 10; i++) {
-            table.declareVar("x" + i, i, "entier");
+            table.creationVar("x" + i, i, "entier");
         }
         table.printTable();
 
@@ -532,8 +532,8 @@ public class SymbolTableFullTest {
     }
 
     @Test
-    void testUpdateValueNullName() {
-        assertFalse(table.updateValue(null, 1));
+    void testUpdateAddressStackNullName() {
+        assertFalse(table.updateAddressStack(null, 1));
     }
 
     @Test
@@ -615,17 +615,17 @@ public class SymbolTableFullTest {
     @Test
     void testRemoveFirstNodeBranch() {
         // حالت prev == null
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
+        table.creationVar("x", 1, "entier");
+        table.creationVar("y", 2, "entier");
         assertTrue(table.remove("x")); // head node حذف شود
     }
 
     @Test
     void testRemoveMiddleNodeBranch() {
         // حالت prev != null
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
-        table.declareVar("z", 3, "entier");
+        table.creationVar("x", 1, "entier");
+        table.creationVar("y", 2, "entier");
+        table.creationVar("z", 3, "entier");
         assertTrue(table.remove("y")); // middle node
     }
 

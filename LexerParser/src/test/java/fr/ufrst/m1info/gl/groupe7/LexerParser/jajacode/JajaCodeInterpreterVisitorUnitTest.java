@@ -155,7 +155,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         visitor.visitInstr(instrWithNew("x", "int", "var"));
 
         // Then SymbolTable.declareVar is called with the popped value
-        verify(symbolTable).declareVar(eq("x"), eq(5), eq("int"));
+        verify(symbolTable).creationVar(eq("x"), eq(5), eq("int"));
 
         // And declareCst / assign are not called here
         verify(symbolTable, never()).declareCst(anyString(), any(), anyString());
@@ -167,7 +167,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         visitor.visitInstr(instrWithPush(8));
         visitor.visitInstr(instrWithNew("f", "int", "meth"));
         verify(symbolTable).declareCst(eq("f"), eq(8), eq("int"));
-        verify(symbolTable, never()).declareVar(anyString(), any(), anyString());
+        verify(symbolTable, never()).creationVar(anyString(), any(), anyString());
     }
 
     // ------------------------
