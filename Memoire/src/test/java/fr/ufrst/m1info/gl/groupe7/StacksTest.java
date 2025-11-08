@@ -432,6 +432,10 @@ public class StacksTest {
         assertFalse(invokeIsTypeCompatible("int", "42"));
         assertFalse(invokeIsTypeCompatible("int", 3.14));
     }
+    @Test
+    void test_getStackPosition_no_in_the_stack(){
+        assertEquals(-1, stacks.getStackPosition("x"));
+    }
 
     // ===============================
     // Tests pour le type "boolean" / "booleen"
