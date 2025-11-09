@@ -23,7 +23,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
             IHM/**,
-            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/LexerParser/jajacode/JajaCodeInterpreter.java,
+            lexerparser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/jajacode/JajaCodeInterpreter.java,
         </sonar.exclusions>
     </properties>
 

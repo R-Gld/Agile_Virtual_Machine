@@ -75,7 +75,7 @@
                         <!-- Usage: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>fr.ufrst.m1info.gl.groupe7.IHM.Main</mainClass>
+                            <mainClass>fr.ufrst.m1info.gl.groupe7.gui.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
@@ -95,7 +95,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>fr.ufrst.m1info.gl.groupe7.IHM.Main</mainClass>
+                                    <mainClass>fr.ufrst.m1info.gl.groupe7.gui.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
