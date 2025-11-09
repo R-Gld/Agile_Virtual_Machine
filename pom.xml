@@ -163,7 +163,7 @@
 
     <!-- List of all modules -->
     <modules>
-        <module>IHM</module>
+        <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
         <module>compiler</module>
