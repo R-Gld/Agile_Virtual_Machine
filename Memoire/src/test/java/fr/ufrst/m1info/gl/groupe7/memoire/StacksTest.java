@@ -228,7 +228,7 @@ public class StacksTest {
         assertEquals(2, stacks.getValue("y"));
 
 
-        assertEquals("x", ((Stacks.Quad) stacks.getTop()).ident);
+        assertEquals("x", stacks.getTop().ident);
     }
     @Test
     void testSwapOneElement() {
@@ -243,7 +243,7 @@ public class StacksTest {
 
 
 
-        assertEquals("x", ((Stacks.Quad) stacks.getTop()).ident);
+        assertEquals("x", stacks.getTop().ident);
     }
 
     @Test

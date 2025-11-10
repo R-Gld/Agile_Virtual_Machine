@@ -10,7 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class TestMiniJaja {
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     Stacks stacks = new Stacks();
 
     String program = """
@@ -36,7 +36,7 @@ public class TestMiniJaja {
     MiniJajaParser parser = new MiniJajaParser(tokens);
 
     // Créez le Visitor en lui passant la table
-    MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor(stacks);
+    MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
 
     // 2) Lancement du parsing pour obtenir l'arbre d'analyse (ParseTree)
     ParseTree tree = parser.classe();

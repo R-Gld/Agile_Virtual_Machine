@@ -23,10 +23,10 @@ public class SymbolTableFullTest {
         table.declareVar("x", 5, "entier");
         Symbol s = table.findSymbol("x");
         assertNotNull(s);
-        assertEquals("x", s.getName());
-        assertEquals("var", s.getKind());
-        assertEquals("entier", s.getType());
-        assertEquals(5, s.getValue());
+        assertEquals("x", s.name());
+        assertEquals("var", s.kind());
+        assertEquals("entier", s.type());
+        assertEquals(5, s.value());
     }
 
     @Test
@@ -34,7 +34,7 @@ public class SymbolTableFullTest {
         table.declareCst("PI", 3, "entier");
         Symbol s = table.findSymbol("PI");
         assertNotNull(s);
-        assertEquals("cst", s.getKind());
+        assertEquals("cst", s.kind());
         assertFalse(table.updateValue("PI", 42)); // constant should not change
     }
 
@@ -44,8 +44,8 @@ public class SymbolTableFullTest {
         assertTrue(table.contains("arr"));
         Symbol s = table.findSymbol("arr");
         assertNotNull(s);
-        assertEquals("tab", s.getKind());
-        assertTrue(s.getValue().toString().contains("size=5"));
+        assertEquals("tab", s.kind());
+        assertTrue(s.value().toString().contains("size=5"));
     }
 
     @Test
@@ -53,9 +53,9 @@ public class SymbolTableFullTest {
         table.declareMeth("foo", "body", "void");
         Symbol s = table.findSymbol("foo");
         assertNotNull(s);
-        assertEquals("meth", s.getKind());
-        assertEquals("void", s.getType());
-        assertEquals("body", s.getValue());
+        assertEquals("meth", s.kind());
+        assertEquals("void", s.type());
+        assertEquals("body", s.value());
     }
 
 
@@ -64,7 +64,7 @@ public class SymbolTableFullTest {
         table.declareVar("a", 1, "entier");
         assertTrue(table.updateValue("a", 10));
         Symbol s = table.findSymbol("a");
-        assertEquals(10, s.getValue());
+        assertEquals(10, s.value());
     }
 
     @Test
@@ -111,7 +111,7 @@ public class SymbolTableFullTest {
         table.declareVar("flag", true, "booleen");
         table.updateValue("flag", false);
         Symbol s = table.findSymbol("flag");
-        assertEquals(false, s.getValue());
+        assertEquals(false, s.value());
     }
 
     @Test
@@ -124,7 +124,7 @@ public class SymbolTableFullTest {
         for (int i = 0; i < n; i++) {
             Symbol s = table.findSymbol("v" + i);
             assertNotNull(s);
-            assertEquals(i, s.getValue());
+            assertEquals(i, s.value());
         }
     }
 
@@ -136,7 +136,7 @@ public class SymbolTableFullTest {
         assertTrue(table.remove("tmp"));
         table.declareVar("tmp", 9, "entier");
         Symbol s = table.findSymbol("tmp");
-        assertEquals(9, s.getValue());
+        assertEquals(9, s.value());
     }
 
     @Test
@@ -144,7 +144,7 @@ public class SymbolTableFullTest {
         table.declareVar("dup", 1, "entier");
         assertFalse(table.declareVar("dup", 2, "entier"));
         Symbol s = table.findSymbol("dup");
-        assertEquals(1, s.getValue());
+        assertEquals(1, s.value());
     }
 
     @Test
@@ -159,10 +159,10 @@ public class SymbolTableFullTest {
     @Test
     void testSymbolIntegrity() {
         Symbol s = new Symbol("id1", "entier", "var", 42);
-        assertEquals("id1", s.getName());
-        assertEquals("entier", s.getType());
-        assertEquals("var", s.getKind());
-        assertEquals(42, s.getValue());
+        assertEquals("id1", s.name());
+        assertEquals("entier", s.type());
+        assertEquals("var", s.kind());
+        assertEquals(42, s.value());
         assertTrue(s.toString().contains("id1"));
     }
 
@@ -434,9 +434,9 @@ public class SymbolTableFullTest {
         table.declareVar("foundX", 11, "entier");
         Symbol s = table.lookup("foundX");
         assertNotNull(s);
-        assertEquals("foundX", s.getName());
-        assertEquals("var", s.getKind());
-        assertEquals(11, s.getValue());
+        assertEquals("foundX", s.name());
+        assertEquals("var", s.kind());
+        assertEquals(11, s.value());
     }
 
     @Test

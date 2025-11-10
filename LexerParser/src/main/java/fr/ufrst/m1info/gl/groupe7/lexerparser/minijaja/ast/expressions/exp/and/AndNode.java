@@ -1,15 +1,16 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class AndNode extends Expression {
-    private int value;
-    private Expression exp; // TODO : expNode
-    private Expression exp1; // TODO : exp1Node
+
+    private final Expression exp;
+    private final Expression exp1;
 
     public AndNode(Expression exp, Expression exp1) {
         this.exp = exp;
         this.exp1 = exp1;
-        this.value = exp.getValue() & exp1.getValue();
+
     }
 
     public Expression getExp() {
@@ -21,14 +22,12 @@ public class AndNode extends Expression {
     }
 
     @Override
-    public int getValue() {
-        return value;
+    public Object evaluate(Stacks stack) {
+        return (Boolean) exp.evaluate(stack) && (Boolean) exp1.evaluate(stack);
     }
 
     @Override
    public String toStringTree() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("et (").append(exp.toStringTree()).append(",").append(exp1.toStringTree()).append(")");
-        return sb.toString();
+        return "et (" + exp.toStringTree() + "," + exp1.toStringTree() + ")";
     }
 }

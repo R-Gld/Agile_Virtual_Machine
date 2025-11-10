@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 
 public class MainNode extends AstNode {
@@ -30,6 +30,14 @@ public class MainNode extends AstNode {
     @Override
     public String toStringTree() {
         return "Main(" + (vars != null ? vars.toStringTree() : "vnil") + ", " + instrs.toStringTree() + ")";
+    }
+    @Override
+    public Iterable<AstNode> getChildren() {
+        if (vars != null) {
+            return java.util.List.of(vars, instrs);
+        } else {
+            return java.util.List.of(instrs);
+        }
     }
 
 }
