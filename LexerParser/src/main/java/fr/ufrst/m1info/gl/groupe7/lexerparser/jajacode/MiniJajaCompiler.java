@@ -26,7 +26,7 @@ public class MiniJajaCompiler {
         MiniJajaParser.ClasseContext parseTree = mjjparser.classe();
 
         Stacks stack = new Stacks();
-        MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor(stack);
+        MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor();
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
         MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(stack);
