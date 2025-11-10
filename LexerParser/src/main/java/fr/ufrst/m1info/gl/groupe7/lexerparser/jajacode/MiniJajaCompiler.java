@@ -1,11 +1,10 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -26,12 +25,11 @@ public class MiniJajaCompiler {
         MiniJajaParser mjjparser = new MiniJajaParser(tokens);
         MiniJajaParser.ClasseContext parseTree = mjjparser.classe();
 
-        SymbolTable symbolTable = new SymbolTable();
         Stacks stack = new Stacks();
         MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor(stack);
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
-        fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor compiler = new fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor(symbolTable);
+        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(stack);
         compiler.visit(ast);
         return compiler;
     }

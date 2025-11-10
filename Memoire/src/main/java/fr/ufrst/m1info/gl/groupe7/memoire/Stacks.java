@@ -74,7 +74,6 @@ public class Stacks {
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
         stack.push(q);
-        System.err.println("Pushed: " + q);
         updateSymbolPositions();
     }
 
@@ -82,11 +81,9 @@ public class Stacks {
     public Quad pop() {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
-            System.out.println("Popped: " + q);
-            updateSymbolPositions(); // mise à jour des positions
+            updateSymbolPositions();
             return q;
         } else {
-            System.out.println("Stack is empty. Nothing to pop!");
             return null;
         }
     }
@@ -98,10 +95,7 @@ public class Stacks {
             Quad q2 = stack.pop();
             stack.push(q1);
             stack.push(q2);
-            System.out.println("Swapped top elements: " + q1.ident + " and " + q2.ident);
-            updateSymbolPositions(); // mise à jour des positions
-        } else {
-            System.out.println("Cannot swap: not enough elements in the stack.");
+            updateSymbolPositions();
         }
     }
     /**return the top of the pil */
@@ -205,28 +199,22 @@ public class Stacks {
     public boolean AffecterVal(String ident, Object newValue) {
         if(!symbolTable.contains(ident)){
             return false;
-
         }
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) {
                 // Vérification de la compatibilité de type
                 if (!isTypeCompatible(q.type, newValue)) {
-                    System.out.println("Erreur : type incompatible pour " + ident +
-                            " (" + q.type + " attendu, mais " + newValue.getClass().getSimpleName() + " fourni)");
                     return false;
                 }
                 if (q.object.equals("cst")) {
-                    System.out.println("Error: cannot modify a constant!");
                     return false;
                 } else {
                     q.value = newValue;
-                    System.err.println("Updated value of " + ident + " → " + newValue);
                     return true;
                 }
             }
         }
-        System.out.println("Identifier not found should not go here l 207: " + ident);
         return false;
     }
     /**
@@ -253,7 +241,6 @@ public class Stacks {
                 return value == null;
 
             default:
-                System.err.println("⚠️ Type inconnu : " + type);
                 return false;
         }
     }
@@ -303,9 +290,8 @@ public class Stacks {
             Symbol s = symbolTable.findSymbol(q.ident);
             if (s != null) {
                 symbolTable.updateAddressStack(s.getName(),i);
-            }else{
-                System.out.println(" Symbole non trouvé : " + q.type);
             }
+            // Note: Il est normal que certains Quad temporaires (%TMP%) ne soient pas dans la table des symboles
         }
     }
     public SymbolTable getSymbolTable() {

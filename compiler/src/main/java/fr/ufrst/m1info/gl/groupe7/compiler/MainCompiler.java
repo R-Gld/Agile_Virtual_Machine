@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaCompiler;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompiler;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;

@@ -1,14 +1,11 @@
-package fr.ufrst.m1info.gl.groupe7;
+package fr.ufrst.m1info.gl.groupe7.memoire;
 
-import fr.ufrst.m1info.gl.groupe7.Memoire.Stacks;
-import fr.ufrst.m1info.gl.groupe7.Memoire.Symbol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Stack;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,14 +65,14 @@ public class StacksTest {
     @Test
     void testEqualsWithNull() {
         Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        assertNotEquals(q1, null);
+        assertNotEquals(null, q1);
     }
 
     @Test
     void testEqualsWithDifferentClass() {
         Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
         String otherObject = "Not a Quad";
-        assertNotEquals(q1, otherObject);
+        assertNotEquals(otherObject, q1);
     }
 
     @Test
@@ -231,7 +228,7 @@ public class StacksTest {
         assertEquals(2, stacks.getValue("y"));
 
 
-        assertEquals("x", ((Stacks.Quad) stacks.getTop()).ident);
+        assertEquals("x", (stacks.getTop()).ident);
     }
     @Test
     void testSwapOneElement() {
@@ -246,7 +243,7 @@ public class StacksTest {
 
 
 
-        assertEquals("x", ((Stacks.Quad) stacks.getTop()).ident);
+        assertEquals("x", (stacks.getTop()).ident);
     }
 
     @Test

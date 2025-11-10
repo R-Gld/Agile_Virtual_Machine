@@ -122,11 +122,8 @@ public class SymbolTable {
     public boolean creationSymbol(String name, int positionStack, String type) {
         if (name == null || type == null) return false;
         if(!this.contains(name)){
-
-        put(new Symbol(name,type , positionStack));
-
-        System.err.println("Pushed: <" + name  + ", var, " + type + ">");
-        return true;
+            put(new Symbol(name,type , positionStack));
+            return true;
         }else{
             return false;
         }
@@ -145,18 +142,15 @@ public class SymbolTable {
     public boolean updateAddressStack(String name, int addressStack) {
         Node node = findNode(name);
         if (node == null) {
-            System.err.println("Identifier not found: " + name);
             return false;
         }
-
-        node.symbol.setAddressStack(addressStack); ;
-        System.err.println("Updated value of " + name + " new position " + addressStack);
+        node.symbol.setAddressStack(addressStack);
         return true;
     }
+
     public int getAddressStack(String name) {
         Node node = findNode(name);
         if (node == null) {
-            System.err.println("Identifier not found: " + name);
             return -1;
         }
         return node.symbol.getAddressStack();
@@ -179,13 +173,11 @@ public class SymbolTable {
                 else
                     prev.next = current.next;
                 count--;
-                System.err.println("Removed: " + name);
                 return true;
             }
             prev = current;
             current = current.next;
         }
-        System.err.println("Identifier not found for removal: " + name);
         return false;
     }
 
@@ -210,7 +202,6 @@ public class SymbolTable {
     public Symbol findSymbol(String name) {
         Node node = findNode(name);
         if (node == null) {
-            System.err.println("Identifier not found: " + name);
             return null;
         }
         return node.symbol;

@@ -10,7 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.Nbre
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 import java.util.Stack;
 
@@ -20,17 +20,15 @@ public class MiniJajaCompilerVisitor {
 
     private final JajaCodeBuilder jjcBuilder;
     private final Stack<String> variablesToPop;
-    private final SymbolTable symbolTable;
 
 
-    public MiniJajaCompilerVisitor(SymbolTable symbolTable) {
+    public MiniJajaCompilerVisitor(Stacks stacks) {
         this.variablesToPop = new Stack<>();
-        this.symbolTable = symbolTable;
         this.jjcBuilder = new JajaCodeBuilder();
     }
 
     public MiniJajaCompilerVisitor() {
-        this(new SymbolTable());
+        this(new Stacks());
     }
 
     public JajaCodeBuilder getJajaCodeBuilder() {
@@ -86,7 +84,6 @@ public class MiniJajaCompilerVisitor {
     }
 
     public void visit(AffectationNode node) {
-        System.err.println("COMPILER: Generating code for affectation.");
 
         if (node.getExpression() != null) {
             visitExpression(node.getExpression());
@@ -127,8 +124,6 @@ public class MiniJajaCompilerVisitor {
         String type = node.getType();
         int scopeAddress = 1;
 
-        System.err.println("COMPILER: Generating code for variable declaration '" + ident + "'.");
-
         // TODO: Déterminer le 'kind' correctement (var ou cst)
         String kind = "var";
         jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, type, kind, 0);
@@ -137,7 +132,6 @@ public class MiniJajaCompilerVisitor {
     }
 
     public void visit(NbreNode node) {
-        System.err.println("COMPILER: Generating code for number '" + node.value + "'.");
         jjcBuilder.addInstruction(PUSH, node.value);
     }
 
