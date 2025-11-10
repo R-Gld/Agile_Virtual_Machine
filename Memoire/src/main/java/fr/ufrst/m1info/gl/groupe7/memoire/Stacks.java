@@ -267,9 +267,9 @@ public class Stacks {
 
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
-            System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | objet=" + s.getKind() +
-                    " | valeur=" + s.getValue());
+            System.out.println("🔹 " + s.name() + " | type=" + s.type() +
+                    " | objet=" + s.kind() +
+                    " | valeur=" + s.value());
         } else {
             System.out.println(" Symbole non trouvé : " + name);
         }

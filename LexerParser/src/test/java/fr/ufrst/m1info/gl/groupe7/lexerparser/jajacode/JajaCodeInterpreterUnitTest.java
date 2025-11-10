@@ -51,7 +51,7 @@ public class JajaCodeInterpreterUnitTest {
 
         Symbol symbolX = finalMemory.findSymbol("x");
         assertNotNull(symbolX, "La variable 'x' devrait exister.");
-        assertEquals(5, symbolX.getValue(), "La variable 'x' devrait avoir la valeur 5.");
+        assertEquals(5, symbolX.value(), "La variable 'x' devrait avoir la valeur 5.");
         assertTrue(finalMachine.getStack().isEmpty(), "La pile devrait être vide à la fin.");
     }
 }

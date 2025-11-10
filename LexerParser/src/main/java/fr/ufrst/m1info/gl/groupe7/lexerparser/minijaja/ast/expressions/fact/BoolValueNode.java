@@ -1,6 +1,7 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public final class BoolValueNode extends Expression {
     public final boolean value;
@@ -8,9 +9,13 @@ public final class BoolValueNode extends Expression {
     public BoolValueNode(boolean value) {
         this.value = value;
     }
+    public boolean getValue() {
+        return value;
+    }
 
-    public int getValue() {
-        return value ? 1 : 0;
+    public Object evaluate(Stacks stack) {
+
+        return  value;
     }
 
     @Override

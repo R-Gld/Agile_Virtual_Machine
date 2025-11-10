@@ -1,17 +1,21 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus;
 
+import java.util.List;
+
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class PlusNode extends Expression {
-    private int value;
+
     private final Expression exp2; // left expression
     private final Expression terme; // right term
 
     public PlusNode(Expression exp2, Expression terme) {
         this.exp2 = exp2;
         this.terme = terme;
-        this.value = exp2.getValue() + terme.getValue();
-    }
+
+            }
 
     public Expression getExp2() {
         return exp2;
@@ -20,11 +24,16 @@ public class PlusNode extends Expression {
     public Expression getTerme() {
         return terme;
     }
-    public int getValue() {
-        return value;
+
+    public Object evaluate(Stacks stack) {
+        return      (int) exp2.evaluate(stack) + (int) terme.evaluate(stack);
     }
     @Override
     public String toStringTree() {
         return "+ (" + exp2.toStringTree() + "," + terme.toStringTree() + ")";
+    }
+    @Override
+    public Iterable<AstNode> getChildren() {
+        return List.of(exp2, terme);
     }
 }

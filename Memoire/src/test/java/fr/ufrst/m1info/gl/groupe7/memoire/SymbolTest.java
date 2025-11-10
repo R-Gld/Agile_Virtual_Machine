@@ -8,10 +8,10 @@ public class SymbolTest {
     @Test
     void testCreationAndGetters() {
         Symbol s = new Symbol("x", "int", "var", 42);
-        assertEquals("x", s.getName());
-        assertEquals("int", s.getType());
-        assertEquals("var", s.getKind());
-        assertEquals(42, s.getValue());
+        assertEquals("x", s.name());
+        assertEquals("int", s.type());
+        assertEquals("var", s.kind());
+        assertEquals(42, s.value());
     }
 
     @Test

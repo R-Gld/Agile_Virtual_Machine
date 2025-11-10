@@ -1,16 +1,17 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class DivisionNode extends Expression {
-    private final int value;
+    
     private final Expression terme;
     private final Expression fact;
 
     public DivisionNode(Expression terme, Expression fact) {
         this.terme = terme;
         this.fact = fact;
-        this.value = terme.getValue() / fact.getValue();
+        
     }
 
     public Expression getTerme() {
@@ -22,8 +23,8 @@ public class DivisionNode extends Expression {
     }
 
     @Override
-    public int getValue() {
-        return value;
+    public Object evaluate(Stacks stack) {
+        return (int) terme.evaluate(stack) / (int) fact.evaluate(stack);
     }
 
     @Override

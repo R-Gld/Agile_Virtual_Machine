@@ -3,24 +3,24 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.AffectationNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.IncrementNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.RetourNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.SiNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.SommeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.TantqueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.AppelENode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.LengthNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.ListExpNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.NbreNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.DivisionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.MultiplicationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
@@ -34,7 +34,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+
+
 
 /**
  * MiniJajaVisitor builds the Abstract Syntax Tree (AST) from the ANTLR parse
@@ -43,11 +44,6 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  */
 public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNode> {
 
-	private final Stacks stacks;
-
-	public MiniJajaInterpreterVisitor(Stacks stacks) {
-		this.stacks = stacks;
-	}
 	// ======== CLASS ========
 
 	@Override
@@ -102,11 +98,10 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		Expression vexp = (Expression) visit(ctx.vexp());
 		if (vexp == null) {
-			stacks.declareVar(ident.getNom(), 0, "int");
-			return new VarNode(type, ident, null);
+
+			return new VarNode(type, ident);
 		}
 
-		stacks.declareVar(ident.getNom(), vexp.getValue(), type);
 
 		return new VarNode(type, ident, vexp);
 
@@ -133,14 +128,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		InstructionNode firstInstr = (InstructionNode) visit(ctx.instr());
 
-		// ========= Interpretation de l'affectation ================
-		if (firstInstr instanceof AffectationNode affectation) {
-			IdentNode IdentNode = (IdentNode) affectation.getIdent1Node();
-			String variableName = IdentNode.getNom();
-			Object value = affectation.getExpression().getValue();
-			stacks.AffecterVal(variableName, value);
-		}
-		// ==========================================================
+
 
 		InstructionsNode next = (InstructionsNode) visit(ctx.instrs());
 
@@ -151,7 +139,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	public AstNode visitInstr(MiniJajaParser.InstrContext ctx) {
 		// IF statement
 		if (ctx.IF() != null) {
-			AstNode condition = visit(ctx.exp());
+			Expression condition = (Expression) visit(ctx.exp());
 			InstructionsNode thenBlock = (InstructionsNode) visit(ctx.instrs(0));
 			InstructionsNode elseBlock = ctx.ELSE() != null ? (InstructionsNode) visit(ctx.instrs(1)) : null;
 			return new SiNode(condition, thenBlock, elseBlock);
@@ -159,7 +147,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// WHILE loop
 		if (ctx.WHILE() != null) {
-			AstNode condition = visit(ctx.exp());
+			Expression condition = (Expression) visit(ctx.exp());
 			InstructionsNode loopBody = (InstructionsNode) visit(ctx.instrs(0));
 			return new TantqueNode(condition, loopBody);
 		}
@@ -175,7 +163,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			if (ctx.EQ() != null)
 				return new AffectationNode(ident, (Expression) visit(ctx.exp()));
 			if (ctx.SOMME() != null)
-				return new SommeNode(ident, visit(ctx.exp()));
+				return new SommeNode(ident, (Expression) visit(ctx.exp()));
 			if (ctx.INCREMENT() != null)
 				return new IncrementNode(ident);
 		}
@@ -282,10 +270,12 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitIdent1(MiniJajaParser.Ident1Context ctx) {
-		IdentNode id = new IdentNode(ctx.IDENT().getText());
-		if (ctx.exp() != null)
-			return new TabNode(id, visit(ctx.exp()));
-		return id;
+		IdentNode ident = new IdentNode(ctx.IDENT().getText());
+		if (ctx.exp() != null) {
+			Expression index = (Expression) visit(ctx.exp());
+			return new TabNode(ident, index);
+		}
+		return ident;
 	}
 
 	@Override

@@ -4,7 +4,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 
 public class ConsoleOutput extends AnchorPane {
-    private TextArea console;
+    private final TextArea console;
 
     public ConsoleOutput(String id) {
         this.setId(id);

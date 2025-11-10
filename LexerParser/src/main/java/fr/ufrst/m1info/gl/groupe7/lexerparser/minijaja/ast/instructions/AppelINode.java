@@ -1,6 +1,6 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.ListExpNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 
 public class AppelINode extends InstructionNode {

@@ -1,31 +1,26 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node.NodeLoad;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node.NodePush;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.AffectationNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.AppelINode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.IncrementNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.RetourNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.SiNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.SommeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.TantqueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.AppelENode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.LengthNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.ListExpNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.NbreNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.DivisionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.MultiplicationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
@@ -40,6 +35,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class AstNodesTest {
 
@@ -73,9 +71,9 @@ class AstNodesTest {
         VarNode var = new VarNode("int", new IdentNode("x"), new NbreNode(1));
         // getters
         assertEquals("int", var.getType());
-        assertTrue(var.getIdent() instanceof IdentNode);
+        assertInstanceOf(IdentNode.class, var.getIdent());
         assertEquals("x", var.getIdent().getNom());
-        assertTrue(var.getExp().getVexp() instanceof NbreNode);
+        assertInstanceOf(NbreNode.class, var.getExp().getVexp());
         assertEquals(1, ((NbreNode) var.getExp().getVexp()).value);
         // rendering
         assertEquals("var (int , Ident(x) , nbre(1))", var.toStringTree());
@@ -90,9 +88,9 @@ class AstNodesTest {
         VarsNode one = new VarsNode(vx, new VarsNode());
         assertEquals("vars (var (int , Ident(x) , nbre(0)),vnil)", one.toStringTree());
         // getters
-        assertTrue(one.getVar() instanceof VarNode);
+        assertInstanceOf(VarNode.class, one.getVar());
         assertEquals("x", one.getVar().getIdent().getNom());
-        assertTrue(one.getVars() instanceof VarsNode);
+        assertInstanceOf(VarsNode.class, one.getVars());
         assertEquals("vnil", one.getVars().toStringTree());
     }
 
@@ -105,9 +103,9 @@ class AstNodesTest {
         DeclsNode one = new DeclsNode(vx, new DeclsNode());
         assertEquals("decls (var (int , Ident(x) , nbre(0)),vnil)", one.toStringTree());
         // getters
-        assertTrue(one.getDecl() instanceof VarNode);
+        assertInstanceOf(VarNode.class, one.getDecl());
         assertEquals("x", one.getDecl().getIdent().getNom());
-        assertTrue(one.getDecls() instanceof DeclsNode);
+        assertInstanceOf(DeclsNode.class, one.getDecls());
         assertEquals("vnil", one.getDecls().toStringTree());
     }
 
@@ -120,30 +118,30 @@ class AstNodesTest {
         InstructionsNode single = new InstructionsNode(instr, new InstructionsNode());
         assertEquals("Instrs(affectation(Ident(x),nbre(2)),Inil)", single.toStringTree());
         // getters
-        assertTrue(single.getInstructionNode() instanceof AffectationNode);
+        assertInstanceOf(AffectationNode.class, single.getInstructionNode());
         AffectationNode a = (AffectationNode) single.getInstructionNode();
-        assertTrue(a.getIdent1Node() instanceof IdentNode);
+        assertInstanceOf(IdentNode.class, a.getIdent1Node());
         assertEquals("x", ((IdentNode) a.getIdent1Node()).getNom());
-        assertTrue(a.getExpression() instanceof NbreNode);
+        assertInstanceOf(NbreNode.class, a.getExpression());
         assertEquals(2, ((NbreNode) a.getExpression()).value);
+        assertNotNull(single.getInstructions());
         assertEquals("Inil", single.getInstructions().toStringTree());
     }
 
     @Test
     void testInstructionsNodeWithOnlyOneInstruction() {
-
         AffectationNode instr = new AffectationNode(new IdentNode("x"), new NbreNode(2));
         InstructionsNode single = new InstructionsNode(instr);
-        assertTrue(single.getInstructionNode() instanceof AffectationNode);
-        assertTrue(single.getInstructions() == null);
+        assertInstanceOf(AffectationNode.class, single.getInstructionNode());
+        assertNull(single.getInstructions());
 
     }
 
-    @Test
+   @Test
     void testAffectationNode() {
         AffectationNode aff = new AffectationNode(new IdentNode("x"), new NbreNode(5));
-        assertTrue(aff.getIdent1Node() instanceof AstNode);
-        assertTrue(aff.getExpression() instanceof NbreNode);
+        assertInstanceOf(AstNode.class, aff.getIdent1Node());
+        assertInstanceOf(NbreNode.class, aff.getExpression());
         assertEquals("x", ((IdentNode) aff.getIdent1Node()).getNom());
         assertEquals(5, ((NbreNode) aff.getExpression()).value);
         assertEquals("affectation(Ident(x),nbre(5))", aff.toStringTree());
@@ -159,8 +157,8 @@ class AstNodesTest {
     void testBoolAndNbreValues() {
         BoolValueNode f = new BoolValueNode(false);
         BoolValueNode t = new BoolValueNode(true);
-        assertEquals(0, f.getValue());
-        assertEquals(1, t.getValue());
+        assertFalse(f.getValue());
+        assertTrue(t.getValue());
         assertEquals("false", f.toStringTree());
         assertEquals("true", t.toStringTree());
 
@@ -186,8 +184,8 @@ class AstNodesTest {
     void testLengthNode() {
         LengthNode len = new LengthNode(new IdentNode("tab"));
         assertEquals("length(Ident(tab))", len.toStringTree());
-        assertTrue(len.getId() instanceof IdentNode);
-        assertEquals("tab", ((IdentNode) len.getId()).getNom());
+        assertInstanceOf(IdentNode.class, len.getId());
+        assertEquals("tab", len.getId().getNom());
     }
 
     @Test
@@ -233,6 +231,7 @@ class AstNodesTest {
         assertEquals("omega", omega.toStringTree());
         Vexp v = new Vexp(new NbreNode(9));
         assertEquals("nbre(9)", v.toStringTree());
+        assertNotNull(v.getVexp());
         assertEquals(9, ((NbreNode) v.getVexp()).value);
     }
 
@@ -242,7 +241,7 @@ class AstNodesTest {
         AppelENode appelE = new AppelENode(new IdentNode("f"), list);
         assertEquals("appelE(Ident(f),exnil)", appelE.toStringTree());
         assertEquals("f", appelE.getIdent().getNom());
-        assertEquals("exnil", ((DummyListExpNode) appelE.getExp()).toStringTree());
+        assertEquals("exnil", appelE.getExp().toStringTree());
 
         AppelINode appelI = new AppelINode(new IdentNode("proc"), list);
         assertEquals("appelI(Ident(proc),exnil)", appelI.toStringTree());
@@ -264,8 +263,8 @@ class AstNodesTest {
         EnteteNode e2 = new EnteteNode(new IdentNode("n"), "boolean");
         EntetesNode chain = new EntetesNode(e1, new EntetesNode(e2, null));
         assertEquals("entetes (Entete (int , Ident(m)),entetes (Entete (boolean , Ident(n))))", chain.toStringTree());
-        assertTrue(chain.getEntete() instanceof EnteteNode);
-        assertTrue(chain.getEntetes() instanceof EntetesNode);
+        assertInstanceOf(EnteteNode.class, chain.getEntete());
+        assertInstanceOf(EntetesNode.class, chain.getEntetes());
     }
 
     @Test
@@ -299,48 +298,48 @@ class AstNodesTest {
         assertEquals(1, ((NbreNode) eq.getExp1()).value);
         assertEquals(1, ((NbreNode) eq.getExp2()).value);
 
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode t = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode(
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode t = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode(
                 true);
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode f = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode(
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode f = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode(
                 false);
 
         AndNode and = new AndNode(t, f);
         assertEquals("et (true,false)", and.toStringTree());
-        assertTrue(and
-                .getExp() instanceof fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode);
-        assertTrue(and
-                .getExp1() instanceof fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode);
-        assertEquals(true, ((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode) and
+        assertInstanceOf(BoolValueNode.class, and
+                .getExp());
+        assertInstanceOf(BoolValueNode.class, and
+                .getExp1());
+        assertTrue(((BoolValueNode) and
                 .getExp()).value);
-        assertEquals(false, ((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode) and
+        assertFalse(((BoolValueNode) and
                 .getExp1()).value);
 
         OrNode or = new OrNode(f, t);
         assertEquals("ou (false,true)", or.toStringTree());
-        assertEquals(false, ((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode) or
+        assertFalse(((BoolValueNode) or
                 .getExp()).value);
-        assertEquals(true, ((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode) or
+        assertTrue(((BoolValueNode) or
                 .getExp1()).value);
 
         NotNode not = new NotNode(t);
         assertEquals("non (true)", not.toStringTree());
-        assertEquals(true, ((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode) not
+        assertTrue(((BoolValueNode) not
                 .getExp()).value);
     }
 
     @Test
     void testMainNodeToStringTree() {
         MainNode main = new MainNode(new VarsNode(), new InstructionsNode());
-        assertTrue(main.getVars() instanceof VarsNode);
-        assertTrue(main.getInstrs() instanceof InstructionsNode);
+        assertInstanceOf(VarsNode.class, main.getVars());
+        assertInstanceOf(InstructionsNode.class, main.getInstrs());
         assertEquals("Main(vnil, Inil)", main.toStringTree());
     }
 
     @Test
     void testMainNodeNoVars() {
         MainNode main = new MainNode(new InstructionsNode());
-        assertTrue(main.getVars() == null);
-        assertTrue(main.getInstrs() instanceof InstructionsNode);
+        assertNull(main.getVars());
+        assertInstanceOf(InstructionsNode.class, main.getInstrs());
         assertEquals("Main(vnil, Inil)", main.toStringTree());
     }
 
@@ -351,21 +350,39 @@ class AstNodesTest {
         MainNode main = new MainNode(new VarsNode(), new InstructionsNode());
 
         ClasseNode classe = new ClasseNode(id, decls, main);
-        assertTrue(classe.getIdent() instanceof IdentNode);
-        assertTrue(classe.getDeclarations() instanceof DeclsNode);
-        assertTrue(classe.getMethodeMain() instanceof MainNode);
-        assertTrue(classe.getVarClasse() instanceof String);
+        assertInstanceOf(IdentNode.class, classe.getIdent());
+        assertInstanceOf(DeclsNode.class, classe.getDeclarations());
+        assertInstanceOf(MainNode.class, classe.getMethodeMain());
+        assertInstanceOf(String.class, classe.getVarClasse());
         assertEquals("C", classe.getVarClasse());
         assertEquals("Classe(Ident(C),decls (var (int , Ident(x) , nbre(0)),vnil),Main(vnil, Inil))",
                 classe.toStringTree());
     }
 
-    /**
-     * This test is only there to avoid the codecov problem on nonimplemented classes.
-     */
+
     @Test
-    void codecovfixes() { // TODO Delete once theses files are implemented.
-        NodeLoad nl = new NodeLoad();
-        NodePush np = new NodePush();
+    void testAffectationNodeinterpret_updates_realStacks_and_printsToErr() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", 0, "int");
+
+        java.io.ByteArrayOutputStream errBaos = new java.io.ByteArrayOutputStream();
+        java.io.PrintStream oldErr = System.err;
+        System.setErr(new java.io.PrintStream(errBaos));
+        try {
+            AffectationNode aff = new AffectationNode(new IdentNode("x"), new NbreNode(5));
+            Assertions.assertDoesNotThrow(() -> aff.interpret(stacks));
+
+            // verify value actually updated in the real stacks
+            Object val = stacks.getValue("x");
+            // accept Integer or other numeric representations
+            Assertions.assertTrue((val instanceof Integer && ((Integer) val) == 5) || String.valueOf(val).equals("5"));
+        } finally {
+            System.err.flush();
+            System.setErr(oldErr);
+        }
+
+        String errOut = errBaos.toString();
+        Assertions.assertTrue(errOut.contains("Updated value of") || (errOut.contains("x") && errOut.contains("5")));
     }
+
 }
