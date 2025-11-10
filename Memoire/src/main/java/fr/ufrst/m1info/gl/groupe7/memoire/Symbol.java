@@ -10,23 +10,23 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
 public class Symbol {
     private final String name;
     private final String type;
-    private final String kind;
-    private final Object value;
+    private int addressStack;//position in the stack
 
-    public Symbol(String name, String type, String kind, Object value) {
+
+    public Symbol(String name, String type, int addressStack) {
         this.name = name;
         this.type = type;
-        this.kind = kind;
-        this.value = value;
+        this.addressStack = addressStack;
+
     }
 
     public String getName() { return name; }
     public String getType() { return type; }
-    public String getKind() { return kind; }
-    public Object getValue() { return value; }
+    public int getAddressStack() { return addressStack; }
+    public void setAddressStack(int addressStack) { this.addressStack = addressStack; }
 
     @Override
     public String toString() {
-        return name + " : " + type + " (" + kind + ") = " + value;
+        return name + " : " + type + " (" + addressStack + ")" ;
     }
 }

@@ -75,6 +75,7 @@ public class Stacks {
     public void push(Quad q) {
         stack.push(q);
         System.err.println("Pushed: " + q);
+        updateSymbolPositions();
     }
 
     /** Pop (Dépiler): remove the top element from the stack */
@@ -82,6 +83,7 @@ public class Stacks {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
             System.out.println("Popped: " + q);
+            updateSymbolPositions(); // mise à jour des positions
             return q;
         } else {
             System.out.println("Stack is empty. Nothing to pop!");
@@ -97,6 +99,7 @@ public class Stacks {
             stack.push(q1);
             stack.push(q2);
             System.out.println("Swapped top elements: " + q1.ident + " and " + q2.ident);
+            updateSymbolPositions(); // mise à jour des positions
         } else {
             System.out.println("Cannot swap: not enough elements in the stack.");
         }
@@ -113,7 +116,20 @@ public class Stacks {
         }
         return result;
     }
-
+    /**
+     * Retourne la position d'un identifiant dans la pile.
+     * 0 = bas de la pile, size()-1 = haut.
+     * Retourne -1 si l'identifiant n'existe pas.
+     */
+    public int getStackPosition(String ident) {
+        for (int i = 0; i < stack.size(); i++) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                return i;
+            }
+        }
+        return -1;
+    }
     // ============================================================
     // DECLARATION METHODS
     // ============================================================
@@ -121,29 +137,34 @@ public class Stacks {
     /** Declare a variable */
     public void declareVar(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "var", type);
-        symbolTable.declareVar(ident, value,  type);
         push(q);
+        int positionStack = getStackPosition(ident);
+        symbolTable.creationSymbol(ident,positionStack,type);
+
     }
 
     /** Declare a constant */
     public void declareCst(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "cst", type);
-        symbolTable.declareCst(ident, value,  type);
         push(q);
+        int positionStack = getStackPosition(ident);
+        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     /** Declare an array (simulated here by its size) */
     public void declareTab(String ident, int size, String type) {
         Quad q = new Quad(ident, "size=" + size, "tab", type);
-        symbolTable.declareTab(ident, size, type);
         push(q);
+        int positionStack = getStackPosition(ident);
+        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, String type) {
         Quad q = new Quad(ident, body, "meth", type);
-        symbolTable.declareMeth(ident, body,  type);
         push(q);
+        int positionStack = getStackPosition(ident);
+        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     // ============================================================
@@ -268,13 +289,28 @@ public class Stacks {
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
             System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | objet=" + s.getKind() +
-                    " | valeur=" + s.getValue());
+                    " | adress=" + s.getAddressStack()) ;
         } else {
             System.out.println(" Symbole non trouvé : " + name);
         }
     }
-
+    // ------------------------------------------------------------
+    // UTILITY: Update SymbolTable positions after stack changes
+    // ------------------------------------------------------------
+    private void updateSymbolPositions() {
+        for (int i = 0; i < stack.size(); i++) {
+            Quad q = stack.get(i);
+            Symbol s = symbolTable.findSymbol(q.ident);
+            if (s != null) {
+                symbolTable.updateAddressStack(s.getName(),i);
+            }else{
+                System.out.println(" Symbole non trouvé : " + q.type);
+            }
+        }
+    }
+    public SymbolTable getSymbolTable() {
+        return symbolTable;
+    }
 }
 
 
