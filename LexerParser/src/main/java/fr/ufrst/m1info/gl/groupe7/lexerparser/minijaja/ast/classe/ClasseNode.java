@@ -3,7 +3,9 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+import java.util.List;
 public class ClasseNode extends AstNode {
 
     private final String varClasse;
@@ -35,9 +37,16 @@ public class ClasseNode extends AstNode {
 
     @Override
     public String toStringTree() {
-        String sb = "Classe(" + ident.toStringTree() + "," +
+        return "Classe(" + ident.toStringTree() + "," +
                 declarations.toStringTree() + "," +
                 methodeMain.toStringTree() + ")";
-        return sb;
+    }
+    @Override
+    public Iterable<AstNode> getChildren() {
+        return List.of(ident, declarations, methodeMain);
+    }
+    @Override
+    public void interpret(Stacks stacks) {
+        // TODO ?
     }
 }

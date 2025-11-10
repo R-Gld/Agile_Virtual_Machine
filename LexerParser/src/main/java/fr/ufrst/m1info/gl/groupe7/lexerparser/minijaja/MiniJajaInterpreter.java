@@ -18,7 +18,7 @@ public class MiniJajaInterpreter {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniJajaParser parser = new MiniJajaParser(tokens);
 
-        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor(stacks);
+        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
 
         ParseTree tree = parser.classe();
         System.out.println("Debut de l'interprétation du minijaja");

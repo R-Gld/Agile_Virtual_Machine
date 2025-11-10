@@ -2,16 +2,17 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.min
 
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class MinusNode extends Expression {
-    private int value;
+    
     private final Expression exp2; // left expression
     private final Expression terme; // right term
 
     public MinusNode(Expression exp2, Expression terme) {
         this.exp2 = exp2;
         this.terme = terme;
-        this.value = exp2.getValue() - terme.getValue();
+       
     }
 
     public Expression getExp2() {
@@ -22,8 +23,8 @@ public class MinusNode extends Expression {
         return terme;
     }
 
-    public int getValue() {
-        return value;
+    public Object evaluate(Stacks stack) {
+        return (int) exp2.evaluate(stack) - (int) terme.evaluate(stack);
     }
 
     @Override

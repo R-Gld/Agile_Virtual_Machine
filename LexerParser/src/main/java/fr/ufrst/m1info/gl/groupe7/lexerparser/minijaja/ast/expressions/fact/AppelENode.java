@@ -1,5 +1,6 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact;
 
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
@@ -21,8 +22,8 @@ public class AppelENode extends Expression {
     public AstNode getExp() {
         return listexp;
     }
-    
-    public int getValue() {
+
+    public Object evaluate(Stacks stack) {
         return 0;//TODO :gerer le retour de  appelE
     }
 

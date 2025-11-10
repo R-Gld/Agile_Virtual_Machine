@@ -1,6 +1,8 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+
+import java.util.List;
 
 public class InstructionsNode extends AstNode {
 
@@ -39,8 +41,18 @@ public class InstructionsNode extends AstNode {
         }
 
         return "Instrs(" + instructionNode.toStringTree() +
-                "," + instructions.toStringTree() +
+                "," + (instructions != null ? instructions.toStringTree() : null) +
                 ")";
+    }
+    @Override
+    public Iterable<AstNode> getChildren() {
+        if (instructions != null) {
+            return List.of(instructionNode, instructions);
+        } else if (instructionNode != null) {
+            return List.of(instructionNode);
+        } else {
+            return List.of();
+        }
     }
 
 }

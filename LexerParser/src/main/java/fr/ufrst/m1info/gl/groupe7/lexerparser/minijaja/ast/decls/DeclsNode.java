@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls;
 
-
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import java.util.ArrayList;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 
 public class DeclsNode extends AstDecls {
@@ -42,6 +43,17 @@ public class DeclsNode extends AstDecls {
            sb.append("decls (").append(declSpringTree).append(",").append(declsSpringTree).append(")");
        }
         return sb.toString();
+    }
+    @Override
+    public Iterable<AstNode> getChildren() {
+        ArrayList<AstNode> children = new ArrayList<>();
+        if (decl != null) {
+            children.add(decl);
+        }
+        if (decls != null) {
+            children.add(decls);
+        }
+        return children;
     }
 
 }

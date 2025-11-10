@@ -1,6 +1,7 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class RetourNode extends InstructionNode {
 
@@ -15,4 +16,10 @@ public class RetourNode extends InstructionNode {
         return "Retour(" + Exp.toStringTree() +
                 ')';
     }
+   @Override
+   public void interpret(Stacks stacks) {
+
+    // TODO: Implement the interpretation logic for the return node here.
+
+   }
 }
