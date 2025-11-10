@@ -1,13 +1,13 @@
 package fr.ufrst.m1info.gl.groupe7.compiler;
 
-import fr.ufrst.m1info.gl.groupe7.LexerParser.jajacode.MiniJajaCompilerVisitor;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static fr.ufrst.m1info.gl.groupe7.LexerParser.minijaja.MiniJajaCompiler.getMiniJajaCompilerVisitorFromString;
+import static fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaCompiler.getMiniJajaCompilerVisitorFromString;
 
 /**
  * Compiler

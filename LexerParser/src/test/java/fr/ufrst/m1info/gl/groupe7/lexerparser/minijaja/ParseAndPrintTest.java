@@ -1,23 +1,31 @@
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
+
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Test;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode; // Assurez-vous d'importer AstNode
 
-public class TestMiniJaja {
-  public static void main(String[] args) throws Exception {
+/**
+ * Test qui parse un programme, construit l'AST via le Visitor,
+ * affiche l'AST et le dump de la table des symboles.
+ */
+public class ParseAndPrintTest {
+
+  @Test
+  public void testParseAndPrintASTAndSymbolTable() {
     Stacks stacks = new Stacks();
-
+    SymbolTable SymbolTable = new SymbolTable();
     String program = """
         class MathOps {
           // === Declarations globales ==
-          int x = 12+9-4;
-
+          int x = 0;
          main{
           x=12;
 
@@ -25,7 +33,7 @@ public class TestMiniJaja {
         }
         """;
 
-    System.out.println("=====  PROGRAMME SOURCE  =====");
+    System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");
     System.out.println(program);
     System.out.println("==================================");
 
@@ -40,12 +48,17 @@ public class TestMiniJaja {
 
     // 2) Lancement du parsing pour obtenir l'arbre d'analyse (ParseTree)
     ParseTree tree = parser.classe();
-    stacks.printStack();
+
     // 3) Construction de l'AST en appelant visitor.visit(tree)
     AstNode astRoot = visitor.visit(tree);
+    System.out.println("stack");
+    stacks.printStack();
+    System.out.println("SymbolTable");
+    stacks.printSymbolTable();
+    System.out.println("after");
 
     // 4) Affichage de l'AST
-    System.out.println("\n=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====");
+    System.out.println("\n===== 🌳 ARBRE SYNTAXIQUE ABSTRAIT (AST) 🌳 =====");
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       System.out.println(astRoot.toStringTree());
@@ -54,9 +67,8 @@ public class TestMiniJaja {
     }
     System.out.println("==============================================");
 
-    stacks.printStack();
+    System.out.println("\n✅ Test terminé avec succès !");
 
-    System.out.println("\n Test terminé avec succès !");
   }
 
 }

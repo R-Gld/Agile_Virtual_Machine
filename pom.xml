@@ -22,8 +22,9 @@
 
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
-            IHM/**,
-            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/LexerParser/jajacode/JajaCodeInterpreter.java,
+            GUI/**,
+            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/jajacode/JajaCodeInterpreter.java,
+            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/minijaja/MiniJajaCompiler.java,
         </sonar.exclusions>
     </properties>
 
@@ -163,7 +164,7 @@
 
     <!-- List of all modules -->
     <modules>
-        <module>IHM</module>
+        <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
         <module>compiler</module>
