@@ -91,4 +91,25 @@ public class MyCodeArea extends AnchorPane {
     public void disable() {
         codeArea.setEditable(false);
     }
+
+    // ==== START ADDED ====
+    /**
+     * Déplace simplement le caret sur la ligne donnée (lineIndex),
+     * ce qui permet de "suivre" la ligne courante pendant le debug.
+     *
+     * @param lineIndex index de la ligne (0-based)
+     */
+    public void highlightLine(int lineIndex) {
+        if (lineIndex < 0) {
+            return;
+        }
+        int paragraphCount = codeArea.getParagraphs().size();
+        if (lineIndex >= paragraphCount) {
+            return;
+        }
+        codeArea.moveTo(lineIndex, 0);
+        codeArea.requestFollowCaret();
+    }
+    // ==== END ADDED ====
+
 }

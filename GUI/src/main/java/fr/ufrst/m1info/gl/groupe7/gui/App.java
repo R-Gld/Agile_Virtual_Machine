@@ -32,6 +32,19 @@ public class App extends Application {
     private MyCodeArea jjcCodeArea;
     private ChoiceBox<String> fileToRun;
 
+    // ==== START ADDED ====
+    /**
+     * Console de sortie utilisée pour afficher des messages (debug, info, erreurs)
+     */
+    private ConsoleOutput console;
+
+    /**
+     * État simple de debug : mode actif / ligne courante
+     */
+    private boolean debugMode = false;
+    private int debugCurrentLine = -1;
+    // ==== END ADDED ====
+
     @Override
     public void start(Stage stage) {
         appStage = stage;
@@ -51,6 +64,11 @@ public class App extends Application {
 
         ConsoleOutput console = new ConsoleOutput("console");
         root.setBottom(console);
+
+        // ==== START ADDED ====
+        // On garde aussi une référence dans un attribut pour pouvoir écrire dedans
+        this.console = console;
+        // ==== END ADDED ====
 
         stage.setScene(scene);
         stage.show();
@@ -113,6 +131,34 @@ public class App extends Application {
 
         hbox.getChildren().add(runButton);
 
+        // ==== START ADDED ====
+        /**
+         * Boutons pour un debug très simple : Debug / Step / Stop
+         * (pas de modification de la logique existante, seulement ajout)
+         */
+
+        Button debugButton = new Button("Debug");
+        debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
+        debugButton.setOnAction(e -> {
+            startDebug();
+        });
+        hbox.getChildren().add(debugButton);
+
+        Button stepButton = new Button("Step");
+        stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
+        stepButton.setOnAction(e -> {
+            stepDebug();
+        });
+        hbox.getChildren().add(stepButton);
+
+        Button stopButton = new Button("Stop");
+        stopButton.setTooltip(new Tooltip("Stop debug mode"));
+        stopButton.setOnAction(e -> {
+            stopDebug();
+        });
+        hbox.getChildren().add(stopButton);
+        // ==== END ADDED ====
+
         return hbox;
     }
 
@@ -154,6 +200,12 @@ public class App extends Application {
 
         /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
+
+        // ==== START ADDED ====
+        if (console != null) {
+            console.printMessage("File loaded: " + file.getName());
+        }
+        // ==== END ADDED ====
     }
 
     /**
@@ -183,6 +235,12 @@ public class App extends Application {
             alert.setContentText(e.toString());
             alert.showAndWait();
         }
+
+        // ==== START ADDED ====
+        if (console != null && file != null) {
+            console.printMessage("File saved: " + file.getAbsolutePath());
+        }
+        // ==== END ADDED ====
     }
 
     /**
@@ -196,6 +254,12 @@ public class App extends Application {
 
         String compileResult = compiler.compileToString();
         jjcCodeArea.loadText(compileResult);
+
+        // ==== START ADDED ====
+        if (console != null) {
+            console.printMessage("Compilation finished.");
+        }
+        // ==== END ADDED ====
     }
 
     /**
@@ -207,6 +271,12 @@ public class App extends Application {
             // Call minijaja interpretor
             MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
             interpreter.run(mjj);
+
+            // ==== START ADDED ====
+            if (console != null) {
+                console.printMessage("MiniJaja executed.");
+            }
+            // ==== END ADDED ====
         } else {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
@@ -221,9 +291,82 @@ public class App extends Application {
             }
             jjcInterpretor.run(result.toString());
 
+            // ==== START ADDED ====
+            if (console != null) {
+                console.printMessage("JajaCode executed.");
+            }
+            // ==== END ADDED ====
+
         }
 
     }
+
+    // ==== START ADDED ====
+    /**
+     * Lance le mode debug simple : on se contente de "pointer" ligne par ligne
+     * dans la zone MiniJaja et d'afficher la ligne courante dans la console.
+     * (Sans modifier l'interpréteur existant).
+     */
+    private void startDebug() {
+        if (debugMode) {
+            return;
+        }
+        debugMode = true;
+        debugCurrentLine = -1;
+        if (console != null) {
+            console.printMessage("[DEBUG] Debug mode started.");
+        }
+        stepDebug();
+    }
+
+    /**
+     * Passe à la ligne suivante dans le code MiniJaja et "highlight" logique
+     * (déplacement du caret) sur cette ligne.
+     */
+    private void stepDebug() {
+        if (!debugMode) {
+            return;
+        }
+        String text = mjjCodeArea.getText();
+        String[] lines = text.split("\\R", -1);
+        if (lines.length == 0) {
+            if (console != null) {
+                console.printMessage("[DEBUG] No lines to debug.");
+            }
+            stopDebug();
+            return;
+        }
+
+        debugCurrentLine++;
+        if (debugCurrentLine >= lines.length) {
+            if (console != null) {
+                console.printMessage("[DEBUG] End of file reached.");
+            }
+            stopDebug();
+            return;
+        }
+
+        if (console != null) {
+            console.printMessage("[DEBUG] Line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
+        }
+
+        mjjCodeArea.highlightLine(debugCurrentLine);
+    }
+
+    /**
+     * Arrête le mode debug simple.
+     */
+    private void stopDebug() {
+        if (!debugMode) {
+            return;
+        }
+        debugMode = false;
+        debugCurrentLine = -1;
+        if (console != null) {
+            console.printMessage("[DEBUG] Debug mode stopped.");
+        }
+    }
+    // ==== END ADDED ====
 
     public static void main(String[] args) {
         launch();

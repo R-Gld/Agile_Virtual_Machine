@@ -20,4 +20,22 @@ public class ConsoleOutput extends AnchorPane {
 
         this.getChildren().add(console);
     }
+
+    // ==== START ADDED ====
+    /**
+     * Ajoute un message dans la console.
+     * Chaque message est affiché sur une nouvelle ligne.
+     */
+    public void printMessage(String msg) {
+        if (msg == null) return;
+        console.appendText(msg + "\n");
+    }
+
+    /**
+     * Efface le contenu de la console.
+     */
+    public void clear() {
+        console.clear();
+    }
+    // ==== END ADDED ====
 }
