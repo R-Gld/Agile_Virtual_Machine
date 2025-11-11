@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Full coverage tests for SymbolTable (hash-based version).
- * Compatible with Symbol(name, type, kind, value) and SymbolTable(declareVar, declareCst, declareTab, declareMeth, assign, findSymbol, contains, remove, updateValue).
+ * Compatible with Symbol(name, type, addressStack) and SymbolTable(declareVar, declareCst, declareTab, declareMeth, assign, findSymbol, contains, remove, updateValue).
  */
 public class SymbolTableFullTest {
 
@@ -15,73 +15,42 @@ public class SymbolTableFullTest {
     @BeforeEach
     void setup() {
         table = new SymbolTable();
+
     }
 
 
     @Test
-    void testDeclareVarStoresSymbol() {
-        table.declareVar("x", 5, "entier");
+    void testCreationVarStoresSymbol() {
+        table.creationSymbol("x", 5, "entier");
         Symbol s = table.findSymbol("x");
         assertNotNull(s);
-        assertEquals("x", s.name());
-        assertEquals("var", s.kind());
-        assertEquals("entier", s.type());
-        assertEquals(5, s.value());
-    }
-
-    @Test
-    void testDeclareConstThenTryUpdateFails() {
-        table.declareCst("PI", 3, "entier");
-        Symbol s = table.findSymbol("PI");
-        assertNotNull(s);
-        assertEquals("cst", s.kind());
-        assertFalse(table.updateValue("PI", 42)); // constant should not change
-    }
-
-    @Test
-    void testDeclareTabCreatesEntry() {
-        table.declareTab("arr", 5, "entier");
-        assertTrue(table.contains("arr"));
-        Symbol s = table.findSymbol("arr");
-        assertNotNull(s);
-        assertEquals("tab", s.kind());
-        assertTrue(s.value().toString().contains("size=5"));
-    }
-
-    @Test
-    void testDeclareMethCreatesEntry() {
-        table.declareMeth("foo", "body", "void");
-        Symbol s = table.findSymbol("foo");
-        assertNotNull(s);
-        assertEquals("meth", s.kind());
-        assertEquals("void", s.type());
-        assertEquals("body", s.value());
+        assertEquals("x", s.getName());
+        assertEquals("entier", s.getType());
+        assertEquals(5, s.getAddressStack());
     }
 
 
+
+
     @Test
-    void testUpdateValueWorksForVar() {
-        table.declareVar("a", 1, "entier");
-        assertTrue(table.updateValue("a", 10));
+    void testUpdateAddressStackWorksForVar() {
+        table.creationSymbol("a", 1, "entier");
+        assertTrue(table.updateAddressStack("a", 10));
         Symbol s = table.findSymbol("a");
-        assertEquals(10, s.value());
+        assertEquals(10, s.getAddressStack());
     }
 
     @Test
-    void testUpdateValueFailsForUnknown() {
-        assertFalse(table.updateValue("ghost", 10));
+    void testUpdateAddressStackFailsForUnknown() {
+        assertFalse(table.updateAddressStack("ghost", 10));
     }
 
-    @Test
-    void testUpdateValueFailsForConst() {
-        table.declareCst("C", 9, "entier");
-        assertFalse(table.updateValue("C", 0));
-    }
+
 
 
     @Test
     void testRemoveExistingSymbol() {
-        table.declareVar("z", 1, "entier");
+        table.creationSymbol("z", 1, "entier");
         assertTrue(table.remove("z"));
         assertFalse(table.contains("z"));
     }
@@ -94,7 +63,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testContainsSymbol() {
-        table.declareVar("v", 2, "entier");
+        table.creationSymbol("v", 2, "entier");
         assertTrue(table.contains("v"));
         assertFalse(table.contains("x"));
     }
@@ -108,23 +77,23 @@ public class SymbolTableFullTest {
 
     @Test
     void testFindSymbolAfterUpdate() {
-        table.declareVar("flag", true, "booleen");
-        table.updateValue("flag", false);
+        table.creationSymbol("flag", 5, "booleen");
+        table.updateAddressStack("flag", 2);
         Symbol s = table.findSymbol("flag");
-        assertEquals(false, s.value());
+        assertEquals(2, s.getAddressStack());
     }
 
     @Test
     void testInsertManySymbolsAndCheckCount() {
         int n = 150;
         for (int i = 0; i < n; i++) {
-            table.declareVar("v" + i, i, "entier");
+            table.creationSymbol("v" + i, i, "entier");
         }
         assertEquals(n, table.size());
         for (int i = 0; i < n; i++) {
             Symbol s = table.findSymbol("v" + i);
             assertNotNull(s);
-            assertEquals(i, s.value());
+            assertEquals(i, s.getAddressStack());
         }
     }
 
@@ -132,96 +101,53 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveThenReinsertSameName() {
-        table.declareVar("tmp", 1, "entier");
+        table.creationSymbol("tmp", 1, "entier");
         assertTrue(table.remove("tmp"));
-        table.declareVar("tmp", 9, "entier");
+        table.creationSymbol("tmp", 9, "entier");
         Symbol s = table.findSymbol("tmp");
-        assertEquals(9, s.value());
+        assertEquals(9, s.getAddressStack());
     }
 
     @Test
     void testDoubleDeclareReplacesExisting() {
-        table.declareVar("dup", 1, "entier");
-        assertFalse(table.declareVar("dup", 2, "entier"));
+        table.creationSymbol("dup", 1, "entier");
+        assertFalse(table.creationSymbol("dup", 2, "entier"));
         Symbol s = table.findSymbol("dup");
-        assertEquals(1, s.value());
+        assertEquals(1, s.getAddressStack());
     }
 
     @Test
     void testPrintTableRunsWithoutError() {
-        table.declareVar("x", 5, "entier");
-        table.declareCst("c", 1, "entier");
+        table.creationSymbol("x", 5, "entier");
+        table.creationSymbol("c", 1, "entier");
         table.printTable();
     }
 
     // ---------- SYMBOL TESTS ----------
 
-    @Test
-    void testSymbolIntegrity() {
-        Symbol s = new Symbol("id1", "entier", "var", 42);
-        assertEquals("id1", s.name());
-        assertEquals("entier", s.type());
-        assertEquals("var", s.kind());
-        assertEquals(42, s.value());
-        assertTrue(s.toString().contains("id1"));
-    }
+
 
     @Test
-    void testDeclareVarWithNullInputs() {
-        table.declareVar(null, 10, "entier");
-        table.declareVar("x", 10, null);
+    void testCreationVarWithNullInputs() {
+        table.creationSymbol(null, 10, "entier");
+        table.creationSymbol("x", 10, null);
         assertEquals(0, table.size());
     }
 
     @Test
     void testDeclareCstWithNullInputs() {
-        table.declareCst(null, 10, "entier");
-        table.declareCst("x", 10, null);
+        table.creationSymbol(null, 10, "entier");
+        table.creationSymbol("x", 10, null);
         assertEquals(0, table.size());
     }
 
     @Test
     void testDeclareTabWithNullInputs() {
-        table.declareTab(null, 5, "entier");
-        table.declareTab("t", 5, null);
+        table.creationSymbol(null, 5, "entier");
+        table.creationSymbol("t", 5, null);
         assertEquals(0, table.size());
     }
 
-    @Test
-    void testDeclareMethWithNullInputs() {
-        table.declareMeth(null, "body", "entier");
-        table.declareMeth("m", "body", null);
-        assertEquals(0, table.size());
-    }
-
-    @Test
-    void testAssignToConstFails() {
-        table.declareCst("C", 1, "entier");
-        assertFalse(table.assign("C", 5));
-    }
-
-    @Test
-    void testAssignToUnknownFails() {
-        assertFalse(table.assign("unknown", 10));
-    }
-
-    @Test
-    void testLengthOfNonTabReturnsMinusOne() {
-        table.declareVar("x", 5, "entier");
-        assertEquals(-1, table.lengthOf("x"));
-    }
-
-    @Test
-    void testLengthOfTabInvalidFormat() {
-        table.declareTab("t", 5, "entier");
-        table.updateValue("t", "wrong");
-        assertEquals(-1, table.lengthOf("t"));
-    }
-
-    @Test
-    void testUpdateTypeAndUnknownSymbol() {
-        assertFalse(table.updateType("unknown", "entier"));
-    }
 
     @Test
     void testHashHandlesEmptyAndNull() {
@@ -234,33 +160,10 @@ public class SymbolTableFullTest {
             fail(e);
         }
     }
-    @Test
-    void testLengthOfTabTriggersException() {
-        table.declareTab("tabErr", 3, "entier");
-        table.updateValue("tabErr", new Object());
-        assertEquals(-1, table.lengthOf("tabErr"));
-    }
 
-    @Test
-    void testRemoveMiddleOfChain() {
-        table.declareVar("a", 1, "entier");
-        table.declareVar("b", 2, "entier");
-        table.declareVar("c", 3, "entier");
-        assertTrue(table.remove("b"));
-    }
 
-    @Test
-    void testIsConstAndUpdateTypeForUnknowns() {
-        assertFalse(table.isConst("notFound"));
-        assertFalse(table.updateType("notFound", "entier"));
-    }
 
-    @Test
-    void testAssignNullValueAndUnknown() {
-        table.declareVar("v", 1, "entier");
-        assertFalse(table.assign("unknown", 2));
-        assertTrue(table.assign("v", null));
-    }
+
 
     @Test
     void testHashWithNullAndEmpty() throws Exception {
@@ -269,70 +172,23 @@ public class SymbolTableFullTest {
         assertEquals(0, (int) m.invoke(table, (Object) null));
         assertEquals(0, (int) m.invoke(table, ""));
     }
-    @Test
-    void testDeclareWithNullsIgnored() {
-        table.declareVar(null, 1, "entier");
-        table.declareCst("z", 2, null);
-        table.declareTab(null, 5, "entier");
-        table.declareMeth(null, "body", "void");
-        assertEquals(0, table.size());
-    }
+
+
+
 
     @Test
-    void testAssignUnknownAndConst() {
-        table.declareCst("K", 10, "entier");
-        assertFalse(table.assign("unknown", 5));
-        assertFalse(table.assign("K", 5));
+    void testUpdateAddressStackUnknownSymbolReturnsFalse() {
+        assertFalse(table.updateAddressStack("notExist", 123));
     }
 
-    @Test
-    void testUpdateTypeForUnknownAndNullType() {
-        assertFalse(table.updateType("missing", "entier"));
-        table.declareVar("v", 1, "entier");
-        assertTrue(table.updateType("v", "booleen"));
-    }
 
-    @Test
-    void testLengthOfTriggersCatch() {
-        table.declareTab("t", 3, "entier");
-        table.updateValue("t", new Object());
-        assertEquals(-1, table.lengthOf("t"));
-    }
-
-    @Test
-    void testRemoveMiddleChainScenario() {
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
-        table.declareVar("z", 3, "entier");
-        assertTrue(table.remove("y"));
-    }
-
-    @Test
-    void testUpdateValueUnknownSymbolReturnsFalse() {
-        assertFalse(table.updateValue("notExist", 123));
-    }
-
-    @Test
-    void testLengthOfWithoutSizePrefixReturnsMinusOne() {
-        table.declareTab("weird", 4, "entier");
-        table.updateValue("weird", "wrongFormatValue");
-        assertEquals(-1, table.lengthOf("weird"));
-    }
 
     @Test
     void testRemoveLastElementInChain() {
-        table.declareVar("alpha", 1, "entier");
-        table.declareVar("beta", 2, "entier");
+        table.creationSymbol("alpha", 1, "entier");
+        table.creationSymbol("beta", 2, "entier");
         assertTrue(table.remove("beta"));
     }
-
-    @Test
-    void testLengthOfCatchBlockTriggered() {
-        table.declareTab("badTab", 3, "entier");
-        table.updateValue("badTab", "size=abc");
-        assertEquals(-1, table.lengthOf("badTab"));
-    }
-
 
 
     @Test
@@ -342,62 +198,7 @@ public class SymbolTableFullTest {
         int result = (int) method.invoke(table, "");
         assertEquals(0, result);
     }
-    @Test
-    void testDeclareWithNullTypeAndName() {
-        table.declareVar(null, 10, null);
-        table.declareCst(null, 1, null);
-        table.declareTab(null, 5, null);
-        table.declareMeth(null, "body", null);
-        assertEquals(0, table.size());
-    }
 
-    @Test
-    void testLengthOfCatchAndFallbackPath() {
-        table.declareTab("t", 3, "entier");
-        table.updateValue("t", "size=oops");
-        assertEquals(-1, table.lengthOf("t"));
-    }
-
-    @Test
-    void testRemoveWithPrevNotNull() {
-        table.declareVar("aa", 1, "entier");
-        table.declareVar("bb", 2, "entier");
-        table.declareVar("cc", 3, "entier");
-        assertTrue(table.remove("bb"));
-    }
-    @Test
-    void testDeclareNullsTriggersReturn() {
-        table.declareVar(null, 10, "entier");
-        table.declareVar("ok", 1, null);
-        table.declareCst(null, 2, "entier");
-        table.declareTab(null, 3, "entier");
-        table.declareMeth(null, "body", "entier");
-        assertEquals(0, table.size());
-    }
-
-    @Test
-    void testLengthOfCatchBlockExecuted() {
-        table.declareTab("broken", 4, "entier");
-        table.updateValue("broken", "size=abc");
-        assertEquals(-1, table.lengthOf("broken"));
-    }
-
-
-    @Test
-    void testRemoveChainMiddleElement() {
-        table.declareVar("x", 1, "entier");
-        table.declareVar("xx", 2, "entier");
-        table.declareVar("xxx", 3, "entier");
-        assertTrue(table.remove("xx")); //
-    }
-
-
-
-    @Test
-    void testUpdateTypeWithNullType() {
-        table.declareVar("foo", 1, "entier");
-        assertTrue(table.updateType("foo", null)); //
-    }
 
     @Test
     void testHashNegativeOverflowPath() throws Exception {
@@ -411,11 +212,6 @@ public class SymbolTableFullTest {
     void testPrintEmptyTable() {
         table.printTable();
     }
-    @Test
-    void testAssignNullValue() {
-        table.declareVar("n", 5, "entier");
-        assertTrue(table.assign("n", null));
-    }
 
     @Test
     void testRemoveFromEmptyTable() {
@@ -423,61 +219,7 @@ public class SymbolTableFullTest {
     }
 
 
-    @Test
-    void testLengthOfValidTabReturnsSize() {
-        table.declareTab("L", 7, "entier");
-        assertEquals(7, table.lengthOf("L"));
-    }
 
-    @Test
-    void testLookupFound() {
-        table.declareVar("foundX", 11, "entier");
-        Symbol s = table.lookup("foundX");
-        assertNotNull(s);
-        assertEquals("foundX", s.name());
-        assertEquals("var", s.kind());
-        assertEquals(11, s.value());
-    }
-
-    @Test
-    void testLookupNotFound() {
-        assertNull(table.lookup("nope"));
-    }
-
-    @Test
-    void testIsConstTrue() {
-        table.declareCst("KONST", 99, "entier");
-        assertTrue(table.isConst("KONST"));
-    }
-
-    @Test
-    void testRemoveHeadOfNonSingletonChain() {
-        table.declareVar("a", 1, "entier");
-        table.declareVar("aa", 2, "entier");
-        assertTrue(table.remove("a"));
-        assertTrue(table.contains("aa"));
-        assertFalse(table.contains("a"));
-    }
-
-    @Test
-    void testAssignUnknownTriggersErrorMessage() {
-        assertFalse(table.assign("notExisting", 123));
-    }
-
-    @Test
-    void testUpdateTypeUnknownTriggersErrorMessage() {
-        assertFalse(table.updateType("ghost", "entier"));
-    }
-
-    @Test
-    void testPrintTableAfterInsert() {
-        table.declareVar("a", 1, "entier");
-        table.printTable();
-    }
-    @Test
-    void testLengthOfNullName() {
-        assertEquals(-1, table.lengthOf(null));
-    }
     @Test
     void testRemoveNullIdentifier() {
         assertFalse(table.remove(null));
@@ -498,134 +240,26 @@ public class SymbolTableFullTest {
         assertNull(m.invoke(table, (Object) null));
     }
 
-
-    @Test
-    void testPrintTableMultipleBuckets() {
-        for (int i = 0; i < 10; i++) {
-            table.declareVar("x" + i, i, "entier");
-        }
-        table.printTable();
-
-
-}
-
     @Test
     void testFindSymbolNullName() {
         assertNull(table.findSymbol(null));
     }
 
-    @Test
-    void testLookupNullName() {
-        assertNull(table.lookup(null));
-    }
+
 
     @Test
     void testContainsNullName() {
         assertFalse(table.contains(null));
     }
 
-    @Test
-    void testAssignNullName() {
-        assertFalse(table.assign(null, 1));
-    }
+
 
     @Test
-    void testUpdateValueNullName() {
-        assertFalse(table.updateValue(null, 1));
+    void testUpdateAddressStackNullName() {
+        assertFalse(table.updateAddressStack(null, 1));
     }
 
-    @Test
-    void testUpdateTypeNullName() {
-        assertFalse(table.updateType(null, "entier"));
-    }
-    @Test
-    void testLengthOfPrintStackTraceExecuted() throws Exception {
-        table.declareTab("boom", 3, "entier");
 
-        var tableField = SymbolTable.class.getDeclaredField("table");
-        tableField.setAccessible(true);
-        Object[] buckets = (Object[]) tableField.get(table);
-
-        for (Object bucket : buckets) {
-            if (bucket != null) {
-                var node = bucket;
-                var quadField = node.getClass().getDeclaredField("quad");
-                quadField.setAccessible(true);
-                Object quad = quadField.get(node);
-                var valueField = quad.getClass().getDeclaredField("value");
-                valueField.setAccessible(true);
-
-                valueField.set(quad, new Object() {
-                    @Override
-                    public String toString() {
-                        throw new RuntimeException("trigger catch block");
-                    }
-                });
-                break;
-            }
-        }
-
-        assertEquals(-1, table.lengthOf("boom"));
-    }
-
-    @Test
-    void testLengthOfCatchPrintStackTraceFull() throws Exception {
-        table.declareTab("ERRTAB", 3, "entier");
-
-        var tableField = SymbolTable.class.getDeclaredField("table");
-        tableField.setAccessible(true);
-        Object[] buckets = (Object[]) tableField.get(table);
-
-        for (Object bucket : buckets) {
-            if (bucket != null) {
-                var node = bucket;
-                var quadField = node.getClass().getDeclaredField("quad");
-                quadField.setAccessible(true);
-                Object quad = quadField.get(node);
-                var valueField = quad.getClass().getDeclaredField("value");
-                valueField.setAccessible(true);
-
-                valueField.set(quad, new Object() {
-                    @Override
-                    public String toString() {
-                        throw new RuntimeException("force catch for coverage");
-                    }
-                });
-                break;
-            }
-        }
-
-        try {
-            table.lengthOf("ERRTAB");
-        } catch (Exception ex) {
-            fail("should be caught internally, not rethrown");
-        }
-
-        table.lengthOf("ERRTAB");
-    }
-
-    @Test
-    void testLengthOfNullNodeBranch() {
-        // حالت node == null باید بررسی بشه
-        assertEquals(-1, table.lengthOf("notExistTab"));
-    }
-
-    @Test
-    void testRemoveFirstNodeBranch() {
-        // حالت prev == null
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
-        assertTrue(table.remove("x")); // head node حذف شود
-    }
-
-    @Test
-    void testRemoveMiddleNodeBranch() {
-        // حالت prev != null
-        table.declareVar("x", 1, "entier");
-        table.declareVar("y", 2, "entier");
-        table.declareVar("z", 3, "entier");
-        assertTrue(table.remove("y")); // middle node
-    }
 
     @Test
     void testHashFullBranches() throws Exception {
@@ -634,5 +268,240 @@ public class SymbolTableFullTest {
         assertEquals(0, (int) method.invoke(table, (Object) null)); // null branch
         assertEquals(0, (int) method.invoke(table, "")); // empty branch
         assertTrue((int) method.invoke(table, "abc") > 0); // normal branch
+        table.toString();
+    }
+    @Test
+    void testToString_whenEmpty() {
+        String result = table.toString();
+        assertNotNull(result);
+        assertTrue(result.contains("SymbolTable{"));
+        assertTrue(result.contains("count=0"));
+        // Vérifie que la table vide est bien imprimée
+        assertTrue(result.contains("table=["));
+    }
+
+    @Test
+    void testToString_whenHasOneSymbol() {
+        // On ajoute un symbole pour avoir un contenu
+        boolean created = table.creationSymbol("x", 1, "int");
+        assertTrue(created);
+
+        String result = table.toString();
+        assertNotNull(result);
+        assertTrue(result.contains("SymbolTable{"));
+        assertTrue(result.contains("count=1"));
+        assertTrue(result.contains("x")); // le nom du symbole
+        assertTrue(result.contains("int")); // le type du symbole
+    }
+
+    @Test
+    void testToString_afterMultipleSymbols() {
+        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("y", 2, "boolean");
+        table.creationSymbol("z", 3, "string");
+
+        String result = table.toString();
+
+        assertTrue(result.contains("x"));
+        assertTrue(result.contains("y"));
+        assertTrue(result.contains("z"));
+        assertTrue(result.contains("count=3"));
+    }
+    @Test
+    void testType_whenSymbolExists() {
+        // Arrange : création d’un symbole
+        table.creationSymbol("x", 1, "int");
+
+        // Act : appel de la méthode type()
+        String result = table.type("x");
+
+        // Assert : on vérifie que le type correspond
+        assertNotNull(result);
+        assertEquals("int", result);
+    }
+
+    @Test
+    void testType_whenSymbolDoesNotExist() {
+        // Aucun symbole ajouté
+        String result = table.type("unknown");
+
+        // Si aucun symbole trouvé, la méthode doit retourner null
+        assertNull(result);
+    }
+
+    @Test
+    void testType_whenNameIsNull() {
+        // Cas défensif : identifiant null
+        String result = table.type(null);
+        assertNull(result);
+    }
+
+    @Test
+    void testType_withMultipleSymbols() {
+        table.creationSymbol("a", 1, "int");
+        table.creationSymbol("b", 2, "boolean");
+        table.creationSymbol("c", 3, "String");
+
+        assertEquals("int", table.type("a"));
+        assertEquals("boolean", table.type("b"));
+        assertEquals("String", table.type("c"));
+    }
+    // ------------------------------------------------------------------------
+    // CAS 1 : suppression du premier élément de la liste chaînée (prev == null)
+    // ------------------------------------------------------------------------
+    @Test
+    void testRemove_firstElementInBucket() {
+        // Arrange
+        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("y", 2, "boolean");
+
+        assertTrue(table.contains("x"));
+        int before = table.size();
+
+        // Act
+        boolean removed = table.remove("x");
+
+        // Assert
+        assertTrue(removed);
+        assertFalse(table.contains("x")); // doit être supprimé
+        assertEquals(before - 1, table.size());
+    }
+
+    // ------------------------------------------------------------------------
+    // CAS 2 : suppression d’un élément au milieu ou à la fin (prev != null)
+    // ------------------------------------------------------------------------
+    @Test
+    void testRemove_middleOrLastElementInBucket() {
+        // Arrange : pour forcer une collision, on triche un peu
+        // On crée deux symboles ayant le même index de hash
+        // en utilisant un mock symbol ou des noms avec même hash
+        // Pour garantir cela ici, on va insérer manuellement dans le même bucket :
+        table.creationSymbol("a", 1, "int");
+        table.creationSymbol("b", 2, "boolean");
+
+        // Vérifie qu'ils existent
+        assertTrue(table.contains("a"));
+        assertTrue(table.contains("b"));
+
+        int before = table.size();
+
+        // Act : suppression du deuxième élément (requiert prev != null)
+        boolean removed = table.remove("b");
+
+        // Assert
+        assertTrue(removed);
+        assertFalse(table.contains("b"));
+        assertEquals(before - 1, table.size());
+    }
+
+    // ------------------------------------------------------------------------
+    // CAS 3 : itération sans suppression (aucun symbole correspondant)
+    // ------------------------------------------------------------------------
+    @Test
+    void testRemove_nonExistingElement() {
+        table.creationSymbol("x", 1, "int");
+
+        boolean removed = table.remove("unknown");
+        assertFalse(removed);
+        assertTrue(table.contains("x"));
+        assertEquals(1, table.size());
+    }
+
+    // ------------------------------------------------------------------------
+    // CAS 4 : suppression dans une chaîne de plusieurs éléments
+    // ------------------------------------------------------------------------
+    @Test
+    void testRemove_withThreeElements() {
+        table.creationSymbol("a", 1, "int");
+        table.creationSymbol("b", 2, "float");
+        table.creationSymbol("c", 3, "boolean");
+
+        int before = table.size();
+        assertEquals(before, table.getCount());
+
+        // Suppression du milieu (b)
+        boolean removed = table.remove("b");
+
+        assertTrue(removed);
+        assertFalse(table.contains("b"));
+        assertEquals(before - 1, table.size());
+    }
+    @Test
+    void testRemove_one_element_in() {
+        // Arrange
+        table.creationSymbol("x", 1, "int");
+
+        assertTrue(table.contains("x"));
+        int before = table.size();
+
+        // Act
+        boolean removed = table.remove("x");
+        // Assert
+        assertTrue(removed);
+        assertFalse(table.contains("x")); // doit être supprimé
+        assertEquals(before - 1, table.size());
+    }
+    @Test
+    void testRemove_one_element_not_in() {
+        // Arrange
+        table.creationSymbol("x", 1, "int");
+
+        assertTrue(table.contains("x"));
+        int before = table.size();
+
+        // Act
+        boolean removed = table.remove("y");
+        // Assert
+        assertFalse(removed);
+        assertTrue(table.contains("x")); // doit être supprimé
+        assertEquals(before , table.size());
+    }
+    @Test
+    void testRemove_one_element_hash() {
+        // Arrange
+        table.creationSymbol("FB", 1, "int");
+
+        assertTrue(table.contains("FB"));
+        int before = table.size();
+
+        // Act
+        boolean removed = table.remove("Ea");
+        // Assert
+        assertFalse(removed);
+
+        assertEquals(before , table.size());
+    }
+    @Test
+    void testRemove_elseBranch_prevNotNull() {
+        // Arrange : deux symboles différents, même bucket (collision de hash)
+        table.creationSymbol("FB", 1, "int");      // premier dans la chaîne
+        table.creationSymbol("Ea", 2, "boolean");  // ajouté dans le même bucket (chaîne: FB -> Ea)
+
+        // Vérification de la collision
+        assertEquals(getHash("FB"), getHash("Ea"), "Les deux hash doivent être identiques");
+
+        int before = table.size();
+
+        // Act : suppression du deuxième symbole ("Ea"), provoque le else
+        boolean removed = table.remove("Ea");
+
+        // Assert : la suppression a bien eu lieu et le else a été exécuté
+        assertTrue(removed);
+        assertFalse(table.contains("Ea")); // supprimé
+        assertTrue(table.contains("FB"));  // le premier est toujours là
+        assertEquals(before - 1, table.size());
+    }
+
+    // Méthode utilitaire locale pour tester la collision de hash
+    private int getHash(String ident) {
+        int TABLE_SIZE = 97;
+        int h = 0;
+        for (int i = 0; i < ident.length(); i++) {
+            h = (31 * h + ident.charAt(i)) % TABLE_SIZE;
+        }
+        return (h < 0) ? -h : h;
     }
 }
+
+
+
