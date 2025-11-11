@@ -137,31 +137,28 @@ public class App extends Application {
          */
 
         Button debugButton = new Button();
+        Button stepButton = new Button();
+        Button stopButton = new Button();
+
         debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
-        debugButton.setOnAction(e -> {
-            startDebug();
-        });
         ImageView debugIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
+        debugButton.setOnAction(e -> startDebug(stepButton, stopButton));
 
-        Button stepButton = new Button();
         stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
-        stepButton.setOnAction(e -> {
-            stepDebug();
-        });
+        stepButton.setDisable(true);
         ImageView stepIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
+        stepButton.setOnAction(e -> stepDebug(stepButton, stopButton));
 
-        Button stopButton = new Button();
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
-        stopButton.setOnAction(e -> {
-            stopDebug();
-        });
+        stopButton.setDisable(true);
         ImageView stopIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
+        stopButton.setOnAction(e -> stopDebug(stepButton, stopButton));
         // === End of added section ===
 
         return hbox;
@@ -309,22 +306,24 @@ public class App extends Application {
     /**
      * Starts simple debug mode and prints current line information in console.
      */
-    private void startDebug() {
+    private void startDebug(Button stepButton, Button stopButton) {
         if (debugMode) {
             return;
         }
         debugMode = true;
+        stepButton.setDisable(false);
+        stopButton.setDisable(false);
         debugCurrentLine = -1;
         if (console != null) {
             console.printMessage("[DEBUG] Debug mode started.");
         }
-        stepDebug();
+        stepDebug(stepButton, stopButton);
     }
 
     /**
      * Moves to the next line in MiniJaja code and highlights it.
      */
-    private void stepDebug() {
+    private void stepDebug(Button stepButton, Button stopButton) {
         if (!debugMode) {
             return;
         }
@@ -334,7 +333,7 @@ public class App extends Application {
             if (console != null) {
                 console.printMessage("[DEBUG] No lines to debug.");
             }
-            stopDebug();
+            stopDebug(stepButton, stopButton);
             return;
         }
 
@@ -343,7 +342,7 @@ public class App extends Application {
             if (console != null) {
                 console.printMessage("[DEBUG] End of file reached.");
             }
-            stopDebug();
+            stopDebug(stepButton, stopButton);
             return;
         }
 
@@ -357,7 +356,7 @@ public class App extends Application {
     /**
      * Stops simple debug mode.
      */
-    private void stopDebug() {
+    private void stopDebug(Button stepButton, Button stopButton) {
         if (!debugMode) {
             return;
         }
@@ -366,6 +365,8 @@ public class App extends Application {
         if (console != null) {
             console.printMessage("[DEBUG] Debug mode stopped.");
         }
+        stepButton.setDisable(true);
+        stopButton.setDisable(true);
     }
     // === End of added section ===
 
