@@ -29,16 +29,16 @@ public class SymbolTable {
      * Node represents a single linked element inside a bucket.
      */
     private static class Node {
-        Symbol symbol;
+        Stacks.Quad quad;
         Node next;
 
-        Node(Symbol symbol) {
-            this.symbol= symbol;
+        Node(Stacks.Quad q) {
+            this.quad = q;
         }
 
         @Override
         public String toString() {
-            return symbol.toString();
+            return quad.toString();
         }
     }
 
@@ -81,7 +81,7 @@ public class SymbolTable {
         int index = hash(ident);
         Node current = table[index];
         while (current != null) {
-            if (current.symbol.getName().equals(ident))
+            if (current.quad.ident.equals(ident))
                 return current;
             current = current.next;
         }
@@ -91,26 +91,25 @@ public class SymbolTable {
     /**
      * Insert or replace a Quad in the hash table.
      * If the identifier already exists → replace its Quad.
-     * todo multi scope (further test will be done)
      */
-    private void put(Symbol symbol) {
-        int index = hash(symbol.getName());
+    private void put(Stacks.Quad q) {
+        int index = hash(q.ident);
         Node current = table[index];
         if (current == null) {
-            table[index] = new Node(symbol);
+            table[index] = new Node(q);
             count++;
             return;
         }
         Node prev = null;
         while (current != null) {
-            if (current.symbol.getName().equals(symbol.getName())) {
-                current.symbol = symbol; // replace existing entry
+            if (current.quad.ident.equals(q.ident)) {
+                current.quad = q; // replace existing entry
                 return;
             }
             prev = current;
             current = current.next;
         }
-        prev.next = new Node(symbol);
+        prev.next = new Node(q);
         count++;
     }
 
@@ -118,42 +117,76 @@ public class SymbolTable {
     // ======================== PUBLIC API METHODS =============================
     // =========================================================================
 
-    /** make symbol */
-    public boolean creationSymbol(String name, int positionStack, String type) {
+    /** Declare a variable */
+    public boolean declareVar(String name, Object value, String type) {
         if (name == null || type == null) return false;
         if(!this.contains(name)){
-            put(new Symbol(name,type , positionStack));
-            return true;
+        put(new Stacks.Quad(name, value, "var", type));
+
+        System.err.println("Pushed: <" + name + ", " + value + ", var, " + type + ">");
+        return true;
         }else{
             return false;
         }
     }
 
+    /** Declare a constant */
+    public boolean declareCst(String name, Object value, String type) {
+        if (name == null || type == null) return false;
+        if(!this.contains(name)){
+        put(new Stacks.Quad(name, value, "cst", type));
+    
+        System.err.println("Pushed: <" + name + ", " + value + ", cst, " + type + ">");
+        return true;
+        }else{
+            return false;
+        }
+    }
 
+    /** Declare an array (tab) */
+    public boolean declareTab(String name, int size, String type) {
+        if (name == null || type == null) return false;
+        // BEGIN: Fix stacks reference
+        if(!this.contains(name)){
+        // END: Fix stacks reference
+            put(new Stacks.Quad(name, "size=" + size, "tab", type));
+            System.err.println("Pushed: <" + name + ", size=" + size + ", tab, " + type + ">");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /** Declare a method (meth) */
+    public boolean declareMeth(String name, Object body, String type) {
+        if (name == null || type == null)
+            return false;
+        put(new Stacks.Quad(name, body, "meth", type));
+        System.err.println("Pushed: <" + name + ", " + body + ", meth, " + type + ">");
+        return true;
+    }
 
     /**
      * Update an existing symbol’s value.
      * Constants (cst) cannot be modified.
      * 
      * @param name     identifier to update
-     * @param addressStack new position
+     * @param newValue new value to assign
      * @return true if success, false otherwise
      */
-    public boolean updateAddressStack(String name, int addressStack) {
+    public boolean updateValue(String name, Object newValue) {
         Node node = findNode(name);
         if (node == null) {
+            System.err.println("Identifier not found: " + name);
             return false;
         }
-        node.symbol.setAddressStack(addressStack);
-        return true;
-    }
-
-    public int getAddressStack(String name) {
-        Node node = findNode(name);
-        if (node == null) {
-            return -1;
+        if ("cst".equals(node.quad.object)) {
+            System.err.println("Error: cannot modify a constant!");
+            return false;
         }
-        return node.symbol.getAddressStack();
+        node.quad.value = newValue;
+        System.err.println("Updated value of " + name + " = " + newValue);
+        return true;
     }
 
     /**
@@ -167,17 +200,19 @@ public class SymbolTable {
         Node current = table[index];
         Node prev = null;
         while (current != null) {
-            if (current.symbol.getName().equals(name)) {
+            if (current.quad.ident.equals(name)) {
                 if (prev == null)
                     table[index] = current.next;
                 else
                     prev.next = current.next;
                 count--;
+                System.err.println("Removed: " + name);
                 return true;
             }
             prev = current;
             current = current.next;
         }
+        System.err.println("Identifier not found for removal: " + name);
         return false;
     }
 
@@ -190,7 +225,7 @@ public class SymbolTable {
     public String type(String name) {
         Node node = findNode(name);
         if (node == null) return null;
-        return node.symbol.getType();
+        return node.quad.type;
     }
 
     /**
@@ -202,9 +237,10 @@ public class SymbolTable {
     public Symbol findSymbol(String name) {
         Node node = findNode(name);
         if (node == null) {
+            System.err.println("Identifier not found: " + name);
             return null;
         }
-        return node.symbol;
+        return new Symbol(node.quad.ident, node.quad.type, node.quad.object, node.quad.value);
     }
 
     /** Return the total number of entries in the table */
@@ -222,8 +258,8 @@ public class SymbolTable {
             if (e != null) {
                 System.err.print("[" + i + "] -> ");
                 while (e != null) {
-                    System.err.print("<" + e.symbol.getName() + ", " + e.symbol.getType() +
-                             ", " + e.symbol.getAddressStack()+ "> ");
+                    System.err.print("<" + e.quad.ident + ", " + e.quad.value +
+                            ", " + e.quad.object + ", " + e.quad.type + "> ");
                     e = e.next;
                 }
                 System.err.println();
@@ -236,15 +272,71 @@ public class SymbolTable {
     // ==================== EXTENDED METHODS (for full coverage) ===============
     // =========================================================================
 
-    /**
-     * Return the number of symbol (tab).
-     */
-    public int getCount() {
-        return count;
+    /** Assign a new value to a variable (non-constant symbol). */
+    public boolean assign(String name, Object newValue) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("assign(): symbol not found: " + name);
+            return false;
+        }
+        if ("cst".equals(node.quad.object)) {
+            System.err.println("assign(): cannot modify constant " + name);
+            return false;
+        }
+        node.quad.value = newValue;
+        System.err.println("assign(): updated " + name + " = " + newValue);
+        return true;
     }
 
+    /** Lookup a symbol by its name. */
+    public Symbol lookup(String name) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("lookup(): not found: " + name);
+            return null;
+        }
+        return new Symbol(node.quad.ident, node.quad.type, node.quad.object, node.quad.value);
+    }
 
+    /** Check if a symbol is a constant (cst). */
+    public boolean isConst(String name) {
+        Node node = findNode(name);
+        if (node == null)
+            return false;
+        return "cst".equals(node.quad.object);
+    }
 
+    public boolean updateType(String name, String newType) {
+        Node node = findNode(name);
+        if (node == null) {
+            System.err.println("updateType(): symbol not found: " + name);
+            return false;
+        }
+        node.quad.type = newType;
+        System.err.println("updateType(): changed type of " + name + " to " + newType);
+        return true;
+    }
+
+    /**
+     * Return the length of an array symbol (tab).
+     */
+    public int lengthOf(String name) {
+        Node node = findNode(name);
+        if (node == null || !"tab".equals(node.quad.object)) {
+            System.err.println("lengthOf(): not a tab or not found: " + name);
+            return -1;
+        }
+        try {
+            String s = node.quad.value.toString();
+            if (s.startsWith("size=")) {
+                return Integer.parseInt(s.substring(5));
+            }
+        } catch (Exception e) {
+            System.err.println("lengthOf(): Exception - " + e.getMessage());
+        }
+
+        return -1;
+    }
 
     @Override
     public String toString() {

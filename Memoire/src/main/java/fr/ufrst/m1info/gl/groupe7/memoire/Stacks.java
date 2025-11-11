@@ -74,16 +74,17 @@ public class Stacks {
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
         stack.push(q);
-        updateSymbolPositions();
+        System.err.println("Pushed: " + q);
     }
 
     /** Pop (Dépiler): remove the top element from the stack */
     public Quad pop() {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
-            updateSymbolPositions();
+            System.out.println("Popped: " + q);
             return q;
         } else {
+            System.out.println("Stack is empty. Nothing to pop!");
             return null;
         }
     }
@@ -95,7 +96,9 @@ public class Stacks {
             Quad q2 = stack.pop();
             stack.push(q1);
             stack.push(q2);
-            updateSymbolPositions();
+            System.out.println("Swapped top elements: " + q1.ident + " and " + q2.ident);
+        } else {
+            System.out.println("Cannot swap: not enough elements in the stack.");
         }
     }
     /**return the top of the pil */
@@ -110,20 +113,7 @@ public class Stacks {
         }
         return result;
     }
-    /**
-     * Retourne la position d'un identifiant dans la pile.
-     * 0 = bas de la pile, size()-1 = haut.
-     * Retourne -1 si l'identifiant n'existe pas.
-     */
-    public int getStackPosition(String ident) {
-        for (int i = 0; i < stack.size(); i++) {
-            Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
-                return i;
-            }
-        }
-        return -1;
-    }
+
     // ============================================================
     // DECLARATION METHODS
     // ============================================================
@@ -131,34 +121,29 @@ public class Stacks {
     /** Declare a variable */
     public void declareVar(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "var", type);
+        symbolTable.declareVar(ident, value,  type);
         push(q);
-        int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
-
     }
 
     /** Declare a constant */
     public void declareCst(String ident, Object value, String type) {
         Quad q = new Quad(ident, value, "cst", type);
+        symbolTable.declareCst(ident, value,  type);
         push(q);
-        int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     /** Declare an array (simulated here by its size) */
     public void declareTab(String ident, int size, String type) {
         Quad q = new Quad(ident, "size=" + size, "tab", type);
+        symbolTable.declareTab(ident, size, type);
         push(q);
-        int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, String type) {
         Quad q = new Quad(ident, body, "meth", type);
+        symbolTable.declareMeth(ident, body,  type);
         push(q);
-        int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
     }
 
     // ============================================================
@@ -199,22 +184,28 @@ public class Stacks {
     public boolean AffecterVal(String ident, Object newValue) {
         if(!symbolTable.contains(ident)){
             return false;
+
         }
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) {
                 // Vérification de la compatibilité de type
                 if (!isTypeCompatible(q.type, newValue)) {
+                    System.out.println("Erreur : type incompatible pour " + ident +
+                            " (" + q.type + " attendu, mais " + newValue.getClass().getSimpleName() + " fourni)");
                     return false;
                 }
                 if (q.object.equals("cst")) {
+                    System.out.println("Error: cannot modify a constant!");
                     return false;
                 } else {
                     q.value = newValue;
+                    System.err.println("Updated value of " + ident + " → " + newValue);
                     return true;
                 }
             }
         }
+        System.out.println("Identifier not found should not go here l 207: " + ident);
         return false;
     }
     /**
@@ -241,6 +232,7 @@ public class Stacks {
                 return value == null;
 
             default:
+                System.err.println("⚠️ Type inconnu : " + type);
                 return false;
         }
     }
@@ -275,28 +267,14 @@ public class Stacks {
 
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
-            System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | adress=" + s.getAddressStack()) ;
+            System.out.println("🔹 " + s.name() + " | type=" + s.type() +
+                    " | objet=" + s.kind() +
+                    " | valeur=" + s.value());
         } else {
             System.out.println(" Symbole non trouvé : " + name);
         }
     }
-    // ------------------------------------------------------------
-    // UTILITY: Update SymbolTable positions after stack changes
-    // ------------------------------------------------------------
-    private void updateSymbolPositions() {
-        for (int i = 0; i < stack.size(); i++) {
-            Quad q = stack.get(i);
-            Symbol s = symbolTable.findSymbol(q.ident);
-            if (s != null) {
-                symbolTable.updateAddressStack(s.getName(),i);
-            }
-            // Note: Il est normal que certains Quad temporaires (%TMP%) ne soient pas dans la table des symboles
-        }
-    }
-    public SymbolTable getSymbolTable() {
-        return symbolTable;
-    }
+
 }
 
 

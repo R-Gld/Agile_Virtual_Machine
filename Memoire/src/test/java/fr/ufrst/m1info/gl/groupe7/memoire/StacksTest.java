@@ -65,14 +65,14 @@ public class StacksTest {
     @Test
     void testEqualsWithNull() {
         Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        assertNotEquals(null, q1);
+        assertNotEquals(q1, null);
     }
 
     @Test
     void testEqualsWithDifferentClass() {
         Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
         String otherObject = "Not a Quad";
-        assertNotEquals(otherObject, q1);
+        assertNotEquals(q1, otherObject);
     }
 
     @Test
@@ -228,7 +228,7 @@ public class StacksTest {
         assertEquals(2, stacks.getValue("y"));
 
 
-        assertEquals("x", (stacks.getTop()).ident);
+        assertEquals("x", stacks.getTop().ident);
     }
     @Test
     void testSwapOneElement() {
@@ -243,7 +243,7 @@ public class StacksTest {
 
 
 
-        assertEquals("x", (stacks.getTop()).ident);
+        assertEquals("x", stacks.getTop().ident);
     }
 
     @Test
@@ -431,10 +431,6 @@ public class StacksTest {
         assertFalse(invokeIsTypeCompatible("int", "42"));
         assertFalse(invokeIsTypeCompatible("int", 3.14));
     }
-    @Test
-    void test_getStackPosition_no_in_the_stack(){
-        assertEquals(-1, stacks.getStackPosition("x"));
-    }
 
     // ===============================
     // Tests pour le type "boolean" / "booleen"
@@ -490,8 +486,8 @@ public class StacksTest {
         assertFalse(invokeIsTypeCompatible("float", 3.14));
         assertFalse(invokeIsTypeCompatible("char", 'a'));
         assertFalse(invokeIsTypeCompatible("randomType", "test"));
-    }
 
+    }
 
     // ===============================
     // Méthode utilitaire pour accéder à la méthode privée via réflexion
@@ -504,61 +500,6 @@ public class StacksTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-    @Test
-    void testPushUpdatesSymbolTable() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
-
-        Symbol symbolA = stacks.getSymbolTable().findSymbol("a");
-        Symbol symbolB = stacks.getSymbolTable().findSymbol("b");
-
-        assertNotNull(symbolA);
-        assertNotNull(symbolB);
-
-
-        assertEquals(0, symbolA.getAddressStack());
-        assertEquals(1, symbolB.getAddressStack());
-    }
-
-    @Test
-    void testPopUpdatesSymbolTable() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
-
-        stacks.pop();
-
-        assertEquals(0, stacks.getSymbolTable().getAddressStack("a"));
-
-    }
-
-    @Test
-    void testSwapUpdatesSymbolTable() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("y", 2, "integer");
-
-        stacks.swap();
-
-        Symbol symbolX = stacks.getSymbolTable().findSymbol("x");
-        Symbol symbolY = stacks.getSymbolTable().findSymbol("y");
-
-        // Après swap, "y" est en bas (0) et "x" est en haut (1)
-        assertEquals(0, symbolY.getAddressStack());
-        assertEquals(1, symbolX.getAddressStack());
-    }
-
-    @Test
-    void testMultipleOperations() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
-        stacks.declareVar("c", 30, "integer");
-
-        stacks.pop();
-        stacks.swap();
-
-        assertEquals(1, stacks.getSymbolTable().getAddressStack("a"));
-        assertEquals(0, stacks.getSymbolTable().getAddressStack("b"));
-
     }
 }
 
