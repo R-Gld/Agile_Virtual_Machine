@@ -172,8 +172,8 @@ public class MainCompilerCompilerTest {
                 .start();
 
         int exitCode = process.waitFor();
-        String outputContent = Files.readString(output);
-        String goldenOutput = Files.readString(goldenOutputPath);
+        String outputContent = Files.readString(output).replaceAll("\\r\\n", "\n");
+        String goldenOutput = Files.readString(goldenOutputPath).replaceAll("\\r\\n", "\n");
 
         assertEquals(0, exitCode);
         assertEquals(goldenOutput, outputContent);
@@ -203,8 +203,9 @@ public class MainCompilerCompilerTest {
         assertEquals(0, exitCode2);
 
         Path goldenOutputPath = resourceAsPath("goldens/minimal_ok_release1.jjc");
-        String goldenOutput = Files.readString(goldenOutputPath);
-        assertEquals(goldenOutput, Files.readString(alreadyExistingFile.toPath()));
+        String goldenOutput = Files.readString(goldenOutputPath).replaceAll("\\r\\n", "\n");
+        String actualOutput = Files.readString(alreadyExistingFile.toPath()).replaceAll("\\r\\n", "\n");
+        assertEquals(goldenOutput, actualOutput);
 
         // With -f but without -o <arg>
         String[] args2 = { "--input", input.toString(), "-f" };

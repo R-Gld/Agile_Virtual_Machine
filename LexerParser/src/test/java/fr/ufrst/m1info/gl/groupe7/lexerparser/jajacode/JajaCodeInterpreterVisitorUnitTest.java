@@ -1,8 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
-import fr.ufrst.m1info.gl.groupe7.memoire.Symbol;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
@@ -25,13 +24,40 @@ import static org.mockito.Mockito.*;
 class JajaCodeInterpreterVisitorUnitTest {
 
     @Mock
-    private SymbolTable symbolTable;
+    private Stacks stacks;
 
     private JajaCodeInterpreterVisitor visitor;
 
+    // Stack interne pour simuler le comportement push/pop du mock
+    private java.util.Stack<Stacks.Quad> mockStack;
+
     @BeforeEach
     void setUp() {
-        visitor = new JajaCodeInterpreterVisitor(symbolTable);
+        mockStack = new java.util.Stack<>();
+
+        // Configurer le mock pour simuler push() et pop()
+        // Utiliser lenient() car ces stubs ne sont pas utilisés par tous les tests
+        lenient().doAnswer(invocation -> {
+            Stacks.Quad quad = invocation.getArgument(0);
+            mockStack.push(quad);
+            return null;
+        }).when(stacks).push(any(Stacks.Quad.class));
+
+        lenient().when(stacks.pop()).thenAnswer(invocation ->
+            mockStack.isEmpty() ? null : mockStack.pop()
+        );
+
+        lenient().doAnswer(invocation -> {
+            if (mockStack.size() >= 2) {
+                Stacks.Quad q1 = mockStack.pop();
+                Stacks.Quad q2 = mockStack.pop();
+                mockStack.push(q1);
+                mockStack.push(q2);
+            }
+            return null;
+        }).when(stacks).swap();
+
+        visitor = new JajaCodeInterpreterVisitor(stacks);
     }
 
     // ------------------------
@@ -154,20 +180,19 @@ class JajaCodeInterpreterVisitorUnitTest {
         // When NEW var x:int is executed
         visitor.visitInstr(instrWithNew("x", "int", "var"));
 
-        // Then SymbolTable.declareVar is called with the popped value
-        verify(symbolTable).declareVar(eq("x"), eq(5), eq("int"));
+        // Then Stacks.declareVar is called with the popped value
+        verify(stacks).declareVar(eq("x"), eq(5), eq("int"));
 
-        // And declareCst / assign are not called here
-        verify(symbolTable, never()).declareCst(anyString(), any(), anyString());
-        verify(symbolTable, never()).assign(anyString(), any());
+        // And declareCst are not called here
+        verify(stacks, never()).declareCst(anyString(), any(), anyString());
     }
 
     @Test
     void visitInstr_newMeth_declaresCst_withTopValue() {
         visitor.visitInstr(instrWithPush(8));
         visitor.visitInstr(instrWithNew("f", "int", "meth"));
-        verify(symbolTable).declareCst(eq("f"), eq(8), eq("int"));
-        verify(symbolTable, never()).declareVar(anyString(), any(), anyString());
+        verify(stacks).declareCst(eq("f"), eq(8), eq("int"));
+        verify(stacks, never()).declareVar(anyString(), any(), anyString());
     }
 
     // ------------------------
@@ -183,20 +208,16 @@ class JajaCodeInterpreterVisitorUnitTest {
         // Swap -> top becomes 1
         visitor.visitInstr(instrWithSwap());
 
-        // Prepare SymbolTable to say both symbols exist
-        Symbol s1 = mock(Symbol.class);
-        Symbol s2 = mock(Symbol.class);
-        when(symbolTable.findSymbol(anyString())).thenReturn(s1, s2);
+        // Prepare Stacks to say both symbols exist (AffecterVal returns true)
+        when(stacks.AffecterVal(anyString(), any())).thenReturn(true);
 
         // Store into x then y; due to swap, x gets 1 then y gets 2
         visitor.visitInstr(instrWithStore("x"));
         visitor.visitInstr(instrWithStore("y"));
 
-        InOrder inOrder = inOrder(symbolTable);
-        inOrder.verify(symbolTable).findSymbol("x");
-        inOrder.verify(symbolTable).assign(eq("x"), eq(1));
-        inOrder.verify(symbolTable).findSymbol("y");
-        inOrder.verify(symbolTable).assign(eq("y"), eq(2));
+        InOrder inOrder = inOrder(stacks);
+        inOrder.verify(stacks).AffecterVal(eq("x"), eq(1));
+        inOrder.verify(stacks).AffecterVal(eq("y"), eq(2));
     }
 
     // ------------------------
@@ -206,23 +227,27 @@ class JajaCodeInterpreterVisitorUnitTest {
     @Test
     void visitInstr_store_whenSymbolMissing_doesNotAssign() {
         visitor.visitInstr(instrWithPush(42));
-        when(symbolTable.findSymbol("z")).thenReturn(null); // missing symbol
+        when(stacks.AffecterVal("z", 42)).thenReturn(false); // missing symbol or error
 
         visitor.visitInstr(instrWithStore("z"));
 
-        verify(symbolTable).findSymbol("z");
-        verify(symbolTable, never()).assign(anyString(), any());
+        verify(stacks).AffecterVal("z", 42);
     }
 
     // ------------------------
-    // POP (smoke test: no interaction with SymbolTable)
+    // POP (smoke test: should only push/pop, no symbol management)
     // ------------------------
 
     @Test
     void visitInstr_pop_smoke() {
         visitor.visitInstr(instrWithPush(9));
         visitor.visitInstr(instrWithPop());
-        // POP should not touch the SymbolTable
-        verifyNoInteractions(symbolTable);
+
+        // POP should push then pop, but not touch symbol management methods
+        verify(stacks).push(any(Stacks.Quad.class));
+        verify(stacks).pop();
+        verify(stacks, never()).declareVar(anyString(), any(), anyString());
+        verify(stacks, never()).declareCst(anyString(), any(), anyString());
+        verify(stacks, never()).AffecterVal(anyString(), any());
     }
 }
