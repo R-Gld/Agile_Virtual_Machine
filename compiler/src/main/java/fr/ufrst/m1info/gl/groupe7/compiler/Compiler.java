@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompiler.getMiniJajaCompilerVisitorFromString;
+import static fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaCompiler.getMiniJajaCompilerVisitorFromString;
 
 /**
  * Compiler

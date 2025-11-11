@@ -9,7 +9,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.Nbre
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,7 +42,7 @@ class MiniJajaCompilerVisitorTest {
      */
     @BeforeEach
     void setUp() {
-        visitor = new MiniJajaCompilerVisitor(new Stacks());
+        visitor = new MiniJajaCompilerVisitor(new SymbolTable());
         builderSpy = spy(visitor.getJajaCodeBuilder());
         try {
             // Access the private field `jjcBuilder` via reflection to inject the spy
