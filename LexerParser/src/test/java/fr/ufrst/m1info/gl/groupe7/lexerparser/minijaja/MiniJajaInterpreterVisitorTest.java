@@ -21,17 +21,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.AffectationNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.InstructionsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.Instructions.SommeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.AppelENode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.BoolValueNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Fact.NbreNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.DivisionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Terme.MultiplicationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
@@ -51,8 +51,8 @@ class MiniJajaInterpreterVisitorTest {
         MiniJajaParser.ClasseContext tree = parser.classe();
         assertEquals(0, parser.getNumberOfSyntaxErrors(), "pb syntaxe");
 
-        Stacks stacks = mock(Stacks.class);
-        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor(stacks);
+//        Stacks stacks = mock(Stacks.class);
+        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
         AstNode node = visitor.visitClasse(tree);
         assertNotNull(node, "Visitor returned null AST");
         return (ClasseNode) node;
@@ -98,8 +98,8 @@ class MiniJajaInterpreterVisitorTest {
                     int errors = parser.getNumberOfSyntaxErrors();
                     boolean missingClassIdent = tree.IDENT() == null;
                     if (errors == 0 && !missingClassIdent) {
-                        Stacks stacks = mock(Stacks.class);
-                        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor(stacks);
+//                        Stacks stacks = mock(Stacks.class);
+                        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
                         AstNode ast = visitor.visitClasse(tree);
                         assertNotNull(ast, () -> "Visitor returned null AST for syntactically valid invalid-case: "
                                 + path.getFileName());
