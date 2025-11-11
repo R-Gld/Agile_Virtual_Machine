@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -32,18 +33,18 @@ public class App extends Application {
     private MyCodeArea jjcCodeArea;
     private ChoiceBox<String> fileToRun;
 
-    // ==== START ADDED ====
+    // === Added section: console output and debug state tracking ===
     /**
-     * Console de sortie utilisée pour afficher des messages (debug, info, erreurs)
+     * Console used to display messages (debug, info, errors)
      */
     private ConsoleOutput console;
 
     /**
-     * État simple de debug : mode actif / ligne courante
+     * Simple debug state (active flag and current line)
      */
     private boolean debugMode = false;
     private int debugCurrentLine = -1;
-    // ==== END ADDED ====
+    // === End of added section ===
 
     @Override
     public void start(Stage stage) {
@@ -65,10 +66,9 @@ public class App extends Application {
         ConsoleOutput console = new ConsoleOutput("console");
         root.setBottom(console);
 
-        // ==== START ADDED ====
-        // On garde aussi une référence dans un attribut pour pouvoir écrire dedans
+        // === Added section: keep console reference for logging ===
         this.console = console;
-        // ==== END ADDED ====
+        // === End of added section ===
 
         stage.setScene(scene);
         stage.show();
@@ -131,33 +131,38 @@ public class App extends Application {
 
         hbox.getChildren().add(runButton);
 
-        // ==== START ADDED ====
+        // === Added section: debug controls (icons only, no text) ===
         /**
-         * Boutons pour un debug très simple : Debug / Step / Stop
-         * (pas de modification de la logique existante, seulement ajout)
+         * Simple debug control bar with icons only: Start Debug / Step / Stop
          */
 
-        Button debugButton = new Button("Debug");
+        Button debugButton = new Button();
         debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
         debugButton.setOnAction(e -> {
             startDebug();
         });
+        ImageView debugIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
+        debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
 
-        Button stepButton = new Button("Step");
+        Button stepButton = new Button();
         stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
         stepButton.setOnAction(e -> {
             stepDebug();
         });
+        ImageView stepIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
+        stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
 
-        Button stopButton = new Button("Stop");
+        Button stopButton = new Button();
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
         stopButton.setOnAction(e -> {
             stopDebug();
         });
+        ImageView stopIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
+        stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
-        // ==== END ADDED ====
+        // === End of added section ===
 
         return hbox;
     }
@@ -201,11 +206,11 @@ public class App extends Application {
         /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
 
-        // ==== START ADDED ====
+        // === Added section: log message after file loading ===
         if (console != null) {
             console.printMessage("File loaded: " + file.getName());
         }
-        // ==== END ADDED ====
+        // === End of added section ===
     }
 
     /**
@@ -236,11 +241,11 @@ public class App extends Application {
             alert.showAndWait();
         }
 
-        // ==== START ADDED ====
+        // === Added section: log message after saving ===
         if (console != null && file != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
         }
-        // ==== END ADDED ====
+        // === End of added section ===
     }
 
     /**
@@ -255,11 +260,11 @@ public class App extends Application {
         String compileResult = compiler.compileToString();
         jjcCodeArea.loadText(compileResult);
 
-        // ==== START ADDED ====
+        // === Added section: log message after compilation ===
         if (console != null) {
             console.printMessage("Compilation finished.");
         }
-        // ==== END ADDED ====
+        // === End of added section ===
     }
 
     /**
@@ -272,11 +277,11 @@ public class App extends Application {
             MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
             interpreter.run(mjj);
 
-            // ==== START ADDED ====
+            // === Added section: log message after MiniJaja run ===
             if (console != null) {
                 console.printMessage("MiniJaja executed.");
             }
-            // ==== END ADDED ====
+            // === End of added section ===
         } else {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
@@ -291,21 +296,18 @@ public class App extends Application {
             }
             jjcInterpretor.run(result.toString());
 
-            // ==== START ADDED ====
+            // === Added section: log message after JajaCode run ===
             if (console != null) {
                 console.printMessage("JajaCode executed.");
             }
-            // ==== END ADDED ====
-
+            // === End of added section ===
         }
 
     }
 
-    // ==== START ADDED ====
+    // === Added section: Simple Debug methods (Start / Step / Stop) ===
     /**
-     * Lance le mode debug simple : on se contente de "pointer" ligne par ligne
-     * dans la zone MiniJaja et d'afficher la ligne courante dans la console.
-     * (Sans modifier l'interpréteur existant).
+     * Starts simple debug mode and prints current line information in console.
      */
     private void startDebug() {
         if (debugMode) {
@@ -320,8 +322,7 @@ public class App extends Application {
     }
 
     /**
-     * Passe à la ligne suivante dans le code MiniJaja et "highlight" logique
-     * (déplacement du caret) sur cette ligne.
+     * Moves to the next line in MiniJaja code and highlights it.
      */
     private void stepDebug() {
         if (!debugMode) {
@@ -354,7 +355,7 @@ public class App extends Application {
     }
 
     /**
-     * Arrête le mode debug simple.
+     * Stops simple debug mode.
      */
     private void stopDebug() {
         if (!debugMode) {
@@ -366,7 +367,7 @@ public class App extends Application {
             console.printMessage("[DEBUG] Debug mode stopped.");
         }
     }
-    // ==== END ADDED ====
+    // === End of added section ===
 
     public static void main(String[] args) {
         launch();
