@@ -31,6 +31,7 @@ public class MainCompiler {
     }
 
     private MainCompiler(String[] args) {
+
         Options options = getOptions();
 
         CommandLineParser parser = new DefaultParser();
