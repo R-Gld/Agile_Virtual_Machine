@@ -78,9 +78,21 @@ public class TestCodeArea {
     void testDisablePreventsEditing() {
         runOnFxThread(() -> {
             codeArea.disable();
-            Assertions.assertFalse(codeArea.lookupAll(".editable").isEmpty() || codeArea.lookupAll(".editable").size() >= 0);
+
+            // Access the internal CodeArea using reflection (safer for headless)
+            try {
+                var field = MyCodeArea.class.getDeclaredField("codeArea");
+                field.setAccessible(true);
+                Object inner = field.get(codeArea);
+                boolean editable = (boolean) inner.getClass().getMethod("isEditable").invoke(inner);
+                Assertions.assertFalse(editable, "CodeArea should not be editable after disable()");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         });
     }
+
+
 
     @Test
     void testHighlightLineValidAndInvalidIndices() {
