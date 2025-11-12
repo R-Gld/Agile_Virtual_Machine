@@ -17,10 +17,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Walker;
  * Test qui parse un programme, construit l'AST via le Visitor,
  * affiche l'AST et le dump de la table des symboles.
  */
-public class ParseAndPrintTest {
+public class DebugeParsingETC {
 
   @Test
-  public void testParseAndPrintASTAndSymbolTable() {
+  public void DebugeParsing() {
     Stacks stacks = new Stacks();
     String program = """
         class MathOps {
