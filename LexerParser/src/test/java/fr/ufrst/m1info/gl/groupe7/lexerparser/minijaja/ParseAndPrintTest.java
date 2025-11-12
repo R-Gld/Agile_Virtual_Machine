@@ -29,20 +29,16 @@ public class ParseAndPrintTest {
           int y = 10+9;
           main{
             x = 5;
-            while(10 > x){
-              x += 1;
-              if((x / 2) == 3){
-                y = x + 3;
-              } else {
-                y = x + 2;
-              };
+            write("la valuer x:");
+            writeln(x);
+            write(y);
             }
           }
         """;
 
-    System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");
-    System.out.println(program);
-    System.out.println("==================================");
+    //System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");
+    //System.out.println(program);
+    //System.out.println("==================================");
 
     // 1) Initialisation
     CharStream cs = CharStreams.fromString(program);
@@ -66,11 +62,9 @@ public class ParseAndPrintTest {
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       // 4) Affichage de l'AST
-    System.out.println(astRoot.toStringTree());
+    //System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks);
     walker.walk();
-
-    System.out.println("stack");
     stacks.printStack();
 
     } else {
