@@ -62,14 +62,17 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 break;
             }
 
-            System.out.println("PC: " + instructionCounter + " → Exécute: " + instruction.getText() + " | Pile: " + stacks);
+            System.out.println("PC: " + instructionCounter + " → Exécute: " + instruction.getText() + " | Pile: ");
+            stacks.printStack();
 
             visit(instruction);
         }
 
         System.out.println("--- Exécution Terminée ---");
-        System.out.println("Pile finale: " + stacks);
-        System.out.println("Mémoire finale: " + stacks);
+        System.out.println("Pile finale:");
+        stacks.printStack();
+        System.out.println("Mémoire finale: ");
+        stacks.printSymbolTable();
     }
 
     /**
@@ -219,6 +222,4 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
         throw new UnsupportedOperationException("Value not supported: " + ctx.getText());
     }
-
-
 }
