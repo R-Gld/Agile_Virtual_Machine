@@ -12,9 +12,9 @@ public class JajaCodeInterpreter {
         String jajaCode = """
                     1 init
                     2 push(0)
-                    3 new(x@1, int, var, 0)
+                    3 new(x@global, INT, VARIABLE, 0)
                     4 push(5)
-                    5 store(x@1)
+                    5 store(x@global)
                     6 push(0)
                     7 swap
                     8 pop

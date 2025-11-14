@@ -128,7 +128,7 @@ public class MainCompilerCompilerTest {
         String expectedOutput = """
                                 init
                                 push(0)
-                                new(x@1, int, var, 0)
+                                new(x@global, INT, VARIABLE, 0)
                                 push(5)
                                 store(x@1)
                                 push(0)
