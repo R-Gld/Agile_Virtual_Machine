@@ -580,6 +580,34 @@ class JajaCodeInterpreterVisitorUnitTest {
         verify(stacks, atLeast(3)).push(any(Stacks.Quad.class));
     }
 
+    @Test
+    void visitOper2_CMP_compareEqualValues() {
+        JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
+        when(ctx.CMP()).thenReturn(term("cmp"));
+
+        visitor.visitInstr(instrWithPush(50));
+        visitor.visitInstr(instrWithPush(50));
+
+        visitor.visitOper2(ctx);
+
+        verify(stacks, atLeast(2)).pop();
+        verify(stacks, atLeast(3)).push(any(Stacks.Quad.class));
+    }
+
+    @Test
+    void visitOper2_CMP_compareDifferentValues() {
+        JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
+        when(ctx.CMP()).thenReturn(term("cmp"));
+
+        visitor.visitInstr(instrWithPush(30));
+        visitor.visitInstr(instrWithPush(40));
+
+        visitor.visitOper2(ctx);
+
+        verify(stacks, atLeast(2)).pop();
+        verify(stacks, atLeast(3)).push(any(Stacks.Quad.class));
+    }
+
     // ------------------------
     // Tests des opérations unaires (via visitOper1)
     // ------------------------

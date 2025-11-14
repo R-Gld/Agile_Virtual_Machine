@@ -304,6 +304,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomeCmp();
         } else if (ctx.SUP() != null) {
             axiomeSup();
+        } else if (ctx.CMP() != null) {
+            axiomeCmp();
         } else {
             System.err.println("Opération binaire non implémentée: " + ctx.getText());
             instructionCounter++;
