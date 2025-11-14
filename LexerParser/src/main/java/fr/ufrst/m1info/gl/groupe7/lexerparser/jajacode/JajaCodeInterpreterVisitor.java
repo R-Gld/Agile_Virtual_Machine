@@ -946,18 +946,30 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     /**
      * Axiome IF : Saut conditionnel.
      * <p>
-     * Cette instruction dépile un booléen et saute à l'adresse donnée si la valeur est fausse (0).
-     * Si la valeur est vraie (non nulle), l'exécution continue séquentiellement.
+     * Cette instruction dépile un booléen et saute à l'adresse donnée si la valeur est vraie.
+     * Si la valeur est fausse, l'exécution continue séquentiellement.
      * </p>
      *
      * <p><b>Fonctionnement :</b></p>
      * <ol>
      *   <li>Dépile la condition</li>
-     *   <li>Si condition == false (ou 0) → saute à l'adresse donnée</li>
-     *   <li>Si condition == true (ou != 0) → continue à l'instruction suivante</li>
+     *   <li>Si condition == true (ou != 0) → saute à l'adresse donnée</li>
+     *   <li>Si condition == false (ou == 0) → continue à l'instruction suivante</li>
      * </ol>
      *
-     * @param adresse l'adresse de saut si la condition est fausse
+     * <p><b>Utilisation typique avec while :</b></p>
+     * <pre>
+     * // while(condition) { ... }
+     * [début]:
+     *   évaluer condition
+     *   not              // Inverser la condition
+     *   if([fin])        // Sauter à la fin si (not condition) est vrai
+     *   ... corps ...
+     *   goto([début])
+     * [fin]:
+     * </pre>
+     *
+     * @param adresse l'adresse de saut si la condition est vraie
      */
     private void axiomeIF(int adresse) {
         Stacks.Quad condition = stacks.pop();
@@ -979,12 +991,13 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             return;
         }
 
-        if (!conditionValue) {
+        // IF saute à l'adresse donnée si la condition est VRAIE (sémantique standard JajaCode)
+        if (conditionValue) {
             instructionCounter = adresse;
-            System.out.println("\t\tAxiome IF exécuté: condition fausse, saut à l'adresse " + adresse + ".");
+            System.out.println("\t\tAxiome IF exécuté: condition vraie, saut à l'adresse " + adresse + ".");
         } else {
             instructionCounter++;
-            System.out.println("\t\tAxiome IF exécuté: condition vraie, poursuite de l'exécution séquentielle.");
+            System.out.println("\t\tAxiome IF exécuté: condition fausse, poursuite de l'exécution séquentielle.");
         }
     }
 
