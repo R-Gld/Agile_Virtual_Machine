@@ -41,6 +41,14 @@ public class SommeNode extends InstructionNode {
         this.expressionNode = expressionNode;
     }
 
+    public AstNode getIdent1Node() {
+        return ident1Node;
+    }
+
+    public Expression getExpressionNode() {
+        return expressionNode;
+    }
+
     /**
      * Render this node as a compact tree string used for debugging and tests.
      *

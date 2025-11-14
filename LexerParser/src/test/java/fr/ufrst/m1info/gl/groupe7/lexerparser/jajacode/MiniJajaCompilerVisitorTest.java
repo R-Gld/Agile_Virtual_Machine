@@ -21,6 +21,7 @@ import java.util.List;
 import static fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 class MiniJajaCompilerVisitorTest {
 
