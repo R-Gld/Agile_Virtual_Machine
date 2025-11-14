@@ -74,6 +74,14 @@ public class JajaCodeBuilder {
         return instructions.values().stream().toList();
     }
 
+    /**
+     * Get the current instruction address (the address of the next instruction to be added).
+     * @return the current address counter
+     */
+    public int getCurrentAddress() {
+        return adresseCounter;
+    }
+
     @Override
     public String toString() {
         if (instructions.isEmpty()) return "";

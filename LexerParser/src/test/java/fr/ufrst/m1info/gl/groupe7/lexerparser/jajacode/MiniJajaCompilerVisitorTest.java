@@ -87,6 +87,13 @@ class MiniJajaCompilerVisitorTest {
     }
 
     @Test
+    void visitNrbreNode_withNegativeValue_addsPushInstruction() {
+        NbreNode node = new NbreNode(-5);
+        visitor.visit(node);
+        verify(builderSpy).addInstruction(PUSH, -5);
+    }
+
+    @Test
     void visitVarNode_generatesPushAndNewAndTracksVariable() {
         VarNode node = var("x", "int");
 
@@ -127,6 +134,47 @@ class MiniJajaCompilerVisitorTest {
     }
 
     @Test
+    void visitInstructions_withNullNode_doesNothing(){
+        visitor.visit((InstructionsNode) null);
+        verify(builderSpy, never()).addInstruction(any(), any());
+    }
+
+    @Test
+    void visitInstructions_withNullInstruction_skipsGracefully(){
+        InstructionsNode node = mock(InstructionsNode.class);
+        when(node.getInstructionNode()).thenReturn(null);
+
+        visitor.visit(node);
+
+        verify(builderSpy, never()).addInstruction(any(), any());
+    }
+
+    @Test
+    void visitInstructions_chainOfThree_processesInOrder(){
+        InstructionsNode node1 = mock(InstructionsNode.class);
+        InstructionNode instr1 = mock(AffectationNode.class);
+        InstructionsNode node2 = mock(InstructionsNode.class);
+        InstructionNode instr2 = mock(AffectationNode.class);
+        InstructionsNode node3 = mock(InstructionsNode.class);
+        InstructionNode instr3 = mock(AffectationNode.class);
+
+        when(node1.getInstructionNode()).thenReturn(instr1);
+        when(node1.getInstructions()).thenReturn(node2);
+        when(node2.getInstructionNode()).thenReturn(instr2);
+        when(node2.getInstructions()).thenReturn(node3);
+        when(node3.getInstructionNode()).thenReturn(instr3);
+        when(node3.getInstructions()).thenReturn(null);
+
+        visitor.visit(node1);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy, atLeast(0)).addInstruction(any(), any());
+        inOrder.verify(builderSpy, atLeast(0)).addInstruction(any(), any());
+        inOrder.verify(builderSpy, atLeast(0)).addInstruction(any(), any());
+    }
+
+
+    @Test
     void visitMain_generatesBodyThenPushZero() {
         MainNode node = mock(MainNode.class);
         InstructionsNode instrs = mock(InstructionsNode.class);
@@ -135,6 +183,25 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(node);
 
         verify(builderSpy).addInstruction(PUSH, 0);
+    }
+
+    @Test
+    void visitMain_withMultipleInstructions_processesAll(){
+        MainNode node = mock(MainNode.class);
+        InstructionsNode instr1 = mock(InstructionsNode.class);
+        InstructionNode instructionNode1 = mock(AffectationNode.class);
+        InstructionsNode instr2 = mock(InstructionsNode.class);
+        InstructionNode instructionNode2 = mock(AffectationNode.class);
+
+        when(node.getInstrs()).thenReturn(instr1);
+        when(instr1.getInstructionNode()).thenReturn(instructionNode1);
+        when(instr1.getInstructions()).thenReturn(instr2);
+        when(instr2.getInstructionNode()).thenReturn(instructionNode2);
+        when(instr2.getInstructions()).thenReturn(null);
+
+        visitor.visit(node);
+
+        verify(builderSpy, atLeast(0)).addInstruction(any(), any());
     }
 
     @Test
@@ -150,6 +217,61 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(root);
 
         verify(builderSpy, atLeastOnce()).addInstruction(eq(NEW), any(), any(), any(), any());
+    }
+
+    @Test
+    void visitClasse_withMultipleDecls_generatesCorrectSwapPopSequence(){
+        ClasseNode classe = mock(ClasseNode.class);
+        DeclsNode decls = mock(DeclsNode.class);
+        VarNode var1 = var("a", "int");
+        VarNode var2 = var("b", "bool");
+        DeclsNode nextDecls = mock(DeclsNode.class);
+
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(null);
+        when(decls.getDecl()).thenReturn(var1);
+        when(decls.getDecls()).thenReturn(nextDecls);
+        when(nextDecls.getDecl()).thenReturn(var2);
+        when(nextDecls.getDecls()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "a@1", "int", "var", 0);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "b@1", "bool", "var", 0);
+        inOrder.verify(builderSpy).addInstruction(SWAP);
+        inOrder.verify(builderSpy).addInstruction(POP);
+    }
+
+    @Test
+    void visitClasse_emptyVariableStack_doesNotCrash(){
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        verify(builderSpy, atLeastOnce()).addInstruction(eq(INIT));
+        verify(builderSpy, atLeastOnce()).addInstruction(eq(JCSTOP));
+    }
+
+    @Test
+    void visitClasse_ordersInstructionsCorrectly(){
+        ClasseNode classe = mock(ClasseNode.class);
+        DeclsNode decls = mock(DeclsNode.class);
+        MainNode main = mock(MainNode.class);
+
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(INIT);
+        inOrder.verify(builderSpy, atLeastOnce()).addInstruction(any(), any());
+        inOrder.verify(builderSpy).addInstruction(JCSTOP);
     }
 
     @Test
