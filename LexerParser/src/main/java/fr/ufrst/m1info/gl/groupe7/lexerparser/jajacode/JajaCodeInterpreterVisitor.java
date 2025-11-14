@@ -300,12 +300,10 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomeAnd();
         } else if (ctx.OR() != null) {
             axiomeOr();
-        } else if (ctx.CMP() != null) {
-            axiomeCmp();
         } else if (ctx.SUP() != null) {
             axiomeSup();
         } else if (ctx.CMP() != null) {
-            axiomeCmp();
+            axiomeCMP();
         } else {
             System.err.println("Opération binaire non implémentée: " + ctx.getText());
             instructionCounter++;
@@ -872,7 +870,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      *
      * <p><b>Effet :</b> Calcule op1 == op2 et empile le résultat</p>
      */
-    private void axiomeEq() {
+    private void axiomeCMP() {
         Stacks.Quad op2 = stacks.pop();
         Stacks.Quad op1 = stacks.pop();
 
