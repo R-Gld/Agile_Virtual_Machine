@@ -226,6 +226,7 @@ class MiniJajaCompilerVisitorTest {
         DeclsNode decls = mock(DeclsNode.class);
         VarNode var1 = var("a", "int");
         VarNode var2 = var("b", "bool");
+        System.out.println(var2.getType());
         DeclsNode nextDecls = mock(DeclsNode.class);
 
         when(classe.getDeclarations()).thenReturn(decls);
@@ -241,8 +242,7 @@ class MiniJajaCompilerVisitorTest {
         inOrder.verify(builderSpy).addInstruction(INIT);
         inOrder.verify(builderSpy).addInstruction(PUSH, 0);
         inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "INT", "VARIABLE", 0);
-        inOrder.verify(builderSpy).addInstruction(PUSH, 0);
-        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "BOOL", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "BOOLEAN", "VARIABLE", 0);
         inOrder.verify(builderSpy).addInstruction(SWAP);
         inOrder.verify(builderSpy).addInstruction(POP);
         inOrder.verify(builderSpy).addInstruction(SWAP);

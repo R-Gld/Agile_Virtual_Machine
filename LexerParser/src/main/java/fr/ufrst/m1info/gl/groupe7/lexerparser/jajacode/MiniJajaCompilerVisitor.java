@@ -44,6 +44,29 @@ public class MiniJajaCompilerVisitor {
         return jjcBuilder;
     }
 
+    /**
+     * Normalise un type MiniJaja en type JajaCode.
+     * Convertit "boolean" ou "bool" en "BOOLEAN", "int" en "INT", etc.
+     *
+     * @param miniJajaType le type en MiniJaja (peut être "bool", "boolean", "int", etc.)
+     * @return le type normalisé en JajaCode (BOOLEAN, INT, etc.)
+     */
+    private String normalizeType(String miniJajaType) {
+        if (miniJajaType == null || miniJajaType.trim().isEmpty()) {
+            System.out.println("Coucou je suis dans normalizeType avec un type null ou vide, je retourne INT par défaut.");
+            return "INT";
+        }
+
+        System.out.println("Coucou je suis dans normalizeType avec le type : " + miniJajaType);
+
+        String lowerType = miniJajaType.trim().toLowerCase();
+        return switch (lowerType) {
+            case "bool", "boolean" -> "BOOLEAN";
+            case "int", "integer" -> "INT";
+            default -> miniJajaType.trim().toUpperCase();
+        };
+    }
+
     public void visit(ClasseNode node) {
         jjcBuilder.addInstruction(INIT);
 
@@ -234,25 +257,55 @@ public class MiniJajaCompilerVisitor {
         }
     }
 
+    // TODO Corriger la gestion des types si boolean x; -> x est initialisé à 0 au lieu de false et c'est un INT
+    // Par contre boolean x = true; -> x est bien un BOOLEAN
     public void visit(VarNode node) {
-        // Pousser la valeur d'initialisation si elle existe, sinon 0
         Expression vexp = node.getExp() != null ? node.getExp().getVexp() : null;
+        System.out.println("Vexp dans visit VarNode : " + vexp);
+
+        // Utiliser le type déclaré du nœud et le normaliser
+        String rawType = node.getType();
+        System.out.println("DEBUG: node.getType() retourne : '" + rawType + "' pour la variable " + node.getIdent().getNom());
+
+        // Si on a une valeur d'initialisation, on peut déduire le type réel
+        String actualType;
+        if (vexp instanceof BoolValueNode) {
+            actualType = "BOOLEAN";
+            System.out.println("DEBUG: Type déduit depuis BoolValueNode : BOOLEAN");
+        } else if (vexp instanceof NbreNode) {
+            actualType = "INT";
+            System.out.println("DEBUG: Type déduit depuis NbreNode : INT");
+        } else {
+            // Sinon, utiliser le type déclaré et le normaliser
+            actualType = normalizeType(rawType);
+            System.out.println("DEBUG: Type normalisé depuis node.getType() : " + actualType);
+        }
+
+        System.out.println("DEBUG: Type final : '" + actualType + "'");
+
+        // Gérer la valeur d'initialisation
         if (vexp != null) {
             visitExpression(vexp);
         } else {
-            jjcBuilder.addInstruction(PUSH, 0);
+            // Valeur par défaut selon le type
+            if ("BOOLEAN".equals(actualType)) {
+                System.out.println("DEBUG: Génération de PUSH false pour type BOOLEAN");
+                jjcBuilder.addInstruction(PUSH, false);
+            } else {
+                System.out.println("DEBUG: Génération de PUSH 0 pour type " + actualType);
+                jjcBuilder.addInstruction(PUSH, 0);
+            }
         }
 
         String ident = node.getIdent().getNom();
-        String type = node.getType().toUpperCase();
         String scopeAddress = "global";
-
-        // TODO: Déterminer le 'kind' correctement (var ou cst)
         String kind = "VARIABLE";
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, type, kind, 0);
 
+        System.out.println("DEBUG: Génération de NEW avec type : " + actualType);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, actualType, kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
     }
+
 
     public void visit(NbreNode node) {
         jjcBuilder.addInstruction(PUSH, node.value);
