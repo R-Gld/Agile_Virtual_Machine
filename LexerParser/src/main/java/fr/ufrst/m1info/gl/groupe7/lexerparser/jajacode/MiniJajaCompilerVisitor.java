@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
@@ -235,8 +236,9 @@ public class MiniJajaCompilerVisitor {
 
     public void visit(VarNode node) {
         // Pousser la valeur d'initialisation si elle existe, sinon 0
-        if (node.getExp() != null ) {
-            visitExpression(node.getExp().getVexp());
+        Expression vexp = node.getExp() != null ? node.getExp().getVexp() : null;
+        if (vexp != null) {
+            visitExpression(vexp);
         } else {
             jjcBuilder.addInstruction(PUSH, 0);
         }
@@ -260,11 +262,18 @@ public class MiniJajaCompilerVisitor {
         jjcBuilder.addInstruction(PUSH, node.value);
     }
 
+    public void visit(IdentNode node) {
+        String scopeAddress = "global";
+        jjcBuilder.addInstruction(LOAD, node.getNom() + "@" + scopeAddress);
+    }
+
     private void visitExpression(AstNode expression) {
         if (expression instanceof NbreNode) {
             visit((NbreNode) expression);
         } else if (expression instanceof BoolValueNode) {
             visit((BoolValueNode) expression);
+        } else if (expression instanceof IdentNode) {
+            visit((IdentNode) expression);
         } else if (expression instanceof PlusNode) {
             visitPlus((PlusNode) expression);
         } else if (expression instanceof UnaryMinusNode) {
