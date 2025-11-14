@@ -58,8 +58,8 @@ public class MiniJajaCompilerVisitor {
      * @return le nom de l'identifiant
      */
     private String extractIdentifierName(AstNode identNode) {
-        if (identNode instanceof IdentNode) {
-            return ((IdentNode) identNode).getNom();
+        if (identNode instanceof IdentNode identNodeTyped) {
+            return identNodeTyped.getNom();
         }
 
         String identStr = identNode.toStringTree();
@@ -165,14 +165,14 @@ public class MiniJajaCompilerVisitor {
     }
 
     public void visit(InstructionNode instrNode) {
-        if (instrNode instanceof AffectationNode) {
-            visit((AffectationNode) instrNode);
-        } else if (instrNode instanceof SiNode) {
-            visitSi((SiNode) instrNode);
-        } else if (instrNode instanceof TantqueNode) {
-            visitTantque((TantqueNode) instrNode);
-        } else if (instrNode instanceof SommeNode) {
-            visitSomme((SommeNode) instrNode);
+        if (instrNode instanceof AffectationNode affectationNode) {
+            visit(affectationNode);
+        } else if (instrNode instanceof SiNode siNode) {
+            visitSi(siNode);
+        } else if (instrNode instanceof TantqueNode tantqueNode) {
+            visitTantque(tantqueNode);
+        } else if (instrNode instanceof SommeNode sommeNode) {
+            visitSomme(sommeNode);
         }
     }
 
@@ -479,32 +479,32 @@ public class MiniJajaCompilerVisitor {
     }
 
     private void visitExpression(AstNode expression) {
-        if (expression instanceof NbreNode) {
-            visit((NbreNode) expression);
-        } else if (expression instanceof BoolValueNode) {
-            visit((BoolValueNode) expression);
-        } else if (expression instanceof IdentNode) {
-            visit((IdentNode) expression);
-        } else if (expression instanceof PlusNode) {
-            visitPlus((PlusNode) expression);
-        } else if (expression instanceof UnaryMinusNode) {
-            visitUnaryMinus((UnaryMinusNode) expression);
-        } else if (expression instanceof MinusNode) {
-            visitMoins((MinusNode) expression);
-        } else if (expression instanceof AndNode) {
-            visitAnd((AndNode) expression);
-        } else if (expression instanceof OrNode) {
-            visitOr((OrNode) expression);
-        } else if (expression instanceof NotNode) {
-            visitNot((NotNode) expression);
-        } else if (expression instanceof MultiplicationNode) {
-            visitMultiplication((MultiplicationNode) expression);
-        } else if (expression instanceof DivisionNode) {
-            visitDivision((DivisionNode) expression);
-        } else if (expression instanceof GreaterThanNode) {
-            visitGreaterThan((GreaterThanNode) expression);
-        } else if (expression instanceof EqualsNode) {
-            visitEquals((EqualsNode) expression);
+        if (expression instanceof NbreNode nbreNode) {
+            visit(nbreNode);
+        } else if (expression instanceof BoolValueNode boolValueNode) {
+            visit(boolValueNode);
+        } else if (expression instanceof IdentNode identNode) {
+            visit(identNode);
+        } else if (expression instanceof PlusNode plusNode) {
+            visitPlus(plusNode);
+        } else if (expression instanceof UnaryMinusNode unaryMinusNode) {
+            visitUnaryMinus(unaryMinusNode);
+        } else if (expression instanceof MinusNode minusNode) {
+            visitMoins(minusNode);
+        } else if (expression instanceof AndNode andNode) {
+            visitAnd(andNode);
+        } else if (expression instanceof OrNode orNode) {
+            visitOr(orNode);
+        } else if (expression instanceof NotNode notNode) {
+            visitNot(notNode);
+        } else if (expression instanceof MultiplicationNode multiplicationNode) {
+            visitMultiplication(multiplicationNode);
+        } else if (expression instanceof DivisionNode divisionNode) {
+            visitDivision(divisionNode);
+        } else if (expression instanceof GreaterThanNode greaterThanNode) {
+            visitGreaterThan(greaterThanNode);
+        } else if (expression instanceof EqualsNode equalsNode) {
+            visitEquals(equalsNode);
         }
     }
 

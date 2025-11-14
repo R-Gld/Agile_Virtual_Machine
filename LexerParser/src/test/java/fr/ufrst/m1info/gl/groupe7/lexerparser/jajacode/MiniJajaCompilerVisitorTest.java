@@ -1,13 +1,19 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp1.equals.EqualsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp1.greater.GreaterThanNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus.PlusNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -881,6 +887,104 @@ class MiniJajaCompilerVisitorTest {
         inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
     }
 
+    @Test
+    void visitEqualsNode_withMulitpleANDOR_generatesCorrectInstructions() {
+        // (x == 5) && (y == 10) || (z == 15)
+        IdentNode varX = ident("x");
+        IdentNode varY = ident("y");
+        IdentNode varZ = ident("z");
+        OrNode orNode = getNode(varX, varY, varZ);
+
+        AffectationNode node = mock(AffectationNode.class);
+        when(node.getExpression()).thenReturn(orNode);
+        when(node.getIdent1Node()).thenReturn(ident("result"));
+
+        visitor.visit(node);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "x@global");
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);
+        inOrder.verify(builderSpy).addInstruction(CMP);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "y@global");
+        inOrder.verify(builderSpy).addInstruction(PUSH, 10);
+        inOrder.verify(builderSpy).addInstruction(CMP);
+        inOrder.verify(builderSpy).addInstruction(AND);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "z@global");
+        inOrder.verify(builderSpy).addInstruction(PUSH, 15);
+        inOrder.verify(builderSpy).addInstruction(CMP);
+        inOrder.verify(builderSpy).addInstruction(OR);
+        inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
+    }
+
+    private static OrNode getNode(IdentNode varX, IdentNode varY, IdentNode varZ) {
+        EqualsNode equals1 = new EqualsNode(varX, new NbreNode(5));
+        EqualsNode equals2 = new EqualsNode(varY, new NbreNode(10));
+        EqualsNode equals3 = new EqualsNode(varZ, new NbreNode(15));
+        AndNode andNode = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode(equals1, equals2);
+        return new OrNode(andNode, equals3);
+    }
+
+    @Test
+    void test_simpleAffectation_withIdent_generatesLoadAndStore() {
+        // Test simple: result = a
+        IdentNode varA = ident("a");
+        AffectationNode node = new AffectationNode(ident("result"), varA);
+
+        visitor.visit(node);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "a@global");
+        inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
+    }
+
+    @Test
+    void test_multipleCondition_withAND_OR_SUP_CMP_generatesCorrectInstructions() {
+        // ((a > b) && (c == d)) || (e > f)
+        // Construction de l'expression ((a > b) && (c == d))
+        IdentNode varA = ident("a");
+        IdentNode varB = ident("b");
+        IdentNode varC = ident("c");
+        IdentNode varD = ident("d");
+        IdentNode varE = ident("e");
+        IdentNode varF = ident("f");
+
+        GreaterThanNode aGreaterB = new GreaterThanNode(varA, varB);
+        EqualsNode cEqualsD = new EqualsNode(varC, varD);
+        AndNode leftAnd = new AndNode(aGreaterB, cEqualsD);
+
+        // Construction de (e > f)
+        GreaterThanNode eGreaterF = new GreaterThanNode(varE, varF);
+
+        // Construction de ((a > b) && (c == d)) || (e > f)
+        OrNode orNode = new OrNode(leftAnd, eGreaterF);
+
+        // Créer une vraie instance d'AffectationNode au lieu d'un mock
+        // result = ((a > b) && (c == d)) || (e > f)
+        AffectationNode node = new AffectationNode(ident("result"), orNode);
+
+        visitor.visit(node);
+
+        InOrder inOrder = inOrder(builderSpy);
+        // a > b
+        inOrder.verify(builderSpy).addInstruction(LOAD, "a@global");
+        inOrder.verify(builderSpy).addInstruction(LOAD, "b@global");
+        inOrder.verify(builderSpy).addInstruction(SUP);
+        // c == d
+        inOrder.verify(builderSpy).addInstruction(LOAD, "c@global");
+        inOrder.verify(builderSpy).addInstruction(LOAD, "d@global");
+        inOrder.verify(builderSpy).addInstruction(CMP);
+        // AND
+        inOrder.verify(builderSpy).addInstruction(AND);
+        // e > f
+        inOrder.verify(builderSpy).addInstruction(LOAD, "e@global");
+        inOrder.verify(builderSpy).addInstruction(LOAD, "f@global");
+        inOrder.verify(builderSpy).addInstruction(SUP);
+        // OR
+        inOrder.verify(builderSpy).addInstruction(OR);
+        // STORE
+        inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
+    }
+
     // ===== Tests avec variables (déjà couverts partiellement ci-dessus) =====
 
     @Test
@@ -921,4 +1025,610 @@ class MiniJajaCompilerVisitorTest {
         inOrder.verify(builderSpy).addInstruction(CMP);
         inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
     }
+
+    // ===== Tests pour extractIdentifierName =====
+
+    @Test
+    void extractIdentifierName_withNonIdentNode_parsesFromToStringTree() {
+        // Créer un mock AstNode qui retourne une chaîne formatée
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode mockNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode.class);
+        when(mockNode.toStringTree()).thenReturn("Ident(myVar)");
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(mockNode);
+        when(affectation.getExpression()).thenReturn(new NbreNode(10));
+
+        visitor.visit(affectation);
+
+        verify(builderSpy).addInstruction(STORE, "myVar@global");
+    }
+
+    @Test
+    void extractIdentifierName_withUnformattedString_returnsAsIs() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode mockNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode.class);
+        when(mockNode.toStringTree()).thenReturn("someWeirdFormat");
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(mockNode);
+        when(affectation.getExpression()).thenReturn(new NbreNode(10));
+
+        visitor.visit(affectation);
+
+        verify(builderSpy).addInstruction(STORE, "someWeirdFormat@global");
+    }
+
+    // ===== Tests pour resolveVariableScope =====
+
+    @Test
+    void resolveVariableScope_inMainScopeWithLocalVariable_returnsMain() {
+        // Créer une variable locale dans le main
+        MainNode mainNode = mock(MainNode.class);
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        VarNode localVar = var("localVar", "int");
+
+        when(mainNode.getVars()).thenReturn(varsNode);
+        when(varsNode.getVar()).thenReturn(localVar);
+        when(varsNode.getVars()).thenReturn(null);
+
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(mainNode.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+        when(affectation.getIdent1Node()).thenReturn(ident("localVar"));
+        when(affectation.getExpression()).thenReturn(new NbreNode(42));
+
+        visitor.visit(mainNode);
+
+        verify(builderSpy).addInstruction(STORE, "localVar@main");
+    }
+
+    @Test
+    void resolveVariableScope_globalVariable_returnsGlobal() {
+        // Variable globale utilisée dans le main
+        DeclsNode declsNode = mock(DeclsNode.class);
+        VarNode globalVar = var("globalVar", "int");
+        when(declsNode.getDecl()).thenReturn(globalVar);
+        when(declsNode.getDecls()).thenReturn(null);
+
+        visitor.visit(declsNode);
+
+        MainNode mainNode = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+
+        when(mainNode.getVars()).thenReturn(null);
+        when(mainNode.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+        when(affectation.getIdent1Node()).thenReturn(ident("globalVar"));
+        when(affectation.getExpression()).thenReturn(new NbreNode(99));
+
+        visitor.visit(mainNode);
+
+        verify(builderSpy).addInstruction(STORE, "globalVar@global");
+    }
+
+    // ===== Tests pour visit(InstructionNode) avec tous les types =====
+
+    @Test
+    void visitInstructionNode_withSiNode_callsVisitSi() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode siNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode.class);
+        when(siNode.getExpressionNode()).thenReturn(new NbreNode(1));
+        when(siNode.getInstructionsNode()).thenReturn(null);
+        when(siNode.getInstructionsNode2()).thenReturn(null);
+
+        visitor.visit((InstructionNode) siNode);
+
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+    }
+
+    @Test
+    void visitInstructionNode_withTantqueNode_callsVisitTantque() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode tantqueNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode.class);
+        when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
+        when(tantqueNode.getInstructionsNode()).thenReturn(null);
+
+        visitor.visit((InstructionNode) tantqueNode);
+
+        verify(builderSpy).addInstruction(NOT);
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+    }
+
+    @Test
+    void visitInstructionNode_withSommeNode_callsVisitSomme() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode sommeNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
+        when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
+        when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(5));
+
+        visitor.visit((InstructionNode) sommeNode);
+
+        verify(builderSpy).addInstruction(PUSH, 5);
+        verify(builderSpy).addInstruction(INC, "x@global");
+    }
+
+    // ===== Tests pour visitSi =====
+
+    @Test
+    void visitSi_simpleIfWithoutElse_generatesCorrectInstructions() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode siNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode.class);
+        when(siNode.getExpressionNode()).thenReturn(new NbreNode(1));
+
+        InstructionsNode thenBlock = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(thenBlock.getInstructionNode()).thenReturn(affectation);
+        when(thenBlock.getInstructions()).thenReturn(null);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+        when(affectation.getExpression()).thenReturn(new NbreNode(10));
+
+        when(siNode.getInstructionsNode()).thenReturn(thenBlock);
+        when(siNode.getInstructionsNode2()).thenReturn(null);
+
+        visitor.visit((InstructionNode) siNode);
+
+        verify(builderSpy).addInstruction(PUSH, 1);
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+        verify(builderSpy, never()).addInstruction(eq(GOTO), anyInt());
+    }
+
+    @Test
+    void visitSi_ifWithElse_generatesGotoInstruction() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode siNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode.class);
+        when(siNode.getExpressionNode()).thenReturn(new NbreNode(1));
+
+        InstructionsNode thenBlock = mock(InstructionsNode.class);
+        AffectationNode thenAffect = mock(AffectationNode.class);
+        when(thenBlock.getInstructionNode()).thenReturn(thenAffect);
+        when(thenBlock.getInstructions()).thenReturn(null);
+        when(thenAffect.getIdent1Node()).thenReturn(ident("x"));
+        when(thenAffect.getExpression()).thenReturn(new NbreNode(10));
+
+        InstructionsNode elseBlock = mock(InstructionsNode.class);
+        AffectationNode elseAffect = mock(AffectationNode.class);
+        when(elseBlock.getInstructionNode()).thenReturn(elseAffect);
+        when(elseBlock.getInstructions()).thenReturn(null);
+        when(elseAffect.getIdent1Node()).thenReturn(ident("x"));
+        when(elseAffect.getExpression()).thenReturn(new NbreNode(20));
+
+        when(siNode.getInstructionsNode()).thenReturn(thenBlock);
+        when(siNode.getInstructionsNode2()).thenReturn(elseBlock);
+
+        visitor.visit((InstructionNode) siNode);
+
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+        verify(builderSpy).addInstruction(eq(GOTO), anyInt());
+    }
+
+    @Test
+    void visitSi_withNullCondition_handlesGracefully() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode siNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode.class);
+        when(siNode.getExpressionNode()).thenReturn(null);
+        when(siNode.getInstructionsNode()).thenReturn(null);
+        when(siNode.getInstructionsNode2()).thenReturn(null);
+
+        visitor.visit((InstructionNode) siNode);
+
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+    }
+
+    // ===== Tests pour visitTantque =====
+
+    @Test
+    void visitTantque_simpleWhileLoop_generatesCorrectInstructions() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode tantqueNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode.class);
+        GreaterThanNode condition = new GreaterThanNode(ident("i"), new NbreNode(0));
+        when(tantqueNode.getExpressionNode()).thenReturn(condition);
+
+        InstructionsNode body = mock(InstructionsNode.class);
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode somme = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
+        when(body.getInstructionNode()).thenReturn(somme);
+        when(body.getInstructions()).thenReturn(null);
+        when(somme.getIdent1Node()).thenReturn(ident("i"));
+        when(somme.getExpressionNode()).thenReturn(new NbreNode(-1));
+
+        when(tantqueNode.getInstructionsNode()).thenReturn(body);
+
+        visitor.visit((InstructionNode) tantqueNode);
+
+        verify(builderSpy).addInstruction(NOT);
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+        verify(builderSpy).addInstruction(eq(GOTO), anyInt());
+    }
+
+    @Test
+    void visitTantque_withNullBody_generatesLoopStructure() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode tantqueNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode.class);
+        when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
+        when(tantqueNode.getInstructionsNode()).thenReturn(null);
+
+        visitor.visit((InstructionNode) tantqueNode);
+
+        verify(builderSpy).addInstruction(NOT);
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+        verify(builderSpy).addInstruction(eq(GOTO), anyInt());
+    }
+
+    @Test
+    void visitTantque_withNullCondition_handlesGracefully() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode tantqueNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode.class);
+        when(tantqueNode.getExpressionNode()).thenReturn(null);
+        when(tantqueNode.getInstructionsNode()).thenReturn(null);
+
+        visitor.visit((InstructionNode) tantqueNode);
+
+        verify(builderSpy).addInstruction(NOT);
+        verify(builderSpy).addInstruction(eq(IF), anyInt());
+    }
+
+    // ===== Tests pour visitSomme =====
+
+    @Test
+    void visitSomme_withSimpleExpression_generatesIncInstruction() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode sommeNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
+        when(sommeNode.getIdent1Node()).thenReturn(ident("counter"));
+        when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(1));
+
+        visitor.visit((InstructionNode) sommeNode);
+
+        verify(builderSpy).addInstruction(PUSH, 1);
+        verify(builderSpy).addInstruction(INC, "counter@global");
+    }
+
+    @Test
+    void visitSomme_withComplexExpression_evaluatesBeforeInc() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode sommeNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode mult =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode(new NbreNode(2), ident("x"));
+        when(sommeNode.getIdent1Node()).thenReturn(ident("y"));
+        when(sommeNode.getExpressionNode()).thenReturn(mult);
+
+        visitor.visit((InstructionNode) sommeNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 2);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "x@global");
+        inOrder.verify(builderSpy).addInstruction(MUL);
+        inOrder.verify(builderSpy).addInstruction(INC, "y@global");
+    }
+
+    @Test
+    void visitSomme_withNullExpression_handlesGracefully() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode sommeNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
+        when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
+        when(sommeNode.getExpressionNode()).thenReturn(null);
+
+        visitor.visit((InstructionNode) sommeNode);
+
+        verify(builderSpy).addInstruction(INC, "x@global");
+    }
+
+    // ===== Tests pour visit(VarsNode) =====
+
+    @Test
+    void visitVarsNode_withSingleVariable_processesCorrectly() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        VarNode var = var("localVar", "int");
+        when(varsNode.getVar()).thenReturn(var);
+        when(varsNode.getVars()).thenReturn(null);
+
+        visitor.visit(varsNode);
+
+        verify(builderSpy).addInstruction(PUSH, 0);
+        verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("INT"), eq("VARIABLE"), eq(0));
+    }
+
+    @Test
+    void visitVarsNode_withMultipleVariables_processesAll() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode1 = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode2 = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        VarNode var1 = var("a", "int");
+        VarNode var2 = var("b", "bool");
+
+        when(varsNode1.getVar()).thenReturn(var1);
+        when(varsNode1.getVars()).thenReturn(varsNode2);
+        when(varsNode2.getVar()).thenReturn(var2);
+        when(varsNode2.getVars()).thenReturn(null);
+
+        visitor.visit(varsNode1);
+
+        verify(builderSpy, times(2)).addInstruction(eq(NEW), anyString(), anyString(), eq("VARIABLE"), eq(0));
+    }
+
+    @Test
+    void visitVarsNode_withNullNode_doesNothing() {
+        visitor.visit((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode) null);
+        verify(builderSpy, never()).addInstruction(any(), any());
+    }
+
+    @Test
+    void visitVarsNode_withNullVar_doesNothing() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        when(varsNode.getVar()).thenReturn(null);
+
+        visitor.visit(varsNode);
+
+        verify(builderSpy, never()).addInstruction(any(), any());
+    }
+
+    // ===== Tests pour visitUnaryMinus =====
+
+    @Test
+    void visitUnaryMinus_withPositiveNumber_generatesNegInstruction() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(5));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(unaryMinus);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);
+        inOrder.verify(builderSpy).addInstruction(NEG);
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitUnaryMinus_withVariable_generatesLoadThenNeg() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(ident("y"));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(unaryMinus);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "y@global");
+        inOrder.verify(builderSpy).addInstruction(NEG);
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitUnaryMinus_withNegativeNumber_generatesNegInstruction() {
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(-3));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(unaryMinus);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, -3);
+        inOrder.verify(builderSpy).addInstruction(NEG);
+    }
+
+    // ===== Tests pour visitDivision =====
+
+    @Test
+    void visitDivision_withTwoNumbers_generatesDivInstruction() {
+        DivisionNode division = new DivisionNode(new NbreNode(10), new NbreNode(2));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(division);
+        when(affectation.getIdent1Node()).thenReturn(ident("result"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 10);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 2);
+        inOrder.verify(builderSpy).addInstruction(DIV);
+        inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
+    }
+
+    @Test
+    void visitDivision_withVariables_generatesLoadThenDiv() {
+        DivisionNode division = new DivisionNode(ident("a"), ident("b"));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(division);
+        when(affectation.getIdent1Node()).thenReturn(ident("result"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LOAD, "a@global");
+        inOrder.verify(builderSpy).addInstruction(LOAD, "b@global");
+        inOrder.verify(builderSpy).addInstruction(DIV);
+        inOrder.verify(builderSpy).addInstruction(STORE, "result@global");
+    }
+
+    @Test
+    void visitDivision_withNegativeNumbers_generatesDivInstruction() {
+        DivisionNode division = new DivisionNode(new NbreNode(-20), new NbreNode(4));
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(division);
+        when(affectation.getIdent1Node()).thenReturn(ident("result"));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, -20);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 4);
+        inOrder.verify(builderSpy).addInstruction(DIV);
+    }
+
+    // ===== Tests complets pour visit(VarNode) =====
+
+    @Test
+    void visitVarNode_withBoolValueNode_deducesTypeAsBoolean() {
+        // Test: boolean x = true; → le type doit être déduit comme BOOLEAN
+        IdentNode ident = new IdentNode("x");
+        BoolValueNode boolValue = new BoolValueNode(true);
+
+        VarNode varNode = new VarNode("int", ident, boolValue); // Type déclaré "int" mais valeur booléenne
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, true);
+        verify(builderSpy).addInstruction(NEW, "x@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withBoolValueNodeFalse_deducesTypeAsBoolean() {
+        // Test: boolean x = false;
+        IdentNode ident = new IdentNode("y");
+        BoolValueNode boolValue = new BoolValueNode(false);
+
+        VarNode varNode = new VarNode("bool", ident, boolValue);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, false);
+        verify(builderSpy).addInstruction(NEW, "y@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withNbreNode_deducesTypeAsInt() {
+        // Test: int x = 42; → le type doit être déduit comme INT
+        IdentNode ident = new IdentNode("count");
+        NbreNode nbreValue = new NbreNode(42);
+
+        VarNode varNode = new VarNode("int", ident, nbreValue);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, 42);
+        verify(builderSpy).addInstruction(NEW, "count@global", "INT", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withNbreNodeNegative_deducesTypeAsInt() {
+        // Test: int x = -10;
+        IdentNode ident = new IdentNode("negNum");
+        NbreNode nbreValue = new NbreNode(-10);
+
+        VarNode varNode = new VarNode("int", ident, nbreValue);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, -10);
+        verify(builderSpy).addInstruction(NEW, "negNum@global", "INT", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withNullExpression_usesNormalizeTypeForBoolean() {
+        // Test: boolean x; (sans initialisation) → doit utiliser normalizeType et pusher false
+        IdentNode ident = new IdentNode("flag");
+        VarNode varNode = new VarNode("boolean", ident, null);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, false);
+        verify(builderSpy).addInstruction(NEW, "flag@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withNullExpression_usesNormalizeTypeForInt() {
+        // Test: int x; (sans initialisation) → doit utiliser normalizeType et pusher 0
+        IdentNode ident = new IdentNode("counter");
+        VarNode varNode = new VarNode("int", ident, null);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, 0);
+        verify(builderSpy).addInstruction(NEW, "counter@global", "INT", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withNullExpression_usesNormalizeTypeForBool() {
+        // Test: bool x; (avec type "bool" au lieu de "boolean")
+        IdentNode ident = new IdentNode("isReady");
+        VarNode varNode = new VarNode("bool", ident, null);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, false);
+        verify(builderSpy).addInstruction(NEW, "isReady@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withComplexExpression_callsVisitExpression() {
+        // Test: int x = 2 + 3; → doit appeler visitExpression
+        IdentNode ident = new IdentNode("sum");
+        PlusNode plusExpr = new PlusNode(new NbreNode(2), new NbreNode(3));
+
+        VarNode varNode = new VarNode("int", ident, plusExpr);
+
+        visitor.visit(varNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 2);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 3);
+        inOrder.verify(builderSpy).addInstruction(ADD);
+        inOrder.verify(builderSpy).addInstruction(NEW, "sum@global", "INT", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withIdentExpression_usesNormalizeType() {
+        // Test: int x = y; → le type doit être normalisé car ce n'est ni BoolValueNode ni NbreNode
+        IdentNode ident = new IdentNode("x");
+        IdentNode yIdent = new IdentNode("y");
+
+        VarNode varNode = new VarNode("int", ident, yIdent);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(LOAD, "y@global");
+        verify(builderSpy).addInstruction(NEW, "x@global", "INT", "VARIABLE", 0);
+    }
+
+
+    @Test
+    void visitVarNode_inMainScope_addsToMainLocalVariables() {
+        // Test qu'une variable déclarée dans le main est ajoutée aux variables locales
+        MainNode mainNode = mock(MainNode.class);
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        VarNode localVar = var("localInMain", "int");
+
+        when(mainNode.getVars()).thenReturn(varsNode);
+        when(varsNode.getVar()).thenReturn(localVar);
+        when(varsNode.getVars()).thenReturn(null);
+        when(mainNode.getInstrs()).thenReturn(null);
+
+        visitor.visit(mainNode);
+
+        verify(builderSpy).addInstruction(NEW, "localInMain@main", "INT", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_inGlobalScope_doesNotAddToMainLocalVariables() {
+        // Test qu'une variable globale n'est pas ajoutée aux variables locales du main
+        VarNode globalVar = var("globalVar", "bool");
+
+        visitor.visit(globalVar);
+
+        verify(builderSpy).addInstruction(NEW, "globalVar@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withUppercaseType_normalizesCorrectly() {
+        // Test: BOOLEAN x; → doit être normalisé en BOOLEAN
+        IdentNode ident = new IdentNode("uppercaseType");
+        VarNode varNode = new VarNode("BOOLEAN", ident, null);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, false);
+        verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "BOOLEAN", "VARIABLE", 0);
+    }
+
+    @Test
+    void visitVarNode_withMixedCaseType_normalizesCorrectly() {
+        // Test: Boolean x; → doit être normalisé en BOOLEAN
+        IdentNode ident = new IdentNode("mixedCase");
+        VarNode varNode = new VarNode("Boolean", ident, null);
+
+        visitor.visit(varNode);
+
+        verify(builderSpy).addInstruction(PUSH, false);
+        verify(builderSpy).addInstruction(NEW, "mixedCase@global", "BOOLEAN", "VARIABLE", 0);
+    }
 }
+

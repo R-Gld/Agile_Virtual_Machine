@@ -5,6 +5,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParserBaseVis
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Visiteur et interpréteur pour le langage JajaCode.
@@ -36,6 +37,8 @@ import java.util.*;
  * @see JajaCodeParser
  */
 public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object> implements Runnable {
+    Logger logger = Logger.getLogger(getClass().getName());
+    String tempValue = "%TMP%";
 
     /**
      * La pile de mémoire utilisée pour stocker les variables et les valeurs temporaires.
@@ -100,7 +103,9 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 return null;
             }
         }.visit(arbre);
-        System.out.println("Interpréteur: Programme chargé, " + programme.size() + " instructions.");
+        if (logger.isLoggable(java.util.logging.Level.INFO)) {
+            logger.log(java.util.logging.Level.INFO, "Interpréteur: Programme JajaCode chargé avec {0} instructions.", programme.size());
+        }
     }
 
     /**
@@ -143,7 +148,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             JajaCodeParser.InstrContext instruction = programme.get(instructionCounter);
 
             if (instruction == null) {
-                System.err.println("Error : @ " + instructionCounter + " introuvable !");
+                System.out.println("Error : @ " + instructionCounter + " introuvable !");
                 running = false;
                 break;
             }
@@ -188,87 +193,183 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      */
     @Override
     public Object visitInstr(JajaCodeParser.InstrContext ctx) {
+        processSimpleInstructions(ctx);
+        processIdentInstructions(ctx);
+        processAddressInstructions(ctx);
+        // Délégation pour les autres instructions (opérations arithmétiques, etc.)
+        handleOtherInstructions(ctx);
+        return null;
+    }
+
+    private void processSimpleInstructions(JajaCodeParser.InstrContext ctx) {
         if (ctx.INIT() != null) {
             axiomeInit();
-        } else if (ctx.PUSH() != null && ctx.valeur() != null) {
-            axiomePush(ctx.valeur());
-        } else if (ctx.NEW() != null) {
-            // L'instruction NEW peut avoir TYPE et SORTE comme tokens ou comme enfants de l'arbre
-            String ident = null;
-            String type = null;
-            String sorte = null;
-
-            if (ctx.ident() != null) {
-                ident = ctx.ident().getText();
-            }
-
-            if (ctx.TYPE() != null) {
-                type = ctx.TYPE().getText();
-            }
-
-            if (ctx.SORTE() != null) {
-                sorte = ctx.SORTE().getText();
-            }
-
-            // Si TYPE ou SORTE sont null, on essaie d'accéder aux enfants de l'arbre
-            if (type == null || sorte == null) {
-                System.out.println("\t\t[DEBUG] TYPE ou SORTE null, extraction depuis les enfants");
-                System.out.println("\t\t[DEBUG] Nombre d'enfants: " + ctx.getChildCount());
-
-                // Parcourir tous les enfants pour trouver TYPE et SORTE
-                for (int i = 0; i < ctx.getChildCount(); i++) {
-                    String childText = ctx.getChild(i).getText();
-                    System.out.println("\t\t[DEBUG] Enfant " + i + ": " + childText);
-
-                    // Détecter le type (INT, BOOLEAN, etc.)
-                    if (type == null && (childText.equals("INT") || childText.equals("BOOLEAN") || childText.equals("BOOL") || childText.matches("[A-Z]+"))) {
-                        type = childText;
-                        System.out.println("\t\t[DEBUG] Type trouvé: " + type);
-                    }
-
-                    // Détecter la sorte (VARIABLE, CST, TAB, etc.)
-                    if (sorte == null && (childText.equals("VARIABLE") || childText.equals("VAR") || childText.equals("CST") || childText.equals("TAB") || childText.equals("METH"))) {
-                        sorte = childText;
-                        System.out.println("\t\t[DEBUG] Sorte trouvée: " + sorte);
-                    }
-                }
-            }
-
-            if (ident != null && type != null && sorte != null) {
-                System.out.println("\t\t[DEBUG] Exécution de axiomeNew avec: ident=" + ident + ", type=" + type + ", sorte=" + sorte);
-                axiomeNew(ident, type, sorte);
-            } else {
-                System.err.println("Erreur : Instruction NEW incomplète !");
-                System.err.println("  ident: " + ident);
-                System.err.println("  TYPE: " + type);
-                System.err.println("  SORTE: " + sorte);
-                System.err.println("  Texte complet: " + ctx.getText());
-                System.err.println("  Nombre d'enfants: " + ctx.getChildCount());
-                running = false;
-            }
-        } else if (ctx.STORE() != null && ctx.ident() != null) {
-            axiomeStore(ctx.ident().getText());
-        } else if (ctx.LOAD() != null && ctx.ident() != null) {
-            axiomeLoad(ctx.ident().getText());
         } else if (ctx.SWAP() != null) {
             axiomeSwap();
         } else if (ctx.POP() != null) {
             axiomePop();
-        } else if (ctx.IF() != null && ctx.adresse() != null) {
-            axiomeIF(Integer.parseInt(ctx.adresse().getText()));
-        } else if (ctx.GOTO() != null && ctx.adresse() != null) {
-            axiomeGOTO(Integer.parseInt(ctx.adresse().getText()));
-        } else if (ctx.INC() != null && ctx.ident() != null) {
-            axiomeINC(ctx.ident().getText());
         } else if (ctx.JCSTOP() != null) {
             axiomeJcstop();
-        } else {
-            // Pour les autres instructions (ADD, SUB, MUL, DIV, NEG, NOT, AND, OR, CMP, SUP, INF),
-            // on laisse le visiteur par défaut les gérer via visitOper2, visitOper1, etc.
-            System.out.println("\t\t[DEBUG] Délégation à visitChildren pour: " + ctx.getText());
-            visitChildren(ctx);
+        } else if (ctx.PUSH() != null && ctx.valeur() != null) {
+            axiomePush(ctx.valeur());
+        } else if (ctx.NEW() != null) {
+            handleNewInstruction(ctx);
         }
-        return null;
+    }
+
+    private void processIdentInstructions(JajaCodeParser.InstrContext ctx) {
+        if (ctx.ident() == null) {
+            return;
+        }
+        String ident = ctx.ident().getText();
+        if (ctx.STORE() != null) {
+            axiomeStore(ident);
+        } else if (ctx.LOAD() != null) {
+            axiomeLoad(ident);
+        } else if (ctx.INC() != null) {
+            axiomeINC(ident);
+        }
+    }
+
+    private void processAddressInstructions(JajaCodeParser.InstrContext ctx) {
+        if (ctx.adresse() == null) {
+            return;
+        }
+        int address = Integer.parseInt(ctx.adresse().getText());
+        if (ctx.IF() != null) {
+            axiomeIF(address);
+        } else if (ctx.GOTO() != null) {
+            axiomeGOTO(address);
+        }
+    }
+
+    /**
+     * Gère l'instruction NEW en extrayant les paramètres depuis le contexte ou les enfants.
+     *
+     * @param ctx le contexte de l'instruction NEW
+     */
+    private void handleNewInstruction(JajaCodeParser.InstrContext ctx) {
+        NewInstructionParams params = extractNewParams(ctx);
+
+        if (params.isComplete()) {
+            System.out.println("\t\t[DEBUG] Exécution de axiomeNew avec: ident=" + params.ident + ", type=" + params.type + ", sorte=" + params.sorte);
+            axiomeNew(params.ident, params.type, params.sorte);
+        } else {
+            reportIncompleteNewInstruction(params, ctx);
+            running = false;
+        }
+    }
+
+    /**
+     * Extrait les paramètres de l'instruction NEW depuis le contexte.
+     *
+     * @param ctx le contexte de l'instruction NEW
+     * @return les paramètres extraits
+     */
+    private NewInstructionParams extractNewParams(JajaCodeParser.InstrContext ctx) {
+        NewInstructionParams params = new NewInstructionParams();
+
+        params.ident = extractIdent(ctx);
+        params.type = extractType(ctx);
+        params.sorte = extractSorte(ctx);
+
+        // Si TYPE ou SORTE sont null, extraire depuis les enfants
+        if (params.type == null || params.sorte == null) {
+            extractFromChildren(ctx, params);
+        }
+
+        return params;
+    }
+
+    /**
+     * Extrait l'identifiant depuis le contexte.
+     */
+    private String extractIdent(JajaCodeParser.InstrContext ctx) {
+        return ctx.ident() != null ? ctx.ident().getText() : null;
+    }
+
+    /**
+     * Extrait le type depuis le contexte.
+     */
+    private String extractType(JajaCodeParser.InstrContext ctx) {
+        return ctx.TYPE() != null ? ctx.TYPE().getText() : null;
+    }
+
+    /**
+     * Extrait la sorte depuis le contexte.
+     */
+    private String extractSorte(JajaCodeParser.InstrContext ctx) {
+        return ctx.SORTE() != null ? ctx.SORTE().getText() : null;
+    }
+
+    /**
+     * Extrait le type et la sorte depuis les enfants du contexte.
+     */
+    private void extractFromChildren(JajaCodeParser.InstrContext ctx, NewInstructionParams params) {
+        System.out.println("\t\t[DEBUG] TYPE ou SORTE null, extraction depuis les enfants");
+        System.out.println("\t\t[DEBUG] Nombre d'enfants: " + ctx.getChildCount());
+
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            String childText = ctx.getChild(i).getText();
+            System.out.println("\t\t[DEBUG] Enfant " + i + ": " + childText);
+
+            if (params.type == null && isTypeToken(childText)) {
+                params.type = childText;
+                System.out.println("\t\t[DEBUG] Type trouvé: " + params.type);
+            }
+
+            if (params.sorte == null && isSorteToken(childText)) {
+                params.sorte = childText;
+                System.out.println("\t\t[DEBUG] Sorte trouvée: " + params.sorte);
+            }
+        }
+    }
+
+    /**
+     * Vérifie si un texte correspond à un token de type.
+     */
+    private boolean isTypeToken(String text) {
+        return text.equals("INT") || text.equals("BOOLEAN") || text.equals("BOOL") || text.matches("[A-Z]+");
+    }
+
+    /**
+     * Vérifie si un texte correspond à un token de sorte.
+     */
+    private boolean isSorteToken(String text) {
+        return text.equals("VARIABLE") || text.equals("VAR") || text.equals("CST") || text.equals("TAB") || text.equals("METH");
+    }
+
+    /**
+     * Affiche un message d'erreur pour une instruction NEW incomplète.
+     */
+    private void reportIncompleteNewInstruction(NewInstructionParams params, JajaCodeParser.InstrContext ctx) {
+        System.out.println("Erreur : Instruction NEW incomplète !");
+        System.out.println("  ident: " + params.ident);
+        System.out.println("  TYPE: " + params.type);
+        System.out.println("  SORTE: " + params.sorte);
+        System.out.println("  Texte complet: " + ctx.getText());
+        System.out.println("  Nombre d'enfants: " + ctx.getChildCount());
+    }
+
+    /**
+     * Gère les autres instructions qui sont déléguées à visitChildren.
+     */
+    private void handleOtherInstructions(JajaCodeParser.InstrContext ctx) {
+        System.out.println("\t\t[DEBUG] Délégation à visitChildren pour: " + ctx.getText());
+        visitChildren(ctx);
+    }
+
+    /**
+     * Classe interne pour encapsuler les paramètres de l'instruction NEW.
+     */
+    private static class NewInstructionParams {
+        String ident;
+        String type;
+        String sorte;
+
+        boolean isComplete() {
+            return ident != null && type != null && sorte != null;
+        }
     }
 
     /**
@@ -305,7 +406,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         } else if (ctx.CMP() != null) {
             axiomeCMP();
         } else {
-            System.err.println("Opération binaire non implémentée: " + ctx.getText());
+            System.out.println("Opération binaire non implémentée: " + ctx.getText());
             instructionCounter++;
         }
         return null;
@@ -331,7 +432,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         } else if (ctx.NOT() != null) {
             axiomeNot();
         } else {
-            System.err.println("Opération unaire non implémentée: " + ctx.getText());
+            System.out.println("Opération unaire non implémentée: " + ctx.getText());
             instructionCounter++;
         }
         return null;
@@ -387,7 +488,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             type = "void";
         }
 
-        stacks.push(new Stacks.Quad("%TMP%", valeur, "%TMP%", type));
+        stacks.push(new Stacks.Quad(tempValue, valeur, tempValue, type));
         System.out.println("\t\tAxiome PUSH exécuté: " + valeur + " poussé sur la pile.");
         instructionCounter++;
     }
@@ -430,7 +531,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad valeur = stacks.pop();
 
         if (valeur == null) {
-            System.err.println("Erreur dans axiomeNew : pile vide.");
+            System.out.println("Erreur dans axiomeNew : pile vide.");
             running = false;
             return;
         }
@@ -438,25 +539,28 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         System.out.println("\t\t[DEBUG] Valeur dépilée: " + valeur.value);
 
         switch (kind.toLowerCase()) {
-            case "var":
-            case "variable":
+            case "variable", "var":
                 stacks.declareVar(ident, valeur.value, type);
                 break;
-            case "cst":
-            case "meth":
+            case "cst", "meth":
                 stacks.declareCst(ident, valeur.value, type);
                 break;
             case "tab":
-                if (valeur.value instanceof Integer) {
-                    stacks.declareTab(ident, (Integer) valeur.value, type);
+                if (valeur.value instanceof Integer size) {
+                    stacks.declareTab(ident, size, type);
                 } else {
-                    System.err.println("Erreur dans axiomeNew : taille de tableau invalide.");
+                    if (logger.isLoggable(java.util.logging.Level.INFO)) {
+                        logger.info("Erreur dans axiomeNew : taille de tableau invalide.");
+                    }
                     running = false;
                     return;
                 }
                 break;
             default:
-                System.err.println("Erreur dans axiomeNew : type de symbole inconnu: " + kind);
+                if (logger.isLoggable(java.util.logging.Level.INFO)) {
+                    logger.log(java.util.logging.Level.INFO,
+                        "Erreur dans axiomeNew : type de symbole inconnu: {0}", kind);
+                }
                 running = false;
                 return;
         }
@@ -493,7 +597,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad valeur = stacks.pop();
 
         if (valeur == null) {
-            System.err.println("Erreur fatale dans axiomeStore : pile vide.");
+            System.out.println("Erreur fatale dans axiomeStore : pile vide.");
             running = false;
             return;
         }
@@ -502,7 +606,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         boolean success = stacks.AffecterVal(ident, valeur.value);
 
         if (!success) {
-            System.err.println("Erreur fatale dans axiomeStore : impossible d'affecter la valeur à '" + ident + "'.");
+            System.out.println("Erreur fatale dans axiomeStore : impossible d'affecter la valeur à '" + ident + "'.");
             running = false;
             return;
         }
@@ -538,12 +642,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Object valeur = stacks.getValue(ident);
 
         if (valeur == null && !stacks.getSymbolTable().contains(ident)) {
-            System.err.println("Erreur fatale dans axiomeLoad : symbole '" + ident + "' introuvable.");
+            System.out.println("Erreur fatale dans axiomeLoad : symbole '" + ident + "' introuvable.");
             running = false;
             return;
         }
 
-        stacks.push(new Stacks.Quad("%TMP%", valeur, "%TMP%", stacks.getDataType(ident)));
+        stacks.push(new Stacks.Quad(tempValue, valeur, tempValue, stacks.getDataType(ident)));
         System.out.println("\t\tAxiome LOAD exécuté: " + ident + " = " + valeur + " chargé sur la pile.");
         instructionCounter++;
     }
@@ -611,19 +715,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeAdd : pile vide.");
+            System.out.println("Erreur dans axiomeAdd : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeAdd : opérandes non entiers.");
+            System.out.println("Erreur dans axiomeAdd : opérandes non entiers.");
             running = false;
             return;
         }
 
         int result = (Integer) op1.value + (Integer) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
 
         System.out.println("\t\tAxiome ADD exécuté: " + op1.value + " + " + op2.value + " = " + result);
         instructionCounter++;
@@ -648,19 +752,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeSub : pile vide.");
+            System.out.println("Erreur dans axiomeSub : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeSub : opérandes non entiers.");
+            System.out.println("Erreur dans axiomeSub : opérandes non entiers.");
             running = false;
             return;
         }
 
         int result = (Integer) op1.value - (Integer) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
 
         System.out.println("\t\tAxiome SUB exécuté: " + op1.value + " - " + op2.value + " = " + result);
         instructionCounter++;
@@ -679,19 +783,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeMul : pile vide.");
+            System.out.println("Erreur dans axiomeMul : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeMul : opérandes non entiers.");
+            System.out.println("Erreur dans axiomeMul : opérandes non entiers.");
             running = false;
             return;
         }
 
         int result = (Integer) op1.value * (Integer) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
 
         System.out.println("\t\tAxiome MUL exécuté: " + op1.value + " * " + op2.value + " = " + result);
         instructionCounter++;
@@ -716,25 +820,25 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeDiv : pile vide.");
+            System.out.println("Erreur dans axiomeDiv : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeDiv : opérandes non entiers.");
+            System.out.println("Erreur dans axiomeDiv : opérandes non entiers.");
             running = false;
             return;
         }
 
         if ((Integer) op2.value == 0) {
-            System.err.println("Erreur dans axiomeDiv : division par zéro.");
+            System.out.println("Erreur dans axiomeDiv : division par zéro.");
             running = false;
             return;
         }
 
         int result = (Integer) op1.value / (Integer) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
 
         System.out.println("\t\tAxiome DIV exécuté: " + op1.value + " / " + op2.value + " = " + result);
         instructionCounter++;
@@ -752,19 +856,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op = stacks.pop();
 
         if (op == null) {
-            System.err.println("Erreur dans axiomeUnaryMinus : pile vide.");
+            System.out.println("Erreur dans axiomeUnaryMinus : pile vide.");
             running = false;
             return;
         }
 
         if (!(op.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeUnaryMinus : opérande non entier.");
+            System.out.println("Erreur dans axiomeUnaryMinus : opérande non entier.");
             running = false;
             return;
         }
 
         int result = -(Integer) op.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
 
         System.out.println("\t\tAxiome UNARY MINUS exécuté: -" + op.value + " = " + result);
         instructionCounter++;
@@ -782,19 +886,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op = stacks.pop();
 
         if (op == null) {
-            System.err.println("Erreur dans axiomeNot : pile vide.");
+            System.out.println("Erreur dans axiomeNot : pile vide.");
             running = false;
             return;
         }
 
         if (!(op.value instanceof Boolean)) {
-            System.err.println("Erreur dans axiomeNot : opérande non booléen.");
+            System.out.println("Erreur dans axiomeNot : opérande non booléen.");
             running = false;
             return;
         }
 
         boolean result = !(Boolean) op.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
 
         System.out.println("\t\tAxiome NOT exécuté: !" + op.value + " = " + result);
         instructionCounter++;
@@ -813,19 +917,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeAnd : pile vide.");
+            System.out.println("Erreur dans axiomeAnd : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Boolean) || !(op2.value instanceof Boolean)) {
-            System.err.println("Erreur dans axiomeAnd : opérandes non booléens.");
+            System.out.println("Erreur dans axiomeAnd : opérandes non booléens.");
             running = false;
             return;
         }
 
         boolean result = (Boolean) op1.value && (Boolean) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
 
         System.out.println("\t\tAxiome AND exécuté: " + op1.value + " && " + op2.value + " = " + result);
         instructionCounter++;
@@ -844,19 +948,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeOr : pile vide.");
+            System.out.println("Erreur dans axiomeOr : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Boolean) || !(op2.value instanceof Boolean)) {
-            System.err.println("Erreur dans axiomeOr : opérandes non booléens.");
+            System.out.println("Erreur dans axiomeOr : opérandes non booléens.");
             running = false;
             return;
         }
 
         boolean result = (Boolean) op1.value || (Boolean) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
 
         System.out.println("\t\tAxiome OR exécuté: " + op1.value + " || " + op2.value + " = " + result);
         instructionCounter++;
@@ -875,13 +979,13 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeEq : pile vide.");
+            System.out.println("Erreur dans axiomeEq : pile vide.");
             running = false;
             return;
         }
 
         boolean result = Objects.equals(op1.value, op2.value);
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
 
         System.out.println("\t\tAxiome EQ exécuté: " + op1.value + " == " + op2.value + " = " + result);
         instructionCounter++;
@@ -900,46 +1004,21 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad op1 = stacks.pop();
 
         if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeSUP : pile vide.");
+            System.out.println("Erreur dans axiomeSUP : pile vide.");
             running = false;
             return;
         }
 
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeSUP : opérandes non entiers.");
+            System.out.println("Erreur dans axiomeSUP : opérandes non entiers.");
             running = false;
             return;
         }
 
         boolean result = (Integer) op1.value > (Integer) op2.value;
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
 
         System.out.println("\t\tAxiome SUP exécuté: " + op1.value + " > " + op2.value + " = " + result);
-        instructionCounter++;
-    }
-
-    /**
-     * Axiome CMP : Comparaison d'égalité.
-     * <p>
-     * Cette instruction dépile deux valeurs, les compare et empile le résultat booléen.
-     * </p>
-     *
-     * <p><b>Effet :</b> Calcule op1 == op2 et empile le résultat</p>
-     */
-    private void axiomeCmp() {
-        Stacks.Quad op2 = stacks.pop();
-        Stacks.Quad op1 = stacks.pop();
-
-        if (op1 == null || op2 == null) {
-            System.err.println("Erreur dans axiomeCMP : pile vide.");
-            running = false;
-            return;
-        }
-
-        boolean result = Objects.equals(op1.value, op2.value);
-        stacks.push(new Stacks.Quad("%TMP%", result, "%TMP%", "bool"));
-
-        System.out.println("\t\tAxiome CMP exécuté: " + op1.value + " == " + op2.value + " = " + result);
         instructionCounter++;
     }
 
@@ -975,18 +1054,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad condition = stacks.pop();
 
         if (condition == null) {
-            System.err.println("Erreur dans axiomeIF : pile vide.");
+            System.out.println("Erreur dans axiomeIF : pile vide.");
             running = false;
             return;
         }
 
         boolean conditionValue;
-        if (condition.value instanceof Boolean) {
-            conditionValue = (Boolean) condition.value;
-        } else if (condition.value instanceof Integer) {
-            conditionValue = (Integer) condition.value != 0;
+        if (condition.value instanceof Boolean boolValue) {
+            conditionValue = boolValue;
+        } else if (condition.value instanceof Integer intValue) {
+            conditionValue = intValue != 0;
         } else {
-            System.err.println("Erreur dans axiomeIF : condition invalide.");
+            System.out.println("Erreur dans axiomeIF : condition invalide.");
             running = false;
             return;
         }
@@ -1045,7 +1124,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Stacks.Quad increment = stacks.pop();
 
         if (increment == null) {
-            System.err.println("Erreur dans axiomeINC : pile vide.");
+            System.out.println("Erreur dans axiomeINC : pile vide.");
             running = false;
             return;
         }
@@ -1053,13 +1132,13 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         Object currentValue = stacks.getValue(ident);
 
         if (currentValue == null && !stacks.getSymbolTable().contains(ident)) {
-            System.err.println("Erreur dans axiomeINC : symbole '" + ident + "' introuvable.");
+            System.out.println("Erreur dans axiomeINC : symbole '" + ident + "' introuvable.");
             running = false;
             return;
         }
 
         if (!(currentValue instanceof Integer) || !(increment.value instanceof Integer)) {
-            System.err.println("Erreur dans axiomeINC : valeurs non entières.");
+            System.out.println("Erreur dans axiomeINC : valeurs non entières.");
             running = false;
             return;
         }
@@ -1068,7 +1147,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         boolean success = stacks.AffecterVal(ident, newValue);
 
         if (!success) {
-            System.err.println("Erreur dans axiomeINC : impossible d'incrémenter '" + ident + "'.");
+            System.out.println("Erreur dans axiomeINC : impossible d'incrémenter '" + ident + "'.");
             running = false;
             return;
         }
