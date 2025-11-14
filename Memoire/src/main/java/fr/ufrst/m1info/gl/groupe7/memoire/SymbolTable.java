@@ -1,6 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * SymbolTable
@@ -252,5 +254,19 @@ public class SymbolTable {
                 "table=" + Arrays.toString(table).replace("null, ", "") +
                 ", count=" + count +
                 '}';
+    }
+    /**
+     * Return a list of all symbols currently stored in the table.
+     */
+    public List<Symbol> getAllSymbols() {
+        List<Symbol> symbols = new ArrayList<>();
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node current = table[i];
+            while (current != null) {
+                symbols.add(current.symbol);
+                current = current.next;
+            }
+        }
+        return symbols;
     }
 }

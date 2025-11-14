@@ -212,4 +212,37 @@ public class Heap {
     public int getFreeCount() {
         return freeCount;
     }
+
+    //todo tab
+
+
+
+
+
+    public Object read(int address) {
+        if (address < 0 || address >= HEAP_SIZE) {
+            throw new IndexOutOfBoundsException("Heap.read: address out of bounds: " + address);
+        }
+        return memory[address];
+    }
+
+    /**
+     * Write a value into a raw heap cell address.
+     * (Performs bounds checking to avoid invalid access.)
+     */
+    public void write(int address, Object value) {
+        if (address < 0 || address >= HEAP_SIZE) {
+            throw new IndexOutOfBoundsException("Heap.write: address out of bounds: " + address);
+        }
+        memory[address] = value;
+    }
+
+    public Object[] getMemory() {
+        return memory;
+    }
+
+    public Node[] getTable() {
+        return table;
+    }
+
 }

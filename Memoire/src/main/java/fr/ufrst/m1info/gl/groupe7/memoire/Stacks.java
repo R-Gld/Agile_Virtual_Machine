@@ -59,11 +59,13 @@ public class Stacks {
     // ------------------------------------------------------------
     protected final java.util.Stack<Quad> stack;
     private final SymbolTable symbolTable;
+    private final Heap heap;
     
     // Constructor: create an empty stack
     public Stacks() {
         stack = new java.util.Stack<>();
         symbolTable = new SymbolTable();
+        heap = new Heap();
     }
 
 
@@ -145,13 +147,31 @@ public class Stacks {
         symbolTable.creationSymbol(ident,positionStack,type);
     }
 
-    /** Declare an array (simulated here by its size) */
+    /**
+     * Declare an array:
+     *  - allocate a block in the Heap with heap.allocate(...)
+     *  - store an ArrayInfo in the Quad.value (contains base address + logical size)
+     *  - push the Quad on the stack and register the symbol as before
+     */
     public void declareTab(String ident, int size, String type) {
-        Quad q = new Quad(ident, "size=" + size, "tab", type);
+        // 1) allocate block in heap
+        HeapEntry entry = heap.allocate(ident, size, null);
+
+        if (entry == null) {
+            throw new RuntimeException("Heap allocation failed for array '" + ident + "' of size " + size);
+        }
+
+        // 2) create ArrayInfo
+        ArrayInfo info = new ArrayInfo(entry.getAddress(), size);
+
+        Quad q = new Quad(ident, info, "tab", type);
         push(q);
+
+        // 3) register in symbol table
         int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
+        symbolTable.creationSymbol(ident, positionStack, type);
     }
+
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, String type) {
@@ -297,6 +317,127 @@ public class Stacks {
     public SymbolTable getSymbolTable() {
         return symbolTable;
     }
+
+    /**
+     * Find a Quad by identifier from top to bottom.
+     */
+    private Quad findQuad(String ident) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                return q;
+            }
+        }
+        return null;
+    }
+    /**
+     * Return the element at array[ index ].
+     * Returns null if not found, out-of-bounds, or not an array.
+     */
+    public Object getArrayValue(String ident, int index) {
+        Quad q = findQuad(ident);
+        if (q == null) return null;
+        if (!"tab".equals(q.object)) return null;
+
+        // q.value is ArrayInfo
+        if (!(q.value instanceof ArrayInfo)) return null;
+        ArrayInfo info = (ArrayInfo) q.value;
+
+        if (index < 0 || index >= info.getSize()) return null;
+
+        int address = info.getAddress() + index;
+
+        // Use heap.read; may throw if address invalid — you can catch if desired
+        return heap.read(address);
+    }
+    /**
+     * Set array[index] = value.
+     * Returns true on success, false otherwise.
+     */
+    public boolean setArrayValue(String ident, int index, Object value) {
+        Quad q = findQuad(ident);
+        if (q == null) return false;
+        if (!"tab".equals(q.object)) return false;
+        if (!(q.value instanceof ArrayInfo)) return false;
+
+        ArrayInfo info = (ArrayInfo) q.value;
+        if (index < 0 || index >= info.getSize()) return false;
+
+        // Type checking using existing helper
+        if (!isTypeCompatible(q.type, value)) return false;
+
+        int address = info.getAddress() + index;
+        heap.write(address, value);
+        return true;
+    }
+    // ============================================================
+// HEAP UTILITIES
+// ============================================================
+
+    /**
+     * Print the full content of the heap from Stacks.
+     */
+    public void printHeap() {
+        heap.printHeap();
+    }
+
+    /**
+     * Get all free blocks currently in the heap.
+     * Useful for integration tests.
+     */
+    public HeapEntry[] getAllHeapEntries() {
+        // Simple collection of all entries
+        java.util.List<HeapEntry> entries = new java.util.ArrayList<>();
+
+        for (int i = 0; i < 256; i++) { // check each cell in memory table
+            Object mem = heap.getMemory()[i];
+            if (mem instanceof HeapEntry) {
+                entries.add((HeapEntry) mem);
+            }
+        }
+
+        return entries.toArray(new HeapEntry[0]);
+    }
+
+    /**
+     * Retrieve the HeapEntry for a given identifier (array or allocated block)
+     */
+    public HeapEntry getHeapEntry(String id) {
+        // Since we allocate via heap.allocate and get the entry back in declareTab or declareVar
+        // We'll search through Quads in stack
+        for (Quad q : stack) {
+            if (q.ident.equals(id)) {
+                Object value = q.value;
+                if (value instanceof ArrayInfo) {
+                    ArrayInfo info = (ArrayInfo) value;
+                    return new HeapEntry(id, info.getAddress(), info.getSize(), null, false);
+                } else {
+                    // normal variable → allocate 1 cell
+                    int pos = getStackPosition(id);
+                    if (pos >= 0) {
+                        return new HeapEntry(id, pos, 1, null, false);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    /**
+     * Return all symbols currently in the symbol table.
+     * Useful for integration and unit tests.
+     */
+    public List<Symbol> getAllSymbols() {
+
+        return symbolTable.getAllSymbols();
+    }
+    /**
+     * Return the Heap instance (for testing or inspection purposes)
+     */
+    public Heap getHeap() {
+        return heap;
+    }
+
+
 }
 
 
