@@ -10,11 +10,9 @@ import java.util.List;
  * Implements a hash table using chained lists of Stacks.Quad.
  * Each bucket contains a linked list of Quad elements (ident, value, object,
  * type).
- * - No HashMap or Collections are used.
- * - Based on professor’s MiniJaja specification: “table de hachage avec chaînes
- * de Quad”.
- * - Compatible with project symbols (var, cst, tab, meth).
- * Average complexity: O(1) for insert, search, and update operations.
+ *
+ *
+ *
  */
 public class SymbolTable {
 

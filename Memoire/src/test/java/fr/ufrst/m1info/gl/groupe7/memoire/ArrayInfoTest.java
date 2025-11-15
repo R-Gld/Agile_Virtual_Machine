@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,79 +8,68 @@ import static org.junit.jupiter.api.Assertions.*;
  * Full coverage tests for the ArrayInfo class.
  */
 public class ArrayInfoTest {
+    private ArrayInfo array;
 
-    @Test
-    public void testConstructorAndGetters() {
-        ArrayInfo info = new ArrayInfo(10, 5);
-
-        assertEquals(10, info.getAddress(), "Address should match constructor value");
-        assertEquals(5, info.getSize(), "Size should match constructor value");
+    @BeforeEach
+    void setUp() {
+        array = new ArrayInfo(5); // tableau de taille 5
     }
 
     @Test
-    public void testSetAddress() {
-        ArrayInfo info = new ArrayInfo(0, 5);
-
-        info.setAddress(42);
-        assertEquals(42, info.getAddress(), "setAddress should update the internal address");
+    void testInitialAddresses() {
+        // Tous les indices doivent être initialisés à -1
+        for (int i = 0; i < array.getSize(); i++) {
+            assertEquals(-1, array.getAddressForIndex(i));
+        }
     }
 
     @Test
-    public void testSetSize() {
-        ArrayInfo info = new ArrayInfo(10, 3);
+    void testSetAndGetAddress() {
+        array.setAddressForIndex(0, 10);
+        array.setAddressForIndex(3, 42);
 
-        info.setSize(99);
-        assertEquals(99, info.getSize(), "setSize should update the internal size");
+        assertEquals(10, array.getAddressForIndex(0));
+        assertEquals(42, array.getAddressForIndex(3));
+
+        // Les autres indices restent à -1
+        assertEquals(-1, array.getAddressForIndex(1));
+        assertEquals(-1, array.getAddressForIndex(2));
+        assertEquals(-1, array.getAddressForIndex(4));
     }
 
     @Test
-    public void testToStringFormat() {
-        ArrayInfo info = new ArrayInfo(12, 8);
+    void testGetAllAddresses() {
+        array.setAddressForIndex(1, 5);
+        array.setAddressForIndex(4, 20);
 
-        String str = info.toString();
-        assertTrue(str.contains("address=12"), "toString() must contain the address");
-        assertTrue(str.contains("size=8"), "toString() must contain the size");
-        assertTrue(str.contains("ArrayInfo{"), "toString() must start with the class name");
+        int[] addresses = array.getAllAddresses();
+        assertEquals(5, addresses.length);
+        assertEquals(-1, addresses[0]);
+        assertEquals(5, addresses[1]);
+        assertEquals(-1, addresses[2]);
+        assertEquals(-1, addresses[3]);
+        assertEquals(20, addresses[4]);
     }
 
     @Test
-    public void testModifyAfterCreation() {
-        ArrayInfo info = new ArrayInfo(5, 2);
-
-        info.setAddress(100);
-        info.setSize(50);
-
-        assertEquals(100, info.getAddress());
-        assertEquals(50, info.getSize());
+    void testGetSize() {
+        assertEquals(5, array.getSize());
     }
 
     @Test
-    public void testZeroValues() {
-        ArrayInfo info = new ArrayInfo(0, 0);
-
-        assertEquals(0, info.getAddress());
-        assertEquals(0, info.getSize());
-
-        info.setAddress(0);
-        info.setSize(0);
-
-        assertEquals(0, info.getAddress());
-        assertEquals(0, info.getSize());
+    void testSetAddressOutOfBounds() {
+        // Vérifier que les indices invalides déclenchent une exception
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.setAddressForIndex(-1, 10));
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.setAddressForIndex(5, 10));
     }
 
     @Test
-    public void testNegativeValues() {
-        ArrayInfo info = new ArrayInfo(-10, -5);
-
-        assertEquals(-10, info.getAddress());
-        assertEquals(-5, info.getSize());
-
-        info.setAddress(-100);
-        info.setSize(-1);
-
-        assertEquals(-100, info.getAddress());
-        assertEquals(-1, info.getSize());
+    void testGetAddressOutOfBounds() {
+        // Vérifier que la lecture d’un indice invalide déclenche une exception
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.getAddressForIndex(-1));
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> array.getAddressForIndex(5));
     }
+
     /** Fake heap that always fails allocation */
     private static class FakeFailHeap extends Heap {
         @Override
@@ -102,7 +92,7 @@ public class ArrayInfoTest {
             }
         }
     }
-
+    /*
     @Test
     void testDeclareTabThrowsExceptionOnFailedAllocation() {
         Stacks stacks = new StacksWithFailHeap();
@@ -115,5 +105,7 @@ public class ArrayInfoTest {
         assertTrue(ex.getMessage().contains("Heap allocation failed"),
                 "Exception message should indicate allocation failure");
     }
+     */
+
 }
 

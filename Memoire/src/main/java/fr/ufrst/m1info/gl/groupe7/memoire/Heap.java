@@ -213,10 +213,6 @@ public class Heap {
         return freeCount;
     }
 
-    //todo tab
-
-
-
 
 
     public Object read(int address) {
@@ -235,14 +231,19 @@ public class Heap {
             throw new IndexOutOfBoundsException("Heap.write: address out of bounds: " + address);
         }
         memory[address] = value;
+        // Debug log
+        System.out.println(
+                "[HEAP WRITE] address=" + address +
+                        "  stored_value=" + value +
+                        " (" + (value != null ? value.getClass().getSimpleName() : "null") + ")"
+        );
     }
+
 
     public Object[] getMemory() {
         return memory;
     }
 
-    public Node[] getTable() {
-        return table;
-    }
+
 
 }
