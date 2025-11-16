@@ -321,10 +321,9 @@ public class App extends Application {
             protected Void call() {
                 try {
                     if ("MiniJaja".equals(choice)) {
-                        MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
-                        interpreter.run(mjjText);
+                        MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
+                        interpreter.run();
                     } else {
-                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter();
                         String[] lines = jjcText.split("\\n");
                         StringBuilder result = new StringBuilder();
                         for (int i = 0; i < lines.length; i++) {
@@ -333,7 +332,8 @@ public class App extends Application {
                                     .append(lines[i])
                                     .append("\n");
                         }
-                        jjcInterpreter.run(result.toString());
+                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
+                        jjcInterpreter.run();
                     }
                 } catch (Exception e) { throw new RuntimeException(e); }
                 return null;
