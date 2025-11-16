@@ -17,7 +17,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
 
-        <junit.jupiter.version>5.13.4</junit.jupiter.version>
+        <junit.jupiter.version>5.11.2</junit.jupiter.version>
         <mockito.version>5.14.2</mockito.version>
 
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
