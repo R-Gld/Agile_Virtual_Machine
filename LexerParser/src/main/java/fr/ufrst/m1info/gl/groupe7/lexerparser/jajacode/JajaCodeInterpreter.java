@@ -1,21 +1,31 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-public class JajaCodeInterpreter {
+public class JajaCodeInterpreter implements Runnable {
+    private final String jajaCode;
+    private final DiagnosticCollector collector;
+
+    public JajaCodeInterpreter(String jajaCode, DiagnosticCollector collector) {
+        this.jajaCode = jajaCode;
+        this.collector = collector;
+    }
+
     public static void main(String[] args) {
-        SymbolTable symbolTable = new SymbolTable();
         String jajaCode = """
                     1 init
                     2 push(0)
-                    3 new(x@1, int, var, 0)
+                    3 new(x@global, INT, VARIABLE, 0)
                     4 push(5)
-                    5 store(x@1)
+                    5 store(x@global)
                     6 push(0)
                     7 swap
                     8 pop
@@ -23,31 +33,31 @@ public class JajaCodeInterpreter {
                     10 jcstop
                 """;
 
-        CharStream stream = CharStreams.fromString(jajaCode);
-        JajaCodeLexer lexer = new JajaCodeLexer(stream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        JajaCodeParser parser = new JajaCodeParser(tokens);
-        JajaCodeParser.ClasseContext arbreJajaCode = parser.classe();
-
-        JajaCodeInterpreterVisitor interpreteur = new JajaCodeInterpreterVisitor(symbolTable);
-
-        interpreteur.load(arbreJajaCode);
-        interpreteur.run();
+        new JajaCodeInterpreter(jajaCode, new DiagnosticCollector()).run();
     }
 
     /**
      * Fonction utiliser par l'interface pour interpreter du jajacode
-     * @param jajaCode String du jajacode a interpréter
      */
-    public void run(String jajaCode){
-        SymbolTable symbolTable = new SymbolTable();
+    @Override
+    public void run() {
+        Stacks stacks = new Stacks();
         CharStream stream = CharStreams.fromString(jajaCode);
         JajaCodeLexer lexer = new JajaCodeLexer(stream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JajaCodeParser parser = new JajaCodeParser(tokens);
+
+        SyntaxErrorListener sel = new SyntaxErrorListener(collector, null);
+        sel.register(lexer);
+        sel.register(parser);
+
         JajaCodeParser.ClasseContext arbreJajaCode = parser.classe();
 
-        JajaCodeInterpreterVisitor interpreteur = new JajaCodeInterpreterVisitor(symbolTable);
+        if (collector.hasErrors()) {
+            throw new SyntaxException(collector);
+        }
+
+        JajaCodeInterpreterVisitor interpreteur = new JajaCodeInterpreterVisitor(stacks);
 
         interpreteur.load(arbreJajaCode);
         interpreteur.run();

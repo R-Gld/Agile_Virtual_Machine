@@ -32,6 +32,14 @@ public class TantqueNode extends InstructionNode {
         this.instructionsNode = instructionsNode;
     }
 
+    public Expression getExpressionNode() {
+        return expressionNode;
+    }
+
+    public InstructionsNode getInstructionsNode() {
+        return instructionsNode;
+    }
+
     /**
      * Render this node as a compact tree string used for debugging and tests.
      *

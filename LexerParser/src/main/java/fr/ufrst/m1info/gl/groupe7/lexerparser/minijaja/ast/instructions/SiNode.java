@@ -87,6 +87,33 @@ public class SiNode extends InstructionNode {
     }
 
     /**
+     * Get the condition expression of this if statement.
+     *
+     * @return the condition expression
+     */
+    public Expression getExpressionNode() {
+        return expressionNode;
+    }
+
+    /**
+     * Get the "then" branch instructions.
+     *
+     * @return the instructions to execute when the condition is true
+     */
+    public InstructionsNode getInstructionsNode() {
+        return instructionsNode;
+    }
+
+    /**
+     * Get the "else" branch instructions.
+     *
+     * @return the instructions to execute when the condition is false, or null if no else branch
+     */
+    public InstructionsNode getInstructionsNode2() {
+        return instructionsNode2;
+    }
+
+    /**
      * Interpret this conditional node using the provided runtime stacks.
      *
      * <p>The condition expression is evaluated and expected to return a Boolean.

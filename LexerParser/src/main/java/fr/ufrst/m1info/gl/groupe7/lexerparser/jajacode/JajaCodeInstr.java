@@ -29,8 +29,8 @@ public enum JajaCodeInstr {
     NEG("neg"),
     WRITE("write"),
     WRITELN("writeln"),
-    INC("inc"),
-    AINC("ainc"),
+    INC("inc", 1), // inc(ident)
+    AINC("ainc", 1) // ainc(ident),
     ;
 
     private final String text;

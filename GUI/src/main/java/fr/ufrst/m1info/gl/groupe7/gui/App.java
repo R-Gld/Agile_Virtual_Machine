@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.gui;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.concurrent.Task;

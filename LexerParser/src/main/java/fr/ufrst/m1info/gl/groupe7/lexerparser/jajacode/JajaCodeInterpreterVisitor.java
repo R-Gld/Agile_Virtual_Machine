@@ -3,32 +3,93 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
-import fr.ufrst.m1info.gl.groupe7.memoire.Symbol;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 
 import java.util.*;
+import java.util.logging.Logger;
 
+/**
+ * Visiteur et interpréteur pour le langage JajaCode.
+ * <p>
+ * Cette classe implémente un interpréteur pour le bytecode JajaCode généré par le compilateur MiniJaja.
+ * Elle visite l'arbre syntaxique du programme JajaCode et exécute les instructions une par une
+ * en utilisant un compteur de programme (PC) et une pile de mémoire.
+ * </p>
+ *
+ * <p><b>Architecture :</b></p>
+ * <ul>
+ *   <li>Charge le programme JajaCode en mémoire avec {@link #load(JajaCodeParser.ClasseContext)}</li>
+ *   <li>Exécute le programme avec {@link #run()}</li>
+ *   <li>Utilise un compteur de programme (PC) pour suivre l'instruction courante</li>
+ *   <li>Maintient une pile de mémoire via l'objet {@link Stacks}</li>
+ * </ul>
+ *
+ * <p><b>Exemple d'utilisation :</b></p>
+ * <pre>{@code
+ * Stacks stacks = new Stacks();
+ * JajaCodeInterpreterVisitor interpreter = new JajaCodeInterpreterVisitor(stacks);
+ * interpreter.load(programmeArbre);
+ * interpreter.run();
+ * }</pre>
+ *
+ * @author Groupe 7
+ * @version 1.0
+ * @see Stacks
+ * @see JajaCodeParser
+ */
 public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object> implements Runnable {
+    Logger logger = Logger.getLogger(getClass().getName());
+    String tempValue = "%TMP%";
 
-//    private final Stack<Object> pile = new Stack<>();
-    private final ManageSTForInterp.JJCStack stack = new ManageSTForInterp.JJCStack();
+    /**
+     * La pile de mémoire utilisée pour stocker les variables et les valeurs temporaires.
+     * Cette pile gère également la table des symboles.
+     */
+    private final Stacks stacks;
 
-    private final SymbolTable symbolTable;
-
+    /**
+     * Map contenant toutes les instructions du programme JajaCode indexées par leur adresse.
+     * Clé : adresse de l'instruction (Integer)
+     * Valeur : contexte de l'instruction (InstrContext)
+     */
     private final Map<Integer, JajaCodeParser.InstrContext> programme = new HashMap<>();
 
-    // Compteur pour les instructions
+    /**
+     * Compteur de programme (Program Counter) qui pointe sur l'adresse de l'instruction courante.
+     * Initialisé à 1 au début de l'exécution.
+     */
     private int instructionCounter;
+
+    /**
+     * Indicateur d'état de l'interpréteur.
+     * {@code true} si le programme est en cours d'exécution, {@code false} s'il est arrêté.
+     */
     private boolean running;
 
-    public JajaCodeInterpreterVisitor(SymbolTable symbolTable) {
-        this.symbolTable = symbolTable;
+    /**
+     * Construit un nouvel interpréteur JajaCode avec une pile de mémoire.
+     *
+     * @param stacks la pile de mémoire à utiliser pour l'exécution du programme
+     */
+    public JajaCodeInterpreterVisitor(Stacks stacks) {
+        this.stacks = stacks;
     }
 
     /**
      * Charge le programme JajaCode à partir de l'arbre syntaxique.
+     * <p>
+     * Cette méthode parcourt l'arbre syntaxique du programme JajaCode et indexe
+     * chaque instruction par son adresse dans la map {@link #programme}.
+     * Cela permet un accès direct aux instructions pendant l'exécution.
+     * </p>
      *
-     * @param arbre L'arbre syntaxique du programme JajaCode.
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Parcourt récursivement l'arbre syntaxique</li>
+     *   <li>Pour chaque instruction, extrait son adresse</li>
+     *   <li>Stocke l'instruction dans la map avec son adresse comme clé</li>
+     * </ol>
+     *
+     * @param arbre l'arbre syntaxique du programme JajaCode à charger
      */
     public void load(JajaCodeParser.ClasseContext arbre) {
         new JajaCodeParserBaseVisitor<Void>() {
@@ -42,13 +103,39 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 return null;
             }
         }.visit(arbre);
-        System.out.println("Interpréteur: Programme chargé, " + programme.size() + " instructions.");
+        if (logger.isLoggable(java.util.logging.Level.INFO)) {
+            logger.log(java.util.logging.Level.INFO, "Interpréteur: Programme JajaCode chargé avec {0} instructions.", programme.size());
+        }
     }
 
     /**
-     * Exécute le programme JajaCode chargé. L'on va avoir un compteur de programme (pc) qui pointe sur l'instruction courante.
-     * Tant que le programme est en cours d'exécution, on récupère l'instruction à l'adresse pc,
-     * on l'exécute, puis on met à jour pc en fonction de l'instruction exécutée
+     * Exécute le programme JajaCode chargé.
+     * <p>
+     * Cette méthode implémente la boucle principale d'exécution de l'interpréteur.
+     * Elle initialise le compteur de programme à 1 et exécute les instructions
+     * séquentiellement jusqu'à ce que le programme se termine ou qu'une erreur survienne.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Initialise le compteur de programme ({@link #instructionCounter}) à 1</li>
+     *   <li>Active le flag {@link #running}</li>
+     *   <li>Tant que {@code running} est vrai :
+     *     <ul>
+     *       <li>Récupère l'instruction à l'adresse courante</li>
+     *       <li>Affiche l'état de la pile et l'instruction</li>
+     *       <li>Exécute l'instruction via {@link #visitInstr(JajaCodeParser.InstrContext)}</li>
+     *       <li>Le compteur de programme est incrémenté par chaque axiome</li>
+     *     </ul>
+     *   </li>
+     *   <li>Affiche l'état final de la pile et de la mémoire</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Si une instruction n'existe pas à l'adresse courante, affiche une erreur et arrête</li>
+     *   <li>Chaque axiome peut arrêter l'exécution en cas d'erreur critique</li>
+     * </ul>
      */
     @Override
     public void run() {
@@ -61,134 +148,1053 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             JajaCodeParser.InstrContext instruction = programme.get(instructionCounter);
 
             if (instruction == null) {
-                System.err.println("Error : @ " + instructionCounter + " introuvable !");
+                System.out.println("Error : @ " + instructionCounter + " introuvable !");
                 running = false;
                 break;
             }
 
-            System.out.println("PC: " + instructionCounter + " → Exécute: " + instruction.getText() + " | Pile: " + stack);
+            System.out.println("PC: " + instructionCounter + " → Exécute: " + instruction.getText() + " | Pile: ");
+            stacks.printStack();
 
             visit(instruction);
         }
 
         System.out.println("--- Exécution Terminée ---");
-        System.out.println("Pile finale: " + stack);
-        System.out.println("Mémoire finale: " + symbolTable);
+        System.out.println("Pile finale:");
+        stacks.printStack();
+        System.out.println("Mémoire finale: ");
+        stacks.printSymbolTable();
     }
 
     /**
      * Visite et exécute une instruction JajaCode.
+     * <p>
+     * Cette méthode analyse le type d'instruction et délègue son exécution
+     * à l'axiome approprié. C'est le point central de dispatch de l'interpréteur.
+     * </p>
      *
-     * @param ctx Le contexte de l'instruction à exécuter.
-     * @return null
+     * <p><b>Instructions supportées :</b></p>
+     * <ul>
+     *   <li>{@code INIT} - Initialisation du programme → {@link #axiomeInit()}</li>
+     *   <li>{@code PUSH} - Empiler une valeur → {@link #axiomePush(JajaCodeParser.ValeurContext)}</li>
+     *   <li>{@code NEW} - Déclarer un symbole → {@link #axiomeNew(String, String, String)}</li>
+     *   <li>{@code STORE} - Stocker une valeur → {@link #axiomeStore(String)}</li>
+     *   <li>{@code LOAD} - Charger une valeur → {@link #axiomeLoad(String)}</li>
+     *   <li>{@code SWAP} - Échanger → {@link #axiomeSwap()}</li>
+     *   <li>{@code POP} - Dépiler → {@link #axiomePop()}</li>
+     *   <li>{@code IF} - Saut conditionnel → {@link #axiomeIF(int)}</li>
+     *   <li>{@code GOTO} - Saut inconditionnel → {@link #axiomeGOTO(int)}</li>
+     *   <li>{@code INC} - Incrémentation → {@link #axiomeINC(String)}</li>
+     *   <li>{@code JCSTOP} - Arrêt du programme → {@link #axiomeJcstop()}</li>
+     * </ul>
+     *
+     * @param ctx le contexte de l'instruction à exécuter
+     * @return null (la valeur de retour n'est pas utilisée)
      */
-
     @Override
     public Object visitInstr(JajaCodeParser.InstrContext ctx) {
+        processSimpleInstructions(ctx);
+        processIdentInstructions(ctx);
+        processAddressInstructions(ctx);
+        // Délégation pour les autres instructions (opérations arithmétiques, etc.)
+        handleOtherInstructions(ctx);
+        return null;
+    }
+
+    private void processSimpleInstructions(JajaCodeParser.InstrContext ctx) {
         if (ctx.INIT() != null) {
             axiomeInit();
-        } else if (ctx.PUSH() != null) {
-            axiomePush(ctx.valeur());
-        } else if (ctx.NEW() != null) {
-            axiomeNew(ctx.ident().getText(), ctx.TYPE().getText(), ctx.SORTE().getText());
-        } else if (ctx.STORE() != null) {
-            axiomeStore(ctx.ident().getText());
         } else if (ctx.SWAP() != null) {
             axiomeSwap();
         } else if (ctx.POP() != null) {
             axiomePop();
         } else if (ctx.JCSTOP() != null) {
             axiomeJcstop();
+        } else if (ctx.PUSH() != null && ctx.valeur() != null) {
+            axiomePush(ctx.valeur());
+        } else if (ctx.NEW() != null) {
+            handleNewInstruction(ctx);
+        }
+    }
+
+    private void processIdentInstructions(JajaCodeParser.InstrContext ctx) {
+        if (ctx.ident() == null) {
+            return;
+        }
+        String ident = ctx.ident().getText();
+        if (ctx.STORE() != null) {
+            axiomeStore(ident);
+        } else if (ctx.LOAD() != null) {
+            axiomeLoad(ident);
+        } else if (ctx.INC() != null) {
+            axiomeINC(ident);
+        }
+    }
+
+    private void processAddressInstructions(JajaCodeParser.InstrContext ctx) {
+        if (ctx.adresse() == null) {
+            return;
+        }
+        int address = Integer.parseInt(ctx.adresse().getText());
+        if (ctx.IF() != null) {
+            axiomeIF(address);
+        } else if (ctx.GOTO() != null) {
+            axiomeGOTO(address);
+        }
+    }
+
+    /**
+     * Gère l'instruction NEW en extrayant les paramètres depuis le contexte ou les enfants.
+     *
+     * @param ctx le contexte de l'instruction NEW
+     */
+    private void handleNewInstruction(JajaCodeParser.InstrContext ctx) {
+        NewInstructionParams params = extractNewParams(ctx);
+
+        if (params.isComplete()) {
+            System.out.println("\t\t[DEBUG] Exécution de axiomeNew avec: ident=" + params.ident + ", type=" + params.type + ", sorte=" + params.sorte);
+            axiomeNew(params.ident, params.type, params.sorte);
         } else {
-            System.err.println("Instruction non implémentée: " + ctx.getText());
+            reportIncompleteNewInstruction(params, ctx);
+            running = false;
+        }
+    }
+
+    /**
+     * Extrait les paramètres de l'instruction NEW depuis le contexte.
+     *
+     * @param ctx le contexte de l'instruction NEW
+     * @return les paramètres extraits
+     */
+    private NewInstructionParams extractNewParams(JajaCodeParser.InstrContext ctx) {
+        NewInstructionParams params = new NewInstructionParams();
+
+        params.ident = extractIdent(ctx);
+        params.type = extractType(ctx);
+        params.sorte = extractSorte(ctx);
+
+        // Si TYPE ou SORTE sont null, extraire depuis les enfants
+        if (params.type == null || params.sorte == null) {
+            extractFromChildren(ctx, params);
+        }
+
+        return params;
+    }
+
+    /**
+     * Extrait l'identifiant depuis le contexte.
+     */
+    private String extractIdent(JajaCodeParser.InstrContext ctx) {
+        return ctx.ident() != null ? ctx.ident().getText() : null;
+    }
+
+    /**
+     * Extrait le type depuis le contexte.
+     */
+    private String extractType(JajaCodeParser.InstrContext ctx) {
+        return ctx.TYPE() != null ? ctx.TYPE().getText() : null;
+    }
+
+    /**
+     * Extrait la sorte depuis le contexte.
+     */
+    private String extractSorte(JajaCodeParser.InstrContext ctx) {
+        return ctx.SORTE() != null ? ctx.SORTE().getText() : null;
+    }
+
+    /**
+     * Extrait le type et la sorte depuis les enfants du contexte.
+     */
+    private void extractFromChildren(JajaCodeParser.InstrContext ctx, NewInstructionParams params) {
+        System.out.println("\t\t[DEBUG] TYPE ou SORTE null, extraction depuis les enfants");
+        System.out.println("\t\t[DEBUG] Nombre d'enfants: " + ctx.getChildCount());
+
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            String childText = ctx.getChild(i).getText();
+            System.out.println("\t\t[DEBUG] Enfant " + i + ": " + childText);
+
+            if (params.type == null && isTypeToken(childText)) {
+                params.type = childText;
+                System.out.println("\t\t[DEBUG] Type trouvé: " + params.type);
+            }
+
+            if (params.sorte == null && isSorteToken(childText)) {
+                params.sorte = childText;
+                System.out.println("\t\t[DEBUG] Sorte trouvée: " + params.sorte);
+            }
+        }
+    }
+
+    /**
+     * Vérifie si un texte correspond à un token de type.
+     */
+    private boolean isTypeToken(String text) {
+        return text.equals("INT") || text.equals("BOOLEAN") || text.equals("BOOL") || text.matches("[A-Z]+");
+    }
+
+    /**
+     * Vérifie si un texte correspond à un token de sorte.
+     */
+    private boolean isSorteToken(String text) {
+        return text.equals("VARIABLE") || text.equals("VAR") || text.equals("CST") || text.equals("TAB") || text.equals("METH");
+    }
+
+    /**
+     * Affiche un message d'erreur pour une instruction NEW incomplète.
+     */
+    private void reportIncompleteNewInstruction(NewInstructionParams params, JajaCodeParser.InstrContext ctx) {
+        System.out.println("Erreur : Instruction NEW incomplète !");
+        System.out.println("  ident: " + params.ident);
+        System.out.println("  TYPE: " + params.type);
+        System.out.println("  SORTE: " + params.sorte);
+        System.out.println("  Texte complet: " + ctx.getText());
+        System.out.println("  Nombre d'enfants: " + ctx.getChildCount());
+    }
+
+    /**
+     * Gère les autres instructions qui sont déléguées à visitChildren.
+     */
+    private void handleOtherInstructions(JajaCodeParser.InstrContext ctx) {
+        System.out.println("\t\t[DEBUG] Délégation à visitChildren pour: " + ctx.getText());
+        visitChildren(ctx);
+    }
+
+    /**
+     * Classe interne pour encapsuler les paramètres de l'instruction NEW.
+     */
+    private static class NewInstructionParams {
+        String ident;
+        String type;
+        String sorte;
+
+        boolean isComplete() {
+            return ident != null && type != null && sorte != null;
+        }
+    }
+
+    /**
+     * Visite un nœud d'opération binaire et exécute l'axiome correspondant.
+     * <p>
+     * Cette méthode gère les opérations arithmétiques binaires :
+     * <ul>
+     *   <li>ADD (+)</li>
+     *   <li>SUB (-)</li>
+     *   <li>MUL (*)</li>
+     *   <li>DIV (/)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ctx le contexte de l'opération binaire
+     * @return null
+     */
+    @Override
+    public Object visitOper2(JajaCodeParser.Oper2Context ctx) {
+        if (ctx.ADD() != null) {
+            axiomeAdd();
+        } else if (ctx.SUB() != null) {
+            axiomeSub();
+        } else if (ctx.MUL() != null) {
+            axiomeMul();
+        } else if (ctx.DIV() != null) {
+            axiomeDiv();
+        } else if (ctx.AND() != null) {
+            axiomeAnd();
+        } else if (ctx.OR() != null) {
+            axiomeOr();
+        } else if (ctx.SUP() != null) {
+            axiomeSup();
+        } else if (ctx.CMP() != null) {
+            axiomeCMP();
+        } else {
+            System.out.println("Opération binaire non implémentée: " + ctx.getText());
             instructionCounter++;
         }
         return null;
     }
 
-    // Implémentation des axiomes JajaCode
+    /**
+     * Visite un nœud d'opération unaire et exécute l'axiome correspondant.
+     * <p>
+     * Cette méthode gère les opérations unaires :
+     * <ul>
+     *   <li>NEG (négation arithmétique : -x)</li>
+     *   <li>NOT (négation booléenne : !x)</li>
+     * </ul>
+     * </p>
+     *
+     * @param ctx le contexte de l'opération unaire
+     * @return null
+     */
+    @Override
+    public Object visitOper1(JajaCodeParser.Oper1Context ctx) {
+        if (ctx.NEG() != null) {
+            axiomeUnaryMinus();
+        } else if (ctx.NOT() != null) {
+            axiomeNot();
+        } else {
+            System.out.println("Opération unaire non implémentée: " + ctx.getText());
+            instructionCounter++;
+        }
+        return null;
+    }
 
+    // ========================================================================
+    // Implémentation des axiomes JajaCode
+    // ========================================================================
+
+    /**
+     * Axiome INIT : Initialise le programme JajaCode.
+     * <p>
+     * Cette instruction marque le début de l'exécution du programme.
+     * Elle ne modifie pas l'état de la pile ni de la mémoire.
+     * </p>
+     *
+     * <p><b>Effet :</b></p>
+     * <ul>
+     *   <li>Incrémente le compteur de programme</li>
+     *   <li>Affiche un message de confirmation</li>
+     * </ul>
+     */
     private void axiomeInit() {
         System.out.println("\t\tAxiome INIT exécuté.");
         instructionCounter++;
     }
 
+    /**
+     * Axiome PUSH : Empile une valeur sur la pile.
+     * <p>
+     * Cette instruction crée un quad temporaire contenant la valeur
+     * et le place au sommet de la pile.
+     * </p>
+     *
+     * <p><b>Effet :</b></p>
+     * <ul>
+     *   <li>Crée un quad temporaire {@code <%TMP%, valeur, %TMP%, type>}</li>
+     *   <li>Empile ce quad sur la pile</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ul>
+     *
+     * @param valeurCtx le contexte contenant la valeur à empiler
+     */
     private void axiomePush(JajaCodeParser.ValeurContext valeurCtx) {
-        int valeur = Integer.parseInt(valeurCtx.getText());
-        stack.push(new ManageSTForInterp.JJCQuad(valeur, ManageSTForInterp.Type.INT));
+        Object valeur = visitValeur(valeurCtx);
+        String type;
+
+        if (valeur instanceof Integer) {
+            type = "int";
+        } else if (valeur instanceof Boolean) {
+            type = "bool";
+        } else {
+            type = "void";
+        }
+
+        stacks.push(new Stacks.Quad(tempValue, valeur, tempValue, type));
         System.out.println("\t\tAxiome PUSH exécuté: " + valeur + " poussé sur la pile.");
         instructionCounter++;
     }
 
+    /**
+     * Axiome NEW : Déclare un nouveau symbole dans la mémoire.
+     * <p>
+     * Cette instruction dépile une valeur et crée un symbole (variable, constante,
+     * tableau ou méthode) avec cette valeur initiale.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur initiale du sommet de la pile</li>
+     *   <li>Crée un symbole selon le type ({@code kind}) :
+     *     <ul>
+     *       <li>{@code var} → Variable modifiable</li>
+     *       <li>{@code cst} → Constante non modifiable</li>
+     *       <li>{@code meth} → Méthode (traitée comme constante)</li>
+     *       <li>{@code tab} → Tableau de taille donnée</li>
+     *     </ul>
+     *   </li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si le type de symbole est inconnu</li>
+     *   <li>Arrête l'exécution si la taille du tableau n'est pas un entier</li>
+     * </ul>
+     *
+     * @param ident le nom du symbole à créer
+     * @param type  le type du symbole (int, bool, etc.)
+     * @param kind  la sorte du symbole (var, cst, tab, meth)
+     */
     private void axiomeNew(String ident, String type, String kind) {
-        ManageSTForInterp.JJCQuad valeur = stack.pop();
-        stack.push(valeur); // Counter the pop ^ TODO check if its good.
+        System.out.println("\t\t[DEBUG] axiomeNew appelé: ident=" + ident + ", type=" + type + ", kind=" + kind);
 
-        switch(ManageSTForInterp.Kind.fromString(kind)) {
-            case VAR:
-                symbolTable.declareVar(ident, valeur.value, type);
+        Stacks.Quad valeur = stacks.pop();
+
+        if (valeur == null) {
+            System.out.println("Erreur dans axiomeNew : pile vide.");
+            running = false;
+            return;
+        }
+
+        System.out.println("\t\t[DEBUG] Valeur dépilée: " + valeur.value);
+
+        switch (kind.toLowerCase()) {
+            case "variable", "var":
+                stacks.declareVar(ident, valeur.value, type);
                 break;
-            case METH:
-                symbolTable.declareCst(ident, valeur.value, type);
+            case "cst", "meth":
+                stacks.declareCst(ident, valeur.value, type);
+                break;
+            case "tab":
+                if (valeur.value instanceof Integer size) {
+                    stacks.declareTab(ident, size, type);
+                } else {
+                    if (logger.isLoggable(java.util.logging.Level.INFO)) {
+                        logger.info("Erreur dans axiomeNew : taille de tableau invalide.");
+                    }
+                    running = false;
+                    return;
+                }
                 break;
             default:
-                System.err.println("Erreur dans axiomeNew : type de symbole inconnu.");
+                if (logger.isLoggable(java.util.logging.Level.INFO)) {
+                    logger.log(java.util.logging.Level.INFO,
+                        "Erreur dans axiomeNew : type de symbole inconnu: {0}", kind);
+                }
                 running = false;
                 return;
         }
 
-        System.out.println("\t\tAxiome NEW exécuté: " + ident + " de type " + type + " et sorte " + kind + " créé avec valeur " + valeur + ".");
+        System.out.println("\t\tAxiome NEW exécuté: " + ident + " de type " + type + " et sorte " + kind + " créé avec valeur " + valeur.value + ".");
         instructionCounter++;
     }
 
 
     /**
-     * Axiome STORE : met à jour la valeur d'un symbole existant dans la mémoire.
-     * Comment ça marche :
-     * 1. On dépile la valeur à stocker.
-     * 2. On cherche le symbole dans la mémoire.
-     * 3. Si le symbole n'existe pas, on affiche une erreur et on arrête l'interpréteur.
-     * 4. Si le symbole existe, on le retire de la mémoire.
-     * 5. On crée un nouveau symbole avec la même identité, type et sorte, mais avec la nouvelle valeur.
-     * 6. On ajoute le nouveau symbole à la mémoire.
-     * 7. On incrémente le compteur de programme.
+     * Axiome STORE : Stocke une valeur dans un symbole existant.
+     * <p>
+     * Cette instruction dépile une valeur et l'affecte à un symbole existant
+     * dans la table des symboles.
+     * </p>
      *
-     * @param ident the identifier of the symbol to store
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur à stocker</li>
+     *   <li>Recherche le symbole dans la mémoire</li>
+     *   <li>Met à jour la valeur du symbole via {@link Stacks#AffecterVal(String, Object)}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si le symbole n'existe pas ou est une constante</li>
+     * </ul>
+     *
+     * @param ident le nom du symbole à mettre à jour
      */
     private void axiomeStore(String ident) {
-        ManageSTForInterp.JJCQuad valeur = stack.pop();
+        Stacks.Quad valeur = stacks.pop();
 
-        Symbol oldSymbol = symbolTable.findSymbol(ident);
-
-        if (oldSymbol == null) {
-            System.err.println("Erreur fatale dans axiomeStore : symbole '" + ident + "' non trouvé.");
+        if (valeur == null) {
+            System.out.println("Erreur fatale dans axiomeStore : pile vide.");
             running = false;
             return;
         }
 
-        symbolTable.assign(ident, valeur.value);
+        // Utiliser AffecterVal pour mettre à jour la valeur
+        boolean success = stacks.AffecterVal(ident, valeur.value);
 
-        System.out.println("\t\tAxiome STORE exécuté: " + ident + " mis à jour avec valeur " + valeur + ".");
+        if (!success) {
+            System.out.println("Erreur fatale dans axiomeStore : impossible d'affecter la valeur à '" + ident + "'.");
+            running = false;
+            return;
+        }
+
+        System.out.println("\t\tAxiome STORE exécuté: " + ident + " mis à jour avec valeur " + valeur.value + ".");
         instructionCounter++;
     }
 
+    /**
+     * Axiome LOAD : Charge la valeur d'un symbole et l'empile.
+     * <p>
+     * Cette instruction recherche un symbole dans la table des symboles,
+     * récupère sa valeur et l'empile sous forme de quad temporaire.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Recherche le symbole par son identifiant</li>
+     *   <li>Récupère la valeur du symbole</li>
+     *   <li>Crée un quad temporaire avec cette valeur</li>
+     *   <li>Empile le quad</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si le symbole n'existe pas</li>
+     * </ul>
+     *
+     * @param ident le nom du symbole dont la valeur doit être chargée
+     */
+    private void axiomeLoad(String ident) {
+        Object valeur = stacks.getValue(ident);
+
+        if (valeur == null && !stacks.getSymbolTable().contains(ident)) {
+            System.out.println("Erreur fatale dans axiomeLoad : symbole '" + ident + "' introuvable.");
+            running = false;
+            return;
+        }
+
+        stacks.push(new Stacks.Quad(tempValue, valeur, tempValue, stacks.getDataType(ident)));
+        System.out.println("\t\tAxiome LOAD exécuté: " + ident + " = " + valeur + " chargé sur la pile.");
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome SWAP : Échange les deux éléments au sommet de la pile.
+     * <p>
+     * Cette instruction échange la position des deux quads au sommet de la pile.
+     * </p>
+     *
+     * <p><b>Effet :</b></p>
+     * <ul>
+     *   <li>Appelle {@link Stacks#swap()}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ul>
+     */
     private void axiomeSwap() {
-        stack.swap();
+        stacks.swap();
         System.out.println("\t\tAxiome SWAP exécuté: Les deux éléments du sommet de la pile ont été échangés.");
         instructionCounter++;
     }
 
+    /**
+     * Axiome POP : Dépile l'élément au sommet de la pile.
+     * <p>
+     * Cette instruction retire le quad au sommet de la pile.
+     * </p>
+     *
+     * <p><b>Effet :</b></p>
+     * <ul>
+     *   <li>Appelle {@link Stacks#pop()}</li>
+     *   <li>Affiche l'élément retiré</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ul>
+     */
     private void axiomePop() {
-        Stacks.Quad popped = stack.pop();
+        Stacks.Quad popped = stacks.pop();
         System.out.println("\t\tAxiome POP exécuté: " + popped + " retiré de la pile.");
         instructionCounter++;
     }
 
+    /**
+     * Axiome ADD : Addition de deux entiers.
+     * <p>
+     * Cette instruction dépile deux valeurs, les additionne et empile le résultat.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile op2 (deuxième opérande)</li>
+     *   <li>Dépile op1 (premier opérande)</li>
+     *   <li>Calcule result = op1 + op2</li>
+     *   <li>Empile result</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si les opérandes ne sont pas des entiers</li>
+     * </ul>
+     */
+    private void axiomeAdd() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeAdd : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeAdd : opérandes non entiers.");
+            running = false;
+            return;
+        }
+
+        int result = (Integer) op1.value + (Integer) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+
+        System.out.println("\t\tAxiome ADD exécuté: " + op1.value + " + " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome SUB : Soustraction de deux entiers.
+     * <p>
+     * Cette instruction dépile deux valeurs, calcule la différence et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 - op2 et empile le résultat</p>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si les opérandes ne sont pas des entiers</li>
+     * </ul>
+     */
+    private void axiomeSub() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeSub : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeSub : opérandes non entiers.");
+            running = false;
+            return;
+        }
+
+        int result = (Integer) op1.value - (Integer) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+
+        System.out.println("\t\tAxiome SUB exécuté: " + op1.value + " - " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome MUL : Multiplication de deux entiers.
+     * <p>
+     * Cette instruction dépile deux valeurs, les multiplie et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 * op2 et empile le résultat</p>
+     */
+    private void axiomeMul() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeMul : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeMul : opérandes non entiers.");
+            running = false;
+            return;
+        }
+
+        int result = (Integer) op1.value * (Integer) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+
+        System.out.println("\t\tAxiome MUL exécuté: " + op1.value + " * " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome DIV : Division entière de deux entiers.
+     * <p>
+     * Cette instruction dépile deux valeurs, effectue la division entière et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 / op2 et empile le résultat</p>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si division par zéro</li>
+     * </ul>
+     */
+    private void axiomeDiv() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeDiv : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeDiv : opérandes non entiers.");
+            running = false;
+            return;
+        }
+
+        if ((Integer) op2.value == 0) {
+            System.out.println("Erreur dans axiomeDiv : division par zéro.");
+            running = false;
+            return;
+        }
+
+        int result = (Integer) op1.value / (Integer) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+
+        System.out.println("\t\tAxiome DIV exécuté: " + op1.value + " / " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome NEG : Négation unaire (opposé d'un entier).
+     * <p>
+     * Cette instruction dépile un entier, calcule son opposé et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule -op et empile le résultat</p>
+     */
+    private void axiomeUnaryMinus() {
+        Stacks.Quad op = stacks.pop();
+
+        if (op == null) {
+            System.out.println("Erreur dans axiomeUnaryMinus : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeUnaryMinus : opérande non entier.");
+            running = false;
+            return;
+        }
+
+        int result = -(Integer) op.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+
+        System.out.println("\t\tAxiome UNARY MINUS exécuté: -" + op.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome NOT : Négation booléenne (NON logique).
+     * <p>
+     * Cette instruction dépile un booléen, calcule sa négation et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule !op et empile le résultat</p>
+     */
+    private void axiomeNot() {
+        Stacks.Quad op = stacks.pop();
+
+        if (op == null) {
+            System.out.println("Erreur dans axiomeNot : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op.value instanceof Boolean)) {
+            System.out.println("Erreur dans axiomeNot : opérande non booléen.");
+            running = false;
+            return;
+        }
+
+        boolean result = !(Boolean) op.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+
+        System.out.println("\t\tAxiome NOT exécuté: !" + op.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome AND : ET logique entre deux booléens.
+     * <p>
+     * Cette instruction dépile deux booléens, effectue un ET logique et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 AND op2 et empile le résultat</p>
+     */
+    private void axiomeAnd() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeAnd : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Boolean) || !(op2.value instanceof Boolean)) {
+            System.out.println("Erreur dans axiomeAnd : opérandes non booléens.");
+            running = false;
+            return;
+        }
+
+        boolean result = (Boolean) op1.value && (Boolean) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+
+        System.out.println("\t\tAxiome AND exécuté: " + op1.value + " && " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome OR : OU logique entre deux booléens.
+     * <p>
+     * Cette instruction dépile deux booléens, effectue un OU logique et empile le résultat.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 OR op2 et empile le résultat</p>
+     */
+    private void axiomeOr() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeOr : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Boolean) || !(op2.value instanceof Boolean)) {
+            System.out.println("Erreur dans axiomeOr : opérandes non booléens.");
+            running = false;
+            return;
+        }
+
+        boolean result = (Boolean) op1.value || (Boolean) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+
+        System.out.println("\t\tAxiome OR exécuté: " + op1.value + " || " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome CMP : Comparaison d'égalité.
+     * <p>
+     * Cette instruction dépile deux valeurs, les compare et empile le résultat booléen.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 == op2 et empile le résultat</p>
+     */
+    private void axiomeCMP() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeEq : pile vide.");
+            running = false;
+            return;
+        }
+
+        boolean result = Objects.equals(op1.value, op2.value);
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+
+        System.out.println("\t\tAxiome EQ exécuté: " + op1.value + " == " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome SUP : Comparaison de supériorité stricte.
+     * <p>
+     * Cette instruction dépile deux entiers et empile vrai si le premier est strictement supérieur au second.
+     * </p>
+     *
+     * <p><b>Effet :</b> Calcule op1 &gt; op2 et empile le résultat</p>
+     */
+    private void axiomeSup() {
+        Stacks.Quad op2 = stacks.pop();
+        Stacks.Quad op1 = stacks.pop();
+
+        if (op1 == null || op2 == null) {
+            System.out.println("Erreur dans axiomeSUP : pile vide.");
+            running = false;
+            return;
+        }
+
+        if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeSUP : opérandes non entiers.");
+            running = false;
+            return;
+        }
+
+        boolean result = (Integer) op1.value > (Integer) op2.value;
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+
+        System.out.println("\t\tAxiome SUP exécuté: " + op1.value + " > " + op2.value + " = " + result);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome IF : Saut conditionnel.
+     * <p>
+     * Cette instruction dépile un booléen et saute à l'adresse donnée si la valeur est vraie.
+     * Si la valeur est fausse, l'exécution continue séquentiellement.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la condition</li>
+     *   <li>Si condition == true (ou != 0) → saute à l'adresse donnée</li>
+     *   <li>Si condition == false (ou == 0) → continue à l'instruction suivante</li>
+     * </ol>
+     *
+     * <p><b>Utilisation typique avec while :</b></p>
+     * <pre>
+     * // while(condition) { ... }
+     * [début]:
+     *   évaluer condition
+     *   not              // Inverser la condition
+     *   if([fin])        // Sauter à la fin si (not condition) est vrai
+     *   ... corps ...
+     *   goto([début])
+     * [fin]:
+     * </pre>
+     *
+     * @param adresse l'adresse de saut si la condition est vraie
+     */
+    private void axiomeIF(int adresse) {
+        Stacks.Quad condition = stacks.pop();
+
+        if (condition == null) {
+            System.out.println("Erreur dans axiomeIF : pile vide.");
+            running = false;
+            return;
+        }
+
+        boolean conditionValue;
+        if (condition.value instanceof Boolean boolValue) {
+            conditionValue = boolValue;
+        } else if (condition.value instanceof Integer intValue) {
+            conditionValue = intValue != 0;
+        } else {
+            System.out.println("Erreur dans axiomeIF : condition invalide.");
+            running = false;
+            return;
+        }
+
+        // IF saute à l'adresse donnée si la condition est VRAIE (sémantique standard JajaCode)
+        if (conditionValue) {
+            instructionCounter = adresse;
+            System.out.println("\t\tAxiome IF exécuté: condition vraie, saut à l'adresse " + adresse + ".");
+        } else {
+            instructionCounter++;
+            System.out.println("\t\tAxiome IF exécuté: condition fausse, poursuite de l'exécution séquentielle.");
+        }
+    }
+
+    /**
+     * Axiome GOTO : Saut inconditionnel.
+     * <p>
+     * Cette instruction effectue un saut inconditionnel à l'adresse donnée.
+     * </p>
+     *
+     * <p><b>Effet :</b> Le compteur de programme est mis à jour avec l'adresse cible</p>
+     *
+     * @param adresse l'adresse de destination du saut
+     */
+    private void axiomeGOTO(int adresse) {
+        instructionCounter = adresse;
+        System.out.println("\t\tAxiome GOTO exécuté: saut à l'adresse " + adresse + ".");
+    }
+
+    /**
+     * Axiome INC : Incrémentation d'une variable.
+     * <p>
+     * Cette instruction dépile une valeur et l'ajoute à la variable spécifiée.
+     * Équivalent à : variable = variable + valeur_dépilée
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur à ajouter</li>
+     *   <li>Récupère la valeur actuelle de la variable</li>
+     *   <li>Calcule nouvelle_valeur = valeur_actuelle + valeur_dépilée</li>
+     *   <li>Met à jour la variable avec la nouvelle valeur</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     *   <li>Arrête l'exécution si la variable n'existe pas</li>
+     *   <li>Arrête l'exécution si les valeurs ne sont pas des entiers</li>
+     * </ul>
+     *
+     * @param ident le nom de la variable à incrémenter
+     */
+    private void axiomeINC(String ident) {
+        Stacks.Quad increment = stacks.pop();
+
+        if (increment == null) {
+            System.out.println("Erreur dans axiomeINC : pile vide.");
+            running = false;
+            return;
+        }
+
+        Object currentValue = stacks.getValue(ident);
+
+        if (currentValue == null && !stacks.getSymbolTable().contains(ident)) {
+            System.out.println("Erreur dans axiomeINC : symbole '" + ident + "' introuvable.");
+            running = false;
+            return;
+        }
+
+        if (!(currentValue instanceof Integer) || !(increment.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeINC : valeurs non entières.");
+            running = false;
+            return;
+        }
+
+        int newValue = (Integer) currentValue + (Integer) increment.value;
+        boolean success = stacks.AffecterVal(ident, newValue);
+
+        if (!success) {
+            System.out.println("Erreur dans axiomeINC : impossible d'incrémenter '" + ident + "'.");
+            running = false;
+            return;
+        }
+
+        System.out.println("\t\tAxiome INC exécuté: " + ident + " incrémenté de " + increment.value + " → nouvelle valeur: " + newValue);
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome JCSTOP : Arrête l'exécution du programme.
+     * <p>
+     * Cette instruction termine l'exécution du programme JajaCode.
+     * </p>
+     *
+     * <p><b>Effet :</b> Met {@link #running} à false pour terminer la boucle d'exécution</p>
+     */
     private void axiomeJcstop() {
         System.out.println("\t\tAxiome JCSTOP exécuté: Arrêt de l'exécution.");
         running = false;
     }
 
+    /**
+     * Visite un nœud valeur et retourne sa représentation Java.
+     * <p>
+     * Cette méthode convertit les valeurs littérales du code JajaCode
+     * en objets Java correspondants qui seront empilés sur la pile.
+     * </p>
+     *
+     * <p><b>Valeurs supportées :</b></p>
+     * <ul>
+     *   <li>{@code NOMBRE} → {@link Integer} (ex: 42, -5, 0)</li>
+     *   <li>{@code TRUE} → {@link Boolean} true</li>
+     *   <li>{@code FALSE} → {@link Boolean} false</li>
+     *   <li>{@code VIDE} → null (valeur vide/non initialisée)</li>
+     * </ul>
+     *
+     * <p><b>Exemple :</b></p>
+     * <pre>
+     * push(42)    → visitValeur retourne Integer(42)
+     * push(true)  → visitValeur retourne Boolean(true)
+     * push(vide)  → visitValeur retourne null
+     * </pre>
+     *
+     * @param ctx le contexte de la valeur à convertir
+     * @return la valeur Java correspondante (Integer, Boolean ou null)
+     * @throws UnsupportedOperationException si le type de valeur n'est pas supporté
+     */
     @Override
     public Object visitValeur(JajaCodeParser.ValeurContext ctx) {
         if (ctx.NOMBRE() != null) {
@@ -205,157 +1211,4 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
         throw new UnsupportedOperationException("Value not supported: " + ctx.getText());
     }
-
-    public SymbolTable getSymbolTable() {
-        return symbolTable;
-    }
-
-    public ManageSTForInterp.JJCStack getStack() {
-        return stack;
-    }
-
-    private static class ManageSTForInterp {
-
-        private enum Kind {
-            VAR, METH;
-
-            private static final Map<String, Kind> LOOKUP = new HashMap<>();
-
-            static {
-                for (Kind k : Kind.values() ) {
-                    LOOKUP.put(k.toString(), k);
-                }
-            }
-
-            @Override
-            public String toString() {
-                return name().toLowerCase(Locale.ROOT);
-            }
-
-            public static Kind fromString(String kind) {
-                if (kind == null) throw new UnsupportedOperationException("Type isn't supported: null");
-                Kind k = LOOKUP.get(kind.toLowerCase(Locale.ROOT));
-                if (k == null) throw new UnsupportedOperationException("Type isn't supported: " + kind);
-                return k;
-            }
-        }
-
-        private enum Type {
-            INT, BOOL, VOID;
-
-            private static final Map<String, Type> LOOKUP = new HashMap<>();
-            static {
-                for (Type t : values()) {
-                    LOOKUP.put(t.toString(), t);
-                }
-            }
-
-            @Override
-            public String toString() {
-                return name().toLowerCase(Locale.ROOT);
-            }
-
-            public static Type fromString(String type) {
-                if (type == null) throw new UnsupportedOperationException("Type isn't supported: null");
-                Type t = LOOKUP.get(type.toLowerCase(Locale.ROOT));
-                if (t == null) throw new UnsupportedOperationException("Type isn't supported: " + type);
-                return t;
-            }
-        }
-
-        public static class JJCQuad extends Stacks.Quad {
-            public JJCQuad(Object value, Type type) {
-                super("%TMP%", value, "%TMP%", type.toString());
-            }
-
-            @Override
-            public int hashCode() {
-                return value.hashCode() * 31 + type.hashCode();
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if (this == obj) return true;
-                if (obj == null || getClass() != obj.getClass()) return false;
-                JJCQuad quad = (JJCQuad) obj;
-                return value.equals(quad.value) && type.equals(quad.type);
-            }
-
-            @Override
-            public String toString() {
-                return "<" + value + ", " + type + ">";
-            }
-        }
-
-        public static class JJCStack extends Stacks {
-
-            public JJCStack() {
-                super();
-            }
-
-            @Override
-            public void push(Quad q) {
-                super.stack.push(q);
-                System.err.println("Pushed: " + q);
-            }
-
-            @Override
-            public JJCQuad pop() {
-                if (!stack.isEmpty()) {
-                    JJCQuad q = (JJCQuad) stack.pop();
-                    System.out.println("Popped: " + q);
-                    return q;
-                } else {
-                    System.out.println("Stack is empty. Nothing to pop!");
-                    return null;
-                }
-            }
-
-            @Override
-            public void swap() {
-                if (stack.size() >= 2) {
-                    JJCQuad q1 = (JJCQuad) stack.pop();
-                    JJCQuad q2 = (JJCQuad) stack.pop();
-                    stack.push(q1);
-                    stack.push(q2);
-                    System.out.println("Swapped top elements: " + q1.ident + " and " + q2.ident);
-                } else {
-                    System.out.println("Cannot swap: not enough elements in the stack.");
-                }
-            }
-
-            @Override
-            public JJCQuad getTop() {
-                return stack.isEmpty() ? null : (JJCQuad) stack.peek();
-            }
-
-            @Override
-            public void declareCst(String ident, Object value, String type) {
-                JJCQuad q = new JJCQuad(value, Type.fromString(type));
-                push(q);
-            }
-            @Override
-            public void declareTab(String ident, int size, String type) {
-                throw new UnsupportedOperationException("Cannot declare an array in JJCStack.");
-            }
-            @Override
-            public void declareVar(String ident, Object value, String type) {
-                JJCQuad q = new JJCQuad(value, Type.fromString(type));
-                push(q);
-            }
-
-            @Override
-            public String toString() {
-                StringBuilder sb = new StringBuilder("Stack(size: " + stack.size() + ")[top -> ");
-                stack.elements().asIterator().forEachRemaining(e -> sb.append(e).append(", "));
-                sb.append("]");
-                return sb.toString();
-            }
-
-            public boolean isEmpty(){
-                return stack.isEmpty();
-            }
-        }
-    }
-
 }
