@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp1.equals.EqualsNode;
@@ -49,7 +50,7 @@ class MiniJajaCompilerVisitorTest {
      */
     @BeforeEach
     void setUp() {
-        visitor = new MiniJajaCompilerVisitor(new Stacks());
+        visitor = new MiniJajaCompilerVisitor(new Stacks(), new DiagnosticCollector());
         builderSpy = spy(visitor.getJajaCodeBuilder());
         try {
             // Access the private field `jjcBuilder` via reflection to inject the spy
