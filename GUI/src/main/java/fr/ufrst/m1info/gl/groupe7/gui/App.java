@@ -4,6 +4,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
+import javafx.concurrent.Task;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -21,6 +22,8 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -45,6 +48,14 @@ public class App extends Application {
     private boolean debugMode = false;
     private int debugCurrentLine = -1;
     // === End of added section ===
+
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setName("app-worker");
+        return t;
+    });
 
     @Override
     public void start(Stage stage) {
@@ -72,6 +83,16 @@ public class App extends Application {
 
         stage.setScene(scene);
         stage.show();
+    }
+
+    /**
+     * Stop the application.
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        executor.shutdownNow();
     }
 
     /**
@@ -250,56 +271,97 @@ public class App extends Application {
      * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
      */
     private void compile() {
+        // On lit le texte sur le thread FX
         String code = mjjCodeArea.getText();
 
-        Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() {
+                Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+                return compiler.compileToString();
+            }
+        };
 
-        String compileResult = compiler.compileToString();
-        jjcCodeArea.loadText(compileResult);
+        task.setOnSucceeded(ev -> {
+            String compileResult = task.getValue();
+            jjcCodeArea.loadText(compileResult);
 
-        // === Added section: log message after compilation ===
-        if (console != null) {
-            console.printMessage("Compilation finished.");
-        }
-        // === End of added section ===
+            if (console != null) {
+                console.printMessage("Compilation finished.");
+            }
+        });
+
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
+            if (console != null) {
+                console.printMessage("Compilation failed: " + ex.getMessage());
+            }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur de compilation");
+            alert.setHeaderText("Une erreur est survenue pendant la compilation");
+            alert.setContentText(ex.toString());
+            alert.showAndWait();
+        });
+
+        executor.submit(task);
     }
 
     /**
      * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
      */
     private void run() {
-        if (fileToRun.getValue().equals("MiniJaja")) {
-            String mjj = mjjCodeArea.getText();
-            // Call minijaja interpretor
-            MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
-            interpreter.run(mjj);
+        // On lit ce qu’il faut sur le thread FX
+        String choice = fileToRun.getValue();
+        String mjjText = mjjCodeArea.getText();
+        String jjcText = jjcCodeArea.getText();
 
-            // === Added section: log message after MiniJaja run ===
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                try {
+                    if ("MiniJaja".equals(choice)) {
+                        MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
+                        interpreter.run(mjjText);
+                    } else {
+                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter();
+                        String[] lines = jjcText.split("\\n");
+                        StringBuilder result = new StringBuilder();
+                        for (int i = 0; i < lines.length; i++) {
+                            result.append(i + 1)
+                                    .append(" ")
+                                    .append(lines[i])
+                                    .append("\n");
+                        }
+                        jjcInterpreter.run(result.toString());
+                    }
+                } catch (Exception e) { throw new RuntimeException(e); }
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
             if (console != null) {
-                console.printMessage("MiniJaja executed.");
+                if ("MiniJaja".equals(choice)) {
+                    console.printMessage("MiniJaja executed.");
+                } else {
+                    console.printMessage("JajaCode executed.");
+                }
             }
-            // === End of added section ===
-        } else {
-            String jjc = jjcCodeArea.getText();
-            // call jajacode interpretor
-            JajaCodeInterpreter jjcInterpretor = new JajaCodeInterpreter();
-            String[] lines = jjc.split("\\n");
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < lines.length; i++) {
-                result.append(i + 1)
-                        .append(" ")
-                        .append(lines[i])
-                        .append("\n");
-            }
-            jjcInterpretor.run(result.toString());
+        });
 
-            // === Added section: log message after JajaCode run ===
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
             if (console != null) {
-                console.printMessage("JajaCode executed.");
+                console.printMessage("Execution failed: " + ex.getMessage());
             }
-            // === End of added section ===
-        }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur d'exécution");
+            alert.setHeaderText("Une erreur est survenue pendant l'exécution");
+            alert.setContentText(ex.toString());
+            alert.showAndWait();
+        });
 
+        executor.submit(task);
     }
 
     // === Added section: Simple Debug methods (Start / Step / Stop) ===
