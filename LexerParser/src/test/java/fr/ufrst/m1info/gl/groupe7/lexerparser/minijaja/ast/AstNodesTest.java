@@ -112,7 +112,41 @@ class AstNodesTest {
         assertInstanceOf(DeclsNode.class, one.getDecls());
         assertEquals("vnil", one.getDecls().toStringTree());
     }
+    @Test
+    void testDeclsNodeWithOnlyOneDeclaration() {
+        VarNode vx = new VarNode("int", new IdentNode("x"), new NbreNode(0));
+        DeclsNode one = new DeclsNode(vx);
+        assertInstanceOf(VarNode.class, one.getDecl());
+        assertNull(one.getDecls());
+    }
+    @Test
+    void testDeclsNodeToStringTreeWithBothNulls() {
+        DeclsNode decls = new DeclsNode();
+        assertEquals("vnil", decls.toStringTree());
+    }
+    @Test
+    void testDeclsNodeGetchildren() {
+        VarNode vx = new VarNode("int", new IdentNode("x"), new NbreNode(0));
+        DeclsNode declsWithOne = new DeclsNode(vx);
+        Iterable<AstNode> childrenOne = declsWithOne.getChildren();
+        assertNotNull(childrenOne);
+        int countOne = 0;
+        for (AstNode child : childrenOne) {
+            countOne++;
+            assertInstanceOf(VarNode.class, child);
+            assertEquals("x", ((VarNode) child).getIdent().getNom());
+        }
+        assertEquals(1, countOne);
 
+        DeclsNode emptyDecls = new DeclsNode();
+        Iterable<AstNode> childrenEmpty = emptyDecls.getChildren();
+        assertNotNull(childrenEmpty);
+        int countEmpty = 0;
+        for (AstNode child : childrenEmpty) {
+            countEmpty++;
+        }
+        assertEquals(0, countEmpty);
+    }
     @Test
     void testInstructionsNodeEmptyAndSingleToStringTree() {
         InstructionsNode empty = new InstructionsNode();
@@ -202,7 +236,19 @@ class AstNodesTest {
         assertInstanceOf(IdentNode.class, len.getId());
         assertEquals("tab", len.getId().getNom());
     }
-
+    @Test
+    void testLengthNodeEvaluate() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("tab", "hello", "string");
+        LengthNode len = new LengthNode(new IdentNode("tab"));
+        Object result = len.evaluate(stacks);
+        assertEquals(5, result);
+    }
+    @Test
+    void testLengthNodeToStringTree() {
+        LengthNode len = new LengthNode(new IdentNode("myString"));
+        assertEquals("length(Ident(myString))", len.toStringTree());
+    }
     @Test
     void testSiNodeSansElse() {
         GreaterThanNode cond = new GreaterThanNode(new NbreNode(3), new NbreNode(0));
@@ -249,6 +295,51 @@ class AstNodesTest {
         assertNotNull(v.getVexp());
         assertEquals(9, ((NbreNode) v.getVexp()).value);
     }
+    @Test
+    void VexpEvaluateOmegaAndValue() {
+        Stacks stacks = new Stacks();
+        Vexp omega = new Vexp();
+        assertNull(omega.evaluate(stacks));
+
+        Vexp v = new Vexp(new NbreNode(9));
+        Object result = v.evaluate(stacks);
+        assertNotNull(result);
+        assertTrue(result instanceof Integer);
+        assertEquals(9, result);
+    }
+    @Test
+    void testVexpToStringTree() {
+        Vexp omega = new Vexp();
+        assertEquals("omega", omega.toStringTree());
+
+        Vexp v = new Vexp(new NbreNode(42));
+        assertEquals("nbre(42)", v.toStringTree());
+    }
+    @Test
+    void testListExpNode() {
+        DummyListExpNode tail = new DummyListExpNode();
+        ListExpNode list = new ListExpNode(new NbreNode(5), tail);
+        assertEquals("listExp(nbre(5),exnil)", list.toStringTree());
+        assertInstanceOf(NbreNode.class, list.getExp());
+        assertEquals(5, ((NbreNode) list.getExp()).value);
+        assertInstanceOf(DummyListExpNode.class, list.getListExp());
+    }
+    @Test
+    void testVexpEvalate(){
+        Stacks stacks = new Stacks();
+        stacks.declareVar("a", 10, "int");
+        stacks.declareVar("b", 20, "int");
+
+        Vexp vexpOmega = new Vexp();
+        assertNull(vexpOmega.evaluate(stacks));
+
+        Vexp vexpValue = new Vexp(new NbreNode(15));
+        Object result = vexpValue.evaluate(stacks);
+        assertNotNull(result);
+        assertTrue(result instanceof Integer);
+        assertEquals(15, result);
+    }
+    
 
     @Test
     void testAppelENodeAndAppelINode() {

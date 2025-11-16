@@ -13,6 +13,11 @@ public class DeclsNode extends AstDecls {
         this.decl = decl;
         this.decls = decls;
     }
+    
+    public DeclsNode(VarNode decl) {
+        this.decl = decl;
+        this.decls = null;
+    }
 
     public DeclsNode() {
         this.decl = null;
