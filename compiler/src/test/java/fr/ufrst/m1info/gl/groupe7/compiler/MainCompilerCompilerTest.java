@@ -128,9 +128,9 @@ public class MainCompilerCompilerTest {
         String expectedOutput = """
                                 init
                                 push(0)
-                                new(x@1, int, var, 0)
+                                new(x@global, int, variable, 0)
                                 push(5)
-                                store(x@1)
+                                store(x@global)
                                 push(0)
                                 swap
                                 pop
