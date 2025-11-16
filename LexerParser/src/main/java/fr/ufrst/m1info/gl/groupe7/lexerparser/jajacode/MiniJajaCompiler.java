@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
@@ -20,16 +23,26 @@ public class MiniJajaCompiler {
      */
     public static MiniJajaCompilerVisitor getMiniJajaCompilerVisitor(CharStream cs) {
 
+        DiagnosticCollector collector = new DiagnosticCollector();
+        SyntaxErrorListener syntaxErrorListener = new SyntaxErrorListener(collector, null);
+
         MiniJajaLexer lexer = new MiniJajaLexer(cs);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniJajaParser mjjparser = new MiniJajaParser(tokens);
+        syntaxErrorListener.register(lexer);
+        syntaxErrorListener.register(mjjparser);
+
         MiniJajaParser.ClasseContext parseTree = mjjparser.classe();
+
+        if (collector.hasErrors()) {
+            throw new SyntaxException(collector);
+        }
 
         Stacks stack = new Stacks();
         MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor();
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
-        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(stack);
+        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(stack, collector);
         compiler.visit(ast);
         return compiler;
     }

@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
@@ -38,13 +39,16 @@ public class MiniJajaCompilerVisitor {
 
     private final JajaCodeBuilder jjcBuilder;
     private final Stack<String> variablesToPop;
+    private final DiagnosticCollector collector;
     private String currentScope = "global";
     private final Set<String> mainLocalVariables = new HashSet<>();
 
 
-    public MiniJajaCompilerVisitor(Stacks stacks) {
+    // TODO why does stacks param is unused here ? Lucas, Ahmed, Léo ?
+    public MiniJajaCompilerVisitor(Stacks stacks, DiagnosticCollector collector) {
         this.variablesToPop = new Stack<>();
         this.jjcBuilder = new JajaCodeBuilder();
+        this.collector = collector;
     }
 
     public JajaCodeBuilder getJajaCodeBuilder() {
@@ -88,7 +92,7 @@ public class MiniJajaCompilerVisitor {
      * @return un nouveau visiteur avec le scope et les variables locales propagés
      */
     private MiniJajaCompilerVisitor createChildVisitor() {
-        MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null);
+        MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null, collector);
         childVisitor.currentScope = this.currentScope;
         childVisitor.mainLocalVariables.addAll(this.mainLocalVariables);
         return childVisitor;

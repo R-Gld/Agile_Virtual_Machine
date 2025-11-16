@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
@@ -9,18 +12,37 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class MiniJajaInterpreter {
-    public void run(String input) {
+public class MiniJajaInterpreter implements Runnable {
+    private final DiagnosticCollector collector;
+    private final String input;
+
+    public MiniJajaInterpreter(String input, DiagnosticCollector collector) {
+        this.input = input;
+        this.collector = collector;
+    }
+
+    @Override
+    public void run() {
         Stacks stacks = new Stacks();
+
+        SyntaxErrorListener sel = new SyntaxErrorListener(collector, null);
 
         CharStream cs = CharStreams.fromString(input);
         MiniJajaLexer lexer = new MiniJajaLexer(cs);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniJajaParser parser = new MiniJajaParser(tokens);
 
+        sel.register(lexer);
+        sel.register(parser);
+
         MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
 
         ParseTree tree = parser.classe();
+
+        if (collector.hasErrors()) {
+            throw new SyntaxException(collector);
+        }
+
         System.out.println("Debut de l'interprétation du minijaja");
         stacks.printStack();
         AstNode astRoot = visitor.visit(tree);
@@ -33,7 +55,5 @@ public class MiniJajaInterpreter {
         System.out.println("==============================================");
 
         stacks.printStack();
-
     }
-
 }

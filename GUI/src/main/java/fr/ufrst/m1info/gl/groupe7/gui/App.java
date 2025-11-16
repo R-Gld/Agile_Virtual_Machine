@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.gui;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -202,15 +203,15 @@ public class App extends Application {
      * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
      */
     private void run() {
+        DiagnosticCollector collector = new DiagnosticCollector();
         if (fileToRun.getValue().equals("MiniJaja")) {
             String mjj = mjjCodeArea.getText();
             // Call minijaja interpretor
-            MiniJajaInterpreter interpreter = new MiniJajaInterpreter();
-            interpreter.run(mjj);
+            MiniJajaInterpreter mjjInterp = new MiniJajaInterpreter(mjj, collector);
+            mjjInterp.run(); // TODO passer cela en multi thread pour ne pas bloquer le thread principale
         } else {
             String jjc = jjcCodeArea.getText();
             // call jajacode interpretor
-            JajaCodeInterpreter jjcInterpretor = new JajaCodeInterpreter();
             String[] lines = jjc.split("\\n");
             StringBuilder result = new StringBuilder();
             for (int i = 0; i < lines.length; i++) {
@@ -219,8 +220,8 @@ public class App extends Application {
                         .append(lines[i])
                         .append("\n");
             }
-            jjcInterpretor.run(result.toString());
-
+            JajaCodeInterpreter jjcInterp = new JajaCodeInterpreter(result.toString(), collector);
+            jjcInterp.run(); // TODO passer cela en multi thread pour ne pas bloquer le thread principale
         }
 
     }
