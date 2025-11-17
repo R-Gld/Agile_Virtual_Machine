@@ -49,6 +49,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         appStage = stage;
+
         // Structure de l'interface :
         BorderPane root = new BorderPane();
         root.setTop(buildMenu());
@@ -60,19 +61,17 @@ public class App extends Application {
         jjcCodeArea.disable();
 
         SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
-
         root.setCenter(splitPane);
 
-        ConsoleOutput console = new ConsoleOutput("console");
-        root.setBottom(console);
-
-        // === Added section: keep console reference for logging ===
-        this.console = console;
-        // === End of added section ===
+        // === Console initialization (clean version) ===
+        this.console = new ConsoleOutput("console");
+        root.setBottom(this.console);
+        // === End ===
 
         stage.setScene(scene);
         stage.show();
     }
+
 
     /**
      * Fonction pour construire le menu de l'ihm
@@ -239,7 +238,7 @@ public class App extends Application {
         }
 
         // === Added section: log message after saving ===
-        if (console != null && file != null) {
+        if (console != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
         }
         // === End of added section ===
