@@ -26,6 +26,10 @@ public class Stacks {
             this.type = type;
         }
 
+        public void setValue(Object value) {
+            this.value = value;
+        }
+
         @Override
         public String toString() {
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
@@ -59,11 +63,13 @@ public class Stacks {
     // ------------------------------------------------------------
     protected final java.util.Stack<Quad> stack;
     private final SymbolTable symbolTable;
+    private final Heap heap;
     
     // Constructor: create an empty stack
     public Stacks() {
         stack = new java.util.Stack<>();
         symbolTable = new SymbolTable();
+        heap = new Heap();
     }
 
 
@@ -145,13 +151,28 @@ public class Stacks {
         symbolTable.creationSymbol(ident,positionStack,type);
     }
 
-    /** Declare an array (simulated here by its size) */
+    /**
+     * Declare an array:
+     *  - allocate a block in the Heap with heap.allocate(...)
+     *  - store an ArrayInfo in the Quad.value (contains base address + logical size)
+     *  - push the Quad on the stack and register the symbol as before
+     */
     public void declareTab(String ident, int size, String type) {
-        Quad q = new Quad(ident, "size=" + size, "tab", type);
+
+
+
+
+        // 2) create ArrayInfo
+        ArrayInfo info = new ArrayInfo( size);
+
+        Quad q = new Quad(ident, info, "tab", type);//Quad q = new Quad(ident, info, "tab", type);
         push(q);
+
+        // 3) register in symbol table
         int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
+        symbolTable.creationSymbol(ident, positionStack, type);
     }
+
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, String type) {
@@ -291,12 +312,195 @@ public class Stacks {
             if (s != null) {
                 symbolTable.updateAddressStack(s.getName(),i);
             }
-            // Note: Il est normal que certains Quad temporaires (%TMP%) ne soient pas dans la table des symboles
+
         }
     }
     public SymbolTable getSymbolTable() {
         return symbolTable;
     }
+
+    /**
+     * Find a Quad by identifier from top to bottom.
+     */
+    private Quad findQuad(String ident) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                return q;
+            }
+        }
+        return null;
+    }
+    /**
+     * Find a Quad by identifier from top to bottom.
+     */
+
+    private boolean SetAdress(String ident,int index,int address) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+
+                ArrayInfo info = (ArrayInfo) q.value;
+
+
+                System.out.println(" index  "+index+" adress "+address);
+                info.setAddressForIndex(index, address);
+
+                q.setValue(info);
+                System.out.println(" new quad "+q);
+                stack.set(i,q);
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * Return the element at array[ index ].
+     * Returns null if not found, out-of-bounds, or not an array.
+     */
+    public Object getArrayValue(String ident, int index) {
+        Quad q = findQuad(ident);
+        if (q == null) throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+
+        ArrayInfo info = (ArrayInfo) q.value;
+
+        int addr = info.getAddressForIndex(index);
+        if (addr == -1) throw new RuntimeException("Element not yet assigned: " + ident + "[" + index + "]");
+
+        return heap.read(addr);
+    }
+    /**
+     * Set array[index] = value.
+     * throw exeption if not possible
+     */
+    public void setArrayValue(String ident, int index, Object value) {
+        Quad q = findQuad(ident);
+        if (q == null) throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+        if(!(isTypeCompatible(q.type, value))){
+            throw new RuntimeException("Element not compatible with type " + q.type + " and value " + value);
+        }
+
+        ArrayInfo info = (ArrayInfo) q.value;
+        if(info.getSize()<index || index < 0){
+            throw new RuntimeException("Index not inside the array size");
+        }
+
+
+        int size = 0;
+        if(value instanceof Integer ){
+            size = 2;
+        }else if(value instanceof Boolean){
+            size = 1;
+        }else {
+            throw new RuntimeException("type error should be catch before " );
+        }
+        int  addr = info.getAddressForIndex(index);
+        if(addr == -1){
+            HeapEntry entry = heap.allocate(ident, size, null);
+            System.out.println("info creation new memory space  "+entry);
+            heap.write(entry.getAddress(), value);
+
+
+            SetAdress(ident,index, entry.getAddress());
+
+        }else{
+            heap.write(addr, value);
+        }
+
+
+    }
+    // ============================================================
+// HEAP UTILITIES
+// ============================================================
+
+    /**
+     * Print the full content of the heap from Stacks.
+     */
+    public void printHeap() {
+        heap.printHeap();
+    }
+
+    /**
+     * Get all free blocks currently in the heap.
+     * Useful for integration tests.
+     */
+    public Object[] getAlMemory() {
+        // Simple collection of all entries
+        List<Object> entries = new java.util.ArrayList<>();
+
+        for (int i = 0; i < 256; i++) { // check each cell in memory table
+            Object mem = heap.getMemory()[i];
+            if (mem !=null) {
+                entries.add( mem);
+            }
+        }
+
+        return entries.toArray(new Object[0]);
+    }
+
+
+    /**
+     * Return all symbols currently in the symbol table.
+     * Useful for integration and unit tests.
+     */
+    public List<Symbol> getAllSymbols() {
+
+        return symbolTable.getAllSymbols();
+    }
+    /**
+     * Return the Heap instance (for testing or inspection purposes)
+     */
+    public Heap getHeap() {
+        return heap;
+    }
+    public void freeArrayElement(String ident, int index) {
+
+        Quad q = findQuad(ident);
+        if (q == null)
+            throw new RuntimeException("Unknown array " + ident);
+
+
+        if (!(q.value instanceof ArrayInfo))
+            throw new RuntimeException("Not an array: " + ident);
+
+        ArrayInfo info = (ArrayInfo) q.value;
+
+
+        if (index < 0 || index >= info.getSize())
+            throw new RuntimeException("Index not inside the array size");
+
+
+        int addr = info.getAddressForIndex(index);
+
+        if (addr == -1) {
+
+            System.out.println("[ARRAY FREE] " + ident + "[" + index + "] already empty.");
+            return;
+        }
+
+
+        HeapEntry entry = new HeapEntry(
+                ident + "_elem_" + index,
+                addr,
+                1,
+                null,
+                false
+        );
+
+
+        heap.free(entry);
+
+
+        info.setAddressForIndex(index, -1);
+
+        System.out.println("[ARRAY FREE] removed element " + ident + "[" + index + "] at heap address=" + addr);
+    }
+
+
+
 }
 
 
