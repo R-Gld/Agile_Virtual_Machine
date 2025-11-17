@@ -11,7 +11,7 @@ import java.util.Arrays;
  *   - size    : number of elements in the array
  */
 public class ArrayInfo {
-    private int size;
+    private final int size;
     private int[] elementAddresses; // mapping index -> heap address
 
     public ArrayInfo(int size) {

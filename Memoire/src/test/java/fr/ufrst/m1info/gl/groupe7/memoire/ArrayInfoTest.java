@@ -92,20 +92,5 @@ public class ArrayInfoTest {
             }
         }
     }
-    /*
-    @Test
-    void testDeclareTabThrowsExceptionOnFailedAllocation() {
-        Stacks stacks = new StacksWithFailHeap();
-
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
-                () -> stacks.declareTab("tabX", 10, "int")
-        );
-
-        assertTrue(ex.getMessage().contains("Heap allocation failed"),
-                "Exception message should indicate allocation failure");
-    }
-     */
-
 }
 
