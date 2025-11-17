@@ -4,6 +4,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
@@ -141,7 +143,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		if (ctx.IF() != null) {
 			Expression condition = (Expression) visit(ctx.exp());
 			InstructionsNode thenBlock = (InstructionsNode) visit(ctx.instrs(0));
-			InstructionsNode elseBlock = ctx.ELSE() != null ? (InstructionsNode) visit(ctx.instrs(1)) : null;
+			InstructionsNode elseBlock = (ctx.ELSE() != null && ctx.instrs().size() > 1)
+					? (InstructionsNode) visit(ctx.instrs(1))
+					: null;
 			return new SiNode(condition, thenBlock, elseBlock);
 		}
 
@@ -154,18 +158,42 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
-			return new RetourNode(visit(ctx.exp()));
+			AstNode returned = visit(ctx.exp());
+			return new RetourNode(returned);
 		}
 
-		// Affectation, increment, or addition on identifiers
+		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
 			AstNode ident = visit(ctx.ident1());
-			if (ctx.EQ() != null)
+			if (ctx.EQ() != null) {
 				return new AffectationNode(ident, (Expression) visit(ctx.exp()));
-			if (ctx.SOMME() != null)
+			}
+			if (ctx.SOMME() != null) {
 				return new SommeNode(ident, (Expression) visit(ctx.exp()));
-			if (ctx.INCREMENT() != null)
+			}
+			if (ctx.INCREMENT() != null) {
 				return new IncrementNode(ident);
+			}
+		}
+
+		// WRITE / WRITELN handling (supports identifier or string literal)
+		if (ctx.WRITE() != null || ctx.WRITELN() != null) {
+			boolean writeln = ctx.WRITELN() != null;
+
+			// If there's a bare IDENT token (fallback), create an IdentNode
+			if (ctx.IDENT() != null) {
+				Expression writeExpr = new IdentNode(ctx.IDENT().getText());
+				return writeln ? new EcrireLnNode(writeExpr) : new EcrireNode(writeExpr);
+			}
+
+			// Otherwise, if it's a string literal
+			if (ctx.STRING() != null) {
+				String text = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+			 // Remove quotes
+				return writeln ? new EcrireLnNode(text) : new EcrireNode(text);
+			}
+
+			
 		}
 
 		throw new IllegalStateException("Unhandled instruction: " + ctx.getText());

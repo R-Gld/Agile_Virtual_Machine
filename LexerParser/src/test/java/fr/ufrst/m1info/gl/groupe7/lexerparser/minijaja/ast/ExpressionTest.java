@@ -84,4 +84,43 @@ class ExpressionTest {
         assertEquals(Boolean.TRUE, or.evaluate(stacks));
         assertEquals(Boolean.FALSE, not.evaluate(stacks));
     }
+
+    @Test
+    void complex_arithmetic_precedence_evaluates_correctly() {
+        // 1 + 2 * 3 => 1 + (2*3) = 7
+        MultiplicationNode mul = new MultiplicationNode(new NbreNode(2), new NbreNode(3));
+        PlusNode expr1 = new PlusNode(new NbreNode(1), mul);
+        assertEquals(7, ((Integer) expr1.evaluate(stacks)).intValue());
+
+        // (1 + 2) * 3 => (1+2) * 3 = 9
+        PlusNode plus = new PlusNode(new NbreNode(1), new NbreNode(2));
+        MultiplicationNode expr2 = new MultiplicationNode(plus, new NbreNode(3));
+        assertEquals(9, ((Integer) expr2.evaluate(stacks)).intValue());
+    }
+
+    @Test
+    void mixed_unary_and_division_and_multiplication() {
+        // - (2 + 3) * (10 / 5) => - (5 * 2) = -10
+        PlusNode sum = new PlusNode(new NbreNode(2), new NbreNode(3));
+        DivisionNode div = new DivisionNode(new NbreNode(10), new NbreNode(5));
+        MultiplicationNode mult = new MultiplicationNode(sum, div);
+        UnaryMinusNode whole = new UnaryMinusNode(mult);
+        assertEquals(-10, ((Integer) whole.evaluate(stacks)).intValue());
+    }
+
+    @Test
+    void logical_precedence_and_mixed_comparisons() {
+        // true || false && false  => true || (false && false) = true
+        AndNode and = new AndNode(new BoolValueNode(false), new BoolValueNode(false));
+        OrNode or = new OrNode(new BoolValueNode(true), and);
+        assertEquals(Boolean.TRUE, or.evaluate(stacks));
+
+        // (1 + 4) > 3 && !(2 == 3) => (5 > 3) && !(false) => true && true => true
+        PlusNode plus = new PlusNode(new NbreNode(1), new NbreNode(4));
+        GreaterThanNode gt = new GreaterThanNode(plus, new NbreNode(3));
+        EqualsNode eq = new EqualsNode(new NbreNode(2), new NbreNode(3));
+        NotNode not = new NotNode(eq);
+        AndNode combined = new AndNode(gt, not);
+        assertEquals(Boolean.TRUE, combined.evaluate(stacks));
+    }
 }
