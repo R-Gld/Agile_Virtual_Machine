@@ -53,14 +53,14 @@ public class MiniJajaInterpreter implements Runnable {
         } else {
             System.out.println("ERREUR: L'AST est null.");
         }
+
         System.out.println("==============================================");
-        
         System.out.println("\n=====  INTERPRETATION  =====");
         if (astRoot != null) {
            Walker walker = new Walker(astRoot,stacks);
            walker.walk();
         }
-            stacks.printStack();
 
+        stacks.printStack();
     }
 }
