@@ -1,6 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * SymbolTable
@@ -8,11 +10,9 @@ import java.util.Arrays;
  * Implements a hash table using chained lists of Stacks.Quad.
  * Each bucket contains a linked list of Quad elements (ident, value, object,
  * type).
- * - No HashMap or Collections are used.
- * - Based on professor’s MiniJaja specification: “table de hachage avec chaînes
- * de Quad”.
- * - Compatible with project symbols (var, cst, tab, meth).
- * Average complexity: O(1) for insert, search, and update operations.
+ *
+ *
+ *
  */
 public class SymbolTable {
 
@@ -252,5 +252,19 @@ public class SymbolTable {
                 "table=" + Arrays.toString(table).replace("null, ", "") +
                 ", count=" + count +
                 '}';
+    }
+    /**
+     * Return a list of all symbols currently stored in the table.
+     */
+    public List<Symbol> getAllSymbols() {
+        List<Symbol> symbols = new ArrayList<>();
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node current = table[i];
+            while (current != null) {
+                symbols.add(current.symbol);
+                current = current.next;
+            }
+        }
+        return symbols;
     }
 }

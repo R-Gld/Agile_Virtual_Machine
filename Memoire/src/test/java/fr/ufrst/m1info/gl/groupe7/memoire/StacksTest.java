@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -147,13 +148,7 @@ public class StacksTest {
         assertEquals("integer", stacks.getDataType("PI"));
     }
 
-    @Test
-    void testDeclareTab() {
-        stacks.declareTab("t", 10, "integer");
-        assertEquals("size=10", stacks.getValue("t"));
-        assertEquals("tab", stacks.getObjectType("t"));
-        assertEquals("integer", stacks.getDataType("t"));
-    }
+
 
     @Test
     void testDeclareMeth() {
@@ -560,6 +555,508 @@ public class StacksTest {
         assertEquals(0, stacks.getSymbolTable().getAddressStack("b"));
 
     }
+
+    //part heap test array
+    @Test
+    public void testDeclareTabAndAccess() {
+
+        ;   // must initialize SymbolTable + Heap inside
+        String ident = "T";
+
+        // 1) Declare an array T[5]
+        stacks.declareTab(ident, 5, "int");
+
+        // 2) Ensure symbol exists
+        assertTrue(stacks.getSymbolTable().contains(ident),
+                "Symbol should exist after declareTab");
+
+        // 3) Write values through setArrayValue
+        stacks.setArrayValue(ident, 0, 42);
+        stacks.setArrayValue(ident, 1, 99);
+        stacks.setArrayValue(ident, 4, -12);   // last valid index
+
+        // 4) Read back values
+        assertEquals(42, stacks.getArrayValue(ident, 0));
+        //assertNull(stacks.getArrayValue("m", 1));
+        //assertNull(stacks.getArrayValue(null, 1));
+        // 5) Out-of-bounds should return null
+        //assertNull(stacks.getArrayValue(ident, -1));
+        //assertNull(stacks.getArrayValue(ident, 5));   // size = 5 → last index = 4
+        assertEquals(99, stacks.getArrayValue(ident, 1));
+        assertEquals(-12, stacks.getArrayValue(ident, 4));
+
+
+        /*
+        // 6) Writing out of bounds should fail
+        assertFalse(stacks.setArrayValue(ident, 5, 1234));
+        assertFalse(stacks.setArrayValue(ident, -2, 1234));
+
+        // 7) Accessing a non-array should give null / false
+        stacks.declareVar("x", 10, "int");
+        assertNull(stacks.getArrayValue("x", 0));
+        assertFalse(stacks.setArrayValue("x", 0, 99));
+        // 8) test set null
+        assertFalse(stacks.setArrayValue("v", 0, 99));
+        assertFalse(stacks.setArrayValue("x", 0, "abx"));
+        assertFalse(stacks.setArrayValue("x", 0, "abx"));
+         */
+
+    }
+    /*
+
+    @Test
+    public void testDeclaretabSetInt() {
+        stacks.declareVar("x", 5, "int");
+        assertFalse(stacks.setArrayValue("x", 0, 42));
+    }
+     */
+    @Test
+    void testGetArrayValueUnknownIdentifier() {
+        stacks.declareTab("arr", 5, "int");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayValue("m", 1);
+        });
+
+        assertTrue(ex.getMessage().contains("Unknown array"));
+    }
+    @Test
+    void testGetArrayValueNullIdentifier() {
+        stacks.declareTab("arr", 5, "int");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayValue(null, 1);
+        });
+
+        assertTrue(ex.getMessage().contains("Unknown array"));
+    }
+    @Test
+    void testGetArrayValueNegativeIndex() {
+        stacks.declareTab("arr", 5, "int");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayValue("arr", -1);
+        });
+
+        assertEquals("Index -1 out of bounds for length 5", ex.getMessage());
+    }
+    @Test
+    void testGetArrayValueIndexTooLarge() {
+        stacks.declareTab("arr", 5, "int");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayValue("arr", 5); // last valid index = 4
+        });
+
+        assertEquals("Index 5 out of bounds for length 5", ex.getMessage());
+    }
+
+    /** Fake heap that always fails allocation */
+    private static class FakeFailHeap extends Heap {
+        @Override
+        public HeapEntry allocate(String id, int size, Object ref) {
+            return null; // always fails
+        }
+    }
+
+    /** Stacks subclass injecting the fake heap */
+    private static class StacksWithFailHeap extends Stacks {
+        public StacksWithFailHeap() {
+            super();
+            // replace the internal heap via reflection since heap is private final
+            try {
+                var field = Stacks.class.getDeclaredField("heap");
+                field.setAccessible(true);
+                field.set(this, new FakeFailHeap());
+            } catch (Exception e) {
+                throw new RuntimeException("Reflection injection failed", e);
+            }
+        }
+    }
+
+
+    @Test
+    void testMultipleArraysHeapSymbolStack() {
+
+
+        // 1) Declare three arrays with 5 elements each
+        stacks.declareTab("tab1", 5, "int");
+        stacks.declareTab("tab2", 5, "int");
+        stacks.declareTab("tab3", 5, "int");
+
+        // 2) Check symbol table contains the arrays
+        List<Symbol> symbols = stacks.getAllSymbols();
+        assertEquals(3, symbols.size(), "Symbol table should contain 3 symbols");
+
+        assertTrue(symbols.stream().anyMatch(s -> s.getName().equals("tab1")));
+        assertTrue(symbols.stream().anyMatch(s -> s.getName().equals("tab2")));
+        assertTrue(symbols.stream().anyMatch(s -> s.getName().equals("tab3")));
+
+
+
+        // 4) Check stack contains the Quads in correct order
+        List<Stacks.Quad> stackQuads = stacks.getStackFromTopToBottom();
+        assertEquals(3, stackQuads.size(), "Stack should contain 3 Quads");
+
+        assertEquals("tab3", stackQuads.get(0).ident, "Top of stack should be tab3");
+        assertEquals("tab2", stackQuads.get(1).ident, "Second in stack should be tab2");
+        assertEquals("tab1", stackQuads.get(2).ident, "Bottom of stack should be tab1");
+
+        // 5) Check that each Quad's value is an ArrayInfo and size is correct
+        for (Stacks.Quad q : stackQuads) {
+            assertTrue(q.value instanceof ArrayInfo, "Quad value should be ArrayInfo");
+            ArrayInfo info = (ArrayInfo) q.value;
+            assertEquals(5, info.getSize(), "ArrayInfo size should be 5");
+        }
+        stacks.printHeap();
+    }
+    @Test
+    public void testAllDeclarationsAndState() {
+        // Create the stack manager
+
+
+        // 1) Declare variable, constant, method
+        stacks.declareVar("x", 42, "int");
+        stacks.declareCst("y", 3, "int");
+        stacks.declareMeth("myFunc", "body", "void");
+
+        // 2) Declare two arrays
+        stacks.declareTab("arr1", 5, "int");
+        stacks.printHeap();
+        stacks.declareTab("arr2", 10, "int");
+        System.out.println("Heap: with tab vid ");
+        stacks.printHeap();
+
+        // 2) give value to some part
+        stacks.setArrayValue("arr1",1,21);
+        System.out.println("Heap: with tab un elem ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr1",3,15);
+        System.out.println("Heap: with tab deux elem ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr1",4,17);
+        System.out.println("Heap: with tab trois elem ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr2",2,7);
+        System.out.println("Heap: with tab quatre elem new tab ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr2",4,13);
+        System.out.println("Heap: with tab cinq elem ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr2",7,29);
+        System.out.println("Heap: with tab six elem ");
+        stacks.printHeap();
+        stacks.setArrayValue("arr2",9,145);
+
+
+
+        // --- Test 1: Symbol Table ---
+        List<Symbol> symbols = stacks.getAllSymbols();
+        assertEquals(5, symbols.size(), "There should be 5 symbols in the table");
+
+        assertTrue(stacks.getSymbolTable().contains("x"));
+        assertTrue(stacks.getSymbolTable().contains("y"));
+        assertTrue(stacks.getSymbolTable().contains("myFunc"));
+        assertTrue(stacks.getSymbolTable().contains("arr1"));
+        assertTrue(stacks.getSymbolTable().contains("arr2"));
+
+        // --- Test 2: Stack ---
+        List<Stacks.Quad> stackContent = stacks.getStackFromTopToBottom();
+        assertEquals(5, stackContent.size(), "Stack should contain 5 quads");
+
+        // Check that arrays are stored as ArrayInfo
+        Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
+        assertNotNull(arr1Quad);
+        assertTrue(arr1Quad.value instanceof ArrayInfo);
+
+        Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
+        assertNotNull(arr2Quad);
+        assertTrue(arr2Quad.value instanceof ArrayInfo);
+
+        ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
+        ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
+
+        assertEquals(5, arr1Info.getSize());
+        assertEquals(10, arr2Info.getSize());
+
+        // --- Test 3: Heap ---
+        Heap heap = stacks.getHeap();
+        HeapEntry e1 = heap.allocate("tmp1", 5, null);
+        assertNotNull(e1, "Heap should have free space");
+
+        // We can also print for debug
+        System.out.println("Stack content:");
+        stacks.printStack();
+
+        System.out.println("Symbol Table:");
+        stacks.printSymbolTable();
+
+        System.out.println("Heap:");
+        // Get all HeapEntry objects
+        stacks.printHeap();
+        Object[] memory = stacks.getAlMemory();
+        for (int i = 0; i < memory.length; i++) {
+            if (memory[i] != null) {
+                System.out.println(
+                        "[HEAP CELL] address=" + i +
+                                "  value=" + memory[i] +
+                                " (" + memory[i].getClass().getSimpleName() + ")"
+                );
+            }
+        }
+        System.out.println("================================\n");
+
+    }
+    @Test
+    void testUnknownArray() {
+        stacks.declareTab("arr", 5, "int");
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.setArrayValue("unknown", 0, 10);
+        });
+        assertEquals("Unknown array unknown", ex.getMessage());
+    }
+
+    @Test
+    void testNotAnArray() {
+        stacks.declareTab("arr", 5, "int");
+        stacks.declareVar("x", 42, "int");
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.setArrayValue("x", 0, 10);
+        });
+        assertEquals("Not an array: x", ex.getMessage());
+    }
+
+    @Test
+    void testIncompatibleType() {
+        stacks.declareTab("arr", 5, "int");
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.setArrayValue("arr", 0, true); // boolean in int array
+        });
+        assertEquals("Element not compatible with type int and value true", ex.getMessage());
+    }
+
+    @Test
+    void testIndexOutOfBoundsNegative() {
+        stacks.declareTab("arr", 5, "int");
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.setArrayValue("arr", -1, 10);
+        });
+        assertEquals("Index not inside the array size", ex.getMessage());
+    }
+
+    @Test
+    void testIndexOutOfBoundsTooLarge() {
+        stacks.declareTab("arr", 5, "int");
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.setArrayValue("arr", 10, 10);
+        });
+        assertEquals("Index not inside the array size", ex.getMessage());
+    }
+
+    @Test
+    void testSuccessfulSet() {
+        stacks.declareTab("arr", 5, "int");
+        assertDoesNotThrow(() -> stacks.setArrayValue("arr", 2, 99));
+        Object val = stacks.getArrayValue("arr", 2);
+        assertEquals(99, val);
+    }
+    @Test
+    public void testAllDeclarationsAndStateBoolean() {
+
+
+        // 1) Declare variable, constant, method
+        stacks.declareVar("x", 42, "int");
+        stacks.declareCst("y", 3, "int");
+        stacks.declareMeth("myFunc", "body", "void");
+
+        // 2) Declare two arrays
+        stacks.declareTab("arr1", 5, "int");
+        stacks.printHeap();
+        stacks.declareTab("arr2", 10, "boolean");
+        System.out.println("Heap: with tab vid ");
+        stacks.printHeap();
+
+        // 2) give value to some part
+        stacks.setArrayValue("arr1",1,21);
+        System.out.println("Heap: with tab un elem ");
+
+        stacks.setArrayValue("arr1",3,15);
+        System.out.println("Heap: with tab deux elem ");
+
+        stacks.setArrayValue("arr1",4,17);
+        System.out.println("Heap: with tab trois elem ");
+
+        stacks.setArrayValue("arr2",2,true);
+        System.out.println("Heap: with tab quatre elem new tab ");
+
+        stacks.setArrayValue("arr2",4,true);
+        System.out.println("Heap: with tab cinq elem ");
+
+        stacks.setArrayValue("arr2",7,false);
+        System.out.println("Heap: with tab six elem ");
+
+        stacks.setArrayValue("arr2",9,true);
+        assertEquals(stacks.getArrayValue("arr1",1),21);
+        assertEquals(stacks.getArrayValue("arr1",3),15);
+        assertEquals(stacks.getArrayValue("arr2",2),true);
+        assertEquals(stacks.getArrayValue("arr2",4),true);
+        assertEquals(stacks.getArrayValue("arr2",7),false);
+
+
+
+        // --- Test 1: Symbol Table ---
+        List<Symbol> symbols = stacks.getAllSymbols();
+        assertEquals(5, symbols.size(), "There should be 5 symbols in the table");
+
+        assertTrue(stacks.getSymbolTable().contains("x"));
+        assertTrue(stacks.getSymbolTable().contains("y"));
+        assertTrue(stacks.getSymbolTable().contains("myFunc"));
+        assertTrue(stacks.getSymbolTable().contains("arr1"));
+        assertTrue(stacks.getSymbolTable().contains("arr2"));
+
+        // --- Test 2: Stack ---
+        List<Stacks.Quad> stackContent = stacks.getStackFromTopToBottom();
+        assertEquals(5, stackContent.size(), "Stack should contain 5 quads");
+
+        // Check that arrays are stored as ArrayInfo
+        Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
+        assertNotNull(arr1Quad);
+        assertTrue(arr1Quad.value instanceof ArrayInfo);
+
+        Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
+        assertNotNull(arr2Quad);
+        assertTrue(arr2Quad.value instanceof ArrayInfo);
+
+        ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
+        ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
+
+        assertEquals(5, arr1Info.getSize());
+        assertEquals(10, arr2Info.getSize());
+
+        // --- Test 3: Heap ---
+        Heap heap = stacks.getHeap();
+        HeapEntry e1 = heap.allocate("tmp1", 5, null);
+        assertNotNull(e1, "Heap should have free space");
+
+        // We can also print for debug
+        System.out.println("Stack content:");
+        stacks.printStack();
+
+        System.out.println("Symbol Table:");
+        stacks.printSymbolTable();
+
+        System.out.println("Heap:");
+        // Get all HeapEntry objects
+        stacks.printHeap();
+        Object[] memory = stacks.getAlMemory();
+        for (int i = 0; i < memory.length; i++) {
+            if (memory[i] != null) {
+                System.out.println(
+                        "[HEAP CELL] address=" + i +
+                                "  value=" + memory[i] +
+                                " (" + memory[i].getClass().getSimpleName() + ")"
+                );
+            }
+        }
+        System.out.println("================================\n");
+
+    }
+    @Test
+    public void testFreeArrayElementOK() {
+
+
+        // Declare array of size 5
+        stacks.declareTab("t1", 5, "int");
+
+        // Store value into index 2
+        stacks.setArrayValue("t1", 2, 99);
+
+
+
+        // Free the element
+        stacks.freeArrayElement("t1", 2);
+
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayValue("t1", 2);
+        });
+    }
+
+    @Test
+    public void testFreeArrayElementAlreadyEmpty() {
+
+
+        stacks.declareTab("t1", 4, "int");
+
+
+
+        // Should not throw error
+        stacks.freeArrayElement("t1", 1);
+
+
+    }
+
+    @Test
+    public void testFreeArrayElementInvalidIndexLow() {
+
+
+        stacks.declareTab("t1", 4, "int");
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("t1", -1);
+        });
+    }
+
+    @Test
+    public void testFreeArrayElementInvalidIndexHigh() {
+
+
+        stacks.declareTab("t1", 4, "int");
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("t1", 4);  // out of bounds
+        });
+    }
+
+    @Test
+    public void testFreeArrayElementUnknownArray() {
+
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("doesNotExist", 1);
+        });
+    }
+
+    @Test
+    public void testFreeArrayElementNotAnArray() {
+
+
+        stacks.declareVar("x", 42, "int");
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("x", 0);
+        });
+    }
+    @Test
+    void testMultipleArraysSetSameIndex() {
+
+
+        // 1) Declare three arrays with 5 elements each
+        stacks.declareTab("tab1", 5, "int");
+
+
+        // 2) Check symbol table contains the arrays
+        List<Symbol> symbols = stacks.getAllSymbols();
+        assertEquals(1, symbols.size(), "Symbol table should contain 3 symbols");
+
+        assertTrue(symbols.stream().anyMatch(s -> s.getName().equals("tab1")));
+
+        stacks.setArrayValue("tab1",2,12);
+        stacks.setArrayValue("tab1",2,14);
+        assertEquals(stacks.getArrayValue("tab1",2),14);
+
+    }
+
 }
 
 
