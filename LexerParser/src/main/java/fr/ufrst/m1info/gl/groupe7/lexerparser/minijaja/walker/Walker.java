@@ -56,7 +56,6 @@ public class Walker {
         if (node == null) {
             return;
         } else {
-            System.out.println("Visiting Node: " + node.getClass().getSimpleName());
             node.interpret(stack);
         }
 
