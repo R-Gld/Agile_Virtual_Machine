@@ -259,6 +259,8 @@ public class App extends Application {
             alert.showAndWait();
         }
 
+
+
         // === Added section: log message after saving ===
         if (console != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
