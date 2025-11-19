@@ -6,6 +6,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Walker;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -44,7 +45,7 @@ public class MiniJajaInterpreter implements Runnable {
         }
 
         System.out.println("Debut de l'interprétation du minijaja");
-        stacks.printStack();
+      
         AstNode astRoot = visitor.visit(tree);
         System.out.println("\n=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====");
         if (astRoot != null) {
@@ -52,7 +53,13 @@ public class MiniJajaInterpreter implements Runnable {
         } else {
             System.out.println("ERREUR: L'AST est null.");
         }
+
         System.out.println("==============================================");
+        System.out.println("\n=====  INTERPRETATION  =====");
+        if (astRoot != null) {
+           Walker walker = new Walker(astRoot,stacks);
+           walker.walk();
+        }
 
         stacks.printStack();
     }
