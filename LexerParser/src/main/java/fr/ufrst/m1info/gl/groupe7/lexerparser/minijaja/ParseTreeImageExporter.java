@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -46,9 +47,16 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 public class ParseTreeImageExporter {
 
     public static void main(String[] args) {
+        int exitCode = run(args);
+        if (exitCode != 0) {
+            System.exit(exitCode);
+        }
+    }
+
+    public static int run(String[] args) {
         if (args.length < 1) {
             System.err.println("Usage: ParseTreeImageExporter <code|minijaja|@fichier> [sortie.png]");
-            System.exit(1);
+            return 1;
         }
 
         String inputArg = args[0];
@@ -59,13 +67,12 @@ public class ParseTreeImageExporter {
             source = resolveSource(inputArg);
         } catch (IOException e) {
             System.err.println("Erreur lecture source: " + e.getMessage());
-            System.exit(2);
-            return;
+            return 2;
         }
 
         if (source.isBlank()) {
             System.err.println("La source MiniJaja est vide.");
-            System.exit(3);
+            return 3;
         }
 
         DiagnosticCollector collector = new DiagnosticCollector();
@@ -85,7 +92,7 @@ public class ParseTreeImageExporter {
         if (collector.hasErrors()) {
             System.err.println("Des erreurs de syntaxe ont été détectées:" + collector.formatDiagnostics());
             System.err.println("Aucune image générée (arrêt sur erreurs).");
-            System.exit(4);
+            return 4;
         }
 
         try {
@@ -102,9 +109,10 @@ public class ParseTreeImageExporter {
                 System.out.println("Arbre CST exporté dans: " + outputFile);
             } catch (IOException ex) {
                 System.err.println("Erreur lors de l'export de l'image: " + ex.getMessage());
-                System.exit(5);
+                return 5;
             }
         }
+        return 0;
     }
 
     private static String resolveSource(String arg) throws IOException {
@@ -157,14 +165,14 @@ public class ParseTreeImageExporter {
         int nodeWidth = (int) bounds.getWidth() + 10;
         int nodeHeight = (int) bounds.getHeight() + 6;
         int nodeX = x + (availableWidth - nodeWidth) / 2;
-        int nodeY = y;
+
 
         // Dessin du rectangle du noeud
         g.setColor(new Color(235, 242, 255));
-        g.fillRoundRect(nodeX, nodeY, nodeWidth, nodeHeight, 8, 8);
+        g.fillRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
         g.setColor(new Color(60, 100, 160));
-        g.drawRoundRect(nodeX, nodeY, nodeWidth, nodeHeight, 8, 8);
-        g.drawString(label, nodeX + 5, nodeY + nodeHeight - 8);
+        g.drawRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
+        g.drawString(label, nodeX + 5, y + nodeHeight - 8);
 
         int childCount = tree.getChildCount();
         if (childCount == 0)
@@ -184,10 +192,10 @@ public class ParseTreeImageExporter {
         }
 
         int childX = x + (availableWidth - totalChildrenWidth) / 2;
-        int childY = nodeY + nodeHeight + vGap;
+        int childY = y + nodeHeight + vGap;
 
         int centerParentX = nodeX + nodeWidth / 2;
-        int parentBottomY = nodeY + nodeHeight;
+        int parentBottomY = y + nodeHeight;
 
         for (int i = 0; i < childCount; i++) {
             Tree child = tree.getChild(i);
@@ -309,14 +317,14 @@ public class ParseTreeImageExporter {
         int nodeWidth = (int) bounds.getWidth() + 10;
         int nodeHeight = (int) bounds.getHeight() + 6;
         int nodeX = x + (availableWidth - nodeWidth) / 2;
-        int nodeY = y;
+
 
         g.setColor(new Color(235, 255, 242));
-        g.fillRoundRect(nodeX, nodeY, nodeWidth, nodeHeight, 8, 8);
+        g.fillRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
         g.setColor(new Color(60, 160, 100));
-        g.drawRoundRect(nodeX, nodeY, nodeWidth, nodeHeight, 8, 8);
+        g.drawRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
         g.setColor(Color.BLACK);
-        g.drawString(label, nodeX + 5, nodeY + nodeHeight - 8);
+        g.drawString(label, nodeX + 5, y + nodeHeight - 8);
 
         List<AstNode> children = getAstChildren(node);
         if (children.isEmpty())
@@ -333,9 +341,9 @@ public class ParseTreeImageExporter {
         }
 
         int childX = x + (availableWidth - totalChildrenWidth) / 2;
-        int childY = nodeY + nodeHeight + vGap;
+        int childY = y + nodeHeight + vGap;
         int centerParentX = nodeX + nodeWidth / 2;
-        int parentBottomY = nodeY + nodeHeight;
+        int parentBottomY = y + nodeHeight;
 
         for (int i = 0; i < children.size(); i++) {
             AstNode child = children.get(i);
@@ -372,11 +380,9 @@ public class ParseTreeImageExporter {
                                 }
                             }
                         } else if (val instanceof AstNode[]) {
-                            for (AstNode item : (AstNode[]) val) {
-                                children.add(item);
-                            }
+                            children.addAll(Arrays.asList((AstNode[]) val));
                         }
-                    } catch (IllegalAccessException e) {
+                    } catch (IllegalAccessException ignored) {
                     }
                 }
                 cls = cls.getSuperclass();
