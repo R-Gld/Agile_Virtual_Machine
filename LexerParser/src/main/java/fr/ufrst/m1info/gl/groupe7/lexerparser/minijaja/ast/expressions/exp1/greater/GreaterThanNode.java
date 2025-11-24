@@ -29,6 +29,6 @@ public class GreaterThanNode extends Expression {
   
     @Override
     public String toStringTree() {
-        return ">" + exp1.toStringTree() + "," + exp2.toStringTree();
+        return "> (" + exp1.toStringTree() + "," + exp2.toStringTree() + ")";
     }
 }

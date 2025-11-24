@@ -14,8 +14,8 @@ vars: var SEMI vars
     |
     ;
 
-var:  typemeth IDENT vexp
-    | typemeth IDENT LBRACE exp RBRACE
+var:  TYPE IDENT vexp
+    | TYPE IDENT LBRACE exp RBRACE
     | FINAL TYPE IDENT vexp
     ;
 

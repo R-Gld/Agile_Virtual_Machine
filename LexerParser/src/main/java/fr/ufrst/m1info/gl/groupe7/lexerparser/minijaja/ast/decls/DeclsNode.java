@@ -6,10 +6,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 
 public class DeclsNode extends AstDecls {
 
-    private final VarNode decl; //TODO: ADD METHODE AFTER
+    private final AstNode decl; //TODO: ADD METHODE AFTER
     private final DeclsNode decls;
 
-    public DeclsNode(VarNode decl, DeclsNode decls) {
+    public DeclsNode(AstNode decl, DeclsNode decls) {
         this.decl = decl;
         this.decls = decls;
     }
@@ -24,7 +24,7 @@ public class DeclsNode extends AstDecls {
         this.decls = null;
     }
 
-    public VarNode getDecl() {
+    public AstNode getDecl() {
         return decl;
     }
 

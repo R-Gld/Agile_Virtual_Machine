@@ -13,6 +13,11 @@ public class EntetesNode extends AstEntetes {
     }
     // TODO ajouter les constructeurs vides inill vnil .etc
 
+    public EntetesNode() {
+        this.entete = null;
+        this.entetes = null;
+    }
+
     public EnteteNode getEntete() {
         return entete;
     }
