@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
@@ -7,21 +7,21 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
-public class VarNode extends AstNode {
+public class CstNode extends AstNode {
 
-    private final Type type;
+   private final Type type;
     private final IdentNode ident;
-    private final Expression vexp; 
+    private final Expression vexp; // todo : vexpNode
 
-    public VarNode(Type type, IdentNode ident, Expression vexp) {
+    public CstNode(Type type, IdentNode ident, Expression vexp) {
         this.type = type;
         this.ident = ident;
         this.vexp = vexp;
     }
 
-    public VarNode( Type type2, IdentNode ident2) {
-        this.type = type2;
-        this.ident = ident2;
+    public CstNode(Type type, IdentNode ident) {
+        this.type = type;
+        this.ident = ident;
         this.vexp = null;
     }
 
@@ -41,26 +41,25 @@ public class VarNode extends AstNode {
     public String toStringTree() {
         StringBuilder sb = new StringBuilder();
         if (vexp == null) {
-            sb.append("var (").append(type).append(" , ").append(ident.toStringTree()).append(",").append("Omega").append(")");
+            sb.append("cst (").append(type).append(" , ").append(ident.toStringTree()).append(",").append("Omega").append(")");
             return sb.toString();
+            
         }
-        sb.append("var (").append(type).append(" , ").append(ident.toStringTree()).append(" , ").append(vexp.toStringTree()).append(")");
+        sb.append("cst (").append(type).append(" , ").append(ident.toStringTree()).append(" , ").append(vexp.toStringTree()).append(")");
         return sb.toString();
     }
 
 
     @Override
     public void interpret(Stacks stacks) {
-        // Implement the interpretation logic for the variable declaration here.
         String varName = ident.getNom();
-        Type varType = type;
         Object value;
         if (vexp != null) {
             value = vexp.evaluate(stacks);
-            stacks.declareVar(varName, value, varType);
         } else {
-           stacks.declareVar(varName, varType);
+            value = 0; // Default value for Omega // TODO
         }
-  
+        stacks.declareCst(varName, value, type);
     }
+
 }

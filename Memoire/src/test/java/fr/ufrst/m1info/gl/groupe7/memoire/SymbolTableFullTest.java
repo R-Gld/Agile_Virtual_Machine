@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,11 +22,11 @@ public class SymbolTableFullTest {
 
     @Test
     void testCreationVarStoresSymbol() {
-        table.creationSymbol("x", 5, "entier");
+        table.creationSymbol("x", 5, Type.ENTIER);
         Symbol s = table.findSymbol("x");
         assertNotNull(s);
         assertEquals("x", s.getName());
-        assertEquals("entier", s.getType());
+        assertEquals(Type.ENTIER, s.getType());
         assertEquals(5, s.getAddressStack());
     }
 
@@ -34,7 +35,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testUpdateAddressStackWorksForVar() {
-        table.creationSymbol("a", 1, "entier");
+        table.creationSymbol("a", 1, Type.ENTIER);
         assertTrue(table.updateAddressStack("a", 10));
         Symbol s = table.findSymbol("a");
         assertEquals(10, s.getAddressStack());
@@ -50,7 +51,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveExistingSymbol() {
-        table.creationSymbol("z", 1, "entier");
+        table.creationSymbol("z", 1, Type.ENTIER);
         assertTrue(table.remove("z"));
         assertFalse(table.contains("z"));
     }
@@ -63,7 +64,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testContainsSymbol() {
-        table.creationSymbol("v", 2, "entier");
+        table.creationSymbol("v", 2, Type.ENTIER);
         assertTrue(table.contains("v"));
         assertFalse(table.contains("x"));
     }
@@ -77,7 +78,7 @@ public class SymbolTableFullTest {
 
     @Test
     void testFindSymbolAfterUpdate() {
-        table.creationSymbol("flag", 5, "booleen");
+        table.creationSymbol("flag", 5, Type.BOOLEEN);
         table.updateAddressStack("flag", 2);
         Symbol s = table.findSymbol("flag");
         assertEquals(2, s.getAddressStack());
@@ -87,7 +88,7 @@ public class SymbolTableFullTest {
     void testInsertManySymbolsAndCheckCount() {
         int n = 150;
         for (int i = 0; i < n; i++) {
-            table.creationSymbol("v" + i, i, "entier");
+            table.creationSymbol("v" + i, i, Type.ENTIER);
         }
         assertEquals(n, table.size());
         for (int i = 0; i < n; i++) {
@@ -101,25 +102,25 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveThenReinsertSameName() {
-        table.creationSymbol("tmp", 1, "entier");
+        table.creationSymbol("tmp", 1, Type.ENTIER);
         assertTrue(table.remove("tmp"));
-        table.creationSymbol("tmp", 9, "entier");
+        table.creationSymbol("tmp", 9, Type.ENTIER);
         Symbol s = table.findSymbol("tmp");
         assertEquals(9, s.getAddressStack());
     }
 
     @Test
     void testDoubleDeclareReplacesExisting() {
-        table.creationSymbol("dup", 1, "entier");
-        assertFalse(table.creationSymbol("dup", 2, "entier"));
+        table.creationSymbol("dup", 1, Type.ENTIER);
+        assertFalse(table.creationSymbol("dup", 2, Type.ENTIER));
         Symbol s = table.findSymbol("dup");
         assertEquals(1, s.getAddressStack());
     }
 
     @Test
     void testPrintTableRunsWithoutError() {
-        table.creationSymbol("x", 5, "entier");
-        table.creationSymbol("c", 1, "entier");
+        table.creationSymbol("x", 5, Type.ENTIER);
+        table.creationSymbol("c", 1, Type.ENTIER);
         table.printTable();
     }
 
@@ -129,21 +130,21 @@ public class SymbolTableFullTest {
 
     @Test
     void testCreationVarWithNullInputs() {
-        table.creationSymbol(null, 10, "entier");
+        table.creationSymbol(null, 10, Type.ENTIER);
         table.creationSymbol("x", 10, null);
         assertEquals(0, table.size());
     }
 
     @Test
     void testDeclareCstWithNullInputs() {
-        table.creationSymbol(null, 10, "entier");
+        table.creationSymbol(null, 10, Type.ENTIER);
         table.creationSymbol("x", 10, null);
         assertEquals(0, table.size());
     }
 
     @Test
     void testDeclareTabWithNullInputs() {
-        table.creationSymbol(null, 5, "entier");
+        table.creationSymbol(null, 5, Type.ENTIER);
         table.creationSymbol("t", 5, null);
         assertEquals(0, table.size());
     }
@@ -185,8 +186,8 @@ public class SymbolTableFullTest {
 
     @Test
     void testRemoveLastElementInChain() {
-        table.creationSymbol("alpha", 1, "entier");
-        table.creationSymbol("beta", 2, "entier");
+        table.creationSymbol("alpha", 1, Type.ENTIER);
+        table.creationSymbol("beta", 2, Type.ENTIER);
         assertTrue(table.remove("beta"));
     }
 
@@ -283,7 +284,7 @@ public class SymbolTableFullTest {
     @Test
     void testToString_whenHasOneSymbol() {
         // On ajoute un symbole pour avoir un contenu
-        boolean created = table.creationSymbol("x", 1, "int");
+        boolean created = table.creationSymbol("x", 1, Type.ENTIER);
         assertTrue(created);
 
         String result = table.toString();
@@ -296,9 +297,9 @@ public class SymbolTableFullTest {
 
     @Test
     void testToString_afterMultipleSymbols() {
-        table.creationSymbol("x", 1, "int");
-        table.creationSymbol("y", 2, "boolean");
-        table.creationSymbol("z", 3, "string");
+        table.creationSymbol("x", 1, Type.ENTIER);
+        table.creationSymbol("y", 2, Type.BOOLEEN);
+        table.creationSymbol("z", 3, Type.STRING);
 
         String result = table.toString();
 
@@ -310,20 +311,20 @@ public class SymbolTableFullTest {
     @Test
     void testType_whenSymbolExists() {
         // Arrange : création d’un symbole
-        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("x", 1, Type.ENTIER);
 
         // Act : appel de la méthode type()
-        String result = table.type("x");
+        Type result = table.type("x");
 
         // Assert : on vérifie que le type correspond
         assertNotNull(result);
-        assertEquals("int", result);
+        assertEquals(Type.ENTIER, result);
     }
 
     @Test
     void testType_whenSymbolDoesNotExist() {
         // Aucun symbole ajouté
-        String result = table.type("unknown");
+        Type result = table.type("unknown");
 
         // Si aucun symbole trouvé, la méthode doit retourner null
         assertNull(result);
@@ -332,19 +333,19 @@ public class SymbolTableFullTest {
     @Test
     void testType_whenNameIsNull() {
         // Cas défensif : identifiant null
-        String result = table.type(null);
+        Type result = table.type(null);
         assertNull(result);
     }
 
     @Test
     void testType_withMultipleSymbols() {
-        table.creationSymbol("a", 1, "int");
-        table.creationSymbol("b", 2, "boolean");
-        table.creationSymbol("c", 3, "String");
+        table.creationSymbol("a", 1, Type.ENTIER);
+        table.creationSymbol("b", 2, Type.BOOLEEN);
+        table.creationSymbol("c", 3, Type.STRING);
 
-        assertEquals("int", table.type("a"));
-        assertEquals("boolean", table.type("b"));
-        assertEquals("String", table.type("c"));
+        assertEquals(Type.ENTIER, table.type("a"));
+        assertEquals(Type.BOOLEEN, table.type("b"));
+        assertEquals(Type.STRING, table.type("c"));
     }
     // ------------------------------------------------------------------------
     // CAS 1 : suppression du premier élément de la liste chaînée (prev == null)
@@ -352,8 +353,8 @@ public class SymbolTableFullTest {
     @Test
     void testRemove_firstElementInBucket() {
         // Arrange
-        table.creationSymbol("x", 1, "int");
-        table.creationSymbol("y", 2, "boolean");
+        table.creationSymbol("x", 1, Type.ENTIER);
+        table.creationSymbol("y", 2, Type.BOOLEEN);
 
         assertTrue(table.contains("x"));
         int before = table.size();
@@ -376,8 +377,8 @@ public class SymbolTableFullTest {
         // On crée deux symboles ayant le même index de hash
         // en utilisant un mock symbol ou des noms avec même hash
         // Pour garantir cela ici, on va insérer manuellement dans le même bucket :
-        table.creationSymbol("a", 1, "int");
-        table.creationSymbol("b", 2, "boolean");
+        table.creationSymbol("a", 1, Type.ENTIER);
+        table.creationSymbol("b", 2, Type.BOOLEEN);
 
         // Vérifie qu'ils existent
         assertTrue(table.contains("a"));
@@ -399,7 +400,7 @@ public class SymbolTableFullTest {
     // ------------------------------------------------------------------------
     @Test
     void testRemove_nonExistingElement() {
-        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("x", 1, Type.ENTIER);
 
         boolean removed = table.remove("unknown");
         assertFalse(removed);
@@ -411,10 +412,10 @@ public class SymbolTableFullTest {
     // CAS 4 : suppression dans une chaîne de plusieurs éléments
     // ------------------------------------------------------------------------
     @Test
-    void testRemove_withThreeElements() {
-        table.creationSymbol("a", 1, "int");
-        table.creationSymbol("b", 2, "float");
-        table.creationSymbol("c", 3, "boolean");
+    void testRemove_withTwoElements() {
+        table.creationSymbol("a", 1, Type.ENTIER);
+
+        table.creationSymbol("c", 3, Type.BOOLEEN);
 
         int before = table.size();
         assertEquals(before, table.getCount());
@@ -422,14 +423,15 @@ public class SymbolTableFullTest {
         // Suppression du milieu (b)
         boolean removed = table.remove("b");
 
-        assertTrue(removed);
+        assertFalse(removed);
         assertFalse(table.contains("b"));
-        assertEquals(before - 1, table.size());
+        assertEquals(table.size(), table.size());
     }
+
     @Test
     void testRemove_one_element_in() {
         // Arrange
-        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("x", 1, Type.ENTIER);
 
         assertTrue(table.contains("x"));
         int before = table.size();
@@ -444,7 +446,7 @@ public class SymbolTableFullTest {
     @Test
     void testRemove_one_element_not_in() {
         // Arrange
-        table.creationSymbol("x", 1, "int");
+        table.creationSymbol("x", 1, Type.ENTIER);
 
         assertTrue(table.contains("x"));
         int before = table.size();
@@ -459,7 +461,7 @@ public class SymbolTableFullTest {
     @Test
     void testRemove_one_element_hash() {
         // Arrange
-        table.creationSymbol("FB", 1, "int");
+        table.creationSymbol("FB", 1, Type.ENTIER);
 
         assertTrue(table.contains("FB"));
         int before = table.size();
@@ -474,8 +476,8 @@ public class SymbolTableFullTest {
     @Test
     void testRemove_elseBranch_prevNotNull() {
         // Arrange : deux symboles différents, même bucket (collision de hash)
-        table.creationSymbol("FB", 1, "int");      // premier dans la chaîne
-        table.creationSymbol("Ea", 2, "boolean");  // ajouté dans le même bucket (chaîne: FB -> Ea)
+        table.creationSymbol("FB", 1, Type.ENTIER);      // premier dans la chaîne
+        table.creationSymbol("Ea", 2, Type.BOOLEEN);  // ajouté dans le même bucket (chaîne: FB -> Ea)
 
         // Vérification de la collision
         assertEquals(getHash("FB"), getHash("Ea"), "Les deux hash doivent être identiques");

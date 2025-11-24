@@ -98,26 +98,6 @@ public class MiniJajaCompilerVisitor {
         return childVisitor;
     }
 
-    /**
-     * Normalise un type MiniJaja en type JajaCode.
-     * Convertit "boolean" ou "bool" en "BOOLEAN", "int" en "INT", etc.
-     *
-     * @param miniJajaType le type en MiniJaja (peut être "bool", "boolean", "int", etc.)
-     * @return le type normalisé en JajaCode (BOOLEAN, INT, etc.)
-     */
-    private String normalizeType(String miniJajaType) {
-        if (miniJajaType == null || miniJajaType.trim().isEmpty()) {
-            return "INT";
-        }
-
-        String lowerType = miniJajaType.trim().toLowerCase();
-        return switch (lowerType) {
-            case "bool", "boolean" -> "BOOLEAN";
-            case "int", "integer" -> "INT";
-            default -> miniJajaType.trim().toUpperCase();
-        };
-    }
-
     public void visit(ClasseNode node) {
         jjcBuilder.addInstruction(INIT);
 
@@ -413,7 +393,9 @@ public class MiniJajaCompilerVisitor {
     public void visit(DeclsNode node) {
         if (node == null || node.getDecl() == null) return;
 
-        visit(node.getDecl());
+        if (node.getDecl() instanceof VarNode varNode) {
+            visit(varNode);
+        }
 
         if (node.getDecls() != null) {
             visit(node.getDecls());
@@ -430,27 +412,16 @@ public class MiniJajaCompilerVisitor {
         }
     }
 
-    // TODO Corriger la gestion des types si boolean x; -> x est initialisé à 0 au lieu de false et c'est un INT
-    // Par contre boolean x = true; -> x est bien un BOOLEAN
     public void visit(VarNode node) {
         Expression vexp = node.getExp() != null ? node.getExp().getVexp() : null;
-
-        // Si on a une valeur d'initialisation, on peut déduire le type réel
-        String actualType;
-        if (vexp instanceof BoolValueNode) {
-            actualType = "BOOLEAN";
-        } else if (vexp instanceof NbreNode) {
-            actualType = "INT";
-        } else {
-            actualType = normalizeType(node.getType());
-        }
 
         if (vexp != null) {
             visitExpression(vexp);
         } else {
-            if ("BOOLEAN".equals(actualType)) {
+            // Si pas d'expression d'initialisation, on push une valeur par défaut selon le type
+            if ("BOOLEEN".equals(node.getType().name())) {
                 jjcBuilder.addInstruction(PUSH, false);
-            } else {
+            } else if ("ENTIER".equals(node.getType().name())) {
                 jjcBuilder.addInstruction(PUSH, 0);
             }
         }
@@ -459,7 +430,7 @@ public class MiniJajaCompilerVisitor {
         String scopeAddress = currentScope;
         String kind = "VARIABLE";
 
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, actualType, kind, 0);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, node.getType().toString(), kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
 
         if ("main".equals(currentScope)) {

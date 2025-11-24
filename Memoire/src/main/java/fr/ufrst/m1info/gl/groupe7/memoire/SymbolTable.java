@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -119,10 +121,10 @@ public class SymbolTable {
     // =========================================================================
 
     /** make symbol */
-    public boolean creationSymbol(String name, int positionStack, String type) {
+    public boolean creationSymbol(String name, int positionStack, Type type) {
         if (name == null || type == null) return false;
         if(!this.contains(name)){
-            put(new Symbol(name,type , positionStack));
+            put(new Symbol(name, type, positionStack));
             return true;
         }else{
             return false;
@@ -187,7 +189,7 @@ public class SymbolTable {
     }
 
     /** return type of node */
-    public String type(String name) {
+    public Type type(String name) {
         Node node = findNode(name);
         if (node == null) return null;
         return node.symbol.getType();

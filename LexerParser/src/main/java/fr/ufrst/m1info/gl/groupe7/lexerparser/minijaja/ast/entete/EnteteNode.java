@@ -2,12 +2,13 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.AstEntetes;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class EnteteNode extends AstEntetes {
     private final IdentNode ident;
-    private final String type;
+    private final Type type;
 
-    public EnteteNode(IdentNode ident, String type) {
+    public EnteteNode(IdentNode ident, Type type) {
         this.ident = ident;
         this.type = type;
     }
@@ -16,7 +17,7 @@ public class EnteteNode extends AstEntetes {
      return ident;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 
@@ -28,7 +29,9 @@ public class EnteteNode extends AstEntetes {
 
     @Override
     public String toStringTree() {
-        return "Entete (" + type + " , " + ident.toStringTree() + ")";
+        return "entete (" +  type.toString() + " , "+ ident.toStringTree()  + ")";
 
     }
+
+
 }

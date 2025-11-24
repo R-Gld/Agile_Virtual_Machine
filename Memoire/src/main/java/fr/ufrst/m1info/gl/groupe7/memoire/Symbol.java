@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
 
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
  * Represents a symbol entry in the symbol table.
@@ -9,11 +10,11 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
  */
 public class Symbol {
     private final String name;
-    private final String type;
+    private final Type type;
     private int addressStack;//position in the stack
 
 
-    public Symbol(String name, String type, int addressStack) {
+    public Symbol(String name, Type type, int addressStack) {
         this.name = name;
         this.type = type;
         this.addressStack = addressStack;
@@ -21,7 +22,7 @@ public class Symbol {
     }
 
     public String getName() { return name; }
-    public String getType() { return type; }
+    public Type getType() { return type; }
     public int getAddressStack() { return addressStack; }
     public void setAddressStack(int addressStack) { this.addressStack = addressStack; }
 

@@ -10,9 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Instruct
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -41,7 +39,7 @@ public class RuntimeIntegrationTest {
         // execute declarations
         DeclsNode decls = classe.getDeclarations();
         while (decls != null && decls.getDecl() != null) {
-            VarNode v = decls.getDecl();
+            AstNode v = decls.getDecl();
             v.interpret(stacks);
             decls = decls.getDecls();
         }

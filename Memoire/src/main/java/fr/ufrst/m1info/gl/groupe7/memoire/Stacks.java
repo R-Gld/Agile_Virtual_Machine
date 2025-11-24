@@ -1,4 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
+import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,9 +20,9 @@ public class Stacks {
         public String ident;
         public Object value;
         public String object;
-        public String type;
+        public Type type;
 
-        public Quad(String ident, Object value, String object, String type) {
+        public Quad(String ident, Object value, String object, Type type) {
             this.ident = ident;
             this.value = value;
             this.object = object;
@@ -135,20 +138,28 @@ public class Stacks {
     // ============================================================
 
     /** Declare a variable */
-    public void declareVar(String ident, Object value, String type) {
+    public void declareVar(String ident, Object value, Type type) {
         Quad q = new Quad(ident, value, "var", type);
         push(q);
         int positionStack = getStackPosition(ident);
         symbolTable.creationSymbol(ident,positionStack,type);
 
     }
-
+    /** Declare a variable with default value Omega */
+    public  void declareVar(String ident, Type type) {
+        declareVar(ident, Omega.getInstance(), type);
+    }
+    
     /** Declare a constant */
-    public void declareCst(String ident, Object value, String type) {
+    public void declareCst(String ident, Object value, Type type) {
         Quad q = new Quad(ident, value, "cst", type);
         push(q);
         int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
+        symbolTable.creationSymbol(ident, positionStack, type);
+    }
+    /** Declare a constant with default value Omega */
+    public void declareCst(String ident, Type type) {
+        declareCst(ident, Omega.getInstance(), type);
     }
 
     /**
@@ -157,25 +168,48 @@ public class Stacks {
      *  - store an ArrayInfo in the Quad.value (contains base address + logical size)
      *  - push the Quad on the stack and register the symbol as before
      */
-    public void declareTab(String ident, int size, String type) {
+    public void declareTab(String ident, int size, Type type) {
+        Symbol tabSymbol = symbolTable.findSymbol(ident);
+        if (tabSymbol != null) {
+            throw new RuntimeException(" array already in tab declare" + ident);
+        }
+        int cellPerElement;
+        switch (type) {
+            case ENTIER:  cellPerElement = 1; break;
+            case BOOLEEN: cellPerElement = 1; break;
+            default:
+                throw new RuntimeException("Unsupported array type: " + type);
+        }
+        int totalSize = size * cellPerElement;
 
+        // 2) Allouer un bloc mémoire contigu dans le Heap
+        HeapEntry entry = heap.allocate(ident, totalSize, null);
+        if (entry == null) {
+            throw new RuntimeException("Heap allocation failed for array " + ident);
+        }
+        int baseAddress = entry.getAddress();
 
+        // 3) Créer ArrayInfo avec base + taille logique
+        ArrayInfo info = new ArrayInfo(size);
+        info.setBaseAddress(baseAddress);
 
-
-        // 2) create ArrayInfo
-        ArrayInfo info = new ArrayInfo( size);
-
-        Quad q = new Quad(ident, info, "tab", type);//Quad q = new Quad(ident, info, "tab", type);
+        // 4) Le Quad pointe vers cet ArrayInfo
+        Quad q = new Quad(ident, info, "tab", type);
         push(q);
 
-        // 3) register in symbol table
-        int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident, positionStack, type);
+        // 5) Mise à jour table des symboles
+        int pos = getStackPosition(ident);
+        symbolTable.creationSymbol(ident, pos, type);
+
+        System.out.println("→ Array " + ident +
+                " allocated: base=" + baseAddress +
+                " cells=" + totalSize + " (size=" + size + ")");
+
     }
 
 
     /** Declare a method (record its signature only) */
-    public void declareMeth(String ident, Object body, String type) {
+    public void declareMeth(String ident, Object body, Type type) {
         Quad q = new Quad(ident, body, "meth", type);
         push(q);
         int positionStack = getStackPosition(ident);
@@ -207,7 +241,7 @@ public class Stacks {
     }
 
     /** Get the data type (integer, boolean, void) */
-    public String getDataType(String ident) {
+    public Type getDataType(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) return q.type;
@@ -241,24 +275,20 @@ public class Stacks {
     /**
      * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de String)
      */
-    private boolean isTypeCompatible(String type, Object value) {
+    private boolean isTypeCompatible(Type type, Object value) {
         if (value == null) return true; // null accepté pour tous types
 
-        switch (type.toLowerCase()) {
-            case "entier":
-            case "integer":
-            case "int":
+        switch (type) {
+            case Type.ENTIER:
                 return value instanceof Integer;
 
-            case "booleen":
-            case "boolean":
+            case Type.BOOLEEN:
                 return value instanceof Boolean;
 
-            case "chaine":
-            case "string":
+            case Type.STRING:
                 return value instanceof String;
 
-            case "void":
+            case Type.VOID:
                 return value == null;
 
             default:
@@ -334,7 +364,7 @@ public class Stacks {
     /**
      * Find a Quad by identifier from top to bottom.
      */
-
+    /*
     private boolean SetAdress(String ident,int index,int address) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
@@ -355,6 +385,8 @@ public class Stacks {
         }
         return false;
     }
+     */
+
     /**
      * Return the element at array[ index ].
      * Returns null if not found, out-of-bounds, or not an array.
@@ -362,14 +394,19 @@ public class Stacks {
     public Object getArrayValue(String ident, int index) {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+
+        if (!(q.value instanceof ArrayInfo))
+            throw new RuntimeException("Not an array: " + ident);
 
         ArrayInfo info = (ArrayInfo) q.value;
 
-        int addr = info.getAddressForIndex(index);
-        if (addr == -1) throw new RuntimeException("Element not yet assigned: " + ident + "[" + index + "]");
+        if (index < 0 || index >= info.getSize())
+            throw new RuntimeException("Index out of bounds: " + ident + "[" + index + "]");
 
-        return heap.read(addr);
+
+        int address = info.getBaseAddress() + index ;
+
+        return heap.read(address);
     }
     /**
      * Set array[index] = value.
@@ -382,35 +419,31 @@ public class Stacks {
         if(!(isTypeCompatible(q.type, value))){
             throw new RuntimeException("Element not compatible with type " + q.type + " and value " + value);
         }
-
         ArrayInfo info = (ArrayInfo) q.value;
-        if(info.getSize()<index || index < 0){
-            throw new RuntimeException("Index not inside the array size");
+
+        if (index < 0 || index >= info.getSize()) {
+            throw new RuntimeException("Index out of bounds");
         }
 
-
-        int size = 0;
-        if(value instanceof Integer ){
-            size = 2;
-        }else if(value instanceof Boolean){
-            size = 1;
-        }else {
-            throw new RuntimeException("type error should be catch before " );
+        // determine cell size for element
+        int cellSize;
+        if (value instanceof Integer) {
+            cellSize = 1;
         }
-        int  addr = info.getAddressForIndex(index);
-        if(addr == -1){
-            HeapEntry entry = heap.allocate(ident, size, null);
-            System.out.println("info creation new memory space  "+entry);
-            heap.write(entry.getAddress(), value);
-
-
-            SetAdress(ident,index, entry.getAddress());
-
-        }else{
-            heap.write(addr, value);
+        else if (value instanceof Boolean) {
+            cellSize = 1;
+        }
+        else {
+            throw new RuntimeException("Unsupported type");
         }
 
+        int base = info.getBaseAddress();
+        if (base < 0) throw new RuntimeException("Array not allocated");
 
+        // compute address IN THE CONTIGUOUS BLOCK
+        int address = base + (index * cellSize);
+
+        heap.write(address, value);
     }
     // ============================================================
 // HEAP UTILITIES
@@ -462,43 +495,58 @@ public class Stacks {
         if (q == null)
             throw new RuntimeException("Unknown array " + ident);
 
-
-        if (!(q.value instanceof ArrayInfo))
+        if (!(q.value instanceof ArrayInfo info))
             throw new RuntimeException("Not an array: " + ident);
-
-        ArrayInfo info = (ArrayInfo) q.value;
-
 
         if (index < 0 || index >= info.getSize())
             throw new RuntimeException("Index not inside the array size");
 
+        int base = info.getBaseAddress();
+        if (base < 0)
+            throw new RuntimeException("Array not allocated in heap");
 
-        int addr = info.getAddressForIndex(index);
 
-        if (addr == -1) {
 
+        int address = base + (index );
+
+        // If already empty
+        if (heap.read(address) == null) {
             System.out.println("[ARRAY FREE] " + ident + "[" + index + "] already empty.");
             return;
         }
 
+        // Free the cell inside the contiguous block
+        heap.write(address, null);
 
+        System.out.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
+    }
+    public void freeTab(String ident) {
+
+        Quad q = findQuad(ident);
+        if (q == null)
+            throw new RuntimeException("Unknown array " + ident);
+
+        if (!(q.value instanceof ArrayInfo info))
+            throw new RuntimeException("Not an array: " + ident);
+
+        int base = info.getBaseAddress();
+        if (base < 0)
+            throw new RuntimeException("Array not allocated");
+
+        // build a HeapEntry matching the original allocation
         HeapEntry entry = new HeapEntry(
-                ident + "_elem_" + index,
-                addr,
-                1,
+                ident,
+                base,
+                info.getSize() ,
                 null,
                 false
         );
 
-
+        // Now release the entire block
         heap.free(entry);
 
-
-        info.setAddressForIndex(index, -1);
-
-        System.out.println("[ARRAY FREE] removed element " + ident + "[" + index + "] at heap address=" + addr);
+        System.out.println("← Freed array " + ident + " (block starting at " + base + ")");
     }
-
 
 
 }
