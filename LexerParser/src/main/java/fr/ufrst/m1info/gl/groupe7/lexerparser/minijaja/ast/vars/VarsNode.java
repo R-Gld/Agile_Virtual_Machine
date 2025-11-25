@@ -43,6 +43,7 @@ public class VarsNode extends AstNode {
         }
         return children;
     }
+
     @Override
     public String toStringTree() {
         StringBuilder sb = new StringBuilder();

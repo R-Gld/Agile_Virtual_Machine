@@ -106,6 +106,7 @@ class AstNodesTest {
         assertInstanceOf(VarsNode.class, one.getVars());
         assertEquals("vnil", one.getVars().toStringTree());
     }
+
     @Test
     void testVarsNodeGetChildren() {
         VarsNode empty = new VarsNode();
