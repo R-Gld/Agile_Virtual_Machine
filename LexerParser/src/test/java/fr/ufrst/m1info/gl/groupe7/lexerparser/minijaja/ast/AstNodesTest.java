@@ -108,6 +108,30 @@ class AstNodesTest {
     }
 
     @Test
+    void testVarsNodeGetChildren() {
+        VarsNode empty = new VarsNode();
+        Iterable<AstNode> childrenEmpty = empty.getChildren();
+        assertNotNull(childrenEmpty);
+        int countEmpty = 0;
+        for (AstNode child : childrenEmpty) {
+            countEmpty++;
+        }
+        assertEquals(0, countEmpty);
+
+        VarNode vx = new VarNode(Type.ENTIER, new IdentNode("x"), new NbreNode(0));
+        VarsNode one = new VarsNode(vx, new VarsNode());
+        Iterable<AstNode> childrenOne = one.getChildren();
+        assertNotNull(childrenOne);
+        int countOne = 0;
+        for (AstNode child : childrenOne) {
+            countOne++;
+            if(child instanceof VarNode) {assertInstanceOf(VarNode.class, child);
+            assertEquals("x", ((VarNode) child).getIdent().getNom());}
+        }
+        assertEquals(2, countOne);
+    }
+
+    @Test
     void testCstNodeToStringTree() {
         CstNode cstWithExp = new CstNode(Type.ENTIER, new IdentNode("y"), new NbreNode(10));
         assertEquals("cst (integer , Ident(y) , nbre(10))", cstWithExp.toStringTree());
