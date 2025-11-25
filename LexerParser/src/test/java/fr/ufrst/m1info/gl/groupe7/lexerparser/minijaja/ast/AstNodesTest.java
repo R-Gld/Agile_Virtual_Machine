@@ -584,6 +584,19 @@ class AstNodesTest {
         stacks.setArrayValue("arr", 0, 7); // arr[0] = 7
 
         IncrementNode inc = new IncrementNode(new TabNode(new IdentNode("arr"), new NbreNode(0)));
-        Assertions.assertDoesNotThrow(() -> inc.interpret(stacks)); 
-}
+        Assertions.assertDoesNotThrow(() -> inc.interpret(stacks));
+    }
+
+    @Test
+    void testTabNodeEvaluate() {
+        Stacks stacks = new Stacks();
+        stacks.declareTab("t", 5, Type.ENTIER);
+        stacks.setArrayValue("t", 3, 42);
+
+        TabNode tab = new TabNode(new IdentNode("t"), new NbreNode(3));
+        Object result = tab.evaluate(stacks);
+
+        assertNotNull(result);
+        assertEquals(42, result);
+    }
 }
