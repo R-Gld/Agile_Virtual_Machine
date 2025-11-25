@@ -162,8 +162,6 @@ public class MiniJajaSemanticAnalyser {
         AstNode mainMethod = ast.getMethodeMain();
         if (mainMethod instanceof MainNode mainNode) {
             checkInstructions(mainNode.getInstrs());
-        } else if (mainMethod instanceof MethodeNode methodeNode) {
-            checkInstructions(methodeNode.getInstrs());
         }
     }
 
