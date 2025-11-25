@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 
@@ -28,6 +31,17 @@ public class VarsNode extends AstNode {
     @Override
     public String toString() {
         return var.toString() + (vars != null ? ";" + vars : "");
+    }
+    @Override
+    public List<AstNode> getChildren() {
+        List<AstNode> children = new ArrayList<>();
+        if (var != null) {
+            children.add(var);
+        }
+        if (vars != null) {
+            children.add(vars);
+        }
+        return children;
     }
     @Override
     public String toStringTree() {
