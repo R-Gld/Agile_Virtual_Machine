@@ -53,13 +53,12 @@ public class CstNode extends AstNode {
     @Override
     public void interpret(Stacks stacks) {
         String varName = ident.getNom();
-        Object value;
         if (vexp != null) {
-            value = vexp.evaluate(stacks);
+            Object value = vexp.evaluate(stacks);
+            stacks.declareCst(varName, value, type);
         } else {
-            value = 0; // Default value for Omega // TODO
+            stacks.declareCst(varName, type);
         }
-        stacks.declareCst(varName, value, type);
     }
 
 }
