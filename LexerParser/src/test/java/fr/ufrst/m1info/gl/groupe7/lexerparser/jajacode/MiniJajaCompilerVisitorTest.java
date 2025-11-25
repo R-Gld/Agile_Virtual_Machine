@@ -1122,7 +1122,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(null);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
     }
@@ -1133,7 +1133,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1145,7 +1145,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
         when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(5));
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(PUSH, 5);
         verify(builderSpy).addInstruction(INC, "x@global");
@@ -1168,7 +1168,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(thenBlock);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(PUSH, 1);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1197,7 +1197,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(thenBlock);
         when(siNode.getInstructionsNode2()).thenReturn(elseBlock);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
         verify(builderSpy).addInstruction(eq(GOTO), anyInt());
@@ -1210,7 +1210,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(null);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
     }
@@ -1232,7 +1232,7 @@ class MiniJajaCompilerVisitorTest {
 
         when(tantqueNode.getInstructionsNode()).thenReturn(body);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1245,7 +1245,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1258,7 +1258,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(null);
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1272,7 +1272,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("counter"));
         when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(1));
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(PUSH, 1);
         verify(builderSpy).addInstruction(INC, "counter@global");
@@ -1286,7 +1286,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("y"));
         when(sommeNode.getExpressionNode()).thenReturn(mult);
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(PUSH, 2);
@@ -1301,7 +1301,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
         when(sommeNode.getExpressionNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(INC, "x@global");
     }

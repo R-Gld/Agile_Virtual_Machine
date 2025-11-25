@@ -564,7 +564,7 @@ public class StacksTest {
     @Test
     public void testDeclareTabAndAccess() {
 
-        ;   // must initialize SymbolTable + Heap inside
+        // must initialize SymbolTable + Heap inside
         String ident = "T";
 
         // 1) Declare an array T[5]
@@ -754,7 +754,7 @@ public class StacksTest {
 
         // 5) Check that each Quad's value is an ArrayInfo and size is correct
         for (Stacks.Quad q : stackQuads) {
-            assertTrue(q.value instanceof ArrayInfo, "Quad value should be ArrayInfo");
+            assertInstanceOf(ArrayInfo.class, q.value, "Quad value should be ArrayInfo");
             ArrayInfo info = (ArrayInfo) q.value;
             assertEquals(5, info.getSize(), "ArrayInfo size should be 5");
         }
@@ -817,11 +817,11 @@ public class StacksTest {
         // Check that arrays are stored as ArrayInfo
         Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
         assertNotNull(arr1Quad);
-        assertTrue(arr1Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr1Quad.value);
 
         Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
         assertNotNull(arr2Quad);
-        assertTrue(arr2Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr2Quad.value);
 
         ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
         ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
@@ -971,11 +971,11 @@ public class StacksTest {
         // Check that arrays are stored as ArrayInfo
         Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
         assertNotNull(arr1Quad);
-        assertTrue(arr1Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr1Quad.value);
 
         Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
         assertNotNull(arr2Quad);
-        assertTrue(arr2Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr2Quad.value);
 
         ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
         ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
