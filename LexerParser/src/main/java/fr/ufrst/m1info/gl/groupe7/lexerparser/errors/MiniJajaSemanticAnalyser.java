@@ -50,6 +50,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Set the current file name for error reporting
+     * @param fileName the file name to use
      */
     public void setFileName(String fileName) {
         this.currentFileName = fileName;
@@ -57,21 +58,25 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Create a source position for error reporting
+     * @return a SourcePosition
      */
     private SourcePosition createPosition() {
         return new SourcePosition(currentFileName, 0, 0);
     }
 
+    /**
+     * Performs semantic analysis on the provided abstract syntax tree (AST) by
+     * checking variable declarations and validating type compatibility.
+     *
+     * @param ast the root node of the abstract syntax tree (ClasseNode) to be analyzed
+     */
     public void analyse(ClasseNode ast) {
-        // Phase 1: Collect all declarations
         checkDeclarations(ast);
-
-        // Phase 2: Check types and variable usage
         checkType(ast);
     }
 
     /**
-     * Phase 1: Collect all variable declarations and check for duplicates
+     * Collect all variable declarations and check for duplicates
      */
     private void checkDeclarations(ClasseNode ast) {
         // Collect global variable declarations
@@ -89,6 +94,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Collect declarations from DeclsNode
+     * @param decls the DeclsNode to process
      */
     private void collectDeclarations(DeclsNode decls) {
         if (decls == null) return;
@@ -118,6 +124,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Collect local variable declarations from VarsNode
+     * @param vars the VarsNode to process
      */
     private void collectVars(VarsNode vars) {
         if (vars == null) return;
@@ -147,7 +154,8 @@ public class MiniJajaSemanticAnalyser {
     }
 
     /**
-     * Phase 2: Check type compatibility and variable usage
+     * Check type compatibility and variable usage
+     * @param ast the ClasseNode to check
      */
     private void checkType(ClasseNode ast) {
         // Check main method
@@ -161,6 +169,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Check instructions node
+     * @param instrs the InstructionsNode to check
      */
     private void checkInstructions(InstructionsNode instrs) {
         if (instrs == null) return;
@@ -172,6 +181,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Check any AST node recursively
+     * @param node the node to check
      */
     private void checkNode(AstNode node) {
         switch (node) {
@@ -193,6 +203,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Check assignment statement
+     * @param affectation the AffectationNode to check
      */
     private void checkAffectation(AffectationNode affectation) {
         AstNode identNode = affectation.getIdent1Node();
@@ -208,7 +219,7 @@ public class MiniJajaSemanticAnalyser {
                     Phase.SEMANTIC,
                     createPosition(),
                     String.format("Undeclared variable: '%s' has not been declared. " +
-                                  "Make sure to declare the variable before using it (e.g., 'var integer %s;').",
+                                  "Make sure to declare the variable before using it (e.g., 'int %s;').",
                                   varName, varName)
                 );
                 return;
@@ -233,6 +244,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Infer the type of an expression
+     * @param expr the Expression to infer the type of
      */
     private Type inferType(Expression expr) {
         switch (expr) {
@@ -258,7 +270,7 @@ public class MiniJajaSemanticAnalyser {
                             Phase.SEMANTIC,
                             createPosition(),
                             String.format("Undeclared variable: '%s' is used before being declared. " +
-                                            "Declare it first (e.g., 'var integer %s;' or 'var boolean %s;').",
+                                            "Declare it first (e.g., 'int %s;' or 'var boolean %s;').",
                                     varName, varName, varName)
                     );
                     return null;
@@ -369,6 +381,10 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Check binary operation type compatibility
+     * @param leftType the type of the left operand
+     * @param rightType the type of the right operand
+     * @param expectedType the expected type for both operands
+     * @param operation the operation symbol (e.g., "+", "and", ">")
      */
     private void checkBinaryOperation(Type leftType, Type rightType, Type expectedType, String operation) {
         String operationName = getOperationName(operation);
@@ -397,6 +413,7 @@ public class MiniJajaSemanticAnalyser {
 
     /**
      * Get a human-readable name for an operation
+     * @param operation the operation symbol (e.g., "+", "and", ">")
      */
     private String getOperationName(String operation) {
         return switch (operation) {
