@@ -428,9 +428,9 @@ public class MiniJajaCompilerVisitor {
 
         String ident = node.getIdent().getNom();
         String scopeAddress = currentScope;
-        String kind = "VARIABLE";
+        String kind = "var";
 
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, node.getType().toString(), kind, 0);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(node.getType()), kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
 
         if ("main".equals(currentScope)) {
@@ -547,5 +547,13 @@ public class MiniJajaCompilerVisitor {
 
     public void visitWrite() {
         jjcBuilder.addInstruction(WRITE);
+    }
+
+    private String typeToJajaCode(fr.ufrst.m1info.gl.groupe7.memoire.utils.Type type) {
+        return switch (type) {
+            case ENTIER -> "int";
+            case BOOLEEN -> "boolean";
+            default -> throw new IllegalArgumentException("Type non supporté pour JajaCode: " + type);
+        };
     }
 }
