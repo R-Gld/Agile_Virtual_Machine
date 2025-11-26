@@ -17,14 +17,14 @@ public class EcrireLnNode extends EcrireNode {
             return "ecrireln (" + ident1.toStringTree() + ")";
 
         }
-        return "ecrireln (" + (String) this.getIdent1Node() + ")";
+        return "ecrireln (" + this.getIdent1Node() + ")";
     }
     @Override
     public void interpret(Stacks stacks) {
         if (ident1Node instanceof Expression ident1) {
             System.out.print(ident1.evaluate(stacks)+"\n");
         } else {
-            System.out.print((String) ident1Node+"\n");
+            System.out.print(ident1Node +"\n");
         }
 
     }

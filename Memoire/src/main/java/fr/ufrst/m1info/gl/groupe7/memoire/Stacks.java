@@ -395,10 +395,8 @@ public class Stacks {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
 
-        if (!(q.value instanceof ArrayInfo))
+        if (!(q.value instanceof ArrayInfo info))
             throw new RuntimeException("Not an array: " + ident);
-
-        ArrayInfo info = (ArrayInfo) q.value;
 
         if (index < 0 || index >= info.getSize())
             throw new RuntimeException("Index out of bounds: " + ident + "[" + index + "]");
@@ -415,11 +413,10 @@ public class Stacks {
     public void setArrayValue(String ident, int index, Object value) {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
         if(!(isTypeCompatible(q.type, value))){
             throw new RuntimeException("Element not compatible with type " + q.type + " and value " + value);
         }
-        ArrayInfo info = (ArrayInfo) q.value;
 
         if (index < 0 || index >= info.getSize()) {
             throw new RuntimeException("Index out of bounds");

@@ -8,7 +8,7 @@ public enum Type {
 
     private final String name;
 
-    private Type(String s) {
+    Type(String s) {
         name = s;
     }
 
