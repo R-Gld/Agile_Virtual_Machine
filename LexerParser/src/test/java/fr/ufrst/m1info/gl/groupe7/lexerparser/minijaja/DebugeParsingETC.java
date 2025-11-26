@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode; // Assurez-vous d'importer AstNode
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Walker;
 
@@ -23,18 +22,25 @@ public class DebugeParsingETC {
   public void DebugeParsing() {
     Stacks stacks = new Stacks();
     String program = """
-        class MathOps {
-          // === Declarations globales ==
-          int x = 0;
-          int y = 10+9;
-          main{
-            x = 5;
-            write("la valuer x:");
-            writeln(x);
-            write(y);
-            }
-          }
-        """;
+      class C {
+      int x = 0 ;
+      int t[4] ;
+      int fct(int max) {
+        int y = 5 ;
+        while (max > 0) {
+        y += max ;
+        max = max - 1 ;
+        } ;
+        return y ;
+      } ;
+      main {
+        while (4 > x) {
+        t[x] = x-1 ;
+        x++ ;
+        } ;
+      }
+      }
+      """;
 
     //System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");
     //System.out.println(program);
@@ -62,10 +68,10 @@ public class DebugeParsingETC {
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       // 4) Affichage de l'AST
-    //System.out.println(astRoot.toStringTree());
+    System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks);
-    walker.walk();
-    stacks.printStack();
+    //walker.walk();
+    //stacks.printStack();
 
     } else {
       System.out.println("ERREUR: L'AST est null.");

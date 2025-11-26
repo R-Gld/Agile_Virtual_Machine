@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -13,6 +14,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 class WalkerTest {
+    public Stacks stacks;
+
+    @BeforeEach
+    void setUp() {
+        stacks = Mockito.mock(Stacks.class);
+    }
+
     @Test
     void walk_withNullRoot_doesNotThrow() {
         Stacks stacks = Mockito.mock(Stacks.class);
@@ -25,7 +33,6 @@ class WalkerTest {
         AstNode child1 = Mockito.mock(AstNode.class);
         AstNode child2 = Mockito.mock(AstNode.class);
 
-        Stacks stacks = Mockito.mock(Stacks.class);
 
         Mockito.when(parent.getChildren()).thenReturn(Arrays.asList(child1, child2));
         Mockito.when(child1.getChildren()).thenReturn(Collections.emptyList());
@@ -44,8 +51,6 @@ class WalkerTest {
         AstNode parent = Mockito.mock(AstNode.class);
         AstNode child1 = Mockito.mock(AstNode.class);
         AstNode child2 = Mockito.mock(AstNode.class);
-
-        Stacks stacks = Mockito.mock(Stacks.class);
 
         Mockito.when(parent.getChildren()).thenReturn(Arrays.asList(child1, child2));
         Mockito.when(child1.getChildren()).thenReturn(Collections.emptyList());
@@ -66,7 +71,6 @@ class WalkerTest {
         AstNode child1 = Mockito.mock(AstNode.class);
         AstNode child2 = Mockito.mock(AstNode.class);
 
-        Stacks stacks = Mockito.mock(Stacks.class);
 
         Mockito.when(parent.getChildren()).thenReturn(Arrays.asList(child1, null, child2));
         Mockito.when(child1.getChildren()).thenReturn(Collections.emptyList());
@@ -88,7 +92,6 @@ class WalkerTest {
         AstNode n3 = Mockito.mock(AstNode.class);
         AstNode n4 = Mockito.mock(AstNode.class);
 
-        Stacks stacks = Mockito.mock(Stacks.class);
 
         Mockito.when(n1.getChildren()).thenReturn(Arrays.asList(n2, n3));
         Mockito.when(n2.getChildren()).thenReturn(Collections.singletonList(n4));
@@ -103,4 +106,6 @@ class WalkerTest {
         Mockito.verify(n3, Mockito.times(1)).interpret(stacks);
         Mockito.verify(n4, Mockito.times(1)).interpret(stacks);
     }
+
+
 }

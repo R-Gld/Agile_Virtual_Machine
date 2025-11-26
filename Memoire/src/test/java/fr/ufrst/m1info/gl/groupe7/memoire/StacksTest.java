@@ -1,14 +1,18 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
+
 import java.util.List;
 
+
 import static org.junit.jupiter.api.Assertions.*;
+
 
 public class StacksTest {
 
@@ -23,8 +27,8 @@ public class StacksTest {
      */
     @Test
     void testEqualsSameValues() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
 
         assertEquals(q1, q2);
         assertEquals(q1, q1);
@@ -33,153 +37,153 @@ public class StacksTest {
 
     @Test
     void testNotEqualsDifferentIdent() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("y", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("y", 10, "var", Type.ENTIER);
 
         assertNotEquals(q1, q2);
     }
 
     @Test
     void testNotEqualsDifferentValue() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 20, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 20, "var", Type.ENTIER);
 
         assertNotEquals(q1, q2);
     }
 
     @Test
     void testNotEqualsDifferentObject() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "cst", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "cst", Type.ENTIER);
 
         assertNotEquals(q1, q2);
     }
 
     @Test
     void testNotEqualsDifferentType() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", "boolean");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", Type.BOOLEEN);
 
         assertNotEquals(q1, q2);
     }
 
     @Test
     void testEqualsWithNull() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         assertNotEquals(null, q1);
     }
 
     @Test
     void testEqualsWithDifferentClass() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         String otherObject = "Not a Quad";
         assertNotEquals(otherObject, q1);
     }
 
     @Test
     void testHashCodeConsistency() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         int initialHash = q1.hashCode();
         assertEquals(initialHash, q1.hashCode()); // hashCode must be stable
     }
     @Test
     void testEqualsWithBothValuesNull() {
-        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", null, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", null, "var", Type.ENTIER);
         assertEquals(q1, q2);
         assertEquals(q1.hashCode(), q2.hashCode());
     }
 
     @Test
     void testEqualsWithOneValueNull() {
-        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         assertNotEquals(q1, q2);
 
-        Stacks.Quad q3 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q4 = new Stacks.Quad("x", null, "var", "integer");
+        Stacks.Quad q3 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q4 = new Stacks.Quad("x", null, "var", Type.ENTIER);
         assertNotEquals(q3, q4);
     }
 
     @Test
     void testHashCodeWithNullValue() {
-        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", null, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", null, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", null, "var", Type.ENTIER);
 
         assertEquals(q1.hashCode(), q2.hashCode()); // should not throw NPE
     }
 
     @Test
     void testEqualsReflexive() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         assertEquals(q1, q1); // reflexivity
     }
 
     @Test
     void testEqualsSymmetric() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         assertEquals(q1, q2);
         assertEquals(q2, q1); // symmetry
     }
 
     @Test
     void testEqualsTransitive() {
-        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", "integer");
-        Stacks.Quad q3 = new Stacks.Quad("x", 10, "var", "integer");
+        Stacks.Quad q1 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q2 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
+        Stacks.Quad q3 = new Stacks.Quad("x", 10, "var", Type.ENTIER);
         assertEquals(q1, q2);
         assertEquals(q2, q3);
         assertEquals(q1, q3); // transitivity
     }
     @Test
     void testDeclareVar() {
-        stacks.declareVar("x", 5, "integer");
+        stacks.declareVar("x", 5, Type.ENTIER);
         assertEquals(5, stacks.getValue("x"));
         assertEquals("var", stacks.getObjectType("x"));
-        assertEquals("integer", stacks.getDataType("x"));
+        assertEquals(Type.ENTIER, stacks.getDataType("x"));
     }
 
     @Test
     void testDeclareCst() {
-        stacks.declareCst("PI", 3.14, "integer");
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
         assertEquals(3.14, stacks.getValue("PI"));
         assertEquals("cst", stacks.getObjectType("PI"));
-        assertEquals("integer", stacks.getDataType("PI"));
+        assertEquals(Type.ENTIER, stacks.getDataType("PI"));
     }
 
 
 
     @Test
     void testDeclareMeth() {
-        stacks.declareMeth("f", "body", "void");
+        stacks.declareMeth("f", "body", Type.VOID);
         assertEquals("body", stacks.getValue("f"));
         assertEquals("meth", stacks.getObjectType("f"));
-        assertEquals("void", stacks.getDataType("f"));
+        assertEquals(Type.VOID, stacks.getDataType("f"));
     }
 
     @Test
     void testAssignValueOnVar() {
-        stacks.declareVar("x", 5, "integer");
+        stacks.declareVar("x", 5, Type.ENTIER);
         stacks.AffecterVal("x", 20);
         assertEquals(20, stacks.getValue("x"));
     }
 
     @Test
     void testAssignValueDoesNotAffectConst() {
-        stacks.declareCst("PI", 3.14, "integer");
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
         stacks.AffecterVal("PI", 10);
         assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
     }
     @Test
     void topPil(){
-        stacks.declareVar("x", 5, "integer");
+        stacks.declareVar("x", 5, Type.ENTIER);
         assertEquals("x", stacks.getTop().ident);
     }
     @Test
     void topPil2(){
         stacks.AffecterVal("PI", 10);
-        stacks.declareVar("x", 5, "integer");
+        stacks.declareVar("x", 5, Type.ENTIER);
         assertEquals("x", stacks.getTop().ident);
     }
     @Test
@@ -190,11 +194,11 @@ public class StacksTest {
     @Test
     void testGetStackFromTopToBottom() {
 
-        stacks.declareVar("a", 1, "integer");
-        stacks.declareVar("b", 2, "integer");
-        stacks.declareVar("c", 3, "integer");
-        stacks.declareVar("d", 4, "integer");
-        stacks.declareVar("e", 5, "integer"); // top of the stack
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER);
+        stacks.declareVar("d", 4, Type.ENTIER);
+        stacks.declareVar("e", 5, Type.ENTIER); // top of the stack
 
 
         List<Stacks.Quad> result = stacks.getStackFromTopToBottom();
@@ -212,8 +216,8 @@ public class StacksTest {
 
     @Test
     void testSwap() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("y", 2, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
 
 
         stacks.swap();
@@ -227,7 +231,7 @@ public class StacksTest {
     }
     @Test
     void testSwapOneElement() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
 
 
@@ -251,10 +255,10 @@ public class StacksTest {
 
     @Test
     void testPop() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("y", 2, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
         Stacks.Quad quad = stacks.pop();
-        assertEquals(new Stacks.Quad("y", 2, "var", "integer"), quad);
+        assertEquals(new Stacks.Quad("y", 2, "var", Type.ENTIER), quad);
         List<Stacks.Quad> result = stacks.getStackFromTopToBottom();
 
 
@@ -274,7 +278,7 @@ public class StacksTest {
      */
     @Test
     void testAssignValueToVariable() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
         assertTrue(stacks.AffecterVal("x", 10));
         assertEquals(10, stacks.getValue("x"));
@@ -282,7 +286,7 @@ public class StacksTest {
 
     @Test
     void testAssignValueToConstant() {
-        stacks.declareCst("PI", 3.14, "integer");
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
 
         assertFalse(stacks.AffecterVal("PI", 10));
         assertEquals(3.14, stacks.getValue("PI"));
@@ -290,7 +294,7 @@ public class StacksTest {
 
     @Test
     void testAssignValueIdentifierNotFound() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
         assertFalse(stacks.AffecterVal("y", 10));
         assertNull(stacks.getValue("y"));
@@ -298,7 +302,7 @@ public class StacksTest {
     }
     @Test
     void testAssignValueCst() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
         assertFalse(stacks.AffecterVal("y", 10));
         assertNull(stacks.getValue("y"));
@@ -307,9 +311,9 @@ public class StacksTest {
 
     @Test
     void testAssignValueRestoresStackOrder() {
-        stacks.declareVar("a", 1, "integer");
-        stacks.declareVar("b", 2, "integer");
-        stacks.declareVar("c", 3, "integer"); // top
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER); // top
 
         stacks.AffecterVal("a", 10);
 
@@ -332,8 +336,8 @@ public class StacksTest {
      */
     @Test
     void testGetObjectTypeExistingIdentifier() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareCst("PI", 3.14, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
 
         assertEquals("var", stacks.getObjectType("x"));
         assertEquals("cst", stacks.getObjectType("PI"));
@@ -341,7 +345,7 @@ public class StacksTest {
 
     @Test
     void testGetObjectTypeNonExistingIdentifier() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
         assertNull(stacks.getObjectType("y"));
     }
@@ -353,16 +357,16 @@ public class StacksTest {
 
     @Test
     void testGetDataTypeExistingIdentifier() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("flag", true, "boolean");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareVar("flag", true, Type.BOOLEEN);
 
-        assertEquals("integer", stacks.getDataType("x"));
-        assertEquals("boolean", stacks.getDataType("flag"));
+        assertEquals(Type.ENTIER, stacks.getDataType("x"));
+        assertEquals(Type.BOOLEEN, stacks.getDataType("flag"));
     }
 
     @Test
     void testGetDataTypeNonExistingIdentifier() {
-        stacks.declareVar("x", 1, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
 
         assertNull(stacks.getDataType("y"));
     }
@@ -374,8 +378,8 @@ public class StacksTest {
     @Test
     void testPrintStack() {
 
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("y", 2, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
 
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -399,14 +403,14 @@ public class StacksTest {
     }
     @Test
     void testAffecterValBehavior() {
-        stacks.declareVar("x", 0, "int");
-        stacks.declareCst("PI", 3.14, "float");
+        stacks.declareVar("x", 0, Type.ENTIER);
+
         stacks.printSymbolTable();
         stacks.printSymbol("li");
-        stacks.printSymbol("PI");
+
         // OK
         assertTrue(stacks.AffecterVal("x", 12));
-
+        stacks.printSymbol("x");
         // Mauvais type
         assertFalse(stacks.AffecterVal("x", "notAnInt"));
 
@@ -418,13 +422,13 @@ public class StacksTest {
     }
     @Test
     void testIsTypeCompatible_IntegerVariants() {
-        assertTrue(invokeIsTypeCompatible("int", 10));
-        assertTrue(invokeIsTypeCompatible("integer", -5));
-        assertTrue(invokeIsTypeCompatible("entier", 0));
+        assertTrue(invokeIsTypeCompatible(Type.ENTIER, 10));
+        assertTrue(invokeIsTypeCompatible(Type.ENTIER, -5));
+        assertTrue(invokeIsTypeCompatible(Type.ENTIER, 0));
 
-        assertFalse(invokeIsTypeCompatible("int", true));
-        assertFalse(invokeIsTypeCompatible("int", "42"));
-        assertFalse(invokeIsTypeCompatible("int", 3.14));
+        assertFalse(invokeIsTypeCompatible(Type.ENTIER, true));
+        assertFalse(invokeIsTypeCompatible(Type.ENTIER, "42"));
+        assertFalse(invokeIsTypeCompatible(Type.ENTIER, 3.14));
     }
     @Test
     void test_getStackPosition_no_in_the_stack(){
@@ -436,11 +440,11 @@ public class StacksTest {
     // ===============================
     @Test
     void testIsTypeCompatible_BooleanVariants() {
-        assertTrue(invokeIsTypeCompatible("boolean", true));
-        assertTrue(invokeIsTypeCompatible("booleen", false));
+        assertTrue(invokeIsTypeCompatible(Type.BOOLEEN, true));
+        assertTrue(invokeIsTypeCompatible(Type.BOOLEEN, false));
 
-        assertFalse(invokeIsTypeCompatible("boolean", "true"));
-        assertFalse(invokeIsTypeCompatible("boolean", 1));
+        assertFalse(invokeIsTypeCompatible(Type.BOOLEEN, "true"));
+        assertFalse(invokeIsTypeCompatible(Type.BOOLEEN, 1));
     }
 
     // ===============================
@@ -448,11 +452,11 @@ public class StacksTest {
     // ===============================
     @Test
     void testIsTypeCompatible_StringVariants() {
-        assertTrue(invokeIsTypeCompatible("string", "hello"));
-        assertTrue(invokeIsTypeCompatible("chaine", "bonjour"));
+        assertTrue(invokeIsTypeCompatible(Type.STRING, "hello"));
+        assertTrue(invokeIsTypeCompatible(Type.STRING, "bonjour"));
 
-        assertFalse(invokeIsTypeCompatible("string", 123));
-        assertFalse(invokeIsTypeCompatible("chaine", false));
+        assertFalse(invokeIsTypeCompatible(Type.STRING, 123));
+        assertFalse(invokeIsTypeCompatible(Type.STRING, false));
     }
 
     // ===============================
@@ -460,9 +464,9 @@ public class StacksTest {
     // ===============================
     @Test
     void testIsTypeCompatible_VoidType() {
-        assertTrue(invokeIsTypeCompatible("void", null));
-        assertFalse(invokeIsTypeCompatible("void", 5));
-        assertFalse(invokeIsTypeCompatible("void", "text"));
+        assertTrue(invokeIsTypeCompatible(Type.VOID, null));
+        assertFalse(invokeIsTypeCompatible(Type.VOID, 5));
+        assertFalse(invokeIsTypeCompatible(Type.VOID, "text"));
     }
 
     // ===============================
@@ -470,11 +474,11 @@ public class StacksTest {
     // ===============================
     @Test
     void testIsTypeCompatible_NullValue() {
-        assertTrue(invokeIsTypeCompatible("int", null));
-        assertTrue(invokeIsTypeCompatible("boolean", null));
-        assertTrue(invokeIsTypeCompatible("string", null));
-        assertTrue(invokeIsTypeCompatible("chaine", null));
-        assertTrue(invokeIsTypeCompatible("entier", null));
+        assertTrue(invokeIsTypeCompatible(Type.ENTIER, null));
+        assertTrue(invokeIsTypeCompatible(Type.BOOLEEN, null));
+        assertTrue(invokeIsTypeCompatible(Type.STRING, null));
+        assertTrue(invokeIsTypeCompatible(Type.STRING, null));
+        assertTrue(invokeIsTypeCompatible(Type.ENTIER, null));
     }
 
     // ===============================
@@ -482,18 +486,18 @@ public class StacksTest {
     // ===============================
     @Test
     void testIsTypeCompatible_UnknownType() {
-        assertFalse(invokeIsTypeCompatible("float", 3.14));
-        assertFalse(invokeIsTypeCompatible("char", 'a'));
-        assertFalse(invokeIsTypeCompatible("randomType", "test"));
+
+        assertFalse(invokeIsTypeCompatible(Type.STRING, 'a'));
+        assertTrue(invokeIsTypeCompatible(Type.VOID,null));
     }
 
 
     // ===============================
     // Méthode utilitaire pour accéder à la méthode privée via réflexion
     // ===============================
-    private boolean invokeIsTypeCompatible(String type, Object value) {
+    private boolean invokeIsTypeCompatible(Type type, Object value) {
         try {
-            var method = Stacks.class.getDeclaredMethod("isTypeCompatible", String.class, Object.class);
+            var method = Stacks.class.getDeclaredMethod("isTypeCompatible", Type.class, Object.class);
             method.setAccessible(true);
             return (boolean) method.invoke(stacks, type, value);
         } catch (Exception e) {
@@ -502,8 +506,8 @@ public class StacksTest {
     }
     @Test
     void testPushUpdatesSymbolTable() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
+        stacks.declareVar("a", 10, Type.ENTIER);
+        stacks.declareVar("b", 20, Type.ENTIER);
 
         Symbol symbolA = stacks.getSymbolTable().findSymbol("a");
         Symbol symbolB = stacks.getSymbolTable().findSymbol("b");
@@ -518,8 +522,8 @@ public class StacksTest {
 
     @Test
     void testPopUpdatesSymbolTable() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
+        stacks.declareVar("a", 10, Type.ENTIER);
+        stacks.declareVar("b", 20, Type.ENTIER);
 
         stacks.pop();
 
@@ -529,8 +533,8 @@ public class StacksTest {
 
     @Test
     void testSwapUpdatesSymbolTable() {
-        stacks.declareVar("x", 1, "integer");
-        stacks.declareVar("y", 2, "integer");
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
 
         stacks.swap();
 
@@ -544,9 +548,9 @@ public class StacksTest {
 
     @Test
     void testMultipleOperations() {
-        stacks.declareVar("a", 10, "integer");
-        stacks.declareVar("b", 20, "integer");
-        stacks.declareVar("c", 30, "integer");
+        stacks.declareVar("a", 10, Type.ENTIER);
+        stacks.declareVar("b", 20, Type.ENTIER);
+        stacks.declareVar("c", 30, Type.ENTIER);
 
         stacks.pop();
         stacks.swap();
@@ -560,11 +564,11 @@ public class StacksTest {
     @Test
     public void testDeclareTabAndAccess() {
 
-        ;   // must initialize SymbolTable + Heap inside
+        // must initialize SymbolTable + Heap inside
         String ident = "T";
 
         // 1) Declare an array T[5]
-        stacks.declareTab(ident, 5, "int");
+        stacks.declareTab(ident, 5, Type.ENTIER);
 
         // 2) Ensure symbol exists
         assertTrue(stacks.getSymbolTable().contains(ident),
@@ -612,7 +616,7 @@ public class StacksTest {
      */
     @Test
     void testGetArrayValueUnknownIdentifier() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.getArrayValue("m", 1);
@@ -622,7 +626,7 @@ public class StacksTest {
     }
     @Test
     void testGetArrayValueNullIdentifier() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.getArrayValue(null, 1);
@@ -631,24 +635,70 @@ public class StacksTest {
         assertTrue(ex.getMessage().contains("Unknown array"));
     }
     @Test
+    public void testDeclareTabAlreadyExists() {
+        stacks.declareTab("T", 3, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.declareTab("T", 3, Type.ENTIER)
+        );
+
+        assertTrue(ex.getMessage().contains("array already in tab declare"));
+    }
+
+
+
+    @Test
+    public void testDeclareTabUnsupportedType() {
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.declareTab("X", 5, Type.STRING)  // STRING non supporté
+        );
+
+        assertTrue(ex.getMessage().contains("Unsupported array type"));
+    }
+
+    @Test
+    public void testDeclareTabInvalidSizeZero() {
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.declareTab("T0", 0, Type.ENTIER)
+        );
+
+
+    }
+
+    @Test
+    public void testDeclareTabInvalidSizeNegative() {
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.declareTab("Tneg", -5, Type.ENTIER)
+        );
+
+
+    }
+
+    @Test
     void testGetArrayValueNegativeIndex() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.getArrayValue("arr", -1);
         });
 
-        assertEquals("Index -1 out of bounds for length 5", ex.getMessage());
+        assertEquals("Index out of bounds: arr[-1]", ex.getMessage());
     }
     @Test
     void testGetArrayValueIndexTooLarge() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.getArrayValue("arr", 5); // last valid index = 4
         });
 
-        assertEquals("Index 5 out of bounds for length 5", ex.getMessage());
+        assertEquals("Index out of bounds: arr[5]", ex.getMessage());
     }
 
     /** Fake heap that always fails allocation */
@@ -680,9 +730,9 @@ public class StacksTest {
 
 
         // 1) Declare three arrays with 5 elements each
-        stacks.declareTab("tab1", 5, "int");
-        stacks.declareTab("tab2", 5, "int");
-        stacks.declareTab("tab3", 5, "int");
+        stacks.declareTab("tab1", 5, Type.ENTIER);
+        stacks.declareTab("tab2", 5, Type.ENTIER);
+        stacks.declareTab("tab3", 5, Type.ENTIER);
 
         // 2) Check symbol table contains the arrays
         List<Symbol> symbols = stacks.getAllSymbols();
@@ -704,7 +754,7 @@ public class StacksTest {
 
         // 5) Check that each Quad's value is an ArrayInfo and size is correct
         for (Stacks.Quad q : stackQuads) {
-            assertTrue(q.value instanceof ArrayInfo, "Quad value should be ArrayInfo");
+            assertInstanceOf(ArrayInfo.class, q.value, "Quad value should be ArrayInfo");
             ArrayInfo info = (ArrayInfo) q.value;
             assertEquals(5, info.getSize(), "ArrayInfo size should be 5");
         }
@@ -716,14 +766,14 @@ public class StacksTest {
 
 
         // 1) Declare variable, constant, method
-        stacks.declareVar("x", 42, "int");
-        stacks.declareCst("y", 3, "int");
-        stacks.declareMeth("myFunc", "body", "void");
+        stacks.declareVar("x", 42, Type.ENTIER);
+        stacks.declareCst("y", 3, Type.ENTIER);
+        stacks.declareMeth("myFunc", "body", Type.VOID);
 
         // 2) Declare two arrays
-        stacks.declareTab("arr1", 5, "int");
+        stacks.declareTab("arr1", 5, Type.ENTIER);
         stacks.printHeap();
-        stacks.declareTab("arr2", 10, "int");
+        stacks.declareTab("arr2", 10, Type.ENTIER);
         System.out.println("Heap: with tab vid ");
         stacks.printHeap();
 
@@ -767,11 +817,11 @@ public class StacksTest {
         // Check that arrays are stored as ArrayInfo
         Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
         assertNotNull(arr1Quad);
-        assertTrue(arr1Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr1Quad.value);
 
         Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
         assertNotNull(arr2Quad);
-        assertTrue(arr2Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr2Quad.value);
 
         ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
         ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
@@ -809,7 +859,7 @@ public class StacksTest {
     }
     @Test
     void testUnknownArray() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.setArrayValue("unknown", 0, 10);
         });
@@ -818,8 +868,8 @@ public class StacksTest {
 
     @Test
     void testNotAnArray() {
-        stacks.declareTab("arr", 5, "int");
-        stacks.declareVar("x", 42, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
+        stacks.declareVar("x", 42, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.setArrayValue("x", 0, 10);
         });
@@ -828,34 +878,34 @@ public class StacksTest {
 
     @Test
     void testIncompatibleType() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.setArrayValue("arr", 0, true); // boolean in int array
         });
-        assertEquals("Element not compatible with type int and value true", ex.getMessage());
+        assertEquals("Element not compatible with type integer and value true", ex.getMessage());
     }
 
     @Test
     void testIndexOutOfBoundsNegative() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.setArrayValue("arr", -1, 10);
         });
-        assertEquals("Index not inside the array size", ex.getMessage());
+        assertEquals("Index out of bounds", ex.getMessage());
     }
 
     @Test
     void testIndexOutOfBoundsTooLarge() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
             stacks.setArrayValue("arr", 10, 10);
         });
-        assertEquals("Index not inside the array size", ex.getMessage());
+        assertEquals("Index out of bounds", ex.getMessage());
     }
 
     @Test
     void testSuccessfulSet() {
-        stacks.declareTab("arr", 5, "int");
+        stacks.declareTab("arr", 5, Type.ENTIER);
         assertDoesNotThrow(() -> stacks.setArrayValue("arr", 2, 99));
         Object val = stacks.getArrayValue("arr", 2);
         assertEquals(99, val);
@@ -865,14 +915,14 @@ public class StacksTest {
 
 
         // 1) Declare variable, constant, method
-        stacks.declareVar("x", 42, "int");
-        stacks.declareCst("y", 3, "int");
-        stacks.declareMeth("myFunc", "body", "void");
+        stacks.declareVar("x", 42, Type.ENTIER);
+        stacks.declareCst("y", 3, Type.ENTIER);
+        stacks.declareMeth("myFunc", "body", Type.VOID);
 
         // 2) Declare two arrays
-        stacks.declareTab("arr1", 5, "int");
+        stacks.declareTab("arr1", 5, Type.ENTIER);
         stacks.printHeap();
-        stacks.declareTab("arr2", 10, "boolean");
+        stacks.declareTab("arr2", 10, Type.BOOLEEN);
         System.out.println("Heap: with tab vid ");
         stacks.printHeap();
 
@@ -921,11 +971,11 @@ public class StacksTest {
         // Check that arrays are stored as ArrayInfo
         Stacks.Quad arr1Quad = stackContent.stream().filter(q -> q.ident.equals("arr1")).findFirst().orElse(null);
         assertNotNull(arr1Quad);
-        assertTrue(arr1Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr1Quad.value);
 
         Stacks.Quad arr2Quad = stackContent.stream().filter(q -> q.ident.equals("arr2")).findFirst().orElse(null);
         assertNotNull(arr2Quad);
-        assertTrue(arr2Quad.value instanceof ArrayInfo);
+        assertInstanceOf(ArrayInfo.class, arr2Quad.value);
 
         ArrayInfo arr1Info = (ArrayInfo) arr1Quad.value;
         ArrayInfo arr2Info = (ArrayInfo) arr2Quad.value;
@@ -966,7 +1016,7 @@ public class StacksTest {
 
 
         // Declare array of size 5
-        stacks.declareTab("t1", 5, "int");
+        stacks.declareTab("t1", 5, Type.ENTIER);
 
         // Store value into index 2
         stacks.setArrayValue("t1", 2, 99);
@@ -976,17 +1026,20 @@ public class StacksTest {
         // Free the element
         stacks.freeArrayElement("t1", 2);
 
-
-        assertThrows(RuntimeException.class, () -> {
+        assertNull(stacks.getArrayValue("t1", 2));
+        /*
+                assertThrows(RuntimeException.class, () -> {
             stacks.getArrayValue("t1", 2);
         });
+         */
+
     }
 
     @Test
     public void testFreeArrayElementAlreadyEmpty() {
 
 
-        stacks.declareTab("t1", 4, "int");
+        stacks.declareTab("t1", 4, Type.ENTIER);
 
 
 
@@ -1000,7 +1053,7 @@ public class StacksTest {
     public void testFreeArrayElementInvalidIndexLow() {
 
 
-        stacks.declareTab("t1", 4, "int");
+        stacks.declareTab("t1", 4, Type.ENTIER);
 
         assertThrows(RuntimeException.class, () -> {
             stacks.freeArrayElement("t1", -1);
@@ -1011,7 +1064,7 @@ public class StacksTest {
     public void testFreeArrayElementInvalidIndexHigh() {
 
 
-        stacks.declareTab("t1", 4, "int");
+        stacks.declareTab("t1", 4, Type.ENTIER);
 
         assertThrows(RuntimeException.class, () -> {
             stacks.freeArrayElement("t1", 4);  // out of bounds
@@ -1031,7 +1084,7 @@ public class StacksTest {
     public void testFreeArrayElementNotAnArray() {
 
 
-        stacks.declareVar("x", 42, "int");
+        stacks.declareVar("x", 42, Type.ENTIER);
 
         assertThrows(RuntimeException.class, () -> {
             stacks.freeArrayElement("x", 0);
@@ -1042,7 +1095,7 @@ public class StacksTest {
 
 
         // 1) Declare three arrays with 5 elements each
-        stacks.declareTab("tab1", 5, "int");
+        stacks.declareTab("tab1", 5, Type.ENTIER);
 
 
         // 2) Check symbol table contains the arrays
@@ -1056,6 +1109,56 @@ public class StacksTest {
         assertEquals(stacks.getArrayValue("tab1",2),14);
 
     }
+    @Test
+    public void testFreeTabUnknownArray() {
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.freeTab("X")
+        );
+
+        assertTrue(ex.getMessage().contains("Unknown array"));
+    }
+
+
+    @Test
+    public void testFreeTabNotArray() {
+
+        stacks.declareVar("v", 10, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.freeTab("v")
+        );
+
+        assertTrue(ex.getMessage().contains("Not an array"));
+    }
+
+
+    @Test
+    public void testFreeTabNotAllocated() {
+
+        stacks.declareTab("T", 5, Type.ENTIER);
+
+        // On simule un tableau non alloué
+        ArrayInfo info = (ArrayInfo) stacks.getValue("T");
+        info.setBaseAddress(-1);
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> stacks.freeTab("T")
+        );
+
+        assertTrue(ex.getMessage().contains("Array not allocated"));
+    }
+    @Test
+    public void testFreeTabAllocated() {
+        stacks.declareTab("T", 5, Type.ENTIER);
+        stacks.freeTab("T");
+    }
+
+
+
 
 }
 

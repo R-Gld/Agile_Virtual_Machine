@@ -1,45 +1,41 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
-import java.util.Arrays;
-
 /**
  * ArrayInfo
  * ------------------------------------------------------------
  * Stores metadata for an array allocated inside the Heap.
- * Contains:
- *   - elementAddresses : of element inside the heap
- *   - size    : number of elements in the array
+ * Contains only:
+ *   - baseAddress : first cell of the array in the Heap
+ *   - size        : number of logical elements in the array
+ *
+ * Element addresses are computed as:
+ *   address = baseAddress + index * cellPerElement
  */
 public class ArrayInfo {
-    private final int size;
-    private int[] elementAddresses; // mapping index -> heap address
+
+    private final int size;          // number of elements
+    private int baseAddress;         // starting address in heap
 
     public ArrayInfo(int size) {
         this.size = size;
-        this.elementAddresses = new int[size];
-        Arrays.fill(this.elementAddresses, -1); // -1 = empty
-    }
-
-    public int getAddressForIndex(int index) {
-        return elementAddresses[index];
-    }
-
-    public void setAddressForIndex(int index, int address) {
-        elementAddresses[index] = address;
-    }
-
-    public int[] getAllAddresses() {
-        return elementAddresses;
+        this.baseAddress = -1; // not assigned yet
     }
 
     public int getSize() {
         return size;
     }
+
+    public int getBaseAddress() {
+        return baseAddress;
+    }
+
+    public void setBaseAddress(int baseAddress) {
+        this.baseAddress = baseAddress;
+    }
+
     @Override
     public String toString() {
-        return "ArrayInfo{size=" + size +
-                ", addresses=" + Arrays.toString(elementAddresses) +
-                '}';
+        return "ArrayInfo{size=" + size + ", baseAddress=" + baseAddress + "}";
     }
 }
 

@@ -17,7 +17,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -77,10 +79,10 @@ class MiniJajaCompilerVisitorTest {
      * Creates a simple {@link VarNode} representing a variable declaration.
      *
      * @param name The variable name.
-     * @param type The variable type (e.g., "int", "bool").
+     * @param type The variable type (e.g., Type.ENTIER, Type.BOOLEEN).
      * @return A new VarNode instance.
      */
-    private VarNode var(String name, String type) {
+    private VarNode var(String name, Type type) {
         IdentNode ident = new IdentNode(name);
         return new VarNode(type, ident, null);
     }
@@ -103,12 +105,12 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_generatesPushAndNewAndTracksVariable() {
-        VarNode node = var("x", "int");
+        VarNode node = var("x", Type.ENTIER);
 
         visitor.visit(node);
 
         verify(builderSpy).addInstruction(PUSH, 0);
-        verify(builderSpy).addInstruction(eq(NEW), eq("x@global"), eq("INT"), eq("VARIABLE"), eq(0));
+        verify(builderSpy).addInstruction(eq(NEW), eq("x@global"), eq("integer"), eq("VARIABLE"), eq(0));
     }
 
     @Test
@@ -214,8 +216,8 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitDecls_recursesThroughMultipleDeclarations() {
-        VarNode var1 = var("x", "int");
-        VarNode var2 = var("y", "bool");
+        VarNode var1 = var("x", Type.ENTIER);
+        VarNode var2 = var("y", Type.BOOLEEN);
         DeclsNode next = mock(DeclsNode.class);
         DeclsNode root = mock(DeclsNode.class);
         when(root.getDecl()).thenReturn(var1);
@@ -231,8 +233,8 @@ class MiniJajaCompilerVisitorTest {
     void visitClasse_withMultipleDecls_generatesCorrectSwapPopSequence() {
         ClasseNode classe = mock(ClasseNode.class);
         DeclsNode decls = mock(DeclsNode.class);
-        VarNode var1 = var("a", "int");
-        VarNode var2 = var("b", "bool");
+        VarNode var1 = var("a", Type.ENTIER);
+        VarNode var2 = var("b", Type.BOOLEEN);
         System.out.println(var2.getType());
         DeclsNode nextDecls = mock(DeclsNode.class);
 
@@ -248,8 +250,9 @@ class MiniJajaCompilerVisitorTest {
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(INIT);
         inOrder.verify(builderSpy).addInstruction(PUSH, 0);
-        inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "INT", "VARIABLE", 0);
-        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "BOOLEAN", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "integer", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(PUSH, false);
+        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "boolean", "VARIABLE", 0);
         inOrder.verify(builderSpy).addInstruction(SWAP);
         inOrder.verify(builderSpy).addInstruction(POP);
         inOrder.verify(builderSpy).addInstruction(SWAP);
@@ -1065,7 +1068,7 @@ class MiniJajaCompilerVisitorTest {
         // Créer une variable locale dans le main
         MainNode mainNode = mock(MainNode.class);
         fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
-        VarNode localVar = var("localVar", "int");
+        VarNode localVar = var("localVar", Type.ENTIER);
 
         when(mainNode.getVars()).thenReturn(varsNode);
         when(varsNode.getVar()).thenReturn(localVar);
@@ -1088,7 +1091,7 @@ class MiniJajaCompilerVisitorTest {
     void resolveVariableScope_globalVariable_returnsGlobal() {
         // Variable globale utilisée dans le main
         DeclsNode declsNode = mock(DeclsNode.class);
-        VarNode globalVar = var("globalVar", "int");
+        VarNode globalVar = var("globalVar", Type.ENTIER);
         when(declsNode.getDecl()).thenReturn(globalVar);
         when(declsNode.getDecls()).thenReturn(null);
 
@@ -1119,7 +1122,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(null);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
     }
@@ -1130,7 +1133,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1142,7 +1145,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
         when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(5));
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(PUSH, 5);
         verify(builderSpy).addInstruction(INC, "x@global");
@@ -1165,7 +1168,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(thenBlock);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(PUSH, 1);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1194,7 +1197,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(thenBlock);
         when(siNode.getInstructionsNode2()).thenReturn(elseBlock);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
         verify(builderSpy).addInstruction(eq(GOTO), anyInt());
@@ -1207,7 +1210,7 @@ class MiniJajaCompilerVisitorTest {
         when(siNode.getInstructionsNode()).thenReturn(null);
         when(siNode.getInstructionsNode2()).thenReturn(null);
 
-        visitor.visit((InstructionNode) siNode);
+        visitor.visit(siNode);
 
         verify(builderSpy).addInstruction(eq(IF), anyInt());
     }
@@ -1229,7 +1232,7 @@ class MiniJajaCompilerVisitorTest {
 
         when(tantqueNode.getInstructionsNode()).thenReturn(body);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1242,7 +1245,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(new NbreNode(1));
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1255,7 +1258,7 @@ class MiniJajaCompilerVisitorTest {
         when(tantqueNode.getExpressionNode()).thenReturn(null);
         when(tantqueNode.getInstructionsNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) tantqueNode);
+        visitor.visit(tantqueNode);
 
         verify(builderSpy).addInstruction(NOT);
         verify(builderSpy).addInstruction(eq(IF), anyInt());
@@ -1269,7 +1272,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("counter"));
         when(sommeNode.getExpressionNode()).thenReturn(new NbreNode(1));
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(PUSH, 1);
         verify(builderSpy).addInstruction(INC, "counter@global");
@@ -1283,7 +1286,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("y"));
         when(sommeNode.getExpressionNode()).thenReturn(mult);
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(PUSH, 2);
@@ -1298,7 +1301,7 @@ class MiniJajaCompilerVisitorTest {
         when(sommeNode.getIdent1Node()).thenReturn(ident("x"));
         when(sommeNode.getExpressionNode()).thenReturn(null);
 
-        visitor.visit((InstructionNode) sommeNode);
+        visitor.visit(sommeNode);
 
         verify(builderSpy).addInstruction(INC, "x@global");
     }
@@ -1307,23 +1310,23 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarsNode_withSingleVariable_processesCorrectly() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
-        VarNode var = var("localVar", "int");
+        VarsNode varsNode = mock(VarsNode.class);
+        VarNode var = var("localVar", Type.ENTIER);
         when(varsNode.getVar()).thenReturn(var);
         when(varsNode.getVars()).thenReturn(null);
 
         visitor.visit(varsNode);
 
         verify(builderSpy).addInstruction(PUSH, 0);
-        verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("INT"), eq("VARIABLE"), eq(0));
+        verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("integer"), eq("VARIABLE"), eq(0));
     }
 
     @Test
     void visitVarsNode_withMultipleVariables_processesAll() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode1 = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode2 = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
-        VarNode var1 = var("a", "int");
-        VarNode var2 = var("b", "bool");
+        VarsNode varsNode1 = mock(VarsNode.class);
+        VarsNode varsNode2 = mock(VarsNode.class);
+        VarNode var1 = var("a", Type.ENTIER);
+        VarNode var2 = var("b", Type.BOOLEEN);
 
         when(varsNode1.getVar()).thenReturn(var1);
         when(varsNode1.getVars()).thenReturn(varsNode2);
@@ -1337,13 +1340,13 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarsNode_withNullNode_doesNothing() {
-        visitor.visit((fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode) null);
+        visitor.visit((VarsNode) null);
         verify(builderSpy, never()).addInstruction(any(), any());
     }
 
     @Test
     void visitVarsNode_withNullVar_doesNothing() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
+        VarsNode varsNode = mock(VarsNode.class);
         when(varsNode.getVar()).thenReturn(null);
 
         visitor.visit(varsNode);
@@ -1458,31 +1461,17 @@ class MiniJajaCompilerVisitorTest {
     // ===== Tests complets pour visit(VarNode) =====
 
     @Test
-    void visitVarNode_withBoolValueNode_deducesTypeAsBoolean() {
-        // Test: boolean x = true; → le type doit être déduit comme BOOLEAN
-        IdentNode ident = new IdentNode("x");
-        BoolValueNode boolValue = new BoolValueNode(true);
-
-        VarNode varNode = new VarNode("int", ident, boolValue); // Type déclaré "int" mais valeur booléenne
-
-        visitor.visit(varNode);
-
-        verify(builderSpy).addInstruction(PUSH, true);
-        verify(builderSpy).addInstruction(NEW, "x@global", "BOOLEAN", "VARIABLE", 0);
-    }
-
-    @Test
     void visitVarNode_withBoolValueNodeFalse_deducesTypeAsBoolean() {
         // Test: boolean x = false;
         IdentNode ident = new IdentNode("y");
         BoolValueNode boolValue = new BoolValueNode(false);
 
-        VarNode varNode = new VarNode("bool", ident, boolValue);
+        VarNode varNode = new VarNode(Type.BOOLEEN, ident, boolValue);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "y@global", "BOOLEAN", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "y@global", "boolean", "VARIABLE", 0);
     }
 
     @Test
@@ -1491,12 +1480,12 @@ class MiniJajaCompilerVisitorTest {
         IdentNode ident = new IdentNode("count");
         NbreNode nbreValue = new NbreNode(42);
 
-        VarNode varNode = new VarNode("int", ident, nbreValue);
+        VarNode varNode = new VarNode(Type.ENTIER, ident, nbreValue);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, 42);
-        verify(builderSpy).addInstruction(NEW, "count@global", "INT", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "count@global", "integer", "VARIABLE", 0);
     }
 
     @Test
@@ -1505,48 +1494,12 @@ class MiniJajaCompilerVisitorTest {
         IdentNode ident = new IdentNode("negNum");
         NbreNode nbreValue = new NbreNode(-10);
 
-        VarNode varNode = new VarNode("int", ident, nbreValue);
+        VarNode varNode = new VarNode(Type.ENTIER, ident, nbreValue);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, -10);
-        verify(builderSpy).addInstruction(NEW, "negNum@global", "INT", "VARIABLE", 0);
-    }
-
-    @Test
-    void visitVarNode_withNullExpression_usesNormalizeTypeForBoolean() {
-        // Test: boolean x; (sans initialisation) → doit utiliser normalizeType et pusher false
-        IdentNode ident = new IdentNode("flag");
-        VarNode varNode = new VarNode("boolean", ident, null);
-
-        visitor.visit(varNode);
-
-        verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "flag@global", "BOOLEAN", "VARIABLE", 0);
-    }
-
-    @Test
-    void visitVarNode_withNullExpression_usesNormalizeTypeForInt() {
-        // Test: int x; (sans initialisation) → doit utiliser normalizeType et pusher 0
-        IdentNode ident = new IdentNode("counter");
-        VarNode varNode = new VarNode("int", ident, null);
-
-        visitor.visit(varNode);
-
-        verify(builderSpy).addInstruction(PUSH, 0);
-        verify(builderSpy).addInstruction(NEW, "counter@global", "INT", "VARIABLE", 0);
-    }
-
-    @Test
-    void visitVarNode_withNullExpression_usesNormalizeTypeForBool() {
-        // Test: bool x; (avec type "bool" au lieu de "boolean")
-        IdentNode ident = new IdentNode("isReady");
-        VarNode varNode = new VarNode("bool", ident, null);
-
-        visitor.visit(varNode);
-
-        verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "isReady@global", "BOOLEAN", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "negNum@global", "integer", "VARIABLE", 0);
     }
 
     @Test
@@ -1555,7 +1508,7 @@ class MiniJajaCompilerVisitorTest {
         IdentNode ident = new IdentNode("sum");
         PlusNode plusExpr = new PlusNode(new NbreNode(2), new NbreNode(3));
 
-        VarNode varNode = new VarNode("int", ident, plusExpr);
+        VarNode varNode = new VarNode(Type.ENTIER, ident, plusExpr);
 
         visitor.visit(varNode);
 
@@ -1563,7 +1516,7 @@ class MiniJajaCompilerVisitorTest {
         inOrder.verify(builderSpy).addInstruction(PUSH, 2);
         inOrder.verify(builderSpy).addInstruction(PUSH, 3);
         inOrder.verify(builderSpy).addInstruction(ADD);
-        inOrder.verify(builderSpy).addInstruction(NEW, "sum@global", "INT", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "sum@global", "integer", "VARIABLE", 0);
     }
 
     @Test
@@ -1572,12 +1525,12 @@ class MiniJajaCompilerVisitorTest {
         IdentNode ident = new IdentNode("x");
         IdentNode yIdent = new IdentNode("y");
 
-        VarNode varNode = new VarNode("int", ident, yIdent);
+        VarNode varNode = new VarNode(Type.ENTIER, ident, yIdent);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(LOAD, "y@global");
-        verify(builderSpy).addInstruction(NEW, "x@global", "INT", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "x@global", "integer", "VARIABLE", 0);
     }
 
 
@@ -1586,7 +1539,7 @@ class MiniJajaCompilerVisitorTest {
         // Test qu'une variable déclarée dans le main est ajoutée aux variables locales
         MainNode mainNode = mock(MainNode.class);
         fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode varsNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode.class);
-        VarNode localVar = var("localInMain", "int");
+        VarNode localVar = var("localInMain", Type.ENTIER);
 
         when(mainNode.getVars()).thenReturn(varsNode);
         when(varsNode.getVar()).thenReturn(localVar);
@@ -1595,41 +1548,41 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(mainNode);
 
-        verify(builderSpy).addInstruction(NEW, "localInMain@main", "INT", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "localInMain@main", "integer", "VARIABLE", 0);
     }
 
     @Test
     void visitVarNode_inGlobalScope_doesNotAddToMainLocalVariables() {
         // Test qu'une variable globale n'est pas ajoutée aux variables locales du main
-        VarNode globalVar = var("globalVar", "bool");
+        VarNode globalVar = var("globalVar", Type.BOOLEEN);
 
         visitor.visit(globalVar);
 
-        verify(builderSpy).addInstruction(NEW, "globalVar@global", "BOOLEAN", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "globalVar@global", "boolean", "VARIABLE", 0);
     }
 
     @Test
     void visitVarNode_withUppercaseType_normalizesCorrectly() {
         // Test: BOOLEAN x; → doit être normalisé en BOOLEAN
         IdentNode ident = new IdentNode("uppercaseType");
-        VarNode varNode = new VarNode("BOOLEAN", ident, null);
+        VarNode varNode = new VarNode(Type.BOOLEEN, ident, null);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "BOOLEAN", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "boolean", "VARIABLE", 0);
     }
 
     @Test
     void visitVarNode_withMixedCaseType_normalizesCorrectly() {
         // Test: Boolean x; → doit être normalisé en BOOLEAN
         IdentNode ident = new IdentNode("mixedCase");
-        VarNode varNode = new VarNode("Boolean", ident, null);
+        VarNode varNode = new VarNode(Type.BOOLEEN, ident, null);
 
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "mixedCase@global", "BOOLEAN", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "mixedCase@global", "boolean", "VARIABLE", 0);
     }
 }
 

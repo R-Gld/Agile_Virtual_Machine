@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
@@ -117,6 +118,7 @@ class JajaCodeInterpreterVisitorUnitTest {
 
             @Override
             public void setParent(RuleContext ruleContext) {
+                // Not needed for mock TerminalNode used in tests
             }
 
             @Override
@@ -147,7 +149,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         return ctx;
     }
 
-    private JajaCodeParser.InstrContext instrWithNew(String ident, String type, String kind) {
+    private JajaCodeParser.InstrContext instrWithNew(String ident, Type type, String kind) {
         JajaCodeParser.InstrContext ctx = mock(JajaCodeParser.InstrContext.class);
         when(ctx.NEW()).thenReturn(term("new"));
 
@@ -155,7 +157,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(identCtx.getText()).thenReturn(ident);
         when(ctx.ident()).thenReturn(identCtx);
 
-        when(ctx.TYPE()).thenReturn(term(type));
+        when(ctx.TYPE()).thenReturn(term(type.toString()));
         when(ctx.SORTE()).thenReturn(term(kind));
         return ctx;
     }
@@ -222,21 +224,21 @@ class JajaCodeInterpreterVisitorUnitTest {
         visitor.visitInstr(instrWithPush(5));
 
         // When NEW var x:int is executed
-        visitor.visitInstr(instrWithNew("x", "int", "var"));
+        visitor.visitInstr(instrWithNew("x", Type.ENTIER, "var"));
 
         // Then Stacks.declareVar is called with the popped value
-        verify(stacks).declareVar(eq("x"), eq(5), eq("int"));
+        verify(stacks).declareVar("x", 5, Type.ENTIER);
 
         // And declareCst are not called here
-        verify(stacks, never()).declareCst(anyString(), any(), anyString());
+        verify(stacks, never()).declareCst(anyString(), any(), any(Type.class));
     }
 
     @Test
     void visitInstr_newMeth_declaresCst_withTopValue() {
         visitor.visitInstr(instrWithPush(8));
-        visitor.visitInstr(instrWithNew("f", "int", "meth"));
-        verify(stacks).declareCst(eq("f"), eq(8), eq("int"));
-        verify(stacks, never()).declareVar(anyString(), any(), anyString());
+        visitor.visitInstr(instrWithNew("f", Type.ENTIER, "meth"));
+        verify(stacks).declareCst("f", 8, Type.ENTIER);
+        verify(stacks, never()).declareVar(anyString(), any(), any(Type.class));
     }
 
     // ------------------------
@@ -260,8 +262,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         visitor.visitInstr(instrWithStore("y"));
 
         InOrder inOrder = inOrder(stacks);
-        inOrder.verify(stacks).AffecterVal(eq("x"), eq(1));
-        inOrder.verify(stacks).AffecterVal(eq("y"), eq(2));
+        inOrder.verify(stacks).AffecterVal("x", 1);
+        inOrder.verify(stacks).AffecterVal("y", 2);
     }
 
     // ------------------------
@@ -290,8 +292,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         // POP should push then pop, but not touch symbol management methods
         verify(stacks).push(any(Stacks.Quad.class));
         verify(stacks).pop();
-        verify(stacks, never()).declareVar(anyString(), any(), anyString());
-        verify(stacks, never()).declareCst(anyString(), any(), anyString());
+        verify(stacks, never()).declareVar(anyString(), any(), any(Type.class));
+        verify(stacks, never()).declareCst(anyString(), any(), any(Type.class));
         verify(stacks, never()).AffecterVal(anyString(), any());
     }
 
@@ -388,9 +390,9 @@ class JajaCodeInterpreterVisitorUnitTest {
     @Test
     void visitInstr_newVar_withInt() {
         visitor.visitInstr(instrWithPush(10));
-        visitor.visitInstr(instrWithNew("count", "int", "var"));
+        visitor.visitInstr(instrWithNew("count", Type.ENTIER, "var"));
 
-        verify(stacks).declareVar("count", 10, "int");
+        verify(stacks).declareVar("count", 10, Type.ENTIER);
     }
 
     @Test
@@ -402,59 +404,51 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(pushCtx.valeur()).thenReturn(valeur);
 
         visitor.visitInstr(pushCtx);
-        visitor.visitInstr(instrWithNew("flag", "bool", "var"));
+        visitor.visitInstr(instrWithNew("flag", Type.BOOLEEN, "var"));
 
-        verify(stacks).declareVar("flag", true, "bool");
+        verify(stacks).declareVar("flag", true, Type.BOOLEEN);
     }
 
     @Test
     void visitInstr_newCst_declaresConstant() {
         visitor.visitInstr(instrWithPush(42));
-        visitor.visitInstr(instrWithNew("MAX", "int", "cst"));
+        visitor.visitInstr(instrWithNew("MAX", Type.ENTIER, "cst"));
 
-        verify(stacks).declareCst("MAX", 42, "int");
-        verify(stacks, never()).declareVar(anyString(), any(), anyString());
+        verify(stacks).declareCst("MAX", 42, Type.ENTIER);
+        verify(stacks, never()).declareVar(anyString(), any(), any(Type.class));
     }
 
     @Test
     void visitInstr_newTab_declaresArray() {
         visitor.visitInstr(instrWithPush(10)); // taille du tableau
-        visitor.visitInstr(instrWithNew("array", "int", "tab"));
+        visitor.visitInstr(instrWithNew("array", Type.ENTIER, "tab"));
 
-        verify(stacks).declareTab("array", 10, "int");
-    }
-
-    @Test
-    void visitInstr_newMeth_declaresMethod() {
-        visitor.visitInstr(instrWithPush(100)); // adresse de la méthode
-        visitor.visitInstr(instrWithNew("main", "void", "meth"));
-
-        verify(stacks).declareCst("main", 100, "void");
+        verify(stacks).declareTab("array", 10, Type.ENTIER);
     }
 
     @Test
     void visitInstr_new_withVariableKeyword() {
         visitor.visitInstr(instrWithPush(5));
-        visitor.visitInstr(instrWithNew("x", "int", "variable")); // VARIABLE au lieu de VAR
+        visitor.visitInstr(instrWithNew("x", Type.ENTIER, "variable")); // VARIABLE au lieu de VAR
 
-        verify(stacks).declareVar("x", 5, "int");
+        verify(stacks).declareVar("x", 5, Type.ENTIER);
     }
 
     @Test
     void visitInstr_new_multipleVariables() {
         visitor.visitInstr(instrWithPush(1));
-        visitor.visitInstr(instrWithNew("a", "int", "var"));
+        visitor.visitInstr(instrWithNew("a", Type.ENTIER, "var"));
 
         visitor.visitInstr(instrWithPush(2));
-        visitor.visitInstr(instrWithNew("b", "int", "var"));
+        visitor.visitInstr(instrWithNew("b", Type.ENTIER, "var"));
 
         visitor.visitInstr(instrWithPush(3));
-        visitor.visitInstr(instrWithNew("c", "int", "var"));
+        visitor.visitInstr(instrWithNew("c", Type.ENTIER, "var"));
 
         InOrder inOrder = inOrder(stacks);
-        inOrder.verify(stacks).declareVar("a", 1, "int");
-        inOrder.verify(stacks).declareVar("b", 2, "int");
-        inOrder.verify(stacks).declareVar("c", 3, "int");
+        inOrder.verify(stacks).declareVar("a", 1, Type.ENTIER);
+        inOrder.verify(stacks).declareVar("b", 2, Type.ENTIER);
+        inOrder.verify(stacks).declareVar("c", 3, Type.ENTIER);
     }
 
 
@@ -649,35 +643,33 @@ class JajaCodeInterpreterVisitorUnitTest {
 
     @Test
     void scenario_declareAndAssignVariable() {
-        // int x = 0; x = 5;
         visitor.visitInstr(instrWithPush(0));
-        visitor.visitInstr(instrWithNew("x", "int", "var"));
+        visitor.visitInstr(instrWithNew("x", Type.ENTIER, "var"));
 
         visitor.visitInstr(instrWithPush(5));
         when(stacks.AffecterVal("x", 5)).thenReturn(true);
         visitor.visitInstr(instrWithStore("x"));
 
         InOrder inOrder = inOrder(stacks);
-        inOrder.verify(stacks).declareVar("x", 0, "int");
+        inOrder.verify(stacks).declareVar("x", 0, Type.ENTIER);
         inOrder.verify(stacks).AffecterVal("x", 5);
     }
 
 
     @Test
     void scenario_multipleDeclarations() {
-        // int a = 1; int b = 2; int c = 3;
         visitor.visitInstr(instrWithPush(1));
-        visitor.visitInstr(instrWithNew("a", "int", "var"));
+        visitor.visitInstr(instrWithNew("a", Type.ENTIER, "var"));
 
         visitor.visitInstr(instrWithPush(2));
-        visitor.visitInstr(instrWithNew("b", "int", "var"));
+        visitor.visitInstr(instrWithNew("b", Type.ENTIER, "var"));
 
         visitor.visitInstr(instrWithPush(3));
-        visitor.visitInstr(instrWithNew("c", "int", "var"));
+        visitor.visitInstr(instrWithNew("c", Type.ENTIER, "var"));
 
-        verify(stacks).declareVar("a", 1, "int");
-        verify(stacks).declareVar("b", 2, "int");
-        verify(stacks).declareVar("c", 3, "int");
+        verify(stacks).declareVar("a", 1, Type.ENTIER);
+        verify(stacks).declareVar("b", 2, Type.ENTIER);
+        verify(stacks).declareVar("c", 3, Type.ENTIER);
     }
 
     @Test
@@ -712,18 +704,18 @@ class JajaCodeInterpreterVisitorUnitTest {
     void scenario_arrayDeclaration() {
         // Déclaration d'un tableau de 10 éléments
         visitor.visitInstr(instrWithPush(10));
-        visitor.visitInstr(instrWithNew("numbers", "int", "tab"));
+        visitor.visitInstr(instrWithNew("numbers", Type.ENTIER, "tab"));
 
-        verify(stacks).declareTab("numbers", 10, "int");
+        verify(stacks).declareTab("numbers", 10, Type.ENTIER);
     }
 
     @Test
     void scenario_constantDeclaration() {
         // const PI = 314 (simplifié)
         visitor.visitInstr(instrWithPush(314));
-        visitor.visitInstr(instrWithNew("PI", "int", "cst"));
+        visitor.visitInstr(instrWithNew("PI", Type.ENTIER, "cst"));
 
-        verify(stacks).declareCst("PI", 314, "int");
+        verify(stacks).declareCst("PI", 314, Type.ENTIER);
     }
 
     @Test
@@ -766,7 +758,7 @@ class JajaCodeInterpreterVisitorUnitTest {
 
         visitor.visitInstr(initCtx);
         visitor.visitInstr(instrWithPush(0));
-        visitor.visitInstr(instrWithNew("x", "int", "var"));
+        visitor.visitInstr(instrWithNew("x", Type.ENTIER, "var"));
         visitor.visitInstr(instrWithPush(5));
         visitor.visitInstr(instrWithStore("x"));
         visitor.visitInstr(instrWithPush(0));
@@ -777,7 +769,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         InOrder inOrder = inOrder(stacks);
         inOrder.verify(stacks).push(any()); // push(0)
         inOrder.verify(stacks).pop(); // new consomme le 0
-        inOrder.verify(stacks).declareVar("x", 0, "int");
+        inOrder.verify(stacks).declareVar("x", 0, Type.ENTIER);
         inOrder.verify(stacks).push(any()); // push(5)
         inOrder.verify(stacks).pop(); // store consomme le 5
         inOrder.verify(stacks).AffecterVal("x", 5);
@@ -867,7 +859,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.adresse()).thenReturn(adresse);
         when(adresse.getText()).thenReturn("10");
 
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
 
         visitor.visitInstr(ctx);
 
@@ -907,12 +899,12 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(1)).thenReturn(term("("));
         when(ctx.getChild(2)).thenReturn(term("myVar"));
         when(ctx.getChild(3)).thenReturn(term(","));
-        when(ctx.getChild(4)).thenReturn(term("INT"));
+        when(ctx.getChild(4)).thenReturn(term(Type.ENTIER.name()));
         when(ctx.getChild(5)).thenReturn(term(","));
         when(ctx.getChild(6)).thenReturn(term("VARIABLE"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", Type.ENTIER));
 
         visitor.visitInstr(ctx);
 
@@ -939,7 +931,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(6)).thenReturn(term("VAR"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
-        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
 
         visitor.visitInstr(ctx);
 
@@ -961,12 +953,12 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(1)).thenReturn(term("("));
         when(ctx.getChild(2)).thenReturn(term("arr"));
         when(ctx.getChild(3)).thenReturn(term(","));
-        when(ctx.getChild(4)).thenReturn(term("INT"));
+        when(ctx.getChild(4)).thenReturn(term(Type.ENTIER.name()));
         when(ctx.getChild(5)).thenReturn(term(","));
         when(ctx.getChild(6)).thenReturn(term("TAB"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", Type.ENTIER));
 
         visitor.visitInstr(ctx);
 
@@ -981,8 +973,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.AND()).thenReturn(term("and"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
-        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
+        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
 
         visitor.visitOper2(ctx);
 
@@ -995,8 +987,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.OR()).thenReturn(term("or"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
-        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
+        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
 
         visitor.visitOper2(ctx);
 
@@ -1009,8 +1001,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.SUP()).thenReturn(term("sup"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
-        mockStack.push(new Stacks.Quad("%TMP%", 3, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
+        mockStack.push(new Stacks.Quad("%TMP%", 3, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1056,7 +1048,7 @@ class JajaCodeInterpreterVisitorUnitTest {
 
     @Test
     void visitInstr_newWithNullValue_stopsExecution() {
-        JajaCodeParser.InstrContext ctx = instrWithNew("var", "int", "var");
+        JajaCodeParser.InstrContext ctx = instrWithNew("var", Type.ENTIER, "var");
 
         // Pile vide - pop retournera null
         when(stacks.pop()).thenReturn(null);
@@ -1069,26 +1061,26 @@ class JajaCodeInterpreterVisitorUnitTest {
 
     @Test
     void visitInstr_newWithTabAndNonIntegerSize_stopsExecution() {
-        JajaCodeParser.InstrContext ctx = instrWithNew("arr", "int", "tab");
+        JajaCodeParser.InstrContext ctx = instrWithNew("arr", Type.ENTIER, "tab");
 
-        mockStack.push(new Stacks.Quad("%TMP%", "notAnInteger", "%TMP%", "string"));
+        mockStack.push(new Stacks.Quad("%TMP%", "notAnInteger", "%TMP%", Type.STRING));
 
         visitor.visitInstr(ctx);
 
-        verify(stacks, never()).declareTab(anyString(), anyInt(), anyString());
+        verify(stacks, never()).declareTab(anyString(), anyInt(), any(Type.class));
     }
 
     @Test
     void visitInstr_newWithUnknownKind_stopsExecution() {
-        JajaCodeParser.InstrContext ctx = instrWithNew("x", "int", "unknown");
+        JajaCodeParser.InstrContext ctx = instrWithNew("x", Type.ENTIER, "unknown");
 
-        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", Type.ENTIER));
 
         visitor.visitInstr(ctx);
 
-        verify(stacks, never()).declareVar(anyString(), any(), anyString());
-        verify(stacks, never()).declareCst(anyString(), any(), anyString());
-        verify(stacks, never()).declareTab(anyString(), anyInt(), anyString());
+        verify(stacks, never()).declareVar(anyString(), any(), any(Type.class));
+        verify(stacks, never()).declareCst(anyString(), any(), any(Type.class));
+        verify(stacks, never()).declareTab(anyString(), anyInt(), any(Type.class));
     }
 
     // ===== Tests pour axiomeStore - valeur null =====
@@ -1124,8 +1116,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.ADD()).thenReturn(term("add"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", "string"));
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", Type.STRING));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1152,8 +1144,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.SUB()).thenReturn(term("sub"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1179,8 +1171,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.MUL()).thenReturn(term("mul"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 3, "%TMP%", "int"));
-        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", 3, "%TMP%", Type.ENTIER));
+        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
 
         visitor.visitOper2(ctx);
 
@@ -1206,8 +1198,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.DIV()).thenReturn(term("div"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", "int"));
-        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", "string"));
+        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", Type.ENTIER));
+        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", Type.VOID));
 
         visitor.visitOper2(ctx);
 
@@ -1219,8 +1211,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.DIV()).thenReturn(term("div"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", "int"));
-        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", Type.ENTIER));
+        mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1247,7 +1239,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper1Context ctx = mock(JajaCodeParser.Oper1Context.class);
         when(ctx.NEG()).thenReturn(term("neg"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
 
         visitor.visitOper1(ctx);
 
@@ -1273,7 +1265,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper1Context ctx = mock(JajaCodeParser.Oper1Context.class);
         when(ctx.NOT()).thenReturn(term("not"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 42, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 42, "%TMP%", Type.ENTIER));
 
         visitor.visitOper1(ctx);
 
@@ -1299,8 +1291,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.AND()).thenReturn(term("and"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
-        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", "bool"));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
+        mockStack.push(new Stacks.Quad("%TMP%", true, "%TMP%", Type.BOOLEEN));
 
         visitor.visitOper2(ctx);
 
@@ -1326,8 +1318,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.OR()).thenReturn(term("or"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", "bool"));
-        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
+        mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1367,8 +1359,8 @@ class JajaCodeInterpreterVisitorUnitTest {
         JajaCodeParser.Oper2Context ctx = mock(JajaCodeParser.Oper2Context.class);
         when(ctx.SUP()).thenReturn(term("sup"));
 
-        mockStack.push(new Stacks.Quad("%TMP%", "text", "%TMP%", "string"));
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", "text", "%TMP%", Type.STRING));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
 
         visitor.visitOper2(ctx);
 
@@ -1402,7 +1394,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.adresse()).thenReturn(adresse);
         when(adresse.getText()).thenReturn("10");
 
-        mockStack.push(new Stacks.Quad("%TMP%", "notBool", "%TMP%", "string"));
+        mockStack.push(new Stacks.Quad("%TMP%", "notBool", "%TMP%", Type.STRING));
 
         visitor.visitInstr(ctx);
 
@@ -1418,7 +1410,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.adresse()).thenReturn(adresse);
         when(adresse.getText()).thenReturn("10");
 
-        mockStack.push(new Stacks.Quad("%TMP%", 1, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 1, "%TMP%", Type.ENTIER));
 
         visitor.visitInstr(ctx);
 
@@ -1470,7 +1462,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.ident()).thenReturn(ident);
         when(ident.getText()).thenReturn("x");
 
-        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", "string"));
+        mockStack.push(new Stacks.Quad("%TMP%", "notInt", "%TMP%", Type.STRING));
         when(stacks.getValue("x")).thenReturn(10);
 
         visitor.visitInstr(ctx);
@@ -1487,7 +1479,7 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.ident()).thenReturn(ident);
         when(ident.getText()).thenReturn("const");
 
-        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", "int"));
+        mockStack.push(new Stacks.Quad("%TMP%", 5, "%TMP%", Type.ENTIER));
         when(stacks.getValue("const")).thenReturn(10);
         when(stacks.AffecterVal("const", 15)).thenReturn(false); // Échec de l'affectation
 

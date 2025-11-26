@@ -13,7 +13,7 @@ public class Vexp {
     }
     public Vexp() {
         this.exp = null;
-    } //TODO: OMEGA
+    } 
 
     public Expression getVexp() {
         return exp;

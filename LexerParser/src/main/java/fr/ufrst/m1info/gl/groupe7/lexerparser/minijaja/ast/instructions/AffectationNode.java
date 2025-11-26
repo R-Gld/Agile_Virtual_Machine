@@ -3,6 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
@@ -96,6 +97,13 @@ public class AffectationNode extends InstructionNode {
             String varName = identNode.getNom();
             Object value = expression.evaluate(stacks);
             stacks.AffecterVal(varName, value);
+        }else if (ident1Node instanceof TabNode tabNode)
+        {
+         String varName = tabNode.getIdent().getNom();
+         int index = (int) tabNode.getIndex().evaluate(stacks);
+         Object value = expression.evaluate(stacks);
+         stacks.setArrayValue(varName, index, value);
+
         }
     }
 

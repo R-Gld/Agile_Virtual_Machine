@@ -3,6 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -47,8 +48,8 @@ public class JajaCodeInterpreterUnitTest {
         assertEquals(5, valueX, "La variable 'x' devrait avoir la valeur 5.");
 
         // Vérifier que le type est correct
-        String typeX = finalStacks.getDataType("x");
-        assertEquals("int", typeX, "La variable 'x' devrait être de type int.");
+        Type typeX = finalStacks.getDataType("x");
+        assertEquals(Type.ENTIER, typeX, "La variable 'x' devrait être de type int.");
 
         // Vérifier que c'est bien une variable
         String objectTypeX = finalStacks.getObjectType("x");

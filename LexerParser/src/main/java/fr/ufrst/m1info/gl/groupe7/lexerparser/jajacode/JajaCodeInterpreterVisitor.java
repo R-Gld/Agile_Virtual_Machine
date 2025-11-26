@@ -3,6 +3,8 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.TypeUtils;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -39,6 +41,7 @@ import java.util.logging.Logger;
 public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object> implements Runnable {
     Logger logger = Logger.getLogger(getClass().getName());
     String tempValue = "%TMP%";
+
 
     /**
      * La pile de mémoire utilisée pour stocker les variables et les valeurs temporaires.
@@ -177,7 +180,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      * <ul>
      *   <li>{@code INIT} - Initialisation du programme → {@link #axiomeInit()}</li>
      *   <li>{@code PUSH} - Empiler une valeur → {@link #axiomePush(JajaCodeParser.ValeurContext)}</li>
-     *   <li>{@code NEW} - Déclarer un symbole → {@link #axiomeNew(String, String, String)}</li>
+     *   <li>{@code NEW} - Déclarer un symbole → {@link #axiomeNew(String, Type, String)}</li>
      *   <li>{@code STORE} - Stocker une valeur → {@link #axiomeStore(String)}</li>
      *   <li>{@code LOAD} - Charger une valeur → {@link #axiomeLoad(String)}</li>
      *   <li>{@code SWAP} - Échanger → {@link #axiomeSwap()}</li>
@@ -291,8 +294,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     /**
      * Extrait le type depuis le contexte.
      */
-    private String extractType(JajaCodeParser.InstrContext ctx) {
-        return ctx.TYPE() != null ? ctx.TYPE().getText() : null;
+    private Type extractType(JajaCodeParser.InstrContext ctx) {
+        return ctx.TYPE() != null ? TypeUtils.getTypeFromString(ctx.TYPE().getText()) : null;
     }
 
     /**
@@ -314,7 +317,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             System.out.println("\t\t[DEBUG] Enfant " + i + ": " + childText);
 
             if (params.type == null && isTypeToken(childText)) {
-                params.type = childText;
+                params.type = TypeUtils.getTypeFromString(childText);
                 System.out.println("\t\t[DEBUG] Type trouvé: " + params.type);
             }
 
@@ -364,7 +367,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      */
     private static class NewInstructionParams {
         String ident;
-        String type;
+        Type type;
         String sorte;
 
         boolean isComplete() {
@@ -478,14 +481,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      */
     private void axiomePush(JajaCodeParser.ValeurContext valeurCtx) {
         Object valeur = visitValeur(valeurCtx);
-        String type;
+        Type type;
 
         if (valeur instanceof Integer) {
-            type = "int";
+            type = Type.ENTIER;
         } else if (valeur instanceof Boolean) {
-            type = "bool";
+            type = Type.BOOLEEN;
         } else {
-            type = "void";
+            type = Type.VOID;
         }
 
         stacks.push(new Stacks.Quad(tempValue, valeur, tempValue, type));
@@ -525,7 +528,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      * @param type  le type du symbole (int, bool, etc.)
      * @param kind  la sorte du symbole (var, cst, tab, meth)
      */
-    private void axiomeNew(String ident, String type, String kind) {
+    private void axiomeNew(String ident, Type type, String kind) {
         System.out.println("\t\t[DEBUG] axiomeNew appelé: ident=" + ident + ", type=" + type + ", kind=" + kind);
 
         Stacks.Quad valeur = stacks.pop();
@@ -558,8 +561,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 break;
             default:
                 if (logger.isLoggable(java.util.logging.Level.INFO)) {
-                    logger.log(java.util.logging.Level.INFO,
-                        "Erreur dans axiomeNew : type de symbole inconnu: {0}", kind);
+                    logger.log(java.util.logging.Level.INFO, "Erreur dans axiomeNew : type de symbole inconnu: {0}", kind);
                 }
                 running = false;
                 return;
@@ -727,7 +729,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         int result = (Integer) op1.value + (Integer) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome ADD exécuté: " + op1.value + " + " + op2.value + " = " + result);
         instructionCounter++;
@@ -764,7 +766,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         int result = (Integer) op1.value - (Integer) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome SUB exécuté: " + op1.value + " - " + op2.value + " = " + result);
         instructionCounter++;
@@ -795,7 +797,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         int result = (Integer) op1.value * (Integer) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome MUL exécuté: " + op1.value + " * " + op2.value + " = " + result);
         instructionCounter++;
@@ -838,7 +840,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         int result = (Integer) op1.value / (Integer) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome DIV exécuté: " + op1.value + " / " + op2.value + " = " + result);
         instructionCounter++;
@@ -868,7 +870,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         int result = -(Integer) op.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "int"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome UNARY MINUS exécuté: -" + op.value + " = " + result);
         instructionCounter++;
@@ -898,7 +900,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         boolean result = !(Boolean) op.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.BOOLEEN));
 
         System.out.println("\t\tAxiome NOT exécuté: !" + op.value + " = " + result);
         instructionCounter++;
@@ -929,7 +931,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         boolean result = (Boolean) op1.value && (Boolean) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.ENTIER));
 
         System.out.println("\t\tAxiome AND exécuté: " + op1.value + " && " + op2.value + " = " + result);
         instructionCounter++;
@@ -960,8 +962,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         boolean result = (Boolean) op1.value || (Boolean) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
-
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.BOOLEEN));
         System.out.println("\t\tAxiome OR exécuté: " + op1.value + " || " + op2.value + " = " + result);
         instructionCounter++;
     }
@@ -985,7 +986,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         boolean result = Objects.equals(op1.value, op2.value);
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.BOOLEEN));
 
         System.out.println("\t\tAxiome EQ exécuté: " + op1.value + " == " + op2.value + " = " + result);
         instructionCounter++;
@@ -1016,7 +1017,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
 
         boolean result = (Integer) op1.value > (Integer) op2.value;
-        stacks.push(new Stacks.Quad(tempValue, result, tempValue, "bool"));
+        stacks.push(new Stacks.Quad(tempValue, result, tempValue, Type.BOOLEEN));
 
         System.out.println("\t\tAxiome SUP exécuté: " + op1.value + " > " + op2.value + " = " + result);
         instructionCounter++;
