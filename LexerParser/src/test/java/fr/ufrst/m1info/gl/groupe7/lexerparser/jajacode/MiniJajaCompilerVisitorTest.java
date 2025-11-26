@@ -110,7 +110,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(node);
 
         verify(builderSpy).addInstruction(PUSH, 0);
-        verify(builderSpy).addInstruction(eq(NEW), eq("x@global"), eq("integer"), eq("VARIABLE"), eq(0));
+        verify(builderSpy).addInstruction(eq(NEW), eq("x@global"), eq("int"), eq("var"), eq(0));
     }
 
     @Test
@@ -250,9 +250,9 @@ class MiniJajaCompilerVisitorTest {
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(INIT);
         inOrder.verify(builderSpy).addInstruction(PUSH, 0);
-        inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "integer", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "int", "var", 0);
         inOrder.verify(builderSpy).addInstruction(PUSH, false);
-        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "boolean", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "boolean", "var", 0);
         inOrder.verify(builderSpy).addInstruction(SWAP);
         inOrder.verify(builderSpy).addInstruction(POP);
         inOrder.verify(builderSpy).addInstruction(SWAP);
@@ -1318,7 +1318,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varsNode);
 
         verify(builderSpy).addInstruction(PUSH, 0);
-        verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("integer"), eq("VARIABLE"), eq(0));
+        verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("int"), eq("var"), eq(0));
     }
 
     @Test
@@ -1335,7 +1335,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(varsNode1);
 
-        verify(builderSpy, times(2)).addInstruction(eq(NEW), anyString(), anyString(), eq("VARIABLE"), eq(0));
+        verify(builderSpy, times(2)).addInstruction(eq(NEW), anyString(), anyString(), eq("var"), eq(0));
     }
 
     @Test
@@ -1471,7 +1471,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "y@global", "boolean", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "y@global", "boolean", "var", 0);
     }
 
     @Test
@@ -1485,7 +1485,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, 42);
-        verify(builderSpy).addInstruction(NEW, "count@global", "integer", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "count@global", "int", "var", 0);
     }
 
     @Test
@@ -1499,7 +1499,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, -10);
-        verify(builderSpy).addInstruction(NEW, "negNum@global", "integer", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "negNum@global", "int", "var", 0);
     }
 
     @Test
@@ -1516,7 +1516,7 @@ class MiniJajaCompilerVisitorTest {
         inOrder.verify(builderSpy).addInstruction(PUSH, 2);
         inOrder.verify(builderSpy).addInstruction(PUSH, 3);
         inOrder.verify(builderSpy).addInstruction(ADD);
-        inOrder.verify(builderSpy).addInstruction(NEW, "sum@global", "integer", "VARIABLE", 0);
+        inOrder.verify(builderSpy).addInstruction(NEW, "sum@global", "int", "var", 0);
     }
 
     @Test
@@ -1530,7 +1530,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(LOAD, "y@global");
-        verify(builderSpy).addInstruction(NEW, "x@global", "integer", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "x@global", "int", "var", 0);
     }
 
 
@@ -1548,7 +1548,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(mainNode);
 
-        verify(builderSpy).addInstruction(NEW, "localInMain@main", "integer", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "localInMain@main", "int", "var", 0);
     }
 
     @Test
@@ -1558,7 +1558,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(globalVar);
 
-        verify(builderSpy).addInstruction(NEW, "globalVar@global", "boolean", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "globalVar@global", "boolean", "var", 0);
     }
 
     @Test
@@ -1570,7 +1570,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "boolean", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "boolean", "var", 0);
     }
 
     @Test
@@ -1582,7 +1582,7 @@ class MiniJajaCompilerVisitorTest {
         visitor.visit(varNode);
 
         verify(builderSpy).addInstruction(PUSH, false);
-        verify(builderSpy).addInstruction(NEW, "mixedCase@global", "boolean", "VARIABLE", 0);
+        verify(builderSpy).addInstruction(NEW, "mixedCase@global", "boolean", "var", 0);
     }
 }
 
