@@ -332,14 +332,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      * Vérifie si un texte correspond à un token de type.
      */
     private boolean isTypeToken(String text) {
-        return text.equals("INT") || text.equals("BOOLEAN") || text.equals("BOOL") || text.matches("[A-Z]+");
+        return text.equals("int") || text.equals("boolean");
     }
 
     /**
      * Vérifie si un texte correspond à un token de sorte.
      */
     private boolean isSorteToken(String text) {
-        return text.equals("VARIABLE") || text.equals("VAR") || text.equals("CST") || text.equals("TAB") || text.equals("METH");
+        return text.equals("var") || text.equals("cst") || text.equals("tab") || text.equals("meth");
     }
 
     /**

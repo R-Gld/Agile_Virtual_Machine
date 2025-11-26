@@ -899,9 +899,9 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(1)).thenReturn(term("("));
         when(ctx.getChild(2)).thenReturn(term("myVar"));
         when(ctx.getChild(3)).thenReturn(term(","));
-        when(ctx.getChild(4)).thenReturn(term(Type.ENTIER.name()));
+        when(ctx.getChild(4)).thenReturn(term("int"));
         when(ctx.getChild(5)).thenReturn(term(","));
-        when(ctx.getChild(6)).thenReturn(term("VARIABLE"));
+        when(ctx.getChild(6)).thenReturn(term("var"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
         mockStack.push(new Stacks.Quad("%TMP%", 0, "%TMP%", Type.ENTIER));
@@ -926,9 +926,9 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(1)).thenReturn(term("("));
         when(ctx.getChild(2)).thenReturn(term("flag"));
         when(ctx.getChild(3)).thenReturn(term(","));
-        when(ctx.getChild(4)).thenReturn(term("BOOLEAN"));
+        when(ctx.getChild(4)).thenReturn(term("boolean"));
         when(ctx.getChild(5)).thenReturn(term(","));
-        when(ctx.getChild(6)).thenReturn(term("VAR"));
+        when(ctx.getChild(6)).thenReturn(term("var"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
         mockStack.push(new Stacks.Quad("%TMP%", false, "%TMP%", Type.BOOLEEN));
@@ -953,9 +953,9 @@ class JajaCodeInterpreterVisitorUnitTest {
         when(ctx.getChild(1)).thenReturn(term("("));
         when(ctx.getChild(2)).thenReturn(term("arr"));
         when(ctx.getChild(3)).thenReturn(term(","));
-        when(ctx.getChild(4)).thenReturn(term(Type.ENTIER.name()));
+        when(ctx.getChild(4)).thenReturn(term("int"));
         when(ctx.getChild(5)).thenReturn(term(","));
-        when(ctx.getChild(6)).thenReturn(term("TAB"));
+        when(ctx.getChild(6)).thenReturn(term("tab"));
         when(ctx.getChild(7)).thenReturn(term(","));
 
         mockStack.push(new Stacks.Quad("%TMP%", 10, "%TMP%", Type.ENTIER));
