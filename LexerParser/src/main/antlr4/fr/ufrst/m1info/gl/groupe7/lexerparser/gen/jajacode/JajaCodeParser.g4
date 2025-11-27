@@ -44,8 +44,8 @@ valeur
     : NOMBRE
     | TRUE
     | FALSE
-    | STRING      // Chaînes entre guillemets (avec espaces possibles)
-    | IDENTIFIER  // Chaînes simples sans guillemets
+    | STRING
+    | IDENTIFIER
     | VIDE
     ;
 
