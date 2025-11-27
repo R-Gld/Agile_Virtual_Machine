@@ -24,7 +24,6 @@ NOP: 'nop' ;
 JCSTOP: 'jcstop' ;
 TRUE: 'true' ;
 FALSE: 'false' ;
-STRING: 'string' ;
 VIDE: 'vide' ;
 
 // oper1
@@ -52,5 +51,6 @@ SORTE : 'var' | 'meth' ;
 // Identifiant et Valeur
 IDENTIFIER: [a-zA-Z_][a-zA-Z_0-9@]* ;
 NOMBRE: [0-9]+ ;
+STRING: '"' (~["\r\n])* '"' ;  // Chaînes entre guillemets doubles
 
 WS: [ \t\n\r\f]+ -> skip ;

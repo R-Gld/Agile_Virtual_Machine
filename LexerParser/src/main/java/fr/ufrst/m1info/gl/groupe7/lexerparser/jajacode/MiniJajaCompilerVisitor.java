@@ -14,6 +14,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
@@ -157,6 +159,10 @@ public class MiniJajaCompilerVisitor {
             visitTantque(tantqueNode);
         } else if (instrNode instanceof SommeNode sommeNode) {
             visitSomme(sommeNode);
+        } else if (instrNode instanceof EcrireLnNode ecrireLnNode) {
+            visitEcrireLn(ecrireLnNode);
+        } else if (instrNode instanceof EcrireNode ecrireNode) {
+            visitEcrire(ecrireNode);
         }
     }
 
@@ -541,11 +547,41 @@ public class MiniJajaCompilerVisitor {
         jjcBuilder.addInstruction(CMP);
     }
 
-    private void visitWriteLn() {
+    /**
+     * Compile une instruction writeln en code JajaCode.
+     * Évalue l'expression ou la chaîne à afficher, puis génère l'instruction WRITELN.
+     *
+     * @param node le nœud EcrireLnNode représentant l'instruction writeln à compiler
+     */
+    private void visitEcrireLn(EcrireLnNode node) {
+        Object ident1Node = node.getIdent1Node();
+
+        if (ident1Node instanceof Expression expression) {
+            visitExpression(expression);
+        } else if (ident1Node instanceof String str) {
+            // Ajouter des guillemets autour de la chaîne pour le JajaCode
+            jjcBuilder.addInstruction(PUSH, "\"" + str + "\"");
+        }
+
         jjcBuilder.addInstruction(WRITELN);
     }
 
-    public void visitWrite() {
+    /**
+     * Compile une instruction write en code JajaCode.
+     * Évalue l'expression ou la chaîne à afficher, puis génère l'instruction WRITE.
+     *
+     * @param node le nœud EcrireNode représentant l'instruction write à compiler
+     */
+    private void visitEcrire(EcrireNode node) {
+        Object ident1Node = node.getIdent1Node();
+
+        if (ident1Node instanceof Expression expression) {
+            visitExpression(expression);
+        } else if (ident1Node instanceof String str) {
+            // Ajouter des guillemets autour de la chaîne pour le JajaCode
+            jjcBuilder.addInstruction(PUSH, "\"" + str + "\"");
+        }
+
         jjcBuilder.addInstruction(WRITE);
     }
 
