@@ -48,7 +48,7 @@ class WriteInstructionTest {
         visitor.visit(ecrire);
         String code = visitor.getJajaCodeBuilder().toString();
 
-        assertTrue(code.contains("push(Hello)"), "Should push string Hello");
+        assertTrue(code.contains("push(\"Hello\")"), "Should push string Hello");
         assertTrue(code.contains("write"), "Should contain write instruction");
     }
 
@@ -72,7 +72,7 @@ class WriteInstructionTest {
         visitor.visit(ecrireln);
         String code = visitor.getJajaCodeBuilder().toString();
 
-        assertTrue(code.contains("push(World)"), "Should push string World");
+        assertTrue(code.contains("push(\"World\")"), "Should push string World");
         assertTrue(code.contains("writeln"), "Should contain writeln instruction");
     }
 
@@ -93,7 +93,7 @@ class WriteInstructionTest {
 
         assertTrue(code.contains("load(x@"), "Should load variable x");
         assertTrue(code.contains("write"), "Should contain write instruction");
-        assertTrue(code.contains("push(ok)"), "Should push string ok");
+        assertTrue(code.contains("push(\"ok\")"), "Should push string ok");
         assertTrue(code.contains("writeln"), "Should contain writeln instruction");
     }
 }
