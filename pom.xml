@@ -181,6 +181,7 @@
         <module>Memoire</module>
         <module>LexerParser</module>
         <module>compiler</module>
+        <module>ASTExporter</module>
     </modules>
 
     <scm>

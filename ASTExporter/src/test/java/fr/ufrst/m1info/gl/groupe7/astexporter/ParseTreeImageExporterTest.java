@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
+package fr.ufrst.m1info.gl.groupe7.astexporter;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
