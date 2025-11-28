@@ -17,3 +17,50 @@
 .current-line {
     -fx-background-color: rgba(255, 255, 0, 0.4);
 }
+
+.keyword {
+    -fx-fill: purple;
+    -fx-font-weight: bold;
+}
+
+.type {
+    -fx-fill: #000080; /* Navy */
+    -fx-font-weight: bold;
+}
+
+.function {
+    -fx-fill: #008080; /* Teal */
+    -fx-font-weight: bold;
+}
+
+.boolean {
+    -fx-fill: #000080; /* Navy */
+    -fx-font-weight: bold;
+}
+
+.semicolon {
+    -fx-font-weight: bold;
+}
+
+.paren {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+.brace {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+.bracket {
+    -fx-fill: teal;
+    -fx-font-weight: bold;
+}
+
+.string {
+    -fx-fill: blue;
+}
+
+.comment {
+    -fx-fill: green;
+}
