@@ -213,6 +213,10 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomePop();
         } else if (ctx.JCSTOP() != null) {
             axiomeJcstop();
+        } else if (ctx.WRITE() != null) {
+            axiomeWrite();
+        } else if (ctx.WRITELN() != null) {
+            axiomeWriteln();
         } else if (ctx.PUSH() != null && ctx.valeur() != null) {
             axiomePush(ctx.valeur());
         } else if (ctx.NEW() != null) {
@@ -332,14 +336,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      * Vérifie si un texte correspond à un token de type.
      */
     private boolean isTypeToken(String text) {
-        return text.equals("INT") || text.equals("BOOLEAN") || text.equals("BOOL") || text.matches("[A-Z]+");
+        return text.equals("int") || text.equals("boolean");
     }
 
     /**
      * Vérifie si un texte correspond à un token de sorte.
      */
     private boolean isSorteToken(String text) {
-        return text.equals("VARIABLE") || text.equals("VAR") || text.equals("CST") || text.equals("TAB") || text.equals("METH");
+        return text.equals("var") || text.equals("cst") || text.equals("tab") || text.equals("meth");
     }
 
     /**
@@ -487,6 +491,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             type = Type.ENTIER;
         } else if (valeur instanceof Boolean) {
             type = Type.BOOLEEN;
+        } else if (valeur instanceof String) {
+            type = Type.VOID;  // Les chaînes sont traitées comme VOID
         } else {
             type = Type.VOID;
         }
@@ -1171,6 +1177,72 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     }
 
     /**
+     * Axiome WRITE : Affiche une valeur sans retour à la ligne.
+     * <p>
+     * Cette instruction dépile une valeur de la pile et l'affiche sur la sortie standard
+     * sans ajouter de retour à la ligne.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur au sommet de la pile</li>
+     *   <li>Affiche la valeur avec {@code System.out.print()}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     * </ul>
+     */
+    private void axiomeWrite() {
+        Stacks.Quad valeur = stacks.pop();
+
+        if (valeur == null) {
+            System.out.println("Erreur dans axiomeWrite : pile vide.");
+            running = false;
+            return;
+        }
+
+        System.out.print(valeur.value);
+        System.out.println("\t\tAxiome WRITE exécuté: " + valeur.value + " affiché.");
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome WRITELN : Affiche une valeur avec retour à la ligne.
+     * <p>
+     * Cette instruction dépile une valeur de la pile et l'affiche sur la sortie standard
+     * avec un retour à la ligne.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur au sommet de la pile</li>
+     *   <li>Affiche la valeur avec {@code System.out.println()}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     * </ul>
+     */
+    private void axiomeWriteln() {
+        Stacks.Quad valeur = stacks.pop();
+
+        if (valeur == null) {
+            System.out.println("Erreur dans axiomeWriteln : pile vide.");
+            running = false;
+            return;
+        }
+
+        System.out.println(valeur.value);
+        System.out.println("\t\tAxiome WRITELN exécuté: " + valeur.value + " affiché avec retour à la ligne.");
+        instructionCounter++;
+    }
+
+    /**
      * Visite un nœud valeur et retourne sa représentation Java.
      * <p>
      * Cette méthode convertit les valeurs littérales du code JajaCode
@@ -1209,6 +1281,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
         if (ctx.VIDE() != null) {
             return null;
+        }
+        if (ctx.STRING() != null) {
+            // Chaînes entre guillemets - retirer les guillemets
+            String text = ctx.STRING().getText();
+            if (text.startsWith("\"") && text.endsWith("\"")) {
+                return text.substring(1, text.length() - 1);
+            }
+            return text;
+        }
+        if (ctx.IDENTIFIER() != null) {
+            // Chaînes littérales simples sans guillemets (pour compatibilité)
+            return ctx.IDENTIFIER().getText();
         }
         throw new UnsupportedOperationException("Value not supported: " + ctx.getText());
     }

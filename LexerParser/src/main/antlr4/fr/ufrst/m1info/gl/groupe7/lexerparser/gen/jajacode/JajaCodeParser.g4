@@ -45,6 +45,7 @@ valeur
     | TRUE
     | FALSE
     | STRING
+    | IDENTIFIER
     | VIDE
     ;
 
