@@ -38,6 +38,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 
 public class MyCodeArea extends AnchorPane {
+    public enum Language {
+        MINIJAJA, JAJACODE
+    }
+
     private static final String[] KEYWORDS = new String[] {
             "class", "final", "void", "main", "if", "else", "while", "return", "length"
     };
@@ -55,6 +59,7 @@ public class MyCodeArea extends AnchorPane {
     private static final String TYPE_PATTERN = "\\b(" + String.join("|", TYPES) + ")\\b";
     private static final String FUNCTION_PATTERN = "\\b(" + String.join("|", FUNCTIONS) + ")\\b";
     private static final String BOOLEAN_PATTERN = "\\b(" + String.join("|", BOOLEANS) + ")\\b";
+
     private static final String PAREN_PATTERN = "\\(|\\)";
     private static final String BRACE_PATTERN = "\\{|\\}";
     private static final String BRACKET_PATTERN = "\\[|\\]";
@@ -74,7 +79,9 @@ public class MyCodeArea extends AnchorPane {
                     + "|(?<STRING>" + STRING_PATTERN + ")"
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")");
 
-    private static StyleSpans<Collection<String>> computeHighlighting(String text) {
+    private final Language language;
+
+    private StyleSpans<Collection<String>> computeHighlighting(String text) {
         StyleSpans<Collection<String>> syntaxHighlighting = computeSyntaxHighlighting(text);
         StyleSpans<Collection<String>> errorHighlighting = computeErrorHighlighting(text);
         return syntaxHighlighting.overlay(errorHighlighting, (style1, style2) -> {
@@ -84,14 +91,20 @@ public class MyCodeArea extends AnchorPane {
         });
     }
 
-    private static StyleSpans<Collection<String>> computeSyntaxHighlighting(String text) {
+    private StyleSpans<Collection<String>> computeSyntaxHighlighting(String text) {
+        if (language == Language.JAJACODE) {
+            StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+            spansBuilder.add(Collections.emptyList(), text.length());
+            return spansBuilder.create();
+        }
+
         Matcher matcher = PATTERN.matcher(text);
         int lastKwEnd = 0;
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         while (matcher.find()) {
             String styleClass = matcher.group("KEYWORD") != null ? "keyword"
                     : matcher.group("TYPE") != null ? "type"
-                            : matcher.group("FUNCTION") != null ? "function"
+                            : (language == Language.MINIJAJA && matcher.group("FUNCTION") != null) ? "function"
                                     : matcher.group("BOOLEAN") != null ? "boolean"
                                             : matcher.group("PAREN") != null ? "paren"
                                                     : matcher.group("BRACE") != null ? "brace"
@@ -110,35 +123,37 @@ public class MyCodeArea extends AnchorPane {
         return spansBuilder.create();
     }
 
-    private static StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
+    private StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
-
-        MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
-        lexer.removeErrorListeners();
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniJajaParser parser = new MiniJajaParser(tokens);
-        parser.removeErrorListeners();
-
         List<javafx.scene.control.IndexRange> errors = new ArrayList<>();
-        parser.addErrorListener(new BaseErrorListener() {
-            @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
-                    int charPositionInLine, String msg, RecognitionException e) {
-                if (offendingSymbol instanceof Token) {
-                    Token token = (Token) offendingSymbol;
-                    int start = token.getStartIndex();
-                    int stop = token.getStopIndex() + 1;
-                    if (start >= 0 && stop > start) {
-                        errors.add(new javafx.scene.control.IndexRange(start, stop));
+
+        if (language == Language.MINIJAJA) {
+            MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
+            lexer.removeErrorListeners();
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            MiniJajaParser parser = new MiniJajaParser(tokens);
+            parser.removeErrorListeners();
+
+            parser.addErrorListener(new BaseErrorListener() {
+                @Override
+                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+                        int charPositionInLine, String msg, RecognitionException e) {
+                    if (offendingSymbol instanceof Token) {
+                        Token token = (Token) offendingSymbol;
+                        int start = token.getStartIndex();
+                        int stop = token.getStopIndex() + 1;
+                        if (start >= 0 && stop > start) {
+                            errors.add(new javafx.scene.control.IndexRange(start, stop));
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        try {
-            parser.classe();
-        } catch (Exception e) {
-            // Ignore parser exceptions
+            try {
+                parser.classe();
+            } catch (Exception e) {
+                // Ignore parser exceptions
+            }
         }
 
         int lastEnd = 0;
@@ -168,7 +183,11 @@ public class MyCodeArea extends AnchorPane {
      * @param id the id of this component for javafx
      */
     public MyCodeArea(String id) {
-        this(id, "");
+        this(id, "", Language.MINIJAJA);
+    }
+
+    public MyCodeArea(String id, Language language) {
+        this(id, "", language);
     }
 
     /**
@@ -178,6 +197,11 @@ public class MyCodeArea extends AnchorPane {
      * @param defaultValue A string to place in the codeArea
      */
     public MyCodeArea(String id, String defaultValue) {
+        this(id, defaultValue, Language.MINIJAJA);
+    }
+
+    public MyCodeArea(String id, String defaultValue, Language language) {
+        this.language = language;
         this.setId(id);
 
         this.getStylesheets().add(getClass().getResource("/code_area.css").toExternalForm());
@@ -337,7 +361,7 @@ public class MyCodeArea extends AnchorPane {
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
-                if (suggestion.equals("main")) {
+                if (language == Language.MINIJAJA && suggestion.equals("main")) {
                     codeArea.replaceText(finalStart, caretPosition, "void main() {\n    \n}");
                     codeArea.moveTo(finalStart + 16); // Move caret inside braces
                 } else {
@@ -355,13 +379,14 @@ public class MyCodeArea extends AnchorPane {
 
     private List<String> getSuggestions(String prefix) {
         List<String> allSuggestions = new ArrayList<>();
-        Collections.addAll(allSuggestions, KEYWORDS);
-        Collections.addAll(allSuggestions, TYPES);
-        Collections.addAll(allSuggestions, FUNCTIONS);
-        Collections.addAll(allSuggestions, BOOLEANS);
-
-        // Snippets
-        allSuggestions.add("main"); // We will handle expansion in the action
+        if (language == Language.MINIJAJA) {
+            Collections.addAll(allSuggestions, KEYWORDS);
+            Collections.addAll(allSuggestions, TYPES);
+            Collections.addAll(allSuggestions, FUNCTIONS);
+            Collections.addAll(allSuggestions, BOOLEANS);
+            // Snippets
+            allSuggestions.add("main"); // We will handle expansion in the action
+        }
 
         return allSuggestions.stream()
                 .filter(s -> s.startsWith(prefix))
