@@ -1,9 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,8 +11,10 @@ import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 
 @ExtendWith(ApplicationExtension.class)
 public class TestCodeArea {
@@ -92,8 +93,6 @@ public class TestCodeArea {
         });
     }
 
-
-
     @Test
     void testHighlightLineValidAndInvalidIndices() {
         runOnFxThread(() -> {
@@ -124,6 +123,142 @@ public class TestCodeArea {
             codeArea.loadText("lineA\nlineB\nlineC");
             codeArea.highlightLine(2);
             Assertions.assertTrue(codeArea.getText().contains("lineC"));
+        });
+    }
+
+    private org.fxmisc.richtext.CodeArea getInnerCodeArea() {
+        try {
+            var field = MyCodeArea.class.getDeclaredField("codeArea");
+            field.setAccessible(true);
+            return (org.fxmisc.richtext.CodeArea) field.get(codeArea);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void testAutoCompletionPopupAppears(FxRobot robot) {
+        runOnFxThread(() -> {
+            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
+            inner.replaceText("voi");
+            inner.moveTo(3);
+        });
+
+        robot.clickOn("#testcodearea_code_area");
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
+                .release(javafx.scene.input.KeyCode.CONTROL);
+
+        // Check if ContextMenu is showing
+        // We need to wait a bit for the popup to appear
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(),
+                "Auto-completion popup should be visible");
+    }
+
+    @Test
+    void testAutoCompletionInsertion(FxRobot robot) {
+        runOnFxThread(() -> {
+            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
+            inner.replaceText("voi");
+            inner.moveTo(3);
+        });
+
+        robot.clickOn("#testcodearea_code_area");
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
+                .release(javafx.scene.input.KeyCode.CONTROL);
+
+        // Wait for popup
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        robot.type(javafx.scene.input.KeyCode.ENTER);
+
+        Assertions.assertTrue(codeArea.getText().contains("void"), "Text should contain 'void' after auto-completion");
+    }
+
+    @Test
+    void testAutoCompletionMainSnippet(FxRobot robot) {
+        runOnFxThread(() -> {
+            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
+            inner.replaceText("mai");
+            inner.moveTo(3);
+        });
+
+        robot.clickOn("#testcodearea_code_area");
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
+                .release(javafx.scene.input.KeyCode.CONTROL);
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        robot.type(javafx.scene.input.KeyCode.ENTER);
+
+        Assertions.assertTrue(codeArea.getText().contains("void main()"), "Text should contain main snippet");
+    }
+
+    @Test
+    void testAutoCompletionToggle(FxRobot robot) {
+        runOnFxThread(() -> {
+            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
+            inner.replaceText("voi");
+            inner.moveTo(3);
+        });
+
+        robot.clickOn("#testcodearea_code_area");
+
+        // Open
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
+                .release(javafx.scene.input.KeyCode.CONTROL);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Popup should be open");
+
+        // Close
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
+                .release(javafx.scene.input.KeyCode.CONTROL);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        Assertions.assertTrue(robot.lookup(".context-menu").queryAll().isEmpty(), "Popup should be closed");
+    }
+
+    @Test
+    void testSyntaxErrorHighlighting() {
+        runOnFxThread(() -> codeArea.loadText("int a = ;")); // Syntax error
+
+        // Wait for async highlighting
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        runOnFxThread(() -> {
+            try {
+                org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
+
+                var spans = inner.getStyleSpans(0, inner.getLength());
+                boolean hasError = spans.stream().anyMatch(span -> span.getStyle().contains("error"));
+
+                Assertions.assertTrue(hasError, "Should have error highlighting");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 }
