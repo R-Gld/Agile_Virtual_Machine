@@ -402,6 +402,10 @@ public class App extends Application {
         }
 
         debugCurrentLine++;
+        while (debugCurrentLine < lines.length && lines[debugCurrentLine].trim().isEmpty()) {
+            debugCurrentLine++;
+        }
+
         if (debugCurrentLine >= lines.length) {
             if (console != null) {
                 console.printMessage("[DEBUG] End of file reached.");
