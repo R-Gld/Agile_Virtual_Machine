@@ -10,12 +10,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
@@ -67,6 +75,16 @@ public class MyCodeArea extends AnchorPane {
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")");
 
     private static StyleSpans<Collection<String>> computeHighlighting(String text) {
+        StyleSpans<Collection<String>> syntaxHighlighting = computeSyntaxHighlighting(text);
+        StyleSpans<Collection<String>> errorHighlighting = computeErrorHighlighting(text);
+        return syntaxHighlighting.overlay(errorHighlighting, (style1, style2) -> {
+            Collection<String> combined = new ArrayList<>(style1);
+            combined.addAll(style2);
+            return combined;
+        });
+    }
+
+    private static StyleSpans<Collection<String>> computeSyntaxHighlighting(String text) {
         Matcher matcher = PATTERN.matcher(text);
         int lastKwEnd = 0;
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
@@ -92,7 +110,57 @@ public class MyCodeArea extends AnchorPane {
         return spansBuilder.create();
     }
 
+    private static StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+
+        MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
+        lexer.removeErrorListeners();
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        MiniJajaParser parser = new MiniJajaParser(tokens);
+        parser.removeErrorListeners();
+
+        List<javafx.scene.control.IndexRange> errors = new ArrayList<>();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+                    int charPositionInLine, String msg, RecognitionException e) {
+                if (offendingSymbol instanceof Token) {
+                    Token token = (Token) offendingSymbol;
+                    int start = token.getStartIndex();
+                    int stop = token.getStopIndex() + 1;
+                    if (start >= 0 && stop > start) {
+                        errors.add(new javafx.scene.control.IndexRange(start, stop));
+                    }
+                }
+            }
+        });
+
+        try {
+            parser.classe();
+        } catch (Exception e) {
+            // Ignore parser exceptions
+        }
+
+        int lastEnd = 0;
+        for (javafx.scene.control.IndexRange error : errors) {
+            if (error.getStart() > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), error.getStart() - lastEnd);
+            }
+            int length = error.getEnd() - error.getStart();
+            if (length > 0) {
+                spansBuilder.add(Collections.singleton("error"), length);
+                lastEnd = error.getEnd();
+            }
+        }
+        if (lastEnd < text.length() || (text.isEmpty() && errors.isEmpty())) {
+            spansBuilder.add(Collections.emptyList(), text.length() - lastEnd);
+        }
+
+        return spansBuilder.create();
+    }
+
     private final CodeArea codeArea;
+    private ContextMenu autoCompletionPopup;
 
     /**
      * Create a codeArea component with line number for javafx
@@ -151,13 +219,97 @@ public class MyCodeArea extends AnchorPane {
         // Auto-completion
         codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
-                showAutoCompletion();
+                if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
+                    autoCompletionPopup.hide();
+                } else {
+                    showAutoCompletion();
+                }
                 event.consume();
+            } else if (event.getCode() == KeyCode.TAB) {
+                int tabSize = EditorPreferences.getInstance().getTabSize();
+                String spaces = " ".repeat(tabSize);
+                codeArea.replaceSelection(spaces);
+                event.consume();
+            } else if (event.getCode() == KeyCode.ENTER && EditorPreferences.getInstance().isSmartIndentation()) {
+                handleSmartIndentation(event);
+            }
+        });
+
+        // Auto-close pairs
+        codeArea.addEventFilter(KeyEvent.KEY_TYPED, event -> {
+            if (EditorPreferences.getInstance().isAutoClosePairs()) {
+                handleAutoClose(event);
             }
         });
     }
 
+    private void handleSmartIndentation(KeyEvent event) {
+        int currentParagraph = codeArea.getCurrentParagraph();
+
+        // Get previous line content
+        if (currentParagraph >= 0) {
+            String lineText = codeArea.getText(currentParagraph);
+            String indentation = "";
+            Matcher matcher = Pattern.compile("^\\s*").matcher(lineText);
+            if (matcher.find()) {
+                indentation = matcher.group();
+            }
+
+            // Check if the line ends with {
+            String trimmedLine = lineText.trim();
+            if (trimmedLine.endsWith("{")) {
+                int tabSize = EditorPreferences.getInstance().getTabSize();
+                indentation += " ".repeat(tabSize);
+            }
+
+            codeArea.replaceSelection("\n" + indentation);
+            event.consume();
+        }
+    }
+
+    private void handleAutoClose(KeyEvent event) {
+        String character = event.getCharacter();
+        int caretPosition = codeArea.getCaretPosition();
+        String text = codeArea.getText();
+
+        switch (character) {
+            case "(":
+                codeArea.insertText(caretPosition, "()");
+                codeArea.moveTo(caretPosition + 1);
+                event.consume();
+                break;
+            case "{":
+                codeArea.insertText(caretPosition, "{}");
+                codeArea.moveTo(caretPosition + 1);
+                event.consume();
+                break;
+            case "[":
+                codeArea.insertText(caretPosition, "[]");
+                codeArea.moveTo(caretPosition + 1);
+                event.consume();
+                break;
+            case "\"":
+                codeArea.insertText(caretPosition, "\"\"");
+                codeArea.moveTo(caretPosition + 1);
+                event.consume();
+                break;
+            case ")":
+            case "}":
+            case "]":
+                if (caretPosition < text.length()
+                        && text.substring(caretPosition, caretPosition + 1).equals(character)) {
+                    codeArea.moveTo(caretPosition + 1);
+                    event.consume();
+                }
+                break;
+        }
+    }
+
     private void showAutoCompletion() {
+        if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
+            autoCompletionPopup.hide();
+        }
+
         String text = codeArea.getText();
         int caretPosition = codeArea.getCaretPosition();
 
@@ -175,18 +327,29 @@ public class MyCodeArea extends AnchorPane {
         }
 
         final int finalStart = start;
-        ContextMenu popup = new ContextMenu();
+        autoCompletionPopup = new ContextMenu();
+        autoCompletionPopup.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+                autoCompletionPopup.hide();
+                event.consume();
+            }
+        });
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
-                codeArea.replaceText(finalStart, caretPosition, suggestion);
+                if (suggestion.equals("main")) {
+                    codeArea.replaceText(finalStart, caretPosition, "void main() {\n    \n}");
+                    codeArea.moveTo(finalStart + 16); // Move caret inside braces
+                } else {
+                    codeArea.replaceText(finalStart, caretPosition, suggestion);
+                }
             });
-            popup.getItems().add(item);
+            autoCompletionPopup.getItems().add(item);
         }
 
         Optional<Bounds> bounds = codeArea.getCaretBounds();
         if (bounds.isPresent()) {
-            popup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
+            autoCompletionPopup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
         }
     }
 
@@ -196,6 +359,9 @@ public class MyCodeArea extends AnchorPane {
         Collections.addAll(allSuggestions, TYPES);
         Collections.addAll(allSuggestions, FUNCTIONS);
         Collections.addAll(allSuggestions, BOOLEANS);
+
+        // Snippets
+        allSuggestions.add("main"); // We will handle expansion in the action
 
         return allSuggestions.stream()
                 .filter(s -> s.startsWith(prefix))

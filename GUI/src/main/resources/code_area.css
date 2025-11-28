@@ -64,3 +64,10 @@
 .comment {
     -fx-fill: green;
 }
+
+.error {
+    -fx-fill: red;
+    -fx-underline: true;
+    -fx-font-weight: bold;
+}
+
