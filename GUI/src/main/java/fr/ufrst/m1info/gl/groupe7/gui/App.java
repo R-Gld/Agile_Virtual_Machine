@@ -22,6 +22,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,13 +110,9 @@ public class App extends Application {
 
         MenuItem saveItem = new MenuItem("Save");
         MenuItem openItem = new MenuItem("Open");
-        openItem.setOnAction(e -> {
-            loadFile();
-        });
+        openItem.setOnAction(e -> loadFile());
 
-        saveItem.setOnAction(e -> {
-            saveFile();
-        });
+        saveItem.setOnAction(e -> saveFile());
 
         fileMenu.getItems().addAll(saveItem, openItem);
 
@@ -127,10 +124,8 @@ public class App extends Application {
 
         /* Build button */
         Button buildButton = new Button("");
-        buildButton.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
-        buildButton.setOnAction(e -> {
-            compile();
-        });
+        buildButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/build.png")).toExternalForm()));
+        buildButton.setOnAction(e -> compile());
         buildButton.setTooltip(new Tooltip("Compile file"));
 
         hbox.getChildren().add(buildButton);
@@ -144,11 +139,9 @@ public class App extends Application {
 
         /* Execute button */
         Button runButton = new Button("");
-        runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
+        runButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/threadRunning.png")).toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
-        runButton.setOnAction(e -> {
-            run();
-        });
+        runButton.setOnAction(e -> run());
 
         hbox.getChildren().add(runButton);
 
@@ -162,21 +155,21 @@ public class App extends Application {
         Button stopButton = new Button();
 
         debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
-        ImageView debugIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
+        ImageView debugIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/bug.png")), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
         debugButton.setOnAction(e -> startDebug(stepButton, stopButton));
 
         stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
         stepButton.setDisable(true);
-        ImageView stepIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
+        ImageView stepIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/next.png")), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
         stepButton.setOnAction(e -> stepDebug(stepButton, stopButton));
 
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
         stopButton.setDisable(true);
-        ImageView stopIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
+        ImageView stopIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/stop.png")), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
         stopButton.setOnAction(e -> stopDebug(stepButton, stopButton));
@@ -401,10 +394,9 @@ public class App extends Application {
             return;
         }
 
-        debugCurrentLine++;
-        while (debugCurrentLine < lines.length && lines[debugCurrentLine].trim().isEmpty()) {
+        do {
             debugCurrentLine++;
-        }
+        } while (debugCurrentLine < lines.length && lines[debugCurrentLine].trim().isEmpty());
 
         if (debugCurrentLine >= lines.length) {
             if (console != null) {
