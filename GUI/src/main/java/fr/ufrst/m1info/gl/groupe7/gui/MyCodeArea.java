@@ -1,10 +1,14 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
@@ -13,8 +17,13 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -138,6 +147,59 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setLeftAnchor(scroll, 0d);
         AnchorPane.setRightAnchor(scroll, 0d);
         this.getChildren().add(scroll);
+
+        // Auto-completion
+        codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+                showAutoCompletion();
+                event.consume();
+            }
+        });
+    }
+
+    private void showAutoCompletion() {
+        String text = codeArea.getText();
+        int caretPosition = codeArea.getCaretPosition();
+
+        // Find the word before the caret
+        int start = caretPosition;
+        while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+            start--;
+        }
+        String prefix = text.substring(start, caretPosition);
+
+        List<String> suggestions = getSuggestions(prefix);
+
+        if (suggestions.isEmpty()) {
+            return;
+        }
+
+        final int finalStart = start;
+        ContextMenu popup = new ContextMenu();
+        for (String suggestion : suggestions) {
+            MenuItem item = new MenuItem(suggestion);
+            item.setOnAction(e -> {
+                codeArea.replaceText(finalStart, caretPosition, suggestion);
+            });
+            popup.getItems().add(item);
+        }
+
+        Optional<Bounds> bounds = codeArea.getCaretBounds();
+        if (bounds.isPresent()) {
+            popup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
+        }
+    }
+
+    private List<String> getSuggestions(String prefix) {
+        List<String> allSuggestions = new ArrayList<>();
+        Collections.addAll(allSuggestions, KEYWORDS);
+        Collections.addAll(allSuggestions, TYPES);
+        Collections.addAll(allSuggestions, FUNCTIONS);
+        Collections.addAll(allSuggestions, BOOLEANS);
+
+        return allSuggestions.stream()
+                .filter(s -> s.startsWith(prefix))
+                .collect(Collectors.toList());
     }
 
     /**
