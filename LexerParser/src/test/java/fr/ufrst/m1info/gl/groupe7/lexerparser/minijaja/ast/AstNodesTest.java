@@ -421,6 +421,14 @@ class AstNodesTest {
     }
 
     @Test
+    void testAppelINodeClassGetter() {
+        DummyListExpNode list = new DummyListExpNode();
+        AppelINode appelI = new AppelINode(new IdentNode("proc"), list);
+        assertEquals("proc", appelI.getIdent().getNom());
+        assertEquals(list, appelI.getListExp());
+    }
+
+    @Test
     void testEnteteAndEntetesNodes() {
 
         EntetesNode enil = new EntetesNode(null, null);
