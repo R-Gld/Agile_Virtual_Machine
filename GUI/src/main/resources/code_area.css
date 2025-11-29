@@ -71,3 +71,7 @@
     -fx-font-weight: bold;
 }
 
+.label {
+    -fx-text-background-color: white;
+}
+
