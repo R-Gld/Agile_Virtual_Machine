@@ -1255,6 +1255,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      *   <li>{@code TRUE} → {@link Boolean} true</li>
      *   <li>{@code FALSE} → {@link Boolean} false</li>
      *   <li>{@code VIDE} → null (valeur vide/non initialisée)</li>
+     *   <li>{@code STRING} → {@link String} (sans les guillemets)</li>
+     *   <li>{@code IDENTIFIER} → {@link String} brut (pour compatibilité)</li>
      * </ul>
      *
      * <p><b>Exemple :</b></p>
@@ -1295,5 +1297,87 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             return ctx.IDENTIFIER().getText();
         }
         throw new UnsupportedOperationException("Value not supported: " + ctx.getText());
+    }
+
+    // ========================================================================
+    // Added methods for level 2 (step-by-step execution)
+    // ========================================================================
+
+    /**
+     * Executes exactly one JajaCode instruction.
+     * This method is intended for GUI debugging (step-by-step).
+     *
+     * @return true if there are more instructions to execute, false if the program has finished.
+     */
+    public boolean step() {
+        // First call: initialize PC and running state
+        if (!running && instructionCounter == 0) {
+            instructionCounter = 1;
+            running = true;
+            System.out.println("Interpréteur: Exécution démarrée à l'adresse 1.");
+        }
+
+        if (!running) {
+            return false;
+        }
+
+        JajaCodeParser.InstrContext instruction = programme.get(instructionCounter);
+
+        if (instruction == null) {
+            System.out.println("Error : @ " + instructionCounter + " introuvable !");
+            running = false;
+            printFinalStateForStepMode();
+            return false;
+        }
+
+        System.out.println("PC: " + instructionCounter + " → Exécute: " + instruction.getText() + " | Pile: ");
+        stacks.printStack();
+
+        visit(instruction);
+
+        if (!running) {
+            printFinalStateForStepMode();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Indicates whether the program has finished execution.
+     * Useful for debug mode.
+     */
+    public boolean isFinished() {
+        // If instructionCounter is still 0, execution has not started.
+        if (instructionCounter == 0) {
+            return false;
+        }
+        return !running;
+    }
+
+    /**
+     * Returns the current instruction index (0-based) for GUI highlighting.
+     * In JajaCode, addresses start at 1, so we convert address → index by (address - 1).
+     *
+     * @return 0-based index of the current instruction, or -1 if not started yet.
+     */
+    public int getCurrentInstructionIndex() {
+        if (instructionCounter <= 0) {
+            return -1;
+        }
+        // instructionCounter is the current address to execute, convert to 0-based index
+        return instructionCounter - 1;
+    }
+
+    /**
+     * Prints the final state (stack and memory) when execution ends in step mode.
+     * This is kept separate from run() so that full execution keeps its original behavior.
+     */
+    private void printFinalStateForStepMode() {
+        System.out.println("--- Exécution Terminée (step mode) ---");
+        System.out.println("Pile finale:");
+        stacks.printStack();
+        System.out.println("Mémoire finale: ");
+        stacks.printSymbolTable();
     }
 }

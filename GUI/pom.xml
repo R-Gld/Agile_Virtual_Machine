@@ -64,17 +64,21 @@
                     <release>11</release>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.6</version>
+
                 <executions>
                     <execution>
-                        <!-- Default configuration for running -->
-                        <!-- Usage: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>fr.ufrst.m1info.gl.groupe7.gui.Main</mainClass>
+                            <javafxVersion>23</javafxVersion>
+                            <modules>
+                                <module>javafx.controls</module>
+                            </modules>
                         </configuration>
                     </execution>
                 </executions>

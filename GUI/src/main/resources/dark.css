@@ -1,0 +1,215 @@
+/* ----- Global root (scene) ----- */
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+}
+
+/* ----- Menu bar & menus ----- */
+.menu-bar {
+    -fx-background-color: #252526;
+}
+
+.menu-bar .label {
+    -fx-text-fill: #d4d4d4;
+}
+
+.context-menu {
+    -fx-background-color: #252526;
+}
+
+.menu-item:focused {
+    -fx-background-color: #094771;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: #ffffff;
+}
+
+/* ----- Top toolbar buttons / choicebox ----- */
+.button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #d4d4d4;
+    -fx-background-radius: 3;
+    -fx-padding: 4 10 4 10;
+}
+
+.button:hover {
+    -fx-background-color: #505050;
+}
+
+.button:pressed {
+    -fx-background-color: #007acc;
+}
+
+.toggle-button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #d4d4d4;
+    -fx-background-radius: 3;
+    -fx-padding: 4 10 4 10;
+}
+
+.toggle-button:selected {
+    -fx-background-color: #007acc;
+    -fx-text-fill: #ffffff;
+}
+
+.choice-box {
+    -fx-background-color: #3c3c3c;
+    -fx-mark-color: #d4d4d4;
+}
+
+.choice-box > .label {
+    -fx-text-fill: #d4d4d4;
+}
+
+.choice-box .context-menu {
+    -fx-background-color: #252526;
+}
+
+.choice-box .menu-item .label {
+    -fx-text-fill: #d4d4d4;
+}
+
+/* ----- SplitPane divider ----- */
+.split-pane {
+    -fx-background-color: #1e1e1e;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #333333;
+    -fx-padding: 0 2 0 2;
+}
+
+/* ----- Scrollbars (editor / console) ----- */
+.scroll-bar:horizontal,
+.scroll-bar:vertical {
+    -fx-background-color: #1e1e1e;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #4b4b4b;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #5f5f5f;
+}
+
+/* ----- Text areas (MyCodeArea / console) ----- */
+.text-area, .text-input {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+}
+
+.text-area .content,
+.text-input .content {
+    -fx-background-color: #1e1e1e;
+}
+
+.text-area .selection,
+.text-input .selection {
+    -fx-background-color: #264f78;
+}
+
+/* caret (cursor) */
+.text-area {
+    -fx-highlight-fill: #264f78;
+    -fx-highlight-text-fill: #ffffff;
+}
+
+/* ----- Labels  ----- */
+.label {
+    -fx-text-fill: #d4d4d4;
+}
+
+/* ----- Tooltips ----- */
+.tooltip {
+    -fx-background-color: #252526;
+    -fx-text-fill: #d4d4d4;
+    -fx-padding: 4 8 4 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+}
+
+/* ----- ConsoleOutput ----- */
+#console {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-color: #333333;
+    -fx-border-width: 1 0 0 0;
+}
+.lineno {
+    -fx-background-color: #1b1f2a;
+    -fx-padding: 0 15 0 10;
+    -fx-fill: #1b1f2a;
+}
+
+.lineno .text {
+    -fx-fill: #9cdcfe;
+}
+
+.executed-line {
+    -fx-background-color: #093a4a;
+}
+
+.executed-line .text {
+    -fx-fill: #ce9178;
+}
+
+.current-line {
+    -fx-background-color: #264f78;
+}
+
+.current-line .text {
+    -fx-fill: #ffffff;
+}
+
+.breakpoint-node {
+    -fx-fill: #FF3B30; /* red */
+    -fx-translate-x: -15px;
+}
+
+.code-area {
+    -fx-background-color: #1e1e1e;
+}
+
+.code-area .text {
+    -fx-fill: #d4d4d4;
+}
+.current-line .text {
+    -fx-fill: #000000;
+}
+#console {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-color: #333333;
+    -fx-border-width: 0 0 0 0;
+}
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #333333;
+    -fx-padding: 0 1 0 1;
+}
+
+.split-pane:vertical > .split-pane-divider {
+    -fx-background-color: #333333;
+    -fx-padding: 1 0 1 0;
+}
+
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: #333333;
+}
+
+.split-pane:vertical > .split-pane-divider {
+    -fx-background-color: #333333;
+}
+
+#console {
+    -fx-background-color: #1b1b1b;
+    -fx-text-fill: #e4e4e4;
+    -fx-border-color: #333333;
+    -fx-border-width: 1 0 0 0;
+}
+#debug-toolbar {
+    -fx-border-color: #2B2B2B;
+    -fx-border-width: 0 0 .5 0; /* top, right, bottom, left */
+}

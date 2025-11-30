@@ -6,6 +6,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.concurrent.Task;
+import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -18,14 +19,22 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+// Breakpoint support
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * JavaFX App
@@ -37,7 +46,6 @@ public class App extends Application {
     private MyCodeArea jjcCodeArea;
     private ChoiceBox<String> fileToRun;
 
-    // === Added section: console output and debug state tracking ===
     /**
      * Console used to display messages (debug, info, errors)
      */
@@ -48,8 +56,23 @@ public class App extends Application {
      */
     private boolean debugMode = false;
     private int debugCurrentLine = -1;
-    // === End of added section ===
 
+    /**
+     * Breakpoints snapshot used during debug session
+     */
+    private final Set<Integer> debugBreakpoints = new HashSet<>();
+
+    /**
+     * From which editor are we debugging?
+     * MINIJAJA → mjjCodeArea
+     * JAJACODE → jjcCodeArea
+     */
+    private enum DebugSource {
+        MINIJAJA,
+        JAJACODE
+    }
+
+    private DebugSource debugSource = DebugSource.MINIJAJA;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r);
@@ -61,24 +84,58 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         appStage = stage;
+        appStage.initStyle(StageStyle.UNDECORATED);
 
         // Structure de l'interface :
         BorderPane root = new BorderPane();
-        root.setTop(buildMenu());
-        var scene = new Scene(root, 800, 600);
+        HBox titleBar = buildTitleBar();
+        HBox topMenu = buildMenu();
+        HBox toolbar = buildToolbar();
+        VBox topContainer = new VBox(titleBar, topMenu, toolbar);
+        root.setTop(topContainer);
+        var scene = new Scene(root, 1150, 720);
+
+        String codeCss = getClass().getResource("/code_area.css").toExternalForm();
+        scene.getStylesheets().add(codeCss);
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
         jjcCodeArea = new MyCodeArea("jjc-code");
         jjcCodeArea.disable();
 
-        SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
-        root.setCenter(splitPane);
+        // Wrapper for JajaCode area with title bar and Clear button
+        VBox jajaWrapper = new VBox();
+        jajaWrapper.setSpacing(0);
 
-        // === Console initialization (clean version) ===
+        HBox jajaTitleBar = new HBox();
+        jajaTitleBar.setStyle("-fx-padding: 4 6 4 6; -fx-background-color: #2d2d2d;");
+
+        Label jjcLabel = new Label("JajaCode");
+        jjcLabel.setStyle("-fx-text-fill: #cccccc; -fx-font-size: 12px;");
+
+        Region jajaSpacer = new Region();
+        HBox.setHgrow(jajaSpacer, Priority.ALWAYS);
+
+        Button clearJajaButton = new Button("Clear");
+        clearJajaButton.setTooltip(new Tooltip("Clear JajaCode output"));
+        clearJajaButton.setOnAction(e -> jjcCodeArea.loadText(""));
+
+        jajaTitleBar.getChildren().addAll(jjcLabel, jajaSpacer, clearJajaButton);
+
+        jajaWrapper.getChildren().addAll(jajaTitleBar, jjcCodeArea);
+        VBox.setVgrow(jjcCodeArea, Priority.ALWAYS);
+
+        SplitPane editorSplitPane = new SplitPane(mjjCodeArea, jajaWrapper);
+
+        // Console
         this.console = new ConsoleOutput("console");
-        root.setBottom(this.console);
-        // === End ===
+        this.console.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 0 0;");
+
+        SplitPane mainSplitPane = new SplitPane(editorSplitPane, this.console);
+        mainSplitPane.setOrientation(Orientation.VERTICAL);
+        mainSplitPane.setDividerPositions(0.7);
+
+        root.setCenter(mainSplitPane);
 
         stage.setScene(scene);
         stage.show();
@@ -95,6 +152,56 @@ public class App extends Application {
         executor.shutdownNow();
     }
 
+    private HBox buildTitleBar() {
+        HBox titleBar = new HBox();
+        titleBar.setSpacing(8);
+        titleBar.setStyle("-fx-background-color: #252526; -fx-padding: 4 10 4 10;");
+
+        Label titleLabel = new Label("MiniJaja IDE");
+        titleLabel.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 12px;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        String baseButtonStyle = "-fx-background-color: transparent; -fx-text-fill: #d4d4d4; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
+        String hoverButtonStyle = "-fx-background-color: #3c3c3c; -fx-text-fill: #ffffff; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
+
+        Button minButton = new Button("-");
+        minButton.setStyle(baseButtonStyle);
+        minButton.setOnAction(e -> appStage.setIconified(true));
+        minButton.setOnMouseEntered(e -> minButton.setStyle(hoverButtonStyle));
+        minButton.setOnMouseExited(e -> minButton.setStyle(baseButtonStyle));
+
+        Button maxButton = new Button("□");
+        maxButton.setStyle(baseButtonStyle);
+        maxButton.setOnAction(e -> appStage.setMaximized(!appStage.isMaximized()));
+        maxButton.setOnMouseEntered(e -> maxButton.setStyle(hoverButtonStyle));
+        maxButton.setOnMouseExited(e -> maxButton.setStyle(baseButtonStyle));
+
+        String baseCloseStyle = "-fx-background-color: transparent; -fx-text-fill: #ff5555; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
+        String hoverCloseStyle = "-fx-background-color: #ff5555; -fx-text-fill: #ffffff; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
+
+        Button closeButton = new Button("X");
+        closeButton.setStyle(baseCloseStyle);
+        closeButton.setOnAction(e -> appStage.close());
+        closeButton.setOnMouseEntered(e -> closeButton.setStyle(hoverCloseStyle));
+        closeButton.setOnMouseExited(e -> closeButton.setStyle(baseCloseStyle));
+
+        titleBar.getChildren().addAll(titleLabel, spacer, minButton, maxButton, closeButton);
+
+        final double[] dragDelta = new double[2];
+        titleBar.setOnMousePressed(e -> {
+            dragDelta[0] = appStage.getX() - e.getScreenX();
+            dragDelta[1] = appStage.getY() - e.getScreenY();
+        });
+        titleBar.setOnMouseDragged(e -> {
+            appStage.setX(e.getScreenX() + dragDelta[0]);
+            appStage.setY(e.getScreenY() + dragDelta[1]);
+        });
+
+        return titleBar;
+    }
+
     /**
      * Fonction pour construire le menu de l'ihm
      * @return MenuBar le menu de l'application
@@ -102,6 +209,7 @@ public class App extends Application {
     private HBox buildMenu() {
         HBox hbox = new HBox();
         hbox.setSpacing(10);
+        hbox.setStyle("-fx-padding: 2 12 2 12;");
         MenuBar menuBar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
@@ -109,13 +217,8 @@ public class App extends Application {
 
         MenuItem saveItem = new MenuItem("Save");
         MenuItem openItem = new MenuItem("Open");
-        openItem.setOnAction(e -> {
-            loadFile();
-        });
-
-        saveItem.setOnAction(e -> {
-            saveFile();
-        });
+        openItem.setOnAction(e -> loadFile());
+        saveItem.setOnAction(e -> saveFile());
 
         fileMenu.getItems().addAll(saveItem, openItem);
 
@@ -125,12 +228,34 @@ public class App extends Application {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         hbox.getChildren().add(spacer);
 
+        ToggleButton darkMode = new ToggleButton("🌙");
+        darkMode.setOnAction(e -> {
+            if (appStage != null && appStage.getScene() != null) {
+                String darkCss = getClass().getResource("/dark.css").toExternalForm();
+                if (darkMode.isSelected()) {
+                    if (!appStage.getScene().getStylesheets().contains(darkCss)) {
+                        appStage.getScene().getStylesheets().add(darkCss);
+                    }
+                } else {
+                    appStage.getScene().getStylesheets().remove(darkCss);
+                }
+            }
+        });
+        hbox.getChildren().add(darkMode);
+
+        return hbox;
+    }
+
+    private HBox buildToolbar() {
+        HBox hbox = new HBox();
+        hbox.setSpacing(10);
+        hbox.setStyle("-fx-padding: 4 12 4 12;");
+        hbox.setId("debug-toolbar");
+
         /* Build button */
         Button buildButton = new Button("");
         buildButton.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
-        buildButton.setOnAction(e -> {
-            compile();
-        });
+        buildButton.setOnAction(e -> compile());
         buildButton.setTooltip(new Tooltip("Compile file"));
 
         hbox.getChildren().add(buildButton);
@@ -139,48 +264,42 @@ public class App extends Application {
         fileToRun = new ChoiceBox<>();
         fileToRun.getItems().addAll("MiniJaja", "Jajacode");
         fileToRun.setValue("MiniJaja");
-
         hbox.getChildren().add(fileToRun);
 
         /* Execute button */
         Button runButton = new Button("");
         runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
-        runButton.setOnAction(e -> {
-            run();
-        });
-
+        runButton.setOnAction(e -> run());
         hbox.getChildren().add(runButton);
 
-        // === Added section: debug controls (icons only, no text) ===
-        /**
-         * Simple debug control bar with icons only: Start Debug / Step / Stop
-         */
-
+        // Debug controls (icons only)
         Button debugButton = new Button();
         Button stepButton = new Button();
         Button stopButton = new Button();
 
-        debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
-        ImageView debugIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
+        debugButton.setTooltip(new Tooltip("Start debug on current file"));
+        ImageView debugIcon = new ImageView(new Image(
+                getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
         debugButton.setOnAction(e -> startDebug(stepButton, stopButton));
 
-        stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
+        stepButton.setTooltip(new Tooltip("Step to next line (with breakpoints)"));
         stepButton.setDisable(true);
-        ImageView stepIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
+        ImageView stepIcon = new ImageView(new Image(
+                getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
         stepButton.setOnAction(e -> stepDebug(stepButton, stopButton));
 
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
         stopButton.setDisable(true);
-        ImageView stopIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
+        ImageView stopIcon = new ImageView(new Image(
+                getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
         stopButton.setOnAction(e -> stopDebug(stepButton, stopButton));
-        // === End of added section ===
 
         return hbox;
     }
@@ -224,11 +343,10 @@ public class App extends Application {
         /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
 
-        // === Added section: log message after file loading ===
+        // log message après chargement
         if (console != null) {
             console.printMessage("File loaded: " + file.getName());
         }
-        // === End of added section ===
     }
 
     /**
@@ -259,18 +377,15 @@ public class App extends Application {
             alert.showAndWait();
         }
 
-
-
-        // === Added section: log message after saving ===
+        // log message بعد از ذخیره
         if (console != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
         }
-        // === End of added section ===
     }
 
     /**
      * Fonction utiliser pour appeler les methodes necessaires à la compilation du minijaja
-     * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
+     * Ecris le resultat de la compilation dans la zone prévu برای le jajacode
      */
     private void compile() {
         // On lit le texte sur le thread FX
@@ -336,7 +451,9 @@ public class App extends Application {
                         JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
                         jjcInterpreter.run();
                     }
-                } catch (Exception e) { throw new RuntimeException(e); }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 return null;
             }
         };
@@ -366,32 +483,51 @@ public class App extends Application {
         executor.submit(task);
     }
 
-    // === Added section: Simple Debug methods (Start / Step / Stop) ===
+    // === DEBUG (Start / Step / Stop) pour MiniJaja و JajaCode ===
+
     /**
-     * Starts simple debug mode and prints current line information in console.
+     * Starts debug mode on the current selected source (MiniJaja or JajaCode).
      */
     private void startDebug(Button stepButton, Button stopButton) {
         if (debugMode) {
             return;
         }
+
+        // determine source from ChoiceBox
+        String choice = fileToRun.getValue();
+        if ("Jajacode".equals(choice)) {
+            debugSource = DebugSource.JAJACODE;
+        } else {
+            debugSource = DebugSource.MINIJAJA;
+        }
+
         debugMode = true;
+        debugCurrentLine = -1;
         stepButton.setDisable(false);
         stopButton.setDisable(false);
-        debugCurrentLine = -1;
+
+        // take a snapshot of current breakpoints
+        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
+        debugBreakpoints.clear();
+        debugBreakpoints.addAll(currentArea.getBreakpoints());
+
         if (console != null) {
-            console.printMessage("[DEBUG] Debug mode started.");
+            console.printMessage("[DEBUG] Debug mode started on " +
+                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") + ".");
         }
         stepDebug(stepButton, stopButton);
     }
 
     /**
-     * Moves to the next line in MiniJaja code and highlights it.
+     * Moves to the next line in the current debug source and highlights it.
      */
     private void stepDebug(Button stepButton, Button stopButton) {
         if (!debugMode) {
             return;
         }
-        String text = mjjCodeArea.getText();
+
+        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
+        String text = currentArea.getText();
         String[] lines = text.split("\\R", -1);
         if (lines.length == 0) {
             if (console != null) {
@@ -401,7 +537,17 @@ public class App extends Application {
             return;
         }
 
-        debugCurrentLine++;
+        int next = debugCurrentLine + 1;
+
+        // If we have breakpoints, jump to the next line that has a breakpoint
+        if (!debugBreakpoints.isEmpty()) {
+            while (next < lines.length && !debugBreakpoints.contains(next)) {
+                next++;
+            }
+        }
+
+        debugCurrentLine = next;
+
         if (debugCurrentLine >= lines.length) {
             if (console != null) {
                 console.printMessage("[DEBUG] End of file reached.");
@@ -411,10 +557,12 @@ public class App extends Application {
         }
 
         if (console != null) {
-            console.printMessage("[DEBUG] Line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
+            console.printMessage("[DEBUG] " +
+                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
+                    " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
         }
 
-        mjjCodeArea.highlightLine(debugCurrentLine);
+        currentArea.highlightLine(debugCurrentLine);
     }
 
     /**
@@ -432,7 +580,7 @@ public class App extends Application {
         stepButton.setDisable(true);
         stopButton.setDisable(true);
     }
-    // === End of added section ===
+    // === End of debug section ===
 
     public static void main(String[] args) {
         launch();

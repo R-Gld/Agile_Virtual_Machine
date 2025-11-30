@@ -30,7 +30,7 @@ public class ConsoleOutput extends StackPane {
         console.setWrapText(true);
         console.setEditable(false);
         console.setFont(Font.font("Consolas", 14));
-        console.setStyle("-fx-control-inner-background: black; -fx-text-fill: #F8F8F2;");
+        console.setStyle("-fx-control-inner-background: #141929; -fx-text-fill: #F8F8F2;");
         console.setFocusTraversable(false);
 
         //   Bouton Clear
@@ -44,7 +44,7 @@ public class ConsoleOutput extends StackPane {
         clearButton.setOnAction(e -> clear());
         clearButton.setFocusTraversable(false);
         StackPane.setAlignment(clearButton, Pos.TOP_RIGHT);
-        StackPane.setMargin(clearButton, new Insets(5, 5, 0, 0));
+        StackPane.setMargin(clearButton, new Insets(5, 20, 0, 0));
 
         // StackPane
         this.getChildren().addAll(console, clearButton);
