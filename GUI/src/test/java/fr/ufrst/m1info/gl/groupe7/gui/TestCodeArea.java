@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
+import org.testfx.util.WaitForAsyncUtils;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -160,7 +161,7 @@ public class TestCodeArea {
     }
 
     @Test
-    void testAutoCompletionInsertion(FxRobot robot) {
+    void testAutoCompletionInsertion(FxRobot robot) throws Exception {
         runOnFxThread(() -> {
             org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
             inner.replaceText("voi");
@@ -171,22 +172,17 @@ public class TestCodeArea {
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
 
-        // Wait for popup
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
 
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
-        System.out.println(codeArea.getText());
+        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("void"));
 
         Assertions.assertTrue(codeArea.getText().contains("void"), "Text should contain 'void' after auto-completion");
     }
 
     @Test
-    void testAutoCompletionMainSnippet(FxRobot robot) {
+    void testAutoCompletionMainSnippet(FxRobot robot) throws Exception {
         runOnFxThread(() -> {
             org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
             inner.replaceText("mai");
@@ -197,15 +193,11 @@ public class TestCodeArea {
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
 
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
-        System.out.println(codeArea.getText());
+        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("main"));
 
         Assertions.assertTrue(codeArea.getText().contains("main"), "Text should contain main snippet");
     }
