@@ -95,9 +95,6 @@ public class App extends Application {
         root.setTop(topContainer);
         var scene = new Scene(root, 1150, 720);
 
-        String codeCss = getClass().getResource("/code_area.css").toExternalForm();
-        scene.getStylesheets().add(codeCss);
-
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
         jjcCodeArea = new MyCodeArea("jjc-code");

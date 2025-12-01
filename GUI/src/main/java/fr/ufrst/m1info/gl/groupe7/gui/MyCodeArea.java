@@ -57,7 +57,6 @@ public class MyCodeArea extends AnchorPane {
             bpCircle.getStyleClass().add("breakpoint-node");
             bpCircle.setVisible(false);
             bpCircle.setManaged(true);   // always reserve space
-            bpCircle.setStyle("-fx-fill: red;"); // fallback color in case CSS fails
 
             /* Clicking toggles breakpoint ON/OFF */
             bpCircle.setOnMouseClicked(e -> toggleBreakpoint(line, bpCircle));
