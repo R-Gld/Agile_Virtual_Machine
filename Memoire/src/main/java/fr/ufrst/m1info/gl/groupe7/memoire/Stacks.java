@@ -79,7 +79,7 @@ public class Stacks {
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
         //double check
-        if ("tab".equals(q.type) && q.value instanceof ArrayInfo info) {
+        if (("tab"== q.object)&& q.value instanceof ArrayInfo info) {
 
             Symbol existing = symbolTable.findSymbol(q.ident);
 
@@ -109,7 +109,7 @@ public class Stacks {
     public Quad pop() {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
-            if ("tab".equals(q.type) && q.value instanceof ArrayInfo info) {
+            if (("tab"== q.object)&& q.value instanceof ArrayInfo info) {
 
                 Symbol existing = symbolTable.findSymbol(q.ident);
 
