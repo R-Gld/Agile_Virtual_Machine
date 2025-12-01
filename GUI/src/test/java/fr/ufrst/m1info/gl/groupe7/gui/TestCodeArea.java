@@ -170,6 +170,7 @@ public class TestCodeArea {
         });
 
         robot.clickOn("#testcodearea_code_area");
+
         WaitForAsyncUtils.waitForFxEvents();
 
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
