@@ -146,14 +146,15 @@ public class TestCodeArea {
         });
 
         robot.clickOn("#testcodearea_code_area");
+        WaitForAsyncUtils.waitForFxEvents();
+
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
 
         // Check if ContextMenu is showing
-        // We need to wait a bit for the popup to appear
         try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
+            WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(),
@@ -169,6 +170,8 @@ public class TestCodeArea {
         });
 
         robot.clickOn("#testcodearea_code_area");
+        WaitForAsyncUtils.waitForFxEvents();
+
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
 
@@ -177,6 +180,8 @@ public class TestCodeArea {
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
         WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("void"));
+
+        System.out.println(codeArea.getText());
 
         Assertions.assertTrue(codeArea.getText().contains("void"), "Text should contain 'void' after auto-completion");
     }
@@ -190,6 +195,8 @@ public class TestCodeArea {
         });
 
         robot.clickOn("#testcodearea_code_area");
+        WaitForAsyncUtils.waitForFxEvents();
+
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
 
@@ -198,6 +205,8 @@ public class TestCodeArea {
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
         WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("main"));
+
+        System.out.println(codeArea.getText());
 
         Assertions.assertTrue(codeArea.getText().contains("main"), "Text should contain main snippet");
     }
@@ -211,13 +220,15 @@ public class TestCodeArea {
         });
 
         robot.clickOn("#testcodearea_code_area");
+        WaitForAsyncUtils.waitForFxEvents();
 
         // Open
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
+
         try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
+            WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Popup should be open");
@@ -225,9 +236,10 @@ public class TestCodeArea {
         // Close
         robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
                 .release(javafx.scene.input.KeyCode.CONTROL);
+
         try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
+            WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> robot.lookup(".context-menu").queryAll().isEmpty());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         Assertions.assertTrue(robot.lookup(".context-menu").queryAll().isEmpty(), "Popup should be closed");
