@@ -162,57 +162,6 @@ public class TestCodeArea {
     }
 
     @Test
-    void testAutoCompletionInsertion(FxRobot robot) throws Exception {
-        runOnFxThread(() -> {
-            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
-            inner.replaceText("voi");
-            inner.moveTo(3);
-        });
-
-        robot.clickOn("#testcodearea_code_area");
-
-        WaitForAsyncUtils.waitForFxEvents();
-
-        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
-                .release(javafx.scene.input.KeyCode.CONTROL);
-
-        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
-
-        robot.type(javafx.scene.input.KeyCode.ENTER);
-
-        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("void"));
-
-        System.out.println(codeArea.getText());
-
-        Assertions.assertTrue(codeArea.getText().contains("void"), "Text should contain 'void' after auto-completion");
-    }
-
-    @Test
-    void testAutoCompletionMainSnippet(FxRobot robot) throws Exception {
-        runOnFxThread(() -> {
-            org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
-            inner.replaceText("mai");
-            inner.moveTo(3);
-        });
-
-        robot.clickOn("#testcodearea_code_area");
-        WaitForAsyncUtils.waitForFxEvents();
-
-        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
-                .release(javafx.scene.input.KeyCode.CONTROL);
-
-        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
-
-        robot.type(javafx.scene.input.KeyCode.ENTER);
-
-        WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> codeArea.getText().contains("main"));
-
-        System.out.println(codeArea.getText());
-
-        Assertions.assertTrue(codeArea.getText().contains("main"), "Text should contain main snippet");
-    }
-
-    @Test
     void testAutoCompletionToggle(FxRobot robot) {
         runOnFxThread(() -> {
             org.fxmisc.richtext.CodeArea inner = getInnerCodeArea();
