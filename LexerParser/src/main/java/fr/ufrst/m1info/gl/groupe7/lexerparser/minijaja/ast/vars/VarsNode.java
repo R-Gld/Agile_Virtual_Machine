@@ -8,10 +8,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 
 public class VarsNode extends AstNode {
 
-    private final VarNode var;
+    private final AstNode var;
     private final VarsNode vars;
 
-    public VarsNode(VarNode var, VarsNode vars) {
+    public VarsNode(AstNode var, VarsNode vars) {
         this.var = var;
         this.vars = vars;
     }
@@ -20,7 +20,7 @@ public class VarsNode extends AstNode {
         this(null, null);
     }
 
-    public VarNode getVar() {
+    public AstNode getVar() {
         return var;
     }
 

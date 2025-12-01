@@ -14,7 +14,7 @@ public class DeclsNode extends AstDecls {
         this.decls = decls;
     }
     
-    public DeclsNode(VarNode decl) {
+    public DeclsNode(AstNode decl) {
         this.decl = decl;
         this.decls = null;
     }

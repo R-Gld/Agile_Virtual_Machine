@@ -183,7 +183,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		System.err.println("[DEBUG] enter visitVars: text='" + ctx.getText() + "'");
 		if (ctx.children == null)
 			return new VarsNode();
-		VarNode firstVar = (VarNode) visit(ctx.var());
+		AstNode firstVar =  visit(ctx.var());
 		VarsNode nextVars = (VarsNode) visit(ctx.vars());
 		System.err.println("[DEBUG] exit visitVars: created VarsNode");
 		return new VarsNode(firstVar, nextVars);

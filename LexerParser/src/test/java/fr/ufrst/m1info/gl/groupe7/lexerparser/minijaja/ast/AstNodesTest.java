@@ -102,7 +102,7 @@ class AstNodesTest {
         assertEquals("vars (var (integer , Ident(x) , nbre(0)),vnil)", one.toStringTree());
         // getters
         assertInstanceOf(VarNode.class, one.getVar());
-        assertEquals("x", one.getVar().getIdent().getNom());
+        assertEquals("x",((VarNode) one.getVar()).getIdent().getNom());
         assertInstanceOf(VarsNode.class, one.getVars());
         assertEquals("vnil", one.getVars().toStringTree());
     }

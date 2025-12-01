@@ -23,15 +23,17 @@ public class DebugeParsingETC {
     Stacks stacks = new Stacks();
     String program = """
       class C {
-      int x = 0 ;
+     
       int t[4] ;
     
       main {
-      boolean b = true ;
-      t[0] = 3 ;
-      x = 1 ;
+      int x[2] ;
+      x[0] = 10 ;
+      x[1] = 20 ;
+
+    
      
-      b = (false || ( x > 0 && (! x == 0) ;
+
       
       }
       }
