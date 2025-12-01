@@ -92,8 +92,8 @@ testIHM:
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - mvn ${MAVEN_CLI_OPTS} clean test-compile
-    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI,LexerParser' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
