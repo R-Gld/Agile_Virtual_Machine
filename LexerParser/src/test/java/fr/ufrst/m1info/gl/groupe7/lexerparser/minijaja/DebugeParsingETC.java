@@ -32,10 +32,7 @@ public class DebugeParsingETC {
       x = 1 ;
      
       b = (false || ( x > 0 && (! x == 0) ;
-      while ( t[0] > 0 && b ) {
-        t[x] = x-1 ;
-        x++ ;
-        } ;
+      
       }
       }
       """;
