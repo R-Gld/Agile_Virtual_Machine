@@ -180,6 +180,8 @@ public class TestCodeArea {
 
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
+        System.out.println(codeArea.getText());
+
         Assertions.assertTrue(codeArea.getText().contains("void"), "Text should contain 'void' after auto-completion");
     }
 
@@ -202,6 +204,8 @@ public class TestCodeArea {
         }
 
         robot.type(javafx.scene.input.KeyCode.ENTER);
+
+        System.out.println(codeArea.getText());
 
         Assertions.assertTrue(codeArea.getText().contains("main"), "Text should contain main snippet");
     }
