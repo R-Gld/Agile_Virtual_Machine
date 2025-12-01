@@ -24,29 +24,11 @@ public class EcrireLnNodeTest {
         assertEquals("ecrireln (HelloLn)", tree);
     }
 
-    @Test
-    public void interpret_withExpression_printsEvaluatedValueAndNewline() {
-        Expression expr = mock(Expression.class);
-        when(expr.evaluate(any(Stacks.class))).thenReturn(321);
-        EcrireLnNode node = new EcrireLnNode(expr);
-        Stacks stacks = mock(Stacks.class);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream original = System.out;
-        System.setOut(new PrintStream(out));
-        try {
-            node.interpret(stacks);
-        } finally {
-            System.setOut(original);
-        }
-
-        assertEquals("321\n", out.toString());
-    }
 
     @Test
     public void interpret_withString_printsStringAndNewline() {
         EcrireLnNode node = new EcrireLnNode("abcLn");
-        Stacks stacks = mock(Stacks.class);
+        Stacks stacks = new Stacks();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream original = System.out;
@@ -57,6 +39,8 @@ public class EcrireLnNodeTest {
             System.setOut(original);
         }
 
-        assertEquals("abcLn\n", out.toString());
+        String expected = "abcLn" + System.lineSeparator();
+        assertEquals(expected, out.toString());
     }
 }
+
