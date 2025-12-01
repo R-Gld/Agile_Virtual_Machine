@@ -192,7 +192,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	@Override
 	public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
 		System.err.println("[DEBUG] enter visitMethode: text='" + ctx.getText() + "'");
-		String typeText = ctx.typemeth().TYPE().getText();
+		String typeText = ctx.typemeth().getText();
 		Type typeMeth;
 		switch (typeText) {
 			case "int":
