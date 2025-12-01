@@ -445,6 +445,17 @@ public class Stacks {
 
         heap.write(address, value);
     }
+
+
+
+    //Return the length of the array
+    public int getArrayLength(String ident) {
+        Quad q = findQuad(ident);
+        if (q == null) throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
+
+    return info.getSize();
+}
     // ============================================================
 // HEAP UTILITIES
 // ============================================================

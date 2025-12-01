@@ -25,7 +25,7 @@ public class LengthNode extends Expression {
         }
 
         //todo: ADD function to get tab length
-        return ((Object[]) stack.getValue(ident.getNom())).length;
+        return stack.getArrayLength(ident.getNom());
     }   
 
     @Override
