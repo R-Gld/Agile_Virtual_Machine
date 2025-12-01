@@ -17,6 +17,9 @@ public class UnaryMinusNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
+        if(!(terme.evaluate(stack) instanceof Integer)){
+            throw new RuntimeException("Type error: expression must evaluate to Integer");
+        }
         return - (int) terme.evaluate(stack);
     }
 

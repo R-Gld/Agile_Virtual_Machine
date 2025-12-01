@@ -19,6 +19,9 @@ public class NotNode extends Expression {
 
     @Override
     public Object evaluate(Stacks stack) {
+        if(!(exp.evaluate(stack) instanceof Boolean)){
+            throw new RuntimeException("Type error: expression must evaluate to Boolean");
+        }
         return  !(Boolean) exp.evaluate(stack);
     }
 

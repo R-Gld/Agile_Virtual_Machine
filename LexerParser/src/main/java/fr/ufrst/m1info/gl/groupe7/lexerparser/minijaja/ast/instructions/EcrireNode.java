@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireNode extends InstructionNode {
@@ -30,14 +31,17 @@ public class EcrireNode extends InstructionNode {
     }
    
     public void interpret(Stacks stacks) {
-        if (this.Ident1Node instanceof Expression ident1Node) {
-            System.out.print(ident1Node.evaluate(stacks));
+        if (Ident1Node instanceof IdentNode ident1) {
+            String OT = stacks.getObjectType(ident1.getNom());
+            if (OT.equals("tab" )|| OT.equals("meth")){ 
+                throw new RuntimeException("Type error: cannot print array directly or method reference");
+            }
+            System.out.print(ident1.evaluate(stacks));
         } else {
-            System.out.print((String) this.Ident1Node);
+            System.out.print((String) Ident1Node);
         }
 
     }
-
 
     
     

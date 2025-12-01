@@ -25,16 +25,14 @@ public class DebugeParsingETC {
       class C {
       int x = 0 ;
       int t[4] ;
-      int fct(int max) {
-        int y = 5 ;
-        while (max > 0) {
-        y += max ;
-        max = max - 1 ;
-        } ;
-        return y ;
-      } ;
+    
       main {
-        while (4 > x) {
+      boolean b = true ;
+      t[0] = 3 ;
+      x = 1 ;
+     
+      b = (false || ( x > 0 && (! x == 0) ;
+      while ( t[0] > 0 && b ) {
         t[x] = x-1 ;
         x++ ;
         } ;
@@ -70,7 +68,7 @@ public class DebugeParsingETC {
       // 4) Affichage de l'AST
     System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks);
-    //walker.walk();
+    walker.walk();
     //stacks.printStack();
 
     } else {
