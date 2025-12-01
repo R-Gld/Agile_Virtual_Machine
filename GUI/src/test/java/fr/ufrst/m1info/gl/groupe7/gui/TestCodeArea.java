@@ -203,7 +203,7 @@ public class TestCodeArea {
 
         robot.type(javafx.scene.input.KeyCode.ENTER);
 
-        Assertions.assertTrue(codeArea.getText().contains("void main()"), "Text should contain main snippet");
+        Assertions.assertTrue(codeArea.getText().contains("main"), "Text should contain main snippet");
     }
 
     @Test

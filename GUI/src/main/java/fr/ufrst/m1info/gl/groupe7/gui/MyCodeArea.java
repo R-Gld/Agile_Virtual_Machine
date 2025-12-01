@@ -361,12 +361,7 @@ public class MyCodeArea extends AnchorPane {
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
-                if (language == Language.MINIJAJA && suggestion.equals("main")) {
-                    codeArea.replaceText(finalStart, caretPosition, "void main() {\n    \n}");
-                    codeArea.moveTo(finalStart + 16); // Move caret inside braces
-                } else {
                     codeArea.replaceText(finalStart, caretPosition, suggestion);
-                }
             });
             autoCompletionPopup.getItems().add(item);
         }
