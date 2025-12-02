@@ -9,17 +9,9 @@ import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -45,6 +37,7 @@ public class App extends Application {
     private MyCodeArea mjjCodeArea;
     private MyCodeArea jjcCodeArea;
     private ChoiceBox<String> fileToRun;
+    private ToggleButton darkMode;
 
     /**
      * Console used to display messages (debug, info, errors)
@@ -86,43 +79,67 @@ public class App extends Application {
         appStage = stage;
         appStage.initStyle(StageStyle.UNDECORATED);
 
-        // Structure de l'interface :
         BorderPane root = new BorderPane();
         HBox titleBar = buildTitleBar();
         HBox topMenu = buildMenu();
         HBox toolbar = buildToolbar();
         VBox topContainer = new VBox(titleBar, topMenu, toolbar);
         root.setTop(topContainer);
-        var scene = new Scene(root, 1150, 720);
 
+        // === Editors ===
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
         jjcCodeArea = new MyCodeArea("jjc-code");
         jjcCodeArea.disable();
+
+        // Wrapper for MiniJaja area with title bar
+        VBox miniWrapper = new VBox();
+        miniWrapper.setSpacing(0);
+
+        HBox miniTitleBar = new HBox();
+        miniTitleBar.getStyleClass().add("panel-titlebar");
+        // ارتفاع ثابت برای نوار MiniJaja
+        miniTitleBar.setMinHeight(26);
+        miniTitleBar.setPrefHeight(26);
+        miniTitleBar.setMaxHeight(26);
+
+        Label mjjLabel = new Label("MiniJaja");
+        mjjLabel.getStyleClass().add("panel-title-label");
+
+        Region mjjSpacer = new Region();
+        HBox.setHgrow(mjjSpacer, Priority.ALWAYS);
+
+        miniTitleBar.getChildren().addAll(mjjLabel, mjjSpacer);
+        miniWrapper.getChildren().addAll(miniTitleBar, mjjCodeArea);
+        VBox.setVgrow(mjjCodeArea, Priority.ALWAYS);
 
         // Wrapper for JajaCode area with title bar and Clear button
         VBox jajaWrapper = new VBox();
         jajaWrapper.setSpacing(0);
 
         HBox jajaTitleBar = new HBox();
-        jajaTitleBar.setStyle("-fx-padding: 4 6 4 6; -fx-background-color: #2d2d2d;");
+        jajaTitleBar.getStyleClass().add("panel-titlebar");
+        // همان ارتفاع ثابت برای نوار JajaCode
+        jajaTitleBar.setMinHeight(26);
+        jajaTitleBar.setPrefHeight(26);
+        jajaTitleBar.setMaxHeight(26);
 
         Label jjcLabel = new Label("JajaCode");
-        jjcLabel.setStyle("-fx-text-fill: #cccccc; -fx-font-size: 12px;");
+        jjcLabel.getStyleClass().add("panel-title-label");
 
         Region jajaSpacer = new Region();
         HBox.setHgrow(jajaSpacer, Priority.ALWAYS);
 
         Button clearJajaButton = new Button("Clear");
+        clearJajaButton.getStyleClass().add("panel-title-button");
         clearJajaButton.setTooltip(new Tooltip("Clear JajaCode output"));
         clearJajaButton.setOnAction(e -> jjcCodeArea.loadText(""));
 
         jajaTitleBar.getChildren().addAll(jjcLabel, jajaSpacer, clearJajaButton);
-
         jajaWrapper.getChildren().addAll(jajaTitleBar, jjcCodeArea);
         VBox.setVgrow(jjcCodeArea, Priority.ALWAYS);
 
-        SplitPane editorSplitPane = new SplitPane(mjjCodeArea, jajaWrapper);
+        SplitPane editorSplitPane = new SplitPane(miniWrapper, jajaWrapper);
 
         // Console
         this.console = new ConsoleOutput("console");
@@ -134,10 +151,18 @@ public class App extends Application {
 
         root.setCenter(mainSplitPane);
 
+        // Scene + styles
+        Scene scene = new Scene(root, 1150, 720);
+
+        String codeCss = getClass().getResource("/code_area.css").toExternalForm();
+        scene.getStylesheets().add(codeCss);
+
+        String lightCss = getClass().getResource("/light.css").toExternalForm();
+        scene.getStylesheets().add(lightCss); // پیش‌فرض: لایت
+
         stage.setScene(scene);
         stage.show();
     }
-
 
     /**
      * Stop the application.
@@ -152,37 +177,26 @@ public class App extends Application {
     private HBox buildTitleBar() {
         HBox titleBar = new HBox();
         titleBar.setSpacing(8);
-        titleBar.setStyle("-fx-background-color: #252526; -fx-padding: 4 10 4 10;");
+        titleBar.getStyleClass().add("app-titlebar");
 
         Label titleLabel = new Label("MiniJaja IDE");
-        titleLabel.setStyle("-fx-text-fill: #d4d4d4; -fx-font-size: 12px;");
+        titleLabel.getStyleClass().add("app-title-label");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        String baseButtonStyle = "-fx-background-color: transparent; -fx-text-fill: #d4d4d4; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
-        String hoverButtonStyle = "-fx-background-color: #3c3c3c; -fx-text-fill: #ffffff; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
-
         Button minButton = new Button("-");
-        minButton.setStyle(baseButtonStyle);
-        minButton.setOnAction(e -> appStage.setIconified(true));
-        minButton.setOnMouseEntered(e -> minButton.setStyle(hoverButtonStyle));
-        minButton.setOnMouseExited(e -> minButton.setStyle(baseButtonStyle));
+        minButton.getStyleClass().addAll("window-button", "window-button-min");
 
         Button maxButton = new Button("□");
-        maxButton.setStyle(baseButtonStyle);
-        maxButton.setOnAction(e -> appStage.setMaximized(!appStage.isMaximized()));
-        maxButton.setOnMouseEntered(e -> maxButton.setStyle(hoverButtonStyle));
-        maxButton.setOnMouseExited(e -> maxButton.setStyle(baseButtonStyle));
-
-        String baseCloseStyle = "-fx-background-color: transparent; -fx-text-fill: #ff5555; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
-        String hoverCloseStyle = "-fx-background-color: #ff5555; -fx-text-fill: #ffffff; -fx-padding: 2 10 2 10; -fx-font-size: 12px;";
+        maxButton.getStyleClass().addAll("window-button", "window-button-max");
 
         Button closeButton = new Button("X");
-        closeButton.setStyle(baseCloseStyle);
+        closeButton.getStyleClass().addAll("window-button", "window-button-close");
+
+        minButton.setOnAction(e -> appStage.setIconified(true));
+        maxButton.setOnAction(e -> appStage.setMaximized(!appStage.isMaximized()));
         closeButton.setOnAction(e -> appStage.close());
-        closeButton.setOnMouseEntered(e -> closeButton.setStyle(hoverCloseStyle));
-        closeButton.setOnMouseExited(e -> closeButton.setStyle(baseCloseStyle));
 
         titleBar.getChildren().addAll(titleLabel, spacer, minButton, maxButton, closeButton);
 
@@ -205,6 +219,8 @@ public class App extends Application {
      */
     private HBox buildMenu() {
         HBox hbox = new HBox();
+        hbox.getStyleClass().add("top-strip");
+
         hbox.setSpacing(10);
         hbox.setStyle("-fx-padding: 2 12 2 12;");
         MenuBar menuBar = new MenuBar();
@@ -225,19 +241,28 @@ public class App extends Application {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         hbox.getChildren().add(spacer);
 
-        ToggleButton darkMode = new ToggleButton("🌙");
+        darkMode = new ToggleButton("🌙");
         darkMode.setOnAction(e -> {
             if (appStage != null && appStage.getScene() != null) {
+                Scene scene = appStage.getScene();
+
                 String darkCss = getClass().getResource("/dark.css").toExternalForm();
+                String lightCss = getClass().getResource("/light.css").toExternalForm();
+
                 if (darkMode.isSelected()) {
-                    if (!appStage.getScene().getStylesheets().contains(darkCss)) {
-                        appStage.getScene().getStylesheets().add(darkCss);
+                    scene.getStylesheets().remove(lightCss);
+                    if (!scene.getStylesheets().contains(darkCss)) {
+                        scene.getStylesheets().add(darkCss);
                     }
                 } else {
-                    appStage.getScene().getStylesheets().remove(darkCss);
+                    scene.getStylesheets().remove(darkCss);
+                    if (!scene.getStylesheets().contains(lightCss)) {
+                        scene.getStylesheets().add(lightCss);
+                    }
                 }
             }
         });
+
         hbox.getChildren().add(darkMode);
 
         return hbox;
@@ -249,28 +274,23 @@ public class App extends Application {
         hbox.setStyle("-fx-padding: 4 12 4 12;");
         hbox.setId("debug-toolbar");
 
-        /* Build button */
         Button buildButton = new Button("");
         buildButton.setGraphic(new ImageView(getClass().getResource("/icons/build.png").toExternalForm()));
         buildButton.setOnAction(e -> compile());
         buildButton.setTooltip(new Tooltip("Compile file"));
-
         hbox.getChildren().add(buildButton);
 
-        /* Select file to be interpreted */
         fileToRun = new ChoiceBox<>();
         fileToRun.getItems().addAll("MiniJaja", "Jajacode");
         fileToRun.setValue("MiniJaja");
         hbox.getChildren().add(fileToRun);
 
-        /* Execute button */
         Button runButton = new Button("");
         runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
         runButton.setOnAction(e -> run());
         hbox.getChildren().add(runButton);
 
-        // Debug controls (icons only)
         Button debugButton = new Button();
         Button stepButton = new Button();
         Button stopButton = new Button();
@@ -306,7 +326,6 @@ public class App extends Application {
      */
     private void loadFile() {
 
-        /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.getExtensionFilters().addAll(
@@ -314,12 +333,11 @@ public class App extends Application {
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
         );
         File file = fileChooser.showOpenDialog(appStage);
-        if(file == null) return;
+        if (file == null) return;
 
-        /* Lecture du fichier selectionner depuis l'explorateur de fichier */
         StringBuilder fileContent = new StringBuilder();
-        try(Scanner scanner = new Scanner(file)) {
-            while(scanner.hasNextLine()) {
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
                 fileContent.append(scanner.nextLine());
                 fileContent.append("\n");
             }
@@ -329,7 +347,7 @@ public class App extends Application {
             alert.setContentText(e.toString());
             alert.showAndWait();
             return;
-        } catch(Exception e) {
+        } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Impossible de lire le fichier");
             alert.setContentText(e.toString());
@@ -337,10 +355,8 @@ public class App extends Application {
             return;
         }
 
-        /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
 
-        // log message après chargement
         if (console != null) {
             console.printMessage("File loaded: " + file.getName());
         }
@@ -356,7 +372,7 @@ public class App extends Application {
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
         );
         File file = fileChooser.showSaveDialog(appStage);
-        if(file == null) return;
+        if (file == null) return;
 
         try {
             FileWriter fileWriter = new FileWriter(file);
@@ -374,7 +390,6 @@ public class App extends Application {
             alert.showAndWait();
         }
 
-        // log message بعد از ذخیره
         if (console != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
         }
@@ -382,10 +397,9 @@ public class App extends Application {
 
     /**
      * Fonction utiliser pour appeler les methodes necessaires à la compilation du minijaja
-     * Ecris le resultat de la compilation dans la zone prévu برای le jajacode
+     * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
      */
     private void compile() {
-        // On lit le texte sur le thread FX
         String code = mjjCodeArea.getText();
 
         Task<String> task = new Task<>() {
@@ -424,7 +438,6 @@ public class App extends Application {
      * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
      */
     private void run() {
-        // On lit ce qu’il faut sur le thread FX
         String choice = fileToRun.getValue();
         String mjjText = mjjCodeArea.getText();
         String jjcText = jjcCodeArea.getText();
@@ -480,7 +493,7 @@ public class App extends Application {
         executor.submit(task);
     }
 
-    // === DEBUG (Start / Step / Stop) pour MiniJaja و JajaCode ===
+    // === DEBUG (Start / Step / Stop) pour MiniJaja et JajaCode ===
 
     /**
      * Starts debug mode on the current selected source (MiniJaja or JajaCode).
@@ -490,7 +503,6 @@ public class App extends Application {
             return;
         }
 
-        // determine source from ChoiceBox
         String choice = fileToRun.getValue();
         if ("Jajacode".equals(choice)) {
             debugSource = DebugSource.JAJACODE;
@@ -503,7 +515,6 @@ public class App extends Application {
         stepButton.setDisable(false);
         stopButton.setDisable(false);
 
-        // take a snapshot of current breakpoints
         MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
         debugBreakpoints.clear();
         debugBreakpoints.addAll(currentArea.getBreakpoints());
@@ -536,7 +547,6 @@ public class App extends Application {
 
         int next = debugCurrentLine + 1;
 
-        // If we have breakpoints, jump to the next line that has a breakpoint
         if (!debugBreakpoints.isEmpty()) {
             while (next < lines.length && !debugBreakpoints.contains(next)) {
                 next++;
@@ -577,9 +587,6 @@ public class App extends Application {
         stepButton.setDisable(true);
         stopButton.setDisable(true);
     }
-    // === End of debug section ===
-
-
 
     public static void main(String[] args) {
         launch();
