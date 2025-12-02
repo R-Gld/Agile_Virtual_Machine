@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.junit.jupiter.api.Test;

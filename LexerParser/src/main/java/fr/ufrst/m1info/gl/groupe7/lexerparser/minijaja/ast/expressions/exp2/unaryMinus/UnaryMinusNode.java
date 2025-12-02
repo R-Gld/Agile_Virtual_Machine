@@ -24,11 +24,6 @@ public class UnaryMinusNode extends Expression {
     }
 
     @Override
-    public String toString() {
-        return "-" + terme.toString();
-    }
-
-    @Override
     public String toStringTree() {
         return "- (" + terme.toStringTree() + ")";
     }

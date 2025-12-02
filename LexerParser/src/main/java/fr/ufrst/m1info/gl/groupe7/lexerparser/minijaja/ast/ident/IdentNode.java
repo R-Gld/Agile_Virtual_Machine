@@ -21,12 +21,6 @@ public class IdentNode extends Expression {
     public Object evaluate(Stacks stack) {
         return stack.getValue(this.nom);
     }
- 
-
-    @Override
-    public String toString() {
-        return nom;
-    }
 
     @Override
     public String toStringTree() {

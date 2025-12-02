@@ -16,11 +16,6 @@ public class rDeclrs extends AstNode {
         return declrs;
     }
 
-    @Override
-    public String toString() {
-        return "rDeclrs{}";
-    }
-
     public void interpret(Stacks stacks) {
         if (declrs == null) {
             return;

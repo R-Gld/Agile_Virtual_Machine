@@ -36,7 +36,7 @@ public class MainNode extends AstNode {
         return "Main(" + (vars != null ? vars.toStringTree() : "vnil") + ", " + instrs.toStringTree() + ")";
     }
     @Override
-    public Iterable getChildren() {
+    public Iterable <AstNode> getChildren() {
         if (vars != null) {
             return java.util.List.of(vars, instrs, rvars);
         } else {

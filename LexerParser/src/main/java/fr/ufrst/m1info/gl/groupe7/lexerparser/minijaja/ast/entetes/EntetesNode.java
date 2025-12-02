@@ -26,10 +26,7 @@ public class EntetesNode extends AstEntetes {
         return entetes;
     }
 
-    @Override
-    public String toString() {
-        return "ASTEntetes{}";
-    }
+  
 
     @Override
     public String toStringTree() {

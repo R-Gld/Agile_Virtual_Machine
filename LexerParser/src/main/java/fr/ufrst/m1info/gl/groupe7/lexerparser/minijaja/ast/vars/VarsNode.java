@@ -29,10 +29,6 @@ public class VarsNode extends AstNode {
     }
 
     @Override
-    public String toString() {
-        return var.toString() + (vars != null ? ";" + vars : "");
-    }
-    @Override
     public List<AstNode> getChildren() {
         List<AstNode> children = new ArrayList<>();
         if (var != null) {

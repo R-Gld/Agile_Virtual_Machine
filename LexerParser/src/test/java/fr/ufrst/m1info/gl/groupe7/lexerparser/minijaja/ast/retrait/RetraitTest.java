@@ -451,14 +451,6 @@ public class RetraitTest {
         assertEquals("", rdeclrs.toStringTree());
     }
 
-    @Test
-    void testRDeclrs_ToString() {
-        DeclsNode declsNode = new DeclsNode();
-        rDeclrs rdeclrs = new rDeclrs(declsNode);
-        
-        assertEquals("rDeclrs{}", rdeclrs.toString());
-    }
-
     // ========================================
     // Integration Tests
     // ========================================

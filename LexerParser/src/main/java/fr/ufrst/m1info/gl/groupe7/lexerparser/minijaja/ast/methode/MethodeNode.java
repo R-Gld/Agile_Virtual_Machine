@@ -49,10 +49,6 @@ public class MethodeNode extends AstNode {
     }
 
 
-    @Override
-    public String toString() {
-        return "MethodeNode{}";
-    }
 
     @Override
     public String toStringTree() {
