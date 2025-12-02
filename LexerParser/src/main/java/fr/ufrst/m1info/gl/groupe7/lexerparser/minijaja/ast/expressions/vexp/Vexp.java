@@ -26,10 +26,7 @@ public class Vexp {
         return null;
     }
 
-    @Override
-    public String toString() {
-        return "Vexp{" + "vexp=" + exp + '}';
-    }
+   
 
     public String toStringTree() {
         if(exp == null) return "omega";

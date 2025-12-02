@@ -23,6 +23,9 @@ public class AndNode extends Expression {
 
     @Override
     public Object evaluate(Stacks stack) {
+        if(!(exp.evaluate(stack) instanceof Boolean) || !(exp1.evaluate(stack) instanceof Boolean)){
+            throw new RuntimeException("Type error: both expressions must evaluate to Boolean");
+        }
         return (Boolean) exp.evaluate(stack) && (Boolean) exp1.evaluate(stack);
     }
 

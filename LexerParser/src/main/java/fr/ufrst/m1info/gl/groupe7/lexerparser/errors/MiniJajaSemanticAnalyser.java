@@ -130,10 +130,10 @@ public class MiniJajaSemanticAnalyser {
         if (vars == null) return;
 
         // VarsNode has a linked-list structure: var + vars
-        VarNode var = vars.getVar();
+        AstNode var = vars.getVar();
         if (var != null) {
-            String varName = var.getIdent().getNom();
-            Type varType = var.getType();
+            String varName =((VarNode) var).getIdent().getNom();
+            Type varType = ((VarNode) var).getType();
 
             // Check for duplicate declarations
             if (declaredVariables.containsKey(varName)) {
