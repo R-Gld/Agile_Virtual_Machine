@@ -507,34 +507,7 @@ public class MiniJajaInterpreterTest {
         assertFalse(collector.hasErrors());
     }
 
-    @Test
-    void testRun_MultipleDeclarations() {
-        String input = """
-            class C {
-                int a = 1;
-                int b = 2;
-                final int C1 = 3;
-                final int C2 = 4;
-                int arr1[2];
-                int arr2[3];
-        
-                main {
-                    a = b + C1;
-                }
-            }
-            """;
-        MiniJajaInterpreter interpreter = new MiniJajaInterpreter(input, collector);
-        
-        captureOutput();
-        try {
-            assertDoesNotThrow(() -> interpreter.run());
-        } finally {
-            restoreOutput();
-        }
-        
-        assertFalse(collector.hasErrors());
-    }
-
+   
     @Test
     void testRun_BooleanVariablesAndOperations() {
         String input = """

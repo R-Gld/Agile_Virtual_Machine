@@ -302,7 +302,7 @@ public class Stacks {
             if (q.ident.equals(ident)) {
                 // Traitement de la variable Omega (valeur non initialisée)
                 if (q.value == Omega.getInstance()) {
-                    throw new RuntimeException("Variable '" + ident + "' non initialisée (Omega).");
+                    throw new RuntimeException("Variable '" + ident + "' non initialisee (Omega).");
                 }
                 return q.value;
             }
@@ -349,7 +349,7 @@ public class Stacks {
             if (!q.ident.equals(ident)) continue;
 
             // Prevent assigning to constants
-            if ("cst".equals(q.object)) {
+            if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
                 throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
             if ("tab".equals(q.object)) {
@@ -362,14 +362,16 @@ public class Stacks {
                 throw new RuntimeException("Erreur : " + ident+" est une méthode, affectation non permise.");
             }
 
-            // Type compatibility check
+            // Check type compatibility
             if (!isTypeCompatible(q.type, newValue)) {
-                String got = (newValue == null) ? "null" : newValue.getClass().getSimpleName();
-                throw new RuntimeException("Type mismatch for " + ident + ": expected " + q.type + " but got " + got);
+                throw new RuntimeException("Type de variable " + ident +
+                        ": attendu " + q.type + " mais reçu " + (newValue == null ? "null" : newValue.getClass().getSimpleName()));
             }
 
+          
+
             // Perform assignment and update stack entry explicitly
-            q.setValue(newValue);
+            q.value = newValue;
             stack.set(i, q); // replace to be explicit (Quad is mutable, but keep consistency)
             return true;
         }
@@ -384,16 +386,16 @@ public class Stacks {
         if (value == null) return true; // null accepté pour tous types
 
         switch (type) {
-            case Type.ENTIER:
+            case ENTIER:
                 return value instanceof Integer;
 
-            case Type.BOOLEEN:
+            case BOOLEEN:
                 return value instanceof Boolean;
 
-            case Type.STRING:
+            case STRING:
                 return value instanceof String;
 
-            case Type.VOID:
+            case VOID:
                 return value == null;
 
             default:
@@ -527,14 +529,7 @@ public class Stacks {
 
 
 
-    //Return the length of the array
-    public int getArrayLength(String ident) {
-        Quad q = findQuad(ident);
-        if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
 
-    return info.getSize();
-}
     // ============================================================
 // HEAP UTILITIES
 // ============================================================
