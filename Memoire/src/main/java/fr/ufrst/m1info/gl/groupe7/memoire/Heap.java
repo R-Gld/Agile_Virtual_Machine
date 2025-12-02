@@ -59,7 +59,10 @@ public class Heap {
         System.out.println("index table allocated: " + index+"block.entry.getSize() :"+block.entry.getSize());
         block.next = table[index];
         table[index] = block;
-        freeCount++;
+        if(block.entry.isFree()){
+            freeCount++;
+        }
+
     }
 
     private Node remove(int size) {
@@ -73,7 +76,10 @@ public class Heap {
                     table[index] = current.next;
                 else
                     prev.next = current.next;
-                freeCount--;
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
+
                 current.next = null;
                 return current;
             }
@@ -175,7 +181,10 @@ public class Heap {
                 if (prev == null) table[index] = current.next;
                 else prev.next = current.next;
                 current.next = null;
-                freeCount--; // keep same counting semantics as put()
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
+                 // keep same counting semantics as put()
                 System.out.println("→ Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
                 return true;
             }
@@ -204,7 +213,9 @@ public class Heap {
                     if (prev == null) table[i] = current.next;
                     else prev.next = current.next;
                     current.next = null;
-                    freeCount--;
+                    if(current.entry.isFree()){
+                        freeCount--;
+                    }
                     System.out.println("→ Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
                     return true;
                 }
@@ -233,7 +244,9 @@ public class Heap {
                 if (prev == null) table[index] = current.next;
                 else prev.next = current.next;
                 current.next = null;
-                freeCount--;
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
                 System.out.println("→ Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
                 return true;
             }
@@ -299,7 +312,9 @@ public class Heap {
                     // retirer le buddy
                     if (prev == null) table[i] = current.next;
                     else prev.next = current.next;
-                    freeCount--;
+                    if(current.entry.isFree()){
+                        freeCount--;
+                    }
 
                     // créer le bloc fusionné
                     int mergedAddr = Math.min(block.entry.getAddress(), buddyIndex);

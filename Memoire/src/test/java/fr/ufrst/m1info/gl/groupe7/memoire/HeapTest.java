@@ -65,18 +65,22 @@ public class HeapTest {
     @Test
     public void testFreeAndMerge() {
         Heap heap = new Heap();
+
         HeapEntry e1 = heap.allocate("A", 64, null);
         HeapEntry e2 = heap.allocate("B", 64, null);
 
-        assertNotNull(e1);
-        assertNotNull(e2);
+        int freeBefore = heap.getFreeCount();
 
-        int countBefore = heap.getFreeCount();
+        int addr1 = e1.getAddress();
+        int addr2 = e2.getAddress();
+        heap.printHeap();
         heap.free(e1);
         heap.free(e2);
+        heap.printHeap();
+        int freeAfter = heap.getFreeCount();
 
-        // After freeing, freeCount should increase
-        assertTrue(heap.getFreeCount() >= countBefore, "Free count should increase after freeing blocks");
+        assertEquals(freeBefore, freeAfter,
+                "Merge should keep free block count stable");
     }
 
     @Test
