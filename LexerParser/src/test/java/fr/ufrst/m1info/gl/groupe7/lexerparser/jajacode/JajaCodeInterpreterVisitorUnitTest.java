@@ -234,11 +234,12 @@ class JajaCodeInterpreterVisitorUnitTest {
     }
 
     @Test
-    void visitInstr_newMeth_declaresCst_withTopValue() {
+    void visitInstr_newMeth_declaresMeth_withTopValue() {
         visitor.visitInstr(instrWithPush(8));
         visitor.visitInstr(instrWithNew("f", Type.ENTIER, "meth"));
-        verify(stacks).declareCst("f", 8, Type.ENTIER);
+        verify(stacks).declareMeth("f", 8, Type.ENTIER);
         verify(stacks, never()).declareVar(anyString(), any(), any(Type.class));
+        verify(stacks, never()).declareCst(anyString(), any(), any(Type.class));
     }
 
     // ------------------------

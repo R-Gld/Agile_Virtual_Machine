@@ -13,6 +13,10 @@ public class AppelINode extends InstructionNode {
         this.listExp = listExp;
     }
 
+    public IdentNode getIdent() { return ident; }
+
+    public ListExpNode getListExp() { return listExp; }
+
     @Override
     public String toStringTree() {
         return "appelI(" + ident.toStringTree() + "," + listExp.toStringTree() + ")";

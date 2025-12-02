@@ -32,10 +32,6 @@ public class DeclsNode extends AstDecls {
         return decls;
     }
 
-    @Override
-    public String toString() {
-        return decl == null ? "" : decl + (decls != null ? ";" + decls : "");
-    }
 
     @Override
     public String toStringTree() {

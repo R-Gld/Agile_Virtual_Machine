@@ -169,12 +169,7 @@ public class StacksTest {
         assertEquals(20, stacks.getValue("x"));
     }
 
-    @Test
-    void testAssignValueDoesNotAffectConst() {
-        stacks.declareCst("PI", 3.14, Type.ENTIER);
-        stacks.AffecterVal("PI", 10);
-        assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
-    }
+
     @Test
     void topPil(){
         stacks.declareVar("x", 5, Type.ENTIER);
@@ -284,13 +279,7 @@ public class StacksTest {
         assertEquals(10, stacks.getValue("x"));
     }
 
-    @Test
-    void testAssignValueToConstant() {
-        stacks.declareCst("PI", 3.14, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("PI", 10));
-        assertEquals(3.14, stacks.getValue("PI"));
-    }
 
     @Test
     void testAssignValueIdentifierNotFound() {
@@ -1156,6 +1145,346 @@ public class StacksTest {
         stacks.declareTab("T", 5, Type.ENTIER);
         stacks.freeTab("T");
     }
+    @Test
+    public void testDeclareVarWithOmegaShouldThrowOnGet() {
+        Stacks stacks = new Stacks();
+
+
+        stacks.declareVar("x", Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("x");
+        });
+
+        assertTrue(ex.getMessage().contains("not initialized"));
+    }
+
+    @Test
+    public void testDeclareCstWithOmegaShouldThrowOnGet() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("y", Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("y");
+        });
+
+        assertTrue(ex.getMessage().contains("not initialized"));
+    }
+
+    @Test
+    public void testDeclareVarInitializedOk() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 10, Type.ENTIER);
+
+        Object val = stacks.getValue("a");
+
+        assertEquals(10, val);
+    }
+
+    @Test
+    public void testDeclareCstInitializedOk() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("b", true, Type.BOOLEEN);
+
+        Object val = stacks.getValue("b");
+
+        assertEquals(true, val);
+    }
+    @Test
+    public void testDeclareOmegaVarThenAssign() {
+        Stacks stacks = new Stacks();
+
+
+        stacks.declareVar("x", Type.ENTIER);
+
+
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x"));
+
+
+        stacks.AffecterVal("x",42);
+
+        assertEquals(42, stacks.getValue("x"));
+    }
+
+
+
+
+    /*
+        @Test
+    public void testDeclareOmegaConstThenAssignFails() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("k", Type.ENTIER);
+
+
+        assertThrows(RuntimeException.class, () -> stacks.getValue("k"));
+
+
+        stacks.declareCst("k", 3, Type.ENTIER);
+        assertEquals(3, stacks.getValue("k"));
+    }
+     */
+
+    @Test
+    public void testDoubleDeclarationVarThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareVar("x", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("var already  declare: "));
+    }
+    @Test
+    public void testDoubleDeclarationConstThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("k", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareCst("k", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("cst already declare: "));
+    }
+    @Test
+    public void testVarThenConstSameNameThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareCst("a", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("cst already declare: "));
+    }
+    @Test
+    public void testConstThenVarSameNameThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("z", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareVar("z", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("var already  declare: "));
+    }
+    @Test
+    public void testDoubleDeclareMethodThrows() {
+        Stacks stacks = new Stacks();
+        stacks.declareMeth("maFonction", null, Type.VOID);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareMeth("maFonction", null, Type.VOID)
+        );
+
+        assertTrue(e.getMessage().contains("meth already declare"));
+    }
+    @Test
+    public void testDeclareMethodWithExistingVarThrows() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", Type.ENTIER);
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareMeth("x", null, Type.VOID)
+        );
+        assertTrue(e.getMessage().contains("meth already declare"));
+    }
+    @Test
+    public void testAffecterConstOmegaAllowedOnce() {
+        Stacks s = new Stacks();
+        s.declareCst("c", Type.ENTIER); // c = Ω
+
+        boolean ok = s.AffecterVal("c", 7);
+
+        assertTrue(ok);
+        assertEquals(7, s.getValue("c"));
+    }
+    @Test
+    public void testAffecterConstNonOmegaThrows() {
+        Stacks s = new Stacks();
+        s.declareCst("c", 4, Type.ENTIER); // c = 4, NON OMEGA
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("c", 8)
+        );
+
+        assertTrue(e.getMessage().contains("Cannot modify constant"));
+    }
+    @Test
+    public void testAffecterConstOmegaSecondTimeThrows() {
+        Stacks s = new Stacks();
+        s.declareCst("c", Type.ENTIER); // c = Ω
+
+        assertTrue(s.AffecterVal("c", 5)); // première affectation OK
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("c", 10) // deuxième → interdit
+        );
+
+        assertTrue(e.getMessage().contains("Cannot modify constant"));
+    }
+    @Test
+    public void testAffecterInexistant() {
+        Stacks s = new Stacks();
+
+        boolean ok = s.AffecterVal("x", 5);
+
+        assertFalse(ok);
+    }
+    @Test
+    public void testAffecterTypeIncompatible() {
+        Stacks s = new Stacks();
+        s.declareVar("x", Type.ENTIER); // x = Ω
+
+        boolean ok = s.AffecterVal("x", true);
+
+        assertFalse(ok);
+    }
+    @Test
+    public void testAffecterVarOmegaAllowed() {
+        Stacks s = new Stacks();
+        s.declareVar("x", Type.ENTIER); // x = Ω
+
+        boolean ok = s.AffecterVal("x", 9);
+
+        assertTrue(ok);
+        assertEquals(9, s.getValue("x"));
+    }
+    @Test
+    public void testGetArrayLengthNormal() {
+        Stacks stacks = new Stacks();
+        stacks.declareTab("tab1", 5, Type.ENTIER);
+
+        int size = stacks.getArrayLength("tab1");
+        assertEquals(5, size);
+    }
+
+    @Test
+    public void testGetArrayLengthUnknownArray() {
+        Stacks stacks = new Stacks();
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayLength("unknown");
+        });
+        assertEquals("Unknown array unknown", ex.getMessage());
+    }
+
+    @Test
+    public void testGetArrayLengthNotAnArray() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", 42, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayLength("x");
+        });
+        assertEquals("Not an array: x", ex.getMessage());
+    }
+    @Test
+    public void testPopTableFreesMemory() {
+
+
+
+        stacks.declareTab("myArray", 3, Type.ENTIER);
+
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        stacks.declareVar("y", 20, Type.ENTIER);
+
+
+        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
+        assertNotNull(arrayQuad);
+
+
+        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
+        assertNotEquals(-1, base);
+
+
+        stacks.setArrayValue("myArray", 0, 100);
+        stacks.setArrayValue("myArray", 1, 200);
+        stacks.setArrayValue("myArray", 2, 300);
+
+
+        assertEquals(100, stacks.getArrayValue("myArray", 0));
+        assertEquals(200, stacks.getArrayValue("myArray", 1));
+        assertEquals(300, stacks.getArrayValue("myArray", 2));
+
+        stacks.freeArrayElement("myArray", 0);
+        stacks.freeArrayElement("myArray", 1);
+        stacks.freeArrayElement("myArray", 2);
+
+
+
+        stacks.printStack();
+        stacks.pop(); // pop "y"
+        stacks.printStack();
+        stacks.pop(); // pop "x"
+        stacks.printStack();
+        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
+
+        assertNotNull(poppedArray);
+        assertEquals("myArray", poppedArray.ident);
+
+        // 6. check if all heap are empty
+        assertNull(stacks.getHeap().read(base));
+        assertNull(stacks.getHeap().read(base + 1));
+        assertNull(stacks.getHeap().read(base + 2));
+    }
+    /*todo ask teacher about retrait
+    @Test
+    public void testPopTableFreesMemoryWithoutFreeElements() {
+
+
+
+        stacks.declareTab("myArray", 3, Type.ENTIER);
+
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        stacks.declareVar("y", 20, Type.ENTIER);
+
+
+        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
+        assertNotNull(arrayQuad);
+
+
+        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
+        assertNotEquals(-1, base);
+
+
+        stacks.setArrayValue("myArray", 0, 100);
+        stacks.setArrayValue("myArray", 1, 200);
+        stacks.setArrayValue("myArray", 2, 300);
+
+
+        assertEquals(100, stacks.getArrayValue("myArray", 0));
+        assertEquals(200, stacks.getArrayValue("myArray", 1));
+        assertEquals(300, stacks.getArrayValue("myArray", 2));
+
+
+        stacks.printStack();
+        stacks.pop(); // pop "y"
+        stacks.printStack();
+        stacks.pop(); // pop "x"
+        stacks.printStack();
+        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
+
+        assertNotNull(poppedArray);
+        assertEquals("myArray", poppedArray.ident);
+
+        // 6. check if all heap are empty
+        assertNull(stacks.getHeap().read(base));
+        assertNull(stacks.getHeap().read(base + 1));
+        assertNull(stacks.getHeap().read(base + 2));
+    }
+     */
+
 
 
 

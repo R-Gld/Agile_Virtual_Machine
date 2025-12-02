@@ -217,6 +217,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomeWrite();
         } else if (ctx.WRITELN() != null) {
             axiomeWriteln();
+        } else if (ctx.RETURN() != null) {
+            axiomeReturn();
         } else if (ctx.PUSH() != null && ctx.valeur() != null) {
             axiomePush(ctx.valeur());
         } else if (ctx.NEW() != null) {
@@ -235,6 +237,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomeLoad(ident);
         } else if (ctx.INC() != null) {
             axiomeINC(ident);
+        } else if (ctx.INVOKE() != null) {
+            axiomeInvoke(ident);
         }
     }
 
@@ -551,8 +555,11 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             case "variable", "var":
                 stacks.declareVar(ident, valeur.value, type);
                 break;
-            case "cst", "meth":
+            case "cst":
                 stacks.declareCst(ident, valeur.value, type);
+                break;
+            case "meth":
+                stacks.declareMeth(ident, valeur.value, type);
                 break;
             case "tab":
                 if (valeur.value instanceof Integer size) {
@@ -1240,6 +1247,69 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         System.out.println(valeur.value);
         System.out.println("\t\tAxiome WRITELN exécuté: " + valeur.value + " affiché avec retour à la ligne.");
         instructionCounter++;
+    }
+
+    private void axiomeInvoke(String ident) {
+        System.out.println("\t\t[DEBUG] axiomeInvoke appelé: ident=" + ident);
+
+        // Récupérer l'adresse de la méthode depuis la mémoire
+        Object methodAddress = stacks.getValue(ident);
+
+        if (methodAddress == null) {
+            System.out.println("Erreur dans axiomeInvoke : méthode '" + ident + "' non trouvée.");
+            running = false;
+            return;
+        }
+
+        if (!(methodAddress instanceof Integer)) {
+            System.out.println("Erreur dans axiomeInvoke : l'adresse de la méthode '" + ident + "' n'est pas un entier : " + methodAddress);
+            running = false;
+            return;
+        }
+
+        int adresse = (Integer) methodAddress;
+
+        // Empiler l'adresse de retour (PC + 1) sous forme de quad <w, a+1, cst, *>
+        Stacks.Quad returnQuad = new Stacks.Quad(tempValue, instructionCounter + 1, "cst", Type.ENTIER);
+        stacks.push(returnQuad);
+
+        System.out.println("\t\tAxiome INVOKE exécuté: appel de '" + ident + "' à l'adresse " + adresse + ", retour prévu à " + (instructionCounter + 1));
+
+        // Sauter à l'adresse de la méthode
+        instructionCounter = adresse;
+    }
+
+    private void axiomeReturn() {
+        System.out.println("\t\t[DEBUG] axiomeReturn appelé");
+
+        // Dépiler le quad de retour
+        Stacks.Quad returnQuad = stacks.pop();
+
+        if (returnQuad == null) {
+            System.out.println("Erreur dans axiomeReturn : pile vide.");
+            running = false;
+            return;
+        }
+
+        // Vérifier que c'est bien un quad de retour (cst avec une adresse)
+        if (!"cst".equals(returnQuad.object)) {
+            System.out.println("Erreur dans axiomeReturn : le quad dépilé n'est pas un quad de retour : " + returnQuad);
+            running = false;
+            return;
+        }
+
+        if (!(returnQuad.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeReturn : l'adresse de retour n'est pas un entier : " + returnQuad.value);
+            running = false;
+            return;
+        }
+
+        int returnAddress = (Integer) returnQuad.value;
+
+        System.out.println("\t\tAxiome RETURN exécuté: retour à l'adresse " + returnAddress);
+
+        // Restaurer le PC à l'adresse de retour
+        instructionCounter = returnAddress;
     }
 
     /**
