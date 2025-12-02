@@ -14,7 +14,7 @@ public class DeclsNode extends AstDecls {
         this.decls = decls;
     }
     
-    public DeclsNode(VarNode decl) {
+    public DeclsNode(AstNode decl) {
         this.decl = decl;
         this.decls = null;
     }
@@ -32,7 +32,7 @@ public class DeclsNode extends AstDecls {
         return decls;
     }
 
-
+  
     @Override
     public String toStringTree() {
         StringBuilder sb = new StringBuilder();

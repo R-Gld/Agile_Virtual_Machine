@@ -96,6 +96,16 @@ public class AffectationNode extends InstructionNode {
         if (ident1Node instanceof IdentNode identNode) {
             String varName = identNode.getNom();
             Object value = expression.evaluate(stacks);
+             //if the variable and the value are not of the same type, throw an error
+            String varType = stacks.getDataType(varName).toString();
+            String valueType = value instanceof Integer ? "integer"
+                    : value instanceof Boolean ? "boolean"
+                    : "unknown";
+            if (!varType.equals(valueType)) {
+                throw new RuntimeException(String.format(
+                        "Type error: cannot assign value of type %s to variable %s of type %s",
+                        valueType, varName, varType));
+            }
             stacks.AffecterVal(varName, value);
         }else if (ident1Node instanceof TabNode tabNode)
         {

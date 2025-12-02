@@ -23,13 +23,6 @@ public class EnteteNode extends AstEntetes {
     }
 
 
-
-    @Override
-    public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
-    }
-
     @Override
     public String toStringTree() {
         return "entete (" +  type.toString() + " , "+ ident.toStringTree()  + ")";
