@@ -579,6 +579,8 @@ public class App extends Application {
     }
     // === End of debug section ===
 
+
+
     public static void main(String[] args) {
         launch();
     }

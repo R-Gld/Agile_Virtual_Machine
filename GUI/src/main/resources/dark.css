@@ -1,10 +1,8 @@
-/* ----- Global root (scene) ----- */
 .root {
     -fx-background-color: #1e1e1e;
     -fx-text-fill: #d4d4d4;
 }
 
-/* ----- Menu bar & menus ----- */
 .menu-bar {
     -fx-background-color: #252526;
 }
@@ -25,7 +23,7 @@
     -fx-text-fill: #ffffff;
 }
 
-/* ----- Top toolbar buttons / choicebox ----- */
+
 .button {
     -fx-background-color: #3c3c3c;
     -fx-text-fill: #d4d4d4;
@@ -70,7 +68,6 @@
     -fx-text-fill: #d4d4d4;
 }
 
-/* ----- SplitPane divider ----- */
 .split-pane {
     -fx-background-color: #1e1e1e;
 }
@@ -80,7 +77,6 @@
     -fx-padding: 0 2 0 2;
 }
 
-/* ----- Scrollbars (editor / console) ----- */
 .scroll-bar:horizontal,
 .scroll-bar:vertical {
     -fx-background-color: #1e1e1e;
@@ -94,7 +90,7 @@
     -fx-background-color: #5f5f5f;
 }
 
-/* ----- Text areas (MyCodeArea / console) ----- */
+/*  Text areas (MyCodeArea / console)  */
 .text-area, .text-input {
     -fx-background-color: #1e1e1e;
     -fx-text-fill: #d4d4d4;
@@ -116,12 +112,12 @@
     -fx-highlight-text-fill: #ffffff;
 }
 
-/* ----- Labels  ----- */
+/*  Labels   */
 .label {
     -fx-text-fill: #d4d4d4;
 }
 
-/* ----- Tooltips ----- */
+/*  Tooltips  */
 .tooltip {
     -fx-background-color: #252526;
     -fx-text-fill: #d4d4d4;
@@ -130,7 +126,7 @@
     -fx-font-size: 11px;
 }
 
-/* ----- ConsoleOutput ----- */
+/*  ConsoleOutput  */
 #console {
     -fx-background-color: #1e1e1e;
     -fx-text-fill: #d4d4d4;
@@ -203,6 +199,7 @@
     -fx-background-color: #333333;
 }
 
+
 #console {
     -fx-background-color: #1b1b1b;
     -fx-text-fill: #e4e4e4;
@@ -211,5 +208,5 @@
 }
 #debug-toolbar {
     -fx-border-color: #2B2B2B;
-    -fx-border-width: 0 0 .5 0; /* top, right, bottom, left */
+    -fx-border-width: 0 0 .5 0; 
 }
