@@ -86,7 +86,7 @@ public class App extends Application {
         VBox topContainer = new VBox(titleBar, topMenu, toolbar);
         root.setTop(topContainer);
 
-        // === Editors ===
+        //  Editors
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
         mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
         jjcCodeArea = new MyCodeArea("jjc-code");
@@ -98,7 +98,7 @@ public class App extends Application {
 
         HBox miniTitleBar = new HBox();
         miniTitleBar.getStyleClass().add("panel-titlebar");
-        // ارتفاع ثابت برای نوار MiniJaja
+        // Fixed height for MiniJaja bar
         miniTitleBar.setMinHeight(26);
         miniTitleBar.setPrefHeight(26);
         miniTitleBar.setMaxHeight(26);
@@ -239,7 +239,30 @@ public class App extends Application {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         hbox.getChildren().add(spacer);
 
-        darkMode = new ToggleButton("🌙");
+        // load moon icon
+        java.net.URL moonUrl = getClass().getResource("/icons/moon.png");
+        if (moonUrl == null) {
+            throw new IllegalStateException("Resource /icons/moon.png not found on classpath");
+        }
+        ImageView moonIcon = new ImageView(new Image(moonUrl.toExternalForm()));
+        moonIcon.setFitWidth(16);
+        moonIcon.setFitHeight(16);
+        moonIcon.setPreserveRatio(true);
+
+        // load sun icon
+        java.net.URL sunUrl = getClass().getResource("/icons/sun.png");
+        if (sunUrl == null) {
+            throw new IllegalStateException("Resource /icons/sun.png not found on classpath");
+        }
+        ImageView sunIcon = new ImageView(new Image(sunUrl.toExternalForm()));
+        sunIcon.setFitWidth(16);
+        sunIcon.setFitHeight(16);
+        sunIcon.setPreserveRatio(true);
+
+        darkMode = new ToggleButton();
+        darkMode.setText(null);
+        darkMode.setGraphic(moonIcon);
+
         darkMode.setOnAction(e -> {
             if (appStage != null && appStage.getScene() != null) {
                 Scene scene = appStage.getScene();
@@ -252,11 +275,13 @@ public class App extends Application {
                     if (!scene.getStylesheets().contains(darkCss)) {
                         scene.getStylesheets().add(darkCss);
                     }
+                    darkMode.setGraphic(sunIcon);
                 } else {
                     scene.getStylesheets().remove(darkCss);
                     if (!scene.getStylesheets().contains(lightCss)) {
                         scene.getStylesheets().add(lightCss);
                     }
+                    darkMode.setGraphic(moonIcon);
                 }
             }
         });
@@ -265,6 +290,8 @@ public class App extends Application {
 
         return hbox;
     }
+
+
 
     private HBox buildToolbar() {
         HBox hbox = new HBox();
@@ -491,7 +518,7 @@ public class App extends Application {
         executor.submit(task);
     }
 
-    // === DEBUG (Start / Step / Stop) pour MiniJaja et JajaCode ===
+    //  DEBUG (Start / Step / Stop) pour MiniJaja et JajaCode
 
     /**
      * Starts debug mode on the current selected source (MiniJaja or JajaCode).
