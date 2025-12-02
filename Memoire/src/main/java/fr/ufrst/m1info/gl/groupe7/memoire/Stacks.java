@@ -87,7 +87,7 @@ public class Stacks {
             if (existing != null) {
                 int base = info.getBaseAddress();
 
-                HeapEntry entry = heap.getEntry(base);
+                HeapEntry entry = heap.getEntryNotFree(base);
                 if (entry != null) {
                     entry.incrementRef();
                     System.out.println("[GC] Increment refCount of array '" + q.ident +
@@ -108,7 +108,8 @@ public class Stacks {
     /** Pop (Dépiler): remove the top element from the stack */
     public Quad pop() {
         if (!stack.isEmpty()) {
-            Quad q = stack.pop();
+            Quad q =stack.peek();
+
             if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
 
                 Symbol existing = symbolTable.findSymbol(q.ident);
@@ -117,7 +118,7 @@ public class Stacks {
                 if (existing != null) {
                     int base = info.getBaseAddress();
 
-                    HeapEntry entry = heap.getEntry(base);
+                    HeapEntry entry = heap.getEntryNotFree(base);
                     if (entry != null) {
                         entry.decrementRef();
                         if (entry.getRefCount() == 0) {
@@ -128,6 +129,7 @@ public class Stacks {
                     }
                 }
             }
+            stack.pop();// must be delete after free because free use quad
             updateSymbolPositions();
             return q;
         } else {
@@ -273,7 +275,56 @@ public class Stacks {
         int positionStack = getStackPosition(ident);
         symbolTable.creationSymbol(ident,positionStack,type);
     }
+    // ============================================================
+    // retirerDecl
+    // ============================================================
+    /**
+     * Removes a declaration (Quad) from the stack and from the symbol table.
+     * This is NOT a normal stack pop: it removes a specific identifier located
+     * anywhere inside the stack. Normally, pop() handles the classic LIFO case.
+     *
+     * This method is intended for explicit targeted removal of declarations.
+     */
+    public void retirerDecl(String ident) {
+        Quad q = null;
+        int position = -1;
 
+        // 1. Find declaration in stack
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            if (stack.get(i).ident.equals(ident)) {
+                q = stack.get(i);
+                position = i;
+                break;
+            }
+        }
+        if (position == -1) {
+            System.out.println("Symbol '" + ident + "' not found — cannot remove.");
+            return;
+        }
+
+        // 2. If it's an array, release reference
+        if ("tab".equals(q.object) && q.value instanceof ArrayInfo info) {
+            int base = info.getBaseAddress();
+            HeapEntry entry = heap.getEntryNotFree(base);
+
+            if (entry != null) {
+                heap.releaseReference(entry); // decrementRef + free si refCount==0
+                System.out.println("[GC] Decremented refCount of array '" + q.ident +
+                        "' → now " + entry.getRefCount());
+            }
+        }
+
+        // 3. Remove Quad from stack
+        stack.remove(position);
+        System.out.println("→ Removed declaration '" + ident + "' from stack.");
+
+        // 4. Remove from symbol table
+        symbolTable.remove(ident);
+        System.out.println("→ Symbol '" + ident + "' removed from the symbol table.");
+
+        // 5. Update stack positions (if you track positions)
+        updateSymbolPositions();
+    }
     // ============================================================
     // VALUE ASSIGNMENT & ACCESS METHODS
     // ============================================================
@@ -289,7 +340,7 @@ public class Stacks {
 
                 Object value = q.value;
 
-                // 🔥 Si la variable est déclarée mais non initialisée
+                //  Si la variable est déclarée mais non initialisée
                 if (value instanceof Omega) {
                     throw new RuntimeException(
                             "Variable '" + ident + "' is declared but not initialized."
@@ -574,8 +625,8 @@ public class Stacks {
 
         // If already empty
         if (heap.read(address) == null) {
-            System.out.println("[ARRAY FREE] " + ident + "[" + index + "] already empty.");
-            return;
+            throw new RuntimeException("Array element already free: " + ident + "[" + index + "]");
+
         }
 
         // Free the cell inside the contiguous block
@@ -597,13 +648,10 @@ public class Stacks {
             throw new RuntimeException("Array not allocated");
 
         // build a HeapEntry matching the original allocation
-        HeapEntry entry = new HeapEntry(
-                ident,
-                base,
-                info.getSize() ,
-                null,
-                false
-        );
+        HeapEntry entry = heap.getEntryNotFree(base);
+        if (entry == null)
+            throw new RuntimeException("HeapEntry not found for array " + ident);
+
 
         // Now release the entire block
         //heap.free(entry);
@@ -618,6 +666,79 @@ public class Stacks {
 
         return info.getSize();
 
+    }
+    /**
+     * Assigns a reference from one array variable to another.
+     * Handles reference counting: the destination loses its old reference,
+     * and gains a reference to the source's block.
+     */
+    public void affecterTab(String identDest, String identSource) {
+
+        Quad qDest = findQuad(identDest);
+        Quad qSource = findQuad(identSource);
+
+        if (qDest == null || qSource == null)
+            throw new RuntimeException("Unknown array identifier: " + identDest + " or " + identSource);
+
+        // Ensure both symbols are arrays
+        if (!(qDest.value instanceof ArrayInfo oldDestInfo) || !(qSource.value instanceof ArrayInfo newSourceInfo))
+            throw new RuntimeException("Array reference assignment allowed only between arrays.");
+
+        // 1. Release the previous reference held by the destination
+
+        retirerReference(oldDestInfo);
+
+        // 2. Add a reference to the source block
+
+        ajouterReference(newSourceInfo);
+
+        // 3. Update the Quad's value to point to the new array reference
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(identDest)) {
+                // create a new Quad with the same ident and object type, but updated value
+                Quad newQuad = new Quad(q.ident, newSourceInfo, q.object,q.type);
+                stack.set(i, newQuad); // replace old Quad
+                break;
+            }
+        }
+
+        System.out.println("[REF COPY] " + identDest + " = " + identSource +
+                "  (base=" + newSourceInfo.getBaseAddress() +
+                ", refCount=" + heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount() + ")");
+    }
+    /**
+     * Decrements the reference counter of a heap block.
+     * If the refCount reaches 0, the block is physically freed in the heap.
+     */
+    public void retirerReference(ArrayInfo info) {
+        int base = info.getBaseAddress();
+        HeapEntry entry = heap.getEntry(base);
+
+        if (entry == null) return; // Already freed or invalid
+
+        entry.decrementRef();
+
+        if (entry.getRefCount() == 0) {
+            heap.free(entry);
+            System.out.println("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
+        } else {
+            System.out.println("   [GC] refCount-- → " + entry.getRefCount() + " (base=" + base + ")");
+        }
+    }
+    /**
+     * Increments the reference counter of a heap block.
+     * Used when a new variable points to an already allocated array.
+     */
+    public void ajouterReference(ArrayInfo info) {
+        int base = info.getBaseAddress();
+        HeapEntry entry = heap.getEntry(base);
+
+        if (entry == null) return; // Should never happen but safe
+
+        entry.incrementRef();
+
+        System.out.println("   [GC] refCount++ → " + entry.getRefCount() + " (base=" + base + ")");
     }
 
 

@@ -415,6 +415,7 @@ public class StacksTest {
         assertTrue(invokeIsTypeCompatible(Type.ENTIER, -5));
         assertTrue(invokeIsTypeCompatible(Type.ENTIER, 0));
 
+
         assertFalse(invokeIsTypeCompatible(Type.ENTIER, true));
         assertFalse(invokeIsTypeCompatible(Type.ENTIER, "42"));
         assertFalse(invokeIsTypeCompatible(Type.ENTIER, 3.14));
@@ -1015,28 +1016,15 @@ public class StacksTest {
         // Free the element
         stacks.freeArrayElement("t1", 2);
 
-        assertNull(stacks.getArrayValue("t1", 2));
-        /*
-                assertThrows(RuntimeException.class, () -> {
-            stacks.getArrayValue("t1", 2);
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("t1", 2);
         });
-         */
-
-    }
-
-    @Test
-    public void testFreeArrayElementAlreadyEmpty() {
-
-
-        stacks.declareTab("t1", 4, Type.ENTIER);
-
-
-
-        // Should not throw error
-        stacks.freeArrayElement("t1", 1);
 
 
     }
+
+
 
     @Test
     public void testFreeArrayElementInvalidIndexLow() {
@@ -1140,14 +1128,10 @@ public class StacksTest {
 
         assertTrue(ex.getMessage().contains("Array not allocated"));
     }
-    @Test
-    public void testFreeTabAllocated() {
-        stacks.declareTab("T", 5, Type.ENTIER);
-        stacks.freeTab("T");
-    }
+
     @Test
     public void testDeclareVarWithOmegaShouldThrowOnGet() {
-        Stacks stacks = new Stacks();
+
 
 
         stacks.declareVar("x", Type.ENTIER);
@@ -1159,10 +1143,38 @@ public class StacksTest {
 
         assertTrue(ex.getMessage().contains("not initialized"));
     }
+    @Test
+    public void testDeclareVarMultiple() {
+
+
+
+        stacks.declareVar("x",42 ,Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareVar("x",42 ,Type.ENTIER);
+        });
+
+        assertTrue(ex.getMessage().contains("var already  declare: x"));
+    }
+    @Test
+    public void testDeclareCstMultiple() {
+
+
+
+        stacks.declareCst("x",42 ,Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareCst("x",42 ,Type.ENTIER);
+        });
+
+        assertTrue(ex.getMessage().contains("cst already declare: x"));
+    }
 
     @Test
     public void testDeclareCstWithOmegaShouldThrowOnGet() {
-        Stacks stacks = new Stacks();
+
 
         stacks.declareCst("y", Type.ENTIER);
 
@@ -1436,6 +1448,377 @@ public class StacksTest {
         assertNull(stacks.getHeap().read(base));
         assertNull(stacks.getHeap().read(base + 1));
         assertNull(stacks.getHeap().read(base + 2));
+    }
+    @Test
+    public void testRemoveVar() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        assertNotNull(stacks.getValue("x"));
+
+        stacks.retirerDecl("x");
+
+        assertNull(stacks.getValue("x"));
+        assertNull(stacks.getObjectType("x"));
+        assertNull(stacks.getDataType("x"));
+    }
+
+    @Test
+    public void testRemoveConst() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("C", 42, Type.ENTIER);
+        assertEquals(42, stacks.getValue("C"));
+
+        stacks.retirerDecl("C");
+
+        assertNull(stacks.getValue("C"));
+        assertNull(stacks.getObjectType("C"));
+    }
+    @Test
+    public void testRemoveArray() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareTab("tabA", 5, Type.ENTIER);
+
+        ArrayInfo returned = (ArrayInfo) stacks.getValue("tabA");
+
+        assertNotNull(returned);
+        assertEquals(5, returned.getSize());
+        assertEquals(0, returned.getBaseAddress());
+
+        stacks.retirerDecl("tabA");
+
+        assertNull(stacks.getValue("tabA"));
+        assertNull(stacks.getObjectType("tabA"));
+    }
+
+    @Test
+    public void testRemoveMethod() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareMeth("myFunc", "BODY", Type.VOID);
+        assertEquals("BODY", stacks.getValue("myFunc"));
+
+        stacks.retirerDecl("myFunc");
+
+        assertNull(stacks.getValue("myFunc"));
+        assertNull(stacks.getObjectType("myFunc"));
+    }
+
+    @Test
+    public void testRemoveNonexistentSymbol() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+
+        // Should not crash
+        stacks.retirerDecl("DOES_NOT_EXIST");
+
+        // Should not affect existing variable
+        assertEquals(10, stacks.getValue("x"));
+    }
+
+    @Test
+    public void testRemoveMiddleOfStack() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER);
+
+        // Ensure all exist
+        assertEquals(1, stacks.getValue("a"));
+        assertEquals(2, stacks.getValue("b"));
+        assertEquals(3, stacks.getValue("c"));
+
+        // Remove item in the MIDDLE
+        stacks.retirerDecl("b");
+
+        assertNull(stacks.getValue("b"));
+
+        // Other values should still be present
+        assertEquals(1, stacks.getValue("a"));
+        assertEquals(3, stacks.getValue("c"));
+    }
+    @Test
+    public void testRetirerDeclArrayRefcountDecrementButNotFree() {
+
+
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+        System.out.println(info);
+        int base = info.getBaseAddress();
+        stacks.printHeap();
+        assertNotNull(stacks.getHeap().getEntryNotFree(base),
+                "HeapEntry should exist right after array allocation");
+        // Simuler 2 références
+        stacks.getHeap().getEntryNotFree(base).incrementRef();
+
+        assertEquals(2, stacks.getHeap().getEntryNotFree(base).getRefCount());
+
+        stacks.retirerDecl("A");
+
+        // refCount doit passer à 1 et pas de libération
+        assertEquals(1, stacks.getHeap().getEntryNotFree(base).getRefCount());
+
+        // L'entrée doit exister (donc pas freeTab)
+        assertNotNull(stacks.getHeap().getEntryNotFree(base));
+
+        // Le symbole doit être supprimé
+        assertNull(stacks.getValue("A"));
+    }
+    @Test
+    public void testRetirerDeclArrayFreedWhenRefcountReachedZero() {
+
+
+        stacks.declareTab("A", 4, Type.ENTIER);
+
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+        int base = info.getBaseAddress();
+
+        // refCount initial = 1 (déclaration seule)
+        assertEquals(1, stacks.getHeap().getEntryNotFree(base).getRefCount());
+        stacks.printHeap();
+        stacks.retirerDecl("A");
+        stacks.printHeap();
+        // freeTab doit avoir supprimé l’entrée
+        assertNull(stacks.getHeap().getEntryNotFree(base));
+
+        // Et le symbole doit être retiré
+        assertNull(stacks.getValue("A"));
+    }
+    @Test
+    public void testRetirerDeclMultiple() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareTab("A", 2, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
+
+        assertNotNull(stacks.getValue("x"));
+        assertNotNull(stacks.getValue("A"));
+        assertNotNull(stacks.getValue("y"));
+
+        stacks.retirerDecl("A");
+
+        assertNull(stacks.getValue("A"));
+        assertNotNull(stacks.getValue("x"));
+        assertNotNull(stacks.getValue("y"));
+
+        stacks.retirerDecl("y");
+        assertNull(stacks.getValue("y"));
+    }
+    @Test
+    public void testRetirerDeclUpdatesPositions() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareCst("b", 2, Type.ENTIER);
+        stacks.declareMeth("c", 3, Type.ENTIER);
+
+        stacks.retirerDecl("b");
+
+        // Vérifie positions mises à jour
+        assertEquals(0, stacks.getSymbolTable().findSymbol("a").getAddressStack());
+        assertEquals(1, stacks.getSymbolTable().findSymbol("c").getAddressStack());
+    }
+    // --------------------------
+    // 1. Basic affecterTab test
+    // --------------------------
+    @Test
+    public void testAffecterTabNormal() {
+        // Declare two arrays
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 5, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+
+
+        // Perform the array assignment
+        stacks.affecterTab("B", "A");
+
+        // B should now point to A's ArrayInfo
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+
+        // RefCount of A should have incremented
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+    }
+
+    // -------------------------------------------
+    // 2. affecterTab with unknown identifier
+    // -------------------------------------------
+    @Test
+    public void testAffecterTabUnknownIdentifier() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.affecterTab("B", "A"); // B does not exist
+        });
+        assertTrue(ex.getMessage().contains("Unknown array identifier"));
+    }
+
+    // -------------------------------------------
+    // 3. affecterTab with non-array object
+    // -------------------------------------------
+    @Test
+    public void testAffecterTabNonArray() {
+        stacks.declareVar("X", 10, Type.ENTIER);
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.affecterTab("A", "X"); // X is not an array
+        });
+        assertTrue(ex.getMessage().contains("Array reference assignment allowed only"));
+    }
+
+    // --------------------------
+    // 4. retirerReference normal decrement
+    // --------------------------
+    @Test
+    public void testRetirerReferenceDecrement() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // simulate extra references
+        stacks.getHeap().getEntry(info.getBaseAddress()).incrementRef();
+
+        stacks.retirerReference(info);
+
+        // Ref count should decrement by 1
+        assertEquals(1, stacks.getHeap().getEntry(info.getBaseAddress()).getRefCount());
+    }
+
+    // --------------------------
+    // 5. retirerReference frees block
+    // --------------------------
+    @Test
+    public void testRetirerReferenceFreeBlock() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // initial refCount = 1
+        stacks.retirerReference(info);
+
+        // The heap entry should be freed, so getEntry returns null
+        assertNull(stacks.getHeap().getEntryNotFree(info.getBaseAddress()));
+    }
+
+    // --------------------------
+    // 6. ajouterReference increments
+    // --------------------------
+    @Test
+    public void testAjouterReference() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // refCount should start at 1
+        stacks.ajouterReference(info);
+        assertEquals(2, stacks.getHeap().getEntry(info.getBaseAddress()).getRefCount());
+    }
+
+    // --------------------------
+    // 7. affecterTab overwrites old reference
+    // --------------------------
+    @Test
+    public void testAffecterTabOverwritesOldReference() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceFreeTab() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceFreeTabOrder() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceThreeFree() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+        stacks.declareTab("C", 3, Type.ENTIER);
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.printHeap();
+        stacks.affecterTab("B", "A");
+        stacks.printHeap();
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.affecterTab("C", "A");
+        ArrayInfo infoC = (ArrayInfo) stacks.getValue("C");
+        stacks.printHeap();
+        assertEquals(3, stacks.getHeap().getEntry(infoC.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
     }
     /*todo ask teacher about retrait
     @Test
