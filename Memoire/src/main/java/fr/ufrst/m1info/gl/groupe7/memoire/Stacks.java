@@ -303,14 +303,16 @@ public class Stacks {
         }
 
         // 2. If it's an array, release reference
-        if ("tab".equals(q.object) && q.value instanceof ArrayInfo info) {
+        if (q != null && "tab".equals(q.object) && q.value instanceof ArrayInfo info) {
             int base = info.getBaseAddress();
             HeapEntry entry = heap.getEntryNotFree(base);
 
             if (entry != null) {
-                heap.releaseReference(entry); // decrementRef + free si refCount==0
-                System.out.println("[GC] Decremented refCount of array '" + q.ident +
-                        "' → now " + entry.getRefCount());
+
+                    freeTab(q.ident);
+
+                System.out.println("[GC] Increment refCount of array '" + q.ident +
+                        "' ⇒ now " + entry.getRefCount());
             }
         }
 
