@@ -1,17 +1,28 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
-import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -20,12 +31,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import java.io.*;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 
 /**
  * JavaFX App
@@ -50,7 +55,6 @@ public class App extends Application {
     private int debugCurrentLine = -1;
     // === End of added section ===
 
-
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r);
         t.setDaemon(true);
@@ -68,8 +72,8 @@ public class App extends Application {
         var scene = new Scene(root, 800, 600);
 
         String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
-        mjjCodeArea = new MyCodeArea("mjj-code", codeSample);
-        jjcCodeArea = new MyCodeArea("jjc-code");
+        mjjCodeArea = new MyCodeArea("mjj-code", codeSample, MyCodeArea.Language.MINIJAJA);
+        jjcCodeArea = new MyCodeArea("jjc-code", MyCodeArea.Language.JAJACODE);
         jjcCodeArea.disable();
 
         SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
@@ -84,9 +88,9 @@ public class App extends Application {
         stage.show();
     }
 
-
     /**
      * Stop the application.
+     * 
      * @throws Exception if an error occurs
      */
     @Override
@@ -97,6 +101,7 @@ public class App extends Application {
 
     /**
      * Fonction pour construire le menu de l'ihm
+     * 
      * @return MenuBar le menu de l'application
      */
     private HBox buildMenu() {
@@ -162,21 +167,24 @@ public class App extends Application {
         Button stopButton = new Button();
 
         debugButton.setTooltip(new Tooltip("Start simple debug (step through MiniJaja lines)"));
-        ImageView debugIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
+        ImageView debugIcon = new ImageView(
+                new Image(getClass().getResourceAsStream("/icons/bug.png"), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
         debugButton.setOnAction(e -> startDebug(stepButton, stopButton));
 
         stepButton.setTooltip(new Tooltip("Step to next MiniJaja line"));
         stepButton.setDisable(true);
-        ImageView stepIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
+        ImageView stepIcon = new ImageView(
+                new Image(getClass().getResourceAsStream("/icons/next.png"), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
         stepButton.setOnAction(e -> stepDebug(stepButton, stopButton));
 
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
         stopButton.setDisable(true);
-        ImageView stopIcon = new ImageView(new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
+        ImageView stopIcon = new ImageView(
+                new Image(getClass().getResourceAsStream("/icons/stop.png"), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
         stopButton.setOnAction(e -> stopDebug(stepButton, stopButton));
@@ -195,15 +203,15 @@ public class App extends Application {
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
-                new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
-        );
+                new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showOpenDialog(appStage);
-        if(file == null) return;
+        if (file == null)
+            return;
 
         /* Lecture du fichier selectionner depuis l'explorateur de fichier */
         StringBuilder fileContent = new StringBuilder();
-        try(Scanner scanner = new Scanner(file)) {
-            while(scanner.hasNextLine()) {
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
                 fileContent.append(scanner.nextLine());
                 fileContent.append("\n");
             }
@@ -213,7 +221,7 @@ public class App extends Application {
             alert.setContentText(e.toString());
             alert.showAndWait();
             return;
-        } catch(Exception e) {
+        } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Impossible de lire le fichier");
             alert.setContentText(e.toString());
@@ -238,10 +246,10 @@ public class App extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
-                new FileChooser.ExtensionFilter("JajaCode", "*.jjc")
-        );
+                new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showSaveDialog(appStage);
-        if(file == null) return;
+        if (file == null)
+            return;
 
         try {
             FileWriter fileWriter = new FileWriter(file);
@@ -259,8 +267,6 @@ public class App extends Application {
             alert.showAndWait();
         }
 
-
-
         // === Added section: log message after saving ===
         if (console != null) {
             console.printMessage("File saved: " + file.getAbsolutePath());
@@ -269,7 +275,8 @@ public class App extends Application {
     }
 
     /**
-     * Fonction utiliser pour appeler les methodes necessaires à la compilation du minijaja
+     * Fonction utiliser pour appeler les methodes necessaires à la compilation du
+     * minijaja
      * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
      */
     private void compile() {
@@ -333,10 +340,13 @@ public class App extends Application {
                                     .append(lines[i])
                                     .append("\n");
                         }
-                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
+                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(),
+                                new DiagnosticCollector());
                         jjcInterpreter.run();
                     }
-                } catch (Exception e) { throw new RuntimeException(e); }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 return null;
             }
         };

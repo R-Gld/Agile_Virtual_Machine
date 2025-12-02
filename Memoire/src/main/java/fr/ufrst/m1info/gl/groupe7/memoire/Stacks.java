@@ -29,10 +29,6 @@ public class Stacks {
             this.type = type;
         }
 
-        public void setValue(Object value) {
-            this.value = value;
-        }
-
         @Override
         public String toString() {
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
@@ -82,6 +78,29 @@ public class Stacks {
 
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
+        //double check
+        if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
+
+            Symbol existing = symbolTable.findSymbol(q.ident);
+
+            // Si le tableau existe déjà → on incrémente les références
+            if (existing != null) {
+                int base = info.getBaseAddress();
+
+                HeapEntry entry = heap.getEntry(base);
+                if (entry != null) {
+                    entry.incrementRef();
+                    System.out.println("[GC] Increment refCount of array '" + q.ident +
+                            "' ⇒ now " + entry.getRefCount());
+                }
+            }
+        }
+        stack.push(q);
+        updateSymbolPositions();
+    }
+    /** Push (Empiler): add a new element on top of the stack for new tab */
+    public void pushNewTab(Quad q) {
+
         stack.push(q);
         updateSymbolPositions();
     }
@@ -90,6 +109,25 @@ public class Stacks {
     public Quad pop() {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
+            if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
+
+                Symbol existing = symbolTable.findSymbol(q.ident);
+
+                // Si le tableau existe déjà → on incrémente les références
+                if (existing != null) {
+                    int base = info.getBaseAddress();
+
+                    HeapEntry entry = heap.getEntry(base);
+                    if (entry != null) {
+                        entry.decrementRef();
+                        if (entry.getRefCount() == 0) {
+                            freeTab(q.ident);
+                        }
+                        System.out.println("[GC] Increment refCount of array '" + q.ident +
+                                "' ⇒ now " + entry.getRefCount());
+                    }
+                }
+            }
             updateSymbolPositions();
             return q;
         } else {
@@ -139,6 +177,10 @@ public class Stacks {
 
     /** Declare a variable */
     public void declareVar(String ident, Object value, Type type) {
+        Symbol existing = symbolTable.findSymbol(ident);
+        if (existing != null) {
+            throw new RuntimeException("var already  declare: " + ident);
+        }
         Quad q = new Quad(ident, value, "var", type);
         push(q);
         int positionStack = getStackPosition(ident);
@@ -147,11 +189,19 @@ public class Stacks {
     }
     /** Declare a variable with default value Omega */
     public  void declareVar(String ident, Type type) {
+        Symbol existing = symbolTable.findSymbol(ident);
+        if (existing != null) {
+            throw new RuntimeException("var already  declare: " + ident);
+        }
         declareVar(ident, Omega.getInstance(), type);
     }
     
     /** Declare a constant */
     public void declareCst(String ident, Object value, Type type) {
+        Symbol existing = symbolTable.findSymbol(ident);
+        if (existing != null) {
+            throw new RuntimeException("cst already declare: " + ident);
+        }
         Quad q = new Quad(ident, value, "cst", type);
         push(q);
         int positionStack = getStackPosition(ident);
@@ -159,6 +209,10 @@ public class Stacks {
     }
     /** Declare a constant with default value Omega */
     public void declareCst(String ident, Type type) {
+        Symbol existing = symbolTable.findSymbol(ident);
+        if (existing != null) {
+            throw new RuntimeException("cst already declare: " + ident);
+        }
         declareCst(ident, Omega.getInstance(), type);
     }
 
@@ -196,22 +250,22 @@ public class Stacks {
         }
         int totalSize = size * cellPerElement;
 
-        // 2) Allouer un bloc mémoire contigu dans le Heap
+
         HeapEntry entry = heap.allocate(ident, totalSize, null);
         if (entry == null) {
             throw new RuntimeException("Heap allocation failed for array " + ident);
         }
         int baseAddress = entry.getAddress();
 
-        // 3) Créer ArrayInfo avec base + taille logique
+
         ArrayInfo info = new ArrayInfo(size);
         info.setBaseAddress(baseAddress);
 
-        // 4) Le Quad pointe vers cet ArrayInfo
-        Quad q = new Quad(ident, info, "tab", type);
-        push(q);
 
-        // 5) Mise à jour table des symboles
+        Quad q = new Quad(ident, info, "tab", type);
+        pushNewTab(q);
+
+
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type);
 
@@ -224,6 +278,10 @@ public class Stacks {
 
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, Type type) {
+        Symbol existing = symbolTable.findSymbol(ident);
+        if (existing != null) {
+            throw new RuntimeException("meth already declare: " + ident);
+        }
         Quad q = new Quad(ident, body, "meth", type);
         push(q);
         int positionStack = getStackPosition(ident);
@@ -238,6 +296,7 @@ public class Stacks {
 
     /** Get the value of an identifier */
     public Object getValue(String ident) {
+
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) {
@@ -398,7 +457,7 @@ public class Stacks {
     /**
      * Find a Quad by identifier from top to bottom.
      */
-    private Quad findQuad(String ident) {
+    public Quad findQuad(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
             if (q.ident.equals(ident)) {
@@ -407,31 +466,7 @@ public class Stacks {
         }
         return null;
     }
-    /**
-     * Find a Quad by identifier from top to bottom.
-     */
-    /*
-    private boolean SetAdress(String ident,int index,int address) {
-        for (int i = stack.size() - 1; i >= 0; i--) {
-            Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
-                if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
 
-                ArrayInfo info = (ArrayInfo) q.value;
-
-
-                System.out.println(" index  "+index+" adress "+address);
-                info.setAddressForIndex(index, address);
-
-                q.setValue(info);
-                System.out.println(" new quad "+q);
-                stack.set(i,q);
-                return true;
-            }
-        }
-        return false;
-    }
-     */
 
     /**
      * Return the element at array[ index ].
@@ -441,10 +476,8 @@ public class Stacks {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
 
-        if (!(q.value instanceof ArrayInfo))
+        if (!(q.value instanceof ArrayInfo info))
             throw new RuntimeException("Not an array: " + ident);
-
-        ArrayInfo info = (ArrayInfo) q.value;
 
         if (index < 0 || index >= info.getSize())
             throw new RuntimeException("Index out of bounds: " + ident + "[" + index + "]");
@@ -453,6 +486,7 @@ public class Stacks {
         int address = info.getBaseAddress() + index ;
 
         return heap.read(address);
+
     }
     /**
      * Set array[index] = value.
@@ -461,11 +495,10 @@ public class Stacks {
     public void setArrayValue(String ident, int index, Object value) {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo)) throw new RuntimeException("Not an array: " + ident);
+        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
         if(!(isTypeCompatible(q.type, value))){
             throw new RuntimeException("Element not compatible with type " + q.type + " and value " + value);
         }
-        ArrayInfo info = (ArrayInfo) q.value;
 
         if (index < 0 || index >= info.getSize()) {
             throw new RuntimeException("Index out of bounds");
@@ -602,9 +635,18 @@ public class Stacks {
         );
 
         // Now release the entire block
-        heap.free(entry);
-
+        //heap.free(entry);
+        heap.releaseReference(entry);
         System.out.println("← Freed array " + ident + " (block starting at " + base + ")");
+    }
+    public int getArrayLength(String ident) {
+        Quad q = findQuad(ident);
+        if (q == null) throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
+
+
+        return info.getSize();
+
     }
 
 

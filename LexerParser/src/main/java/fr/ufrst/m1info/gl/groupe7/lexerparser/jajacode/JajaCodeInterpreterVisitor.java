@@ -213,6 +213,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomePop();
         } else if (ctx.JCSTOP() != null) {
             axiomeJcstop();
+        } else if (ctx.WRITE() != null) {
+            axiomeWrite();
+        } else if (ctx.WRITELN() != null) {
+            axiomeWriteln();
+        } else if (ctx.RETURN() != null) {
+            axiomeReturn();
         } else if (ctx.PUSH() != null && ctx.valeur() != null) {
             axiomePush(ctx.valeur());
         } else if (ctx.NEW() != null) {
@@ -231,6 +237,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             axiomeLoad(ident);
         } else if (ctx.INC() != null) {
             axiomeINC(ident);
+        } else if (ctx.INVOKE() != null) {
+            axiomeInvoke(ident);
         }
     }
 
@@ -332,14 +340,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
      * Vérifie si un texte correspond à un token de type.
      */
     private boolean isTypeToken(String text) {
-        return text.equals("INT") || text.equals("BOOLEAN") || text.equals("BOOL") || text.matches("[A-Z]+");
+        return text.equals("int") || text.equals("boolean");
     }
 
     /**
      * Vérifie si un texte correspond à un token de sorte.
      */
     private boolean isSorteToken(String text) {
-        return text.equals("VARIABLE") || text.equals("VAR") || text.equals("CST") || text.equals("TAB") || text.equals("METH");
+        return text.equals("var") || text.equals("cst") || text.equals("tab") || text.equals("meth");
     }
 
     /**
@@ -487,6 +495,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             type = Type.ENTIER;
         } else if (valeur instanceof Boolean) {
             type = Type.BOOLEEN;
+        } else if (valeur instanceof String) {
+            type = Type.VOID;  // Les chaînes sont traitées comme VOID
         } else {
             type = Type.VOID;
         }
@@ -545,8 +555,11 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             case "variable", "var":
                 stacks.declareVar(ident, valeur.value, type);
                 break;
-            case "cst", "meth":
+            case "cst":
                 stacks.declareCst(ident, valeur.value, type);
+                break;
+            case "meth":
+                stacks.declareMeth(ident, valeur.value, type);
                 break;
             case "tab":
                 if (valeur.value instanceof Integer size) {
@@ -1171,6 +1184,135 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     }
 
     /**
+     * Axiome WRITE : Affiche une valeur sans retour à la ligne.
+     * <p>
+     * Cette instruction dépile une valeur de la pile et l'affiche sur la sortie standard
+     * sans ajouter de retour à la ligne.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur au sommet de la pile</li>
+     *   <li>Affiche la valeur avec {@code System.out.print()}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     * </ul>
+     */
+    private void axiomeWrite() {
+        Stacks.Quad valeur = stacks.pop();
+
+        if (valeur == null) {
+            System.out.println("Erreur dans axiomeWrite : pile vide.");
+            running = false;
+            return;
+        }
+
+        System.out.print(valeur.value);
+        System.out.println("\t\tAxiome WRITE exécuté: " + valeur.value + " affiché.");
+        instructionCounter++;
+    }
+
+    /**
+     * Axiome WRITELN : Affiche une valeur avec retour à la ligne.
+     * <p>
+     * Cette instruction dépile une valeur de la pile et l'affiche sur la sortie standard
+     * avec un retour à la ligne.
+     * </p>
+     *
+     * <p><b>Fonctionnement :</b></p>
+     * <ol>
+     *   <li>Dépile la valeur au sommet de la pile</li>
+     *   <li>Affiche la valeur avec {@code System.out.println()}</li>
+     *   <li>Incrémente le compteur de programme</li>
+     * </ol>
+     *
+     * <p><b>Gestion des erreurs :</b></p>
+     * <ul>
+     *   <li>Arrête l'exécution si la pile est vide</li>
+     * </ul>
+     */
+    private void axiomeWriteln() {
+        Stacks.Quad valeur = stacks.pop();
+
+        if (valeur == null) {
+            System.out.println("Erreur dans axiomeWriteln : pile vide.");
+            running = false;
+            return;
+        }
+
+        System.out.println(valeur.value);
+        System.out.println("\t\tAxiome WRITELN exécuté: " + valeur.value + " affiché avec retour à la ligne.");
+        instructionCounter++;
+    }
+
+    private void axiomeInvoke(String ident) {
+        System.out.println("\t\t[DEBUG] axiomeInvoke appelé: ident=" + ident);
+
+        // Récupérer l'adresse de la méthode depuis la mémoire
+        Object methodAddress = stacks.getValue(ident);
+
+        if (methodAddress == null) {
+            System.out.println("Erreur dans axiomeInvoke : méthode '" + ident + "' non trouvée.");
+            running = false;
+            return;
+        }
+
+        if (!(methodAddress instanceof Integer)) {
+            System.out.println("Erreur dans axiomeInvoke : l'adresse de la méthode '" + ident + "' n'est pas un entier : " + methodAddress);
+            running = false;
+            return;
+        }
+
+        int adresse = (Integer) methodAddress;
+
+        // Empiler l'adresse de retour (PC + 1) sous forme de quad <w, a+1, cst, *>
+        Stacks.Quad returnQuad = new Stacks.Quad(tempValue, instructionCounter + 1, "cst", Type.ENTIER);
+        stacks.push(returnQuad);
+
+        System.out.println("\t\tAxiome INVOKE exécuté: appel de '" + ident + "' à l'adresse " + adresse + ", retour prévu à " + (instructionCounter + 1));
+
+        // Sauter à l'adresse de la méthode
+        instructionCounter = adresse;
+    }
+
+    private void axiomeReturn() {
+        System.out.println("\t\t[DEBUG] axiomeReturn appelé");
+
+        // Dépiler le quad de retour
+        Stacks.Quad returnQuad = stacks.pop();
+
+        if (returnQuad == null) {
+            System.out.println("Erreur dans axiomeReturn : pile vide.");
+            running = false;
+            return;
+        }
+
+        // Vérifier que c'est bien un quad de retour (cst avec une adresse)
+        if (!"cst".equals(returnQuad.object)) {
+            System.out.println("Erreur dans axiomeReturn : le quad dépilé n'est pas un quad de retour : " + returnQuad);
+            running = false;
+            return;
+        }
+
+        if (!(returnQuad.value instanceof Integer)) {
+            System.out.println("Erreur dans axiomeReturn : l'adresse de retour n'est pas un entier : " + returnQuad.value);
+            running = false;
+            return;
+        }
+
+        int returnAddress = (Integer) returnQuad.value;
+
+        System.out.println("\t\tAxiome RETURN exécuté: retour à l'adresse " + returnAddress);
+
+        // Restaurer le PC à l'adresse de retour
+        instructionCounter = returnAddress;
+    }
+
+    /**
      * Visite un nœud valeur et retourne sa représentation Java.
      * <p>
      * Cette méthode convertit les valeurs littérales du code JajaCode
@@ -1209,6 +1351,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         }
         if (ctx.VIDE() != null) {
             return null;
+        }
+        if (ctx.STRING() != null) {
+            // Chaînes entre guillemets - retirer les guillemets
+            String text = ctx.STRING().getText();
+            if (text.startsWith("\"") && text.endsWith("\"")) {
+                return text.substring(1, text.length() - 1);
+            }
+            return text;
+        }
+        if (ctx.IDENTIFIER() != null) {
+            // Chaînes littérales simples sans guillemets (pour compatibilité)
+            return ctx.IDENTIFIER().getText();
         }
         throw new UnsupportedOperationException("Value not supported: " + ctx.getText());
     }

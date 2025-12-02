@@ -238,11 +238,34 @@ public class Heap {
                         " (" + (value != null ? value.getClass().getSimpleName() : "null") + ")"
         );
     }
+    public void releaseReference(HeapEntry entry) {
+        if (entry == null) return;
 
+        entry.decrementRef();
+        if (entry.getRefCount() == 0) {
+            free(entry);
+        }
+    }
+    public HeapEntry getEntry(int baseAddress) {
 
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node node = table[i];
+            while (node != null) {
+                HeapEntry entry = node.entry;
+
+                if (!entry.isFree() && entry.getAddress() == baseAddress) {
+                    return entry;
+                }
+
+                node = node.next;
+            }
+        }
+        return null;
+    }
     public Object[] getMemory() {
         return memory;
     }
+
 
 
 

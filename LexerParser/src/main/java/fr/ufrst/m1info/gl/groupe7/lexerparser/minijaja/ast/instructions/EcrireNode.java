@@ -27,7 +27,7 @@ public class EcrireNode extends InstructionNode {
             return "ecrire (" + ((Expression) this.Ident1Node).toStringTree() + ")";
             
         }
-        return "ecrire (" + (String) this.Ident1Node + ")";
+        return "ecrire (" + this.Ident1Node + ")";
     }
    
     public void interpret(Stacks stacks) {

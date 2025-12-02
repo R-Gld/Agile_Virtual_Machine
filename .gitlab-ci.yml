@@ -4,6 +4,7 @@ stages:
   - sonarqube-check
   - package
   - deploy
+  - release
 
 default:
   image: maven:3.9.9-eclipse-temurin-21-alpine
@@ -91,7 +92,7 @@ testIHM:
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - mvn ${MAVEN_CLI_OPTS} compile
+    - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
     - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
@@ -153,3 +154,44 @@ deploy:
     - package
   script:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
+
+release:prepare:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add git openssh-client
+    - git config --global user.email "ci@groupe7.fr"
+    - git config --global user.name "CI Release Bot"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - cp "${GITLAB_SSH_PRIVATE_KEY}" ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa disc.univ-fcomte.fr >> ~/.ssh/known_hosts
+    - git remote set-url origin git@disc.univ-fcomte.fr:projet-amv-2025/groupe-7.git
+    - git fetch --all
+    - git checkout ${CI_COMMIT_BRANCH}
+    - git pull origin ${CI_COMMIT_BRANCH}
+  script:
+    - mvn ${MAVEN_CLI_OPTS} release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
+  after_script:
+    - git push --tags
+  artifacts:
+    paths:
+      - release.properties
+      - pom.xml.releaseBackup
+    expire_in: 1 day
+  allow_failure: false
+
+release:perform:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  needs:
+    - release:prepare
+  script:
+    - mvn ${MAVEN_CLI_OPTS} release:perform -Darguments="-DskipTests"
+  allow_failure: false

@@ -11,6 +11,8 @@ public class RetourNode extends InstructionNode {
         this.Exp = Exp;
     }
 
+    public AstNode getExp() { return Exp; }
+
     @Override
     public String toStringTree() {
         return "Retour(" + Exp.toStringTree() +

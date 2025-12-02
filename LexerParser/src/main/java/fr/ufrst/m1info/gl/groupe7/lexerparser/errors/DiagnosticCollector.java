@@ -34,6 +34,11 @@ public class DiagnosticCollector {
      */
     public List<Diagnostic> getDiagnostics() { return diagnostics; }
 
+    /**
+     * Format all diagnostics as a string for error messages.
+     *
+     * @return A formatted string containing all diagnostic messages
+     */
     public String formatDiagnostics() {
         StringBuilder sb = new StringBuilder("\n\n");
 

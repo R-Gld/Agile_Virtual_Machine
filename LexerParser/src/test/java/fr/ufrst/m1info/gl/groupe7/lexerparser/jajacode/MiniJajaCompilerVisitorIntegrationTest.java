@@ -674,5 +674,69 @@ class MiniJajaCompilerVisitorIntegrationTest {
         assertTrue(code.contains("load(b@global)"));
         assertTrue(code.contains("load(c@global)"));
     }
+
+    // ===== Tests pour les Méthodes (INVOKE et RETURN) =====
+    @Test
+    void methodInvocation_simpleMethodReturningConstant() {
+        String miniJajaCode = """
+            class Test {
+                int getValue() {
+                    return 42;
+                };
+                main {
+                    int x = 0;
+                    x = getValue();
+                    writeln(x);
+                }
+            }
+            """;
+
+        // Compiler le code MiniJaja vers JajaCode
+        MiniJajaCompilerVisitor compiler = MiniJajaCompiler.getMiniJajaCompilerVisitorFromString(miniJajaCode);
+        String jajaCode = compiler.getJajaCodeBuilder().toString();
+
+        System.out.println("=== JajaCode généré ===");
+        System.out.println(jajaCode);
+        System.out.println("=======================");
+
+        // Vérifications de compilation
+        assertTrue(jajaCode.contains("new(getValue@global"), "Should declare getValue method");
+        assertTrue(jajaCode.contains("invoke(getValue@global)"), "Should invoke getValue method");
+        assertTrue(jajaCode.contains("return"), "Should have return instruction");
+        assertTrue(jajaCode.contains("push(42)"), "Should push 42");
+        assertTrue(jajaCode.contains("writeln"), "Should have writeln");
+
+        // Vérifier que le code JajaCode est bien formé avec les adresses
+        assertTrue(jajaCode.contains("goto("), "Should have goto to skip method body");
+        assertTrue(jajaCode.contains("meth"), "Method should be declared with kind 'meth'");
+    }
+
+    /**
+     * Test de compilation d'une méthode avec paramètre.
+     */
+    @Test
+    void methodInvocation_methodWithParameter() {
+        String miniJajaCode = """
+            class Test {
+                int double(int n) {
+                    return n;
+                };
+                main {
+                    int result = 0;
+                    result = double(21);
+                }
+            }
+            """;
+
+        MiniJajaCompilerVisitor compiler = MiniJajaCompiler.getMiniJajaCompilerVisitorFromString(miniJajaCode);
+        String jajaCode = compiler.getJajaCodeBuilder().toString();
+
+        // Vérifications
+        assertTrue(jajaCode.contains("new(double@global"), "Should declare double method");
+        assertTrue(jajaCode.contains("push(21)"), "Should push argument 21");
+        assertTrue(jajaCode.contains("invoke(double@global)"), "Should invoke double method");
+        assertTrue(jajaCode.contains("return"), "Should have return instruction");
+        assertTrue(jajaCode.contains("store(result@main)"), "Should store result");
+    }
 }
 

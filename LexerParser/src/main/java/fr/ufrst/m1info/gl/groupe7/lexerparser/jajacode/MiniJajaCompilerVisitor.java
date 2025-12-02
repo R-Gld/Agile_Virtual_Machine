@@ -14,13 +14,20 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
@@ -45,6 +52,7 @@ public class MiniJajaCompilerVisitor {
 
 
     // TODO why does stacks param is unused here ? Lucas, Ahmed, Léo ?
+    // TODO UP ??
     public MiniJajaCompilerVisitor(Stacks stacks, DiagnosticCollector collector) {
         this.variablesToPop = new Stack<>();
         this.jjcBuilder = new JajaCodeBuilder();
@@ -157,6 +165,14 @@ public class MiniJajaCompilerVisitor {
             visitTantque(tantqueNode);
         } else if (instrNode instanceof SommeNode sommeNode) {
             visitSomme(sommeNode);
+        } else if (instrNode instanceof EcrireLnNode ecrireLnNode) {
+            visitEcrireLn(ecrireLnNode);
+        } else if (instrNode instanceof EcrireNode ecrireNode) {
+            visitEcrire(ecrireNode);
+        } else if (instrNode instanceof RetourNode retourNode) {
+            visitRetour(retourNode);
+        } else if (instrNode instanceof AppelINode appelINode) {
+            visitAppelI(appelINode);
         }
     }
 
@@ -395,6 +411,8 @@ public class MiniJajaCompilerVisitor {
 
         if (node.getDecl() instanceof VarNode varNode) {
             visit(varNode);
+        } else if (node.getDecl() instanceof MethodeNode methodeNode) {
+            visit(methodeNode);
         }
 
         if (node.getDecls() != null) {
@@ -428,9 +446,9 @@ public class MiniJajaCompilerVisitor {
 
         String ident = node.getIdent().getNom();
         String scopeAddress = currentScope;
-        String kind = "VARIABLE";
+        String kind = "var";
 
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, node.getType().toString(), kind, 0);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(node.getType()), kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
 
         if ("main".equals(currentScope)) {
@@ -438,6 +456,68 @@ public class MiniJajaCompilerVisitor {
         }
     }
 
+    /**
+     * Compile une déclaration de méthode en code JajaCode.
+     * <p>
+     * Selon la spécification de compilation :
+     * C⟦meth(T, m, e, v, i)⟧ρ =
+     *   push(adresse_début_méthode),
+     *   new(m@global, T, meth, 0),
+     *   goto(adresse_après_méthode),
+     *   [adresse_début_méthode]:
+     *   C⟦v⟧m,
+     *   C⟦i⟧m,
+     *   push(valeur_par_défaut),
+     *   return
+     *   [adresse_après_méthode]:
+     *
+     * @param node le nœud MethodeNode à compiler
+     */
+    public void visit(MethodeNode node) {
+        String methodName = node.getIdent().getNom();
+
+        // Sauvegarder le scope actuel
+        String previousScope = currentScope;
+
+        // Compiler un builder temporaire pour le corps de la méthode
+        MiniJajaCompilerVisitor methodBodyVisitor = createChildVisitor();
+        methodBodyVisitor.currentScope = methodName; // Le scope de la méthode est son nom
+
+        // Compiler les variables locales
+        if (node.getVars() != null) {
+            methodBodyVisitor.visit(node.getVars());
+        }
+
+        // Compiler les instructions
+        if (node.getInstrs() != null) {
+            methodBodyVisitor.visit(node.getInstrs());
+        }
+
+        // Ajouter une valeur de retour par défaut et return
+        switch (node.getTypeMeth().name()) {
+            case "VOID", "ENTIER" -> methodBodyVisitor.jjcBuilder.addInstruction(PUSH, 0);
+            case "BOOLEEN" -> methodBodyVisitor.jjcBuilder.addInstruction(PUSH, false);
+        }
+        methodBodyVisitor.jjcBuilder.addInstruction(RETURN);
+
+        JajaCodeBuilder methodBody = methodBodyVisitor.getJajaCodeBuilder();
+
+        // Calculer les adresses
+        int currentAddr = jjcBuilder.getCurrentAddress();
+        int methodStartAddr = currentAddr + 3; // après push + new + goto
+        int methodEndAddr = methodStartAddr + methodBody.getInstructionsAsList().size();
+
+        // Générer le code de déclaration de la méthode
+        jjcBuilder.addInstruction(PUSH, methodStartAddr);
+        jjcBuilder.addInstruction(NEW, methodName + "@global", typeToJajaCode(node.getTypeMeth()), "meth", 0);
+        jjcBuilder.addInstruction(GOTO, methodEndAddr);
+
+        // Insérer le corps de la méthode
+        jjcBuilder.merge(methodBody);
+
+        // Restaurer le scope
+        currentScope = previousScope;
+    }
 
     public void visit(NbreNode node) {
         jjcBuilder.addInstruction(PUSH, node.value);
@@ -460,6 +540,8 @@ public class MiniJajaCompilerVisitor {
             visit(boolValueNode);
         } else if (expression instanceof IdentNode identNode) {
             visit(identNode);
+        } else if (expression instanceof AppelENode appelENode) {
+            visitAppelE(appelENode);
         } else if (expression instanceof PlusNode plusNode) {
             visitPlus(plusNode);
         } else if (expression instanceof UnaryMinusNode unaryMinusNode) {
@@ -541,11 +623,105 @@ public class MiniJajaCompilerVisitor {
         jjcBuilder.addInstruction(CMP);
     }
 
-    private void visitWriteLn() {
+    /**
+     * Compile une instruction writeln en code JajaCode.
+     * Évalue l'expression ou la chaîne à afficher, puis génère l'instruction WRITELN.
+     *
+     * @param node le nœud EcrireLnNode représentant l'instruction writeln à compiler
+     */
+    private void visitEcrireLn(EcrireLnNode node) {
+        Object ident1Node = node.getIdent1Node();
+
+        if (ident1Node instanceof Expression expression) {
+            visitExpression(expression);
+        } else if (ident1Node instanceof String str) {
+            // Ajouter des guillemets autour de la chaîne pour le JajaCode
+            jjcBuilder.addInstruction(PUSH, "\"" + str + "\"");
+        }
+
         jjcBuilder.addInstruction(WRITELN);
     }
 
-    public void visitWrite() {
+    /**
+     * Compile une instruction write en code JajaCode.
+     * Évalue l'expression ou la chaîne à afficher, puis génère l'instruction WRITE.
+     *
+     * @param node le nœud EcrireNode représentant l'instruction write à compiler
+     */
+    private void visitEcrire(EcrireNode node) {
+        Object ident1Node = node.getIdent1Node();
+
+        if (ident1Node instanceof Expression expression) {
+            visitExpression(expression);
+        } else if (ident1Node instanceof String str) {
+            // Ajouter des guillemets autour de la chaîne pour le JajaCode
+            jjcBuilder.addInstruction(PUSH, "\"" + str + "\"");
+        }
+
         jjcBuilder.addInstruction(WRITE);
+    }
+
+    private void visitRetour(RetourNode node) {
+        // Évaluer l'expression à retourner
+        if (node.getExp() != null) {
+            visitExpression(node.getExp());
+        }
+
+        // Générer l'instruction RETURN
+        jjcBuilder.addInstruction(RETURN);
+    }
+
+    private void visitAppelI(AppelINode node) {
+        String methodName = node.getIdent().getNom();
+
+        // Compiler les arguments (listexp)
+        if (node.getListExp() != null) {
+            visitListExp(node.getListExp());
+        }
+
+        // Générer l'instruction INVOKE
+        jjcBuilder.addInstruction(INVOKE, methodName + "@global");
+
+        // Pop le résultat car c'est un appel comme instruction (on ne l'utilise pas)
+        jjcBuilder.addInstruction(POP);
+    }
+
+    private void visitAppelE(AppelENode node) {
+        String methodName = node.getIdent().getNom();
+
+        // Compiler les arguments (listexp)
+        if (node.getExp() != null) {
+            visitListExp((ListExpNode) node.getExp());
+        }
+
+        // Générer l'instruction INVOKE
+        jjcBuilder.addInstruction(INVOKE, methodName + "@global");
+    }
+
+    private void visitListExp(ListExpNode node) {
+        if (node == null) return;
+
+        // Si la liste est vide (exnil)
+        if (node.getExp() == null && node.getListExp() == null) {
+            return;
+        }
+
+        // Compiler la première expression
+        if (node.getExp() != null) {
+            visitExpression(node.getExp());
+        }
+
+        // Compiler le reste de la liste
+        if (node.getListExp() != null) {
+            visitListExp(node.getListExp());
+        }
+    }
+
+    private String typeToJajaCode(fr.ufrst.m1info.gl.groupe7.memoire.utils.Type type) {
+        return switch (type) {
+            case ENTIER -> "int";
+            case BOOLEEN -> "boolean";
+            default -> throw new IllegalArgumentException("Type non supporté pour JajaCode: " + type);
+        };
     }
 }

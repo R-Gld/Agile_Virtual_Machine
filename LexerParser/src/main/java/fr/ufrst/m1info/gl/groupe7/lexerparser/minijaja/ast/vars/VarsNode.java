@@ -39,14 +39,12 @@ public class VarsNode extends AstNode {
         }
         return children;
     }
+
     @Override
     public String toStringTree() {
-        StringBuilder sb = new StringBuilder();
-
-        if (vars == null)   return "vnil";
-        else                sb.append("vars (").append(var.toStringTree()).append(",").append(vars.toStringTree()).append(")");
-
-        return sb.toString();
+        if (var == null)
+            return "vnil";
+        return "vars (" + var.toStringTree() + "," + (vars != null ? vars.toStringTree() : "vnil") + ")";
     }
 
 }

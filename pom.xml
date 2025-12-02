@@ -163,6 +163,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>3.1.1</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseProfiles>release</releaseProfiles>
+                    <scmCommentPrefix>[Release] </scmCommentPrefix>
+                    <goals>deploy</goals>
+                    <checkModificationExcludeList>pom.xml,pom.xml.releaseBackup,release.properties</checkModificationExcludeList>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -173,6 +181,7 @@
         <module>Memoire</module>
         <module>LexerParser</module>
         <module>compiler</module>
+        <module>ASTExporter</module>
     </modules>
 
     <scm>

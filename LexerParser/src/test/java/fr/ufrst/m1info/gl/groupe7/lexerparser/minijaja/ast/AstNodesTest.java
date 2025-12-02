@@ -106,6 +106,7 @@ class AstNodesTest {
         assertInstanceOf(VarsNode.class, one.getVars());
         assertEquals("vnil", one.getVars().toStringTree());
     }
+
     @Test
     void testVarsNodeGetChildren() {
         VarsNode empty = new VarsNode();
@@ -418,6 +419,14 @@ class AstNodesTest {
 
         AppelINode appelI = new AppelINode(new IdentNode("proc"), list);
         assertEquals("appelI(Ident(proc),exnil)", appelI.toStringTree());
+    }
+
+    @Test
+    void testAppelINodeClassGetter() {
+        DummyListExpNode list = new DummyListExpNode();
+        AppelINode appelI = new AppelINode(new IdentNode("proc"), list);
+        assertEquals("proc", appelI.getIdent().getNom());
+        assertEquals(list, appelI.getListExp());
     }
 
     @Test
