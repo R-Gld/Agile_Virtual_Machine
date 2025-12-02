@@ -171,6 +171,7 @@ public class App extends Application {
         executor.shutdownNow();
     }
 
+
     private HBox buildTitleBar() {
         HBox titleBar = new HBox();
         titleBar.setSpacing(8);
