@@ -119,7 +119,6 @@ public class App extends Application {
 
         HBox jajaTitleBar = new HBox();
         jajaTitleBar.getStyleClass().add("panel-titlebar");
-        // همان ارتفاع ثابت برای نوار JajaCode
         jajaTitleBar.setMinHeight(26);
         jajaTitleBar.setPrefHeight(26);
         jajaTitleBar.setMaxHeight(26);
@@ -155,7 +154,7 @@ public class App extends Application {
         Scene scene = new Scene(root, 1150, 720);
 
         String lightCss = getClass().getResource("/light.css").toExternalForm();
-        scene.getStylesheets().add(lightCss); // پیش‌فرض: لایت
+        scene.getStylesheets().add(lightCss);
 
         stage.setScene(scene);
         stage.show();
