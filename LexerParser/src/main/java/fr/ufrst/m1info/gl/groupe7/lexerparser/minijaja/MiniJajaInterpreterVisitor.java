@@ -460,7 +460,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return new ListExpNode(null, null); // Nœud "exnil"
 		}
 
-		AstNode exp = visit(ctx.exp());
+		Expression exp = (Expression) visit(ctx.exp());
 
 		if (ctx.listexp() != null) {
 			ListExpNode next = (ListExpNode) visit(ctx.listexp());
