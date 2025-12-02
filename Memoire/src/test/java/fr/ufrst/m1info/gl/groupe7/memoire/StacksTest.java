@@ -172,7 +172,10 @@ public class StacksTest {
     @Test
     void testAssignValueDoesNotAffectConst() {
         stacks.declareCst("PI", 3.14, Type.ENTIER);
-        stacks.AffecterVal("PI", 10);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("PI", 10);
+        });
+        assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
         assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
     }
     @Test
@@ -182,9 +185,9 @@ public class StacksTest {
     }
     @Test
     void topPil2(){
-        stacks.AffecterVal("PI", 10);
         stacks.declareVar("x", 5, Type.ENTIER);
-        assertEquals("x", stacks.getTop().ident);
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
+        assertEquals("PI", stacks.getTop().ident);
     }
     @Test
     void testGetTopOnEmptyStack() {
@@ -288,7 +291,10 @@ public class StacksTest {
     void testAssignValueToConstant() {
         stacks.declareCst("PI", 3.14, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("PI", 10));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("PI", 10);
+        });
+        assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
         assertEquals(3.14, stacks.getValue("PI"));
     }
 
@@ -296,7 +302,10 @@ public class StacksTest {
     void testAssignValueIdentifierNotFound() {
         stacks.declareVar("x", 1, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("y", 10));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -304,7 +313,10 @@ public class StacksTest {
     void testAssignValueCst() {
         stacks.declareVar("x", 1, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("y", 10));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -327,7 +339,10 @@ public class StacksTest {
     @Test
     void testAssignValueOnEmptyStack() {
         // pile vide
-        stacks.AffecterVal("x", 10);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("x", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("x"));
     }
     /*
@@ -412,13 +427,16 @@ public class StacksTest {
         assertTrue(stacks.AffecterVal("x", 12));
         stacks.printSymbol("x");
         // Mauvais type
-        assertFalse(stacks.AffecterVal("x", "notAnInt"));
+        assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("x", "notAnInt");
+        });
 
-        // Constante
-        assertFalse(stacks.AffecterVal("PI", 2.71));
+
 
         // Variable inexistante
-        assertFalse(stacks.AffecterVal("y", 99));
+        assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 99);
+        });
     }
     @Test
     void testIsTypeCompatible_IntegerVariants() {
@@ -1109,6 +1127,141 @@ public class StacksTest {
         assertEquals(stacks.getArrayValue("tab1",2),14);
 
     }
+
+    // ========================================
+    // Tests for getValue with Omega
+    // ========================================
+
+    @Test
+    void testGetValue_OmegaVariableThrowsException() {
+        stacks.declareVar("uninitializedVar", Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("uninitializedVar");
+        });
+        
+        assertTrue(ex.getMessage().contains("non initialisée"));
+        assertTrue(ex.getMessage().contains("Omega"));
+    }
+
+    @Test
+    void testGetValue_InitializedVariableReturnsValue() {
+        stacks.declareVar("initializedVar", 42, Type.ENTIER);
+        assertEquals(42, stacks.getValue("initializedVar"));
+    }
+
+    @Test
+    void testGetValue_VariableInitializedAfterOmega() {
+        stacks.declareVar("laterInitVar", Type.ENTIER);
+        stacks.AffecterVal("laterInitVar", 100);
+        assertEquals(100, stacks.getValue("laterInitVar"));
+    }
+
+    // ========================================
+    // Tests for AffecterVal exceptions
+    // ========================================
+
+    @Test
+    void testAffecterVal_UndeclaredVariableThrowsException() {
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("undeclaredVar", 50);
+        });
+        
+        assertTrue(ex.getMessage().contains("pas declaree"));
+    }
+
+    @Test
+    void testAffecterVal_ConstantThrowsException() {
+        stacks.declareCst("MY_CONST", 100, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("MY_CONST", 200);
+        });
+        
+        assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
+        assertEquals(100, stacks.getValue("MY_CONST"));
+    }
+
+    @Test
+    void testAffecterVal_ArrayThrowsException() {
+        stacks.declareTab("myArray", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("myArray", 10);
+        });
+        
+        assertTrue(ex.getMessage().contains("tableau"));
+        assertTrue(ex.getMessage().contains("affectation non permise"));
+    }
+
+    @Test
+    void testAffecterVal_MethodThrowsException() {
+        stacks.declareMeth("myMethod", "body", Type.VOID);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("myMethod", "newBody");
+        });
+        
+        assertTrue(ex.getMessage().contains("méthode"));
+        assertTrue(ex.getMessage().contains("affectation non permise"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchIntToBoolThrowsException() {
+        stacks.declareVar("intVar", 10, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("intVar", true);
+        });
+        
+        assertTrue(ex.getMessage().contains("Type mismatch"));
+        assertTrue(ex.getMessage().contains("intVar"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchBoolToIntThrowsException() {
+        stacks.declareVar("boolVar", true, Type.BOOLEEN);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("boolVar", 42);
+        });
+        
+        assertTrue(ex.getMessage().contains("Type mismatch"));
+        assertTrue(ex.getMessage().contains("boolVar"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchStringToIntThrowsException() {
+        stacks.declareVar("intVar2", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("intVar2", "not a number");
+        });
+        
+        assertTrue(ex.getMessage().contains("Type mismatch"));
+    }
+
+    @Test
+    void testAffecterVal_ValidAssignmentReturnsTrue() {
+        stacks.declareVar("validVar", 0, Type.ENTIER);
+        assertTrue(stacks.AffecterVal("validVar", 99));
+        assertEquals(99, stacks.getValue("validVar"));
+    }
+
+    @Test
+    void testAffecterVal_NullToIntVariableSucceeds() {
+        stacks.declareVar("nullableInt", 10, Type.ENTIER);
+        assertTrue(stacks.AffecterVal("nullableInt", null));
+        assertNull(stacks.getValue("nullableInt"));
+    }
+
+    @Test
+    void testAffecterVal_NullToBoolVariableSucceeds() {
+        stacks.declareVar("nullableBool", false, Type.BOOLEEN);
+        assertTrue(stacks.AffecterVal("nullableBool", null));
+        assertNull(stacks.getValue("nullableBool"));
+    }
+
     @Test
     public void testFreeTabUnknownArray() {
 

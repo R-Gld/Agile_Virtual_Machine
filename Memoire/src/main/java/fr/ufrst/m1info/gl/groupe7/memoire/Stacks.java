@@ -162,6 +162,20 @@ public class Stacks {
         declareCst(ident, Omega.getInstance(), type);
     }
 
+    /*Retrait de Declaration */
+    public void RetirerDecl(String ident) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (q.ident.equals(ident)) {
+                System.err.println("[RETRAIT] Retiring declaration of '" + ident + "' from stack.");
+                stack.remove(i);
+                updateSymbolPositions();
+                symbolTable.remove(ident);
+                return;
+            }
+        }
+    }
+
     /**
      * Declare an array:
      *  - allocate a block in the Heap with heap.allocate(...)
@@ -171,7 +185,7 @@ public class Stacks {
     public void declareTab(String ident, int size, Type type) {
         Symbol tabSymbol = symbolTable.findSymbol(ident);
         if (tabSymbol != null) {
-            throw new RuntimeException(" array already in tab declare" + ident);
+            throw new RuntimeException(" array already in tab declare " + ident);
         }
         int cellPerElement;
         switch (type) {
@@ -226,9 +240,16 @@ public class Stacks {
     public Object getValue(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(ident)) return q.value;
+            if (q.ident.equals(ident)) {
+                // Traitement de la variable Omega (valeur non initialisée)
+                if (q.value == Omega.getInstance()) {
+                    throw new RuntimeException("Variable '" + ident + "' non initialisée (Omega).");
+                }
+                return q.value;
+            }
         }
-        return null;    
+        //TODO: throw exception
+        return null;
     }
 
     /** Get the object type (var, cst, tab, meth) */
@@ -251,26 +272,51 @@ public class Stacks {
     // ============================================================
     // Axiome D'interpretation
     // ============================================================
+    /**
+     * AffecterVal : assign a new value to an identifier.
+     * Returns true on success, throws RuntimeException on error (unknown symbol,
+     * attempt to assign to constant/array/method, or type mismatch).
+     */
     public boolean AffecterVal(String ident, Object newValue) {
-        if(!symbolTable.contains(ident)){
-            return false;
+        // Verify symbol exists
+        Symbol sym = symbolTable.findSymbol(ident);
+        if (sym == null) {
+            throw new RuntimeException("Variable  :" + ident+ " pas declaree.");
         }
+
+        // Find the Quad from top to bottom
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
-                // Vérification de la compatibilité de type
-                if (!isTypeCompatible(q.type, newValue)) {
-                    return false;
-                }
-                if (q.object.equals("cst")) {
-                    return false;
-                } else {
-                    q.value = newValue;
-                    return true;
-                }
+            if (!q.ident.equals(ident)) continue;
+
+            // Prevent assigning to constants
+            if ("cst".equals(q.object)) {
+                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
+            if ("tab".equals(q.object)) {
+                throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");
+                
+            }
+
+            // For arrays and methods, assignment should be handled by dedicated APIs
+            if ("meth".equals(q.object)) {
+                throw new RuntimeException("Erreur : " + ident+" est une méthode, affectation non permise.");
+            }
+
+            // Type compatibility check
+            if (!isTypeCompatible(q.type, newValue)) {
+                String got = (newValue == null) ? "null" : newValue.getClass().getSimpleName();
+                throw new RuntimeException("Type mismatch for " + ident + ": expected " + q.type + " but got " + got);
+            }
+
+            // Perform assignment and update stack entry explicitly
+            q.setValue(newValue);
+            stack.set(i, q); // replace to be explicit (Quad is mutable, but keep consistency)
+            return true;
         }
-        return false;
+
+        // Shouldn't happen because we checked symbol existence, but keep safe fallback
+        throw new RuntimeException("Symbol found in symbol table but not on stack: " + ident);
     }
     /**
      * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de String)
@@ -531,6 +577,8 @@ public class Stacks {
 
         System.out.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
     }
+
+   
     public void freeTab(String ident) {
 
         Quad q = findQuad(ident);

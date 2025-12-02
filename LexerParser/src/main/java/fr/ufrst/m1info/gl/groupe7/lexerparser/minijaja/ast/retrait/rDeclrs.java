@@ -2,7 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class rDeclrs extends AstNode {
@@ -22,25 +22,26 @@ public class rDeclrs extends AstNode {
     }
 
     public void interpret(Stacks stacks) {
-    if (declrs == null) {
-        return;
-    }
-
-    // interpret the rest of the declarations if any
-    DeclsNode rest = declrs.getDecls();
-    if (rest != null) {
-        new rDeclrs(rest).interpret(stacks);
-    }
-
-    // interpret the current declaration if present
-    AstNode decl = declrs.getDecl();
-    if (decl != null) {
-        if (decl instanceof VarsNode) {
-         new rVars((VarsNode) decl).interpret(stacks);
-        } else if (decl instanceof MethodeNode) {
-         new rMethode((MethodeNode) decl).interpret(stacks);
+        if (declrs == null) {
+            return;
         }
-    }
+    
+        // interpret the rest of the declarations if any
+        DeclsNode rest = declrs.getDecls();
+        if (rest != null) {
+            new rDeclrs(rest).interpret(stacks);
+        }
+    
+        // interpret the current declaration if present
+        AstNode decl = declrs.getDecl();
+        if (decl != null) {
+             if (decl instanceof MethodeNode) {
+                new rMethode((MethodeNode) decl).interpret(stacks);
+            }else{
+                new rVar(decl).interpret(stacks);
+            }
+
+        }
     }
 
     @Override
