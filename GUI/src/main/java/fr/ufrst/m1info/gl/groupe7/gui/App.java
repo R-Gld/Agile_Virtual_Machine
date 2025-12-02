@@ -154,9 +154,6 @@ public class App extends Application {
         // Scene + styles
         Scene scene = new Scene(root, 1150, 720);
 
-        String codeCss = getClass().getResource("/code_area.css").toExternalForm();
-        scene.getStylesheets().add(codeCss);
-
         String lightCss = getClass().getResource("/light.css").toExternalForm();
         scene.getStylesheets().add(lightCss); // پیش‌فرض: لایت
 
