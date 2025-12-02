@@ -9,7 +9,6 @@ public class IdentNode extends Expression {
 
     public IdentNode(String nom) {
         this.nom = nom;
-       
 
     }
 
