@@ -22,8 +22,20 @@ public class GreaterThanNode extends Expression {
         return exp2;
     }
 
+    @Override
     public Object evaluate(Stacks stack) {
-        return (int) exp1.evaluate(stack) > (int) exp2.evaluate(stack);
+        Object v1 = exp1.evaluate(stack);
+        Object v2 = exp2.evaluate(stack);
+
+        if (!(v1 instanceof Integer) || !(v2 instanceof Integer)) {
+            throw new RuntimeException(String.format(
+                "Type error: > requires two integers (got %s and %s)",
+                v1 == null ? "null" : v1.getClass().getSimpleName(),
+                v2 == null ? "null" : v2.getClass().getSimpleName()
+            ));
+        }
+
+        return (Integer) v1 > (Integer) v2;
     }
 
   

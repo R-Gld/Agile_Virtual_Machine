@@ -27,10 +27,7 @@ public class AppelENode extends Expression {
         return 0;//TODO :gerer le retour de  appelE
     }
 
-    @Override
-    public String toString() {
-        return "AppelENode{" + "ident=" + ident + ", exp=" + listexp + '}';
-    }
+
 
     @Override
     public String toStringTree() {

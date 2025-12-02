@@ -21,11 +21,6 @@ public class EnteteNode extends AstEntetes {
         return type;
     }
 
-    @Override
-    public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
-    }
 
     @Override
     public String toStringTree() {

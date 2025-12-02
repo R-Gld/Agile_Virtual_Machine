@@ -102,7 +102,7 @@ class AstNodesTest {
         assertEquals("vars (var (integer , Ident(x) , nbre(0)),vnil)", one.toStringTree());
         // getters
         assertInstanceOf(VarNode.class, one.getVar());
-        assertEquals("x", one.getVar().getIdent().getNom());
+        assertEquals("x",((VarNode) one.getVar()).getIdent().getNom());
         assertInstanceOf(VarsNode.class, one.getVars());
         assertEquals("vnil", one.getVars().toStringTree());
     }
@@ -301,12 +301,13 @@ class AstNodesTest {
     @Test
     void testLengthNodeEvaluate() {
         Stacks stacks = new Stacks();
-        stacks.declareVar("tab", "hello", Type.STRING);
-        LengthNode len = new LengthNode(new IdentNode("tab"));
+        TableauNode tableauNode = new TableauNode(Type.ENTIER, new IdentNode("myArray"), new NbreNode(3));
+        tableauNode.interpret(stacks);
+        LengthNode len = new LengthNode(new IdentNode("myArray"));
         Object result = len.evaluate(stacks);
-        assertEquals(5, result);
+        assertInstanceOf(Integer.class, result);
+        assertEquals(3, result);
     }
-
     @Test
     void testLengthNodeToStringTree() {
         LengthNode len = new LengthNode(new IdentNode("myString"));
@@ -527,6 +528,23 @@ class AstNodesTest {
     }
 
     @Test
+    void testMainNodeGetChildren() {
+        MainNode main = new MainNode(new VarsNode(), new InstructionsNode());
+        Iterable<AstNode> children = main.getChildren();
+        assertNotNull(children);
+        int count = 0;
+        for (AstNode child : children) {
+            count++;
+            if (count == 1) {
+                assertInstanceOf(VarsNode.class, child);
+            } else if (count == 2) {
+                assertInstanceOf(InstructionsNode.class, child);
+            }
+        }
+        assertEquals(3, count);
+    }
+
+    @Test
     void testClasseNodeToStringTree() {
         IdentNode id = new IdentNode("C");
         DeclsNode decls = new DeclsNode(new VarNode(Type.ENTIER, new IdentNode("x"), new NbreNode(0)), new DeclsNode());
@@ -540,6 +558,25 @@ class AstNodesTest {
         assertEquals("C", classe.getVarClasse());
         assertEquals("Classe(Ident(C),decls (var (integer , Ident(x) , nbre(0)),vnil),Main(vnil, Inil))",
                 classe.toStringTree());
+    }
+
+    @Test
+    void testAffectationNodeGetChildren() {
+        AffectationNode aff = new AffectationNode(new IdentNode("x"), new NbreNode(5));
+        Iterable<AstNode> children = aff.getChildren();
+        assertNotNull(children);
+        int count = 0;
+        for (AstNode child : children) {
+            count++;
+            if (count == 1) {
+                assertInstanceOf(IdentNode.class, child);
+                assertEquals("x", ((IdentNode) child).getNom());
+            } else if (count == 2) {
+                assertInstanceOf(NbreNode.class, child);
+                assertEquals(5, ((NbreNode) child).value);
+            }
+        }
+        assertEquals(2, count);
     }
 
     @Test

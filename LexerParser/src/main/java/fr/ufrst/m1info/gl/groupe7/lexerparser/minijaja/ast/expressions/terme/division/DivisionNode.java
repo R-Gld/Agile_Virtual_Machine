@@ -24,6 +24,9 @@ public class DivisionNode extends Expression {
 
     @Override
     public Object evaluate(Stacks stack) {
+        if(!(terme.evaluate(stack) instanceof Integer) || !(fact.evaluate(stack) instanceof Integer)){
+            throw new RuntimeException("Type error: both expressions must evaluate to Integer");
+        }
         return (int) terme.evaluate(stack) / (int) fact.evaluate(stack);
     }
 

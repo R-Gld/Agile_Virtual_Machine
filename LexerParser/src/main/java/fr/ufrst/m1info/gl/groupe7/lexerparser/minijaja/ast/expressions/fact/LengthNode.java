@@ -18,8 +18,15 @@ public class LengthNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
-        return ((String) ident.evaluate(stack)).length();
-    }
+        
+        if (! stack.getObjectType(ident.getNom()).equals("tab")) {
+            throw new RuntimeException("Type error: length can only be applied to arrays");
+            
+        }
+
+        //todo: ADD function to get tab length
+        return stack.getArrayLength(ident.getNom());
+    }   
 
     @Override
     public String toStringTree() {
