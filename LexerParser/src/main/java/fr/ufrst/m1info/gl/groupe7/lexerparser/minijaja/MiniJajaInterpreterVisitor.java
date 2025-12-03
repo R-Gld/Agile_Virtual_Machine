@@ -103,7 +103,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	@Override
 	public AstNode visitVexp(MiniJajaParser.VexpContext ctx) {
 		System.err.println("[DEBUG] enter visitVexp: text='" + (ctx.exp() != null ? ctx.exp().getText() : "<null>") + "'");
-		if (ctx.exp() == null) {
+		if (ctx.children == null) {
 			System.err.println("[DEBUG] visitVexp: no expression (null)");
 			return null;
 		}
@@ -144,13 +144,18 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		IdentNode ident = new IdentNode(ctx.IDENT() != null ? ctx.IDENT().getText() : "");
 		System.err.println("[DEBUG] visitVar: ident='" + ident.getNom() + "', type='" + typeText + "'");
-		Expression vexp = ctx.vexp() != null ? (Expression) visit(ctx.vexp()) : null;
-	
-	
+		Expression vexp = null;
+
+		if(ctx.vexp() != null) {	
+		// Si une expression d'initialisation est présente
+		vexp =(Expression) visit(ctx.vexp()) ;
+
+		}
+
 
 		// Cas 1 : constante finale
 		if (ctx.FINAL() != null) {
-				return (ctx.vexp() != null)
+				return (vexp != null)
 				? new CstNode(type, ident, vexp)
 				: new CstNode(type, ident);
 		}
@@ -167,7 +172,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// Cas 3 : variable simple
 		System.err.println("[DEBUG] exit visitVar: created variable node for '" + ident.getNom() + "', type='" + type + "'");
-		return (ctx.vexp() != null)
+		return (vexp != null)
 				? new VarNode(type, ident , vexp)
 				: new VarNode(type, ident);
 	}
@@ -178,7 +183,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		System.err.println("[DEBUG] enter visitVars: text='" + ctx.getText() + "'");
 		if (ctx.children == null)
 			return new VarsNode();
-		VarNode firstVar = (VarNode) visit(ctx.var());
+		AstNode firstVar =  visit(ctx.var());
 		VarsNode nextVars = (VarsNode) visit(ctx.vars());
 		System.err.println("[DEBUG] exit visitVars: created VarsNode");
 		return new VarsNode(firstVar, nextVars);
@@ -187,7 +192,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	@Override
 	public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
 		System.err.println("[DEBUG] enter visitMethode: text='" + ctx.getText() + "'");
-		String typeText = ctx.typemeth().TYPE().getText();
+		String typeText = ctx.typemeth().getText();
 		Type typeMeth;
 		switch (typeText) {
 			case "int":

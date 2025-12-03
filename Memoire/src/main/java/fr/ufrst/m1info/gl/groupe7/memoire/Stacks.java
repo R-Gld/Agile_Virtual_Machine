@@ -345,7 +345,7 @@ public class Stacks {
                 //  Si la variable est déclarée mais non initialisée
                 if (value instanceof Omega) {
                     throw new RuntimeException(
-                            "Variable '" + ident + "' is declared but not initialized."
+                            "Variable Omega'" + ident + "' is declared but not initialized."
                     );
                 }
 
@@ -377,42 +377,51 @@ public class Stacks {
     // ============================================================
     // Axiome D'interpretation
     // ============================================================
+    /**
+     * AffecterVal : assign a new value to an identifier.
+     * Returns true on success, throws RuntimeException on error (unknown symbol,
+     * attempt to assign to constant/array/method, or type mismatch).
+     */
     public boolean AffecterVal(String ident, Object newValue) {
-        if(!symbolTable.contains(ident)){
-            return false;
+        // Verify symbol exists
+        Symbol sym = symbolTable.findSymbol(ident);
+        if (sym == null) {
+            throw new RuntimeException("Variable  :" + ident+ " pas declaree.");
         }
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
+            if (!q.ident.equals(ident)) continue;
 
-
-                if (!isTypeCompatible(q.type, newValue)) {
-                    return false;
-                }
-
-                // ----------------------------
-                //   CAS CONSTANTE
-                // ----------------------------
-                if (q.object.equals("cst")) {
-
-
-                    if (q.value instanceof Omega) {
-                        q.value = newValue;
-                        return true;
-                    }
-
-
-                    throw new RuntimeException("Cannot modify constant: " + ident);
-                }
-
-                // ----------------------------
-                //   CAS VARIABLE
-                // ----------------------------
-                q.value = newValue;
-                return true;
+            // Prevent assigning to constants
+            if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
+                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
+            if ("tab".equals(q.object)) {
+                throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");
+
+            }
+
+            // For arrays and methods, assignment should be handled by dedicated APIs
+            if ("meth".equals(q.object)) {
+                throw new RuntimeException("Erreur : " + ident+" est une méthode, affectation non permise.");
+            }
+
+            // Check type compatibility
+            if (!isTypeCompatible(q.type, newValue)) {
+                throw new RuntimeException("Type de variable " + ident +
+                        ": attendu " + q.type + " mais reçu " +  newValue.getClass().getSimpleName());
+            }
+
+
+
+            // Perform assignment and update stack entry explicitly
+            q.value = newValue;
+            stack.set(i, q); // replace to be explicit (Quad is mutable, but keep consistency)
+            return true;
         }
-        return false;
+
+        // Shouldn't happen because we checked symbol existence, but keep safe fallback
+        throw new RuntimeException("Symbol found in symbol table but not on stack: " + ident);
     }
     /**
      * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de String)
@@ -636,6 +645,8 @@ public class Stacks {
 
         System.out.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
     }
+
+
     public void freeTab(String ident) {
 
         Quad q = findQuad(ident);

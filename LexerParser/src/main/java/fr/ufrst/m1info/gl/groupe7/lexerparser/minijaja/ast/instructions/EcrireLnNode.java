@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireLnNode extends EcrireNode {
@@ -14,17 +15,23 @@ public class EcrireLnNode extends EcrireNode {
     @Override
     public String toStringTree() {
         if (this.ident1Node instanceof Expression ident1) {
-            return "ecrireln (" + ident1.toStringTree() + ")";
+           
 
+            return "ecrireln (" + ident1.toStringTree() + ")";
         }
-        return "ecrireln (" + this.getIdent1Node() + ")";
+            
+        return "ecrireln (" + (String) this.getIdent1Node() + ")";
     }
     @Override
     public void interpret(Stacks stacks) {
-        if (ident1Node instanceof Expression ident1) {
-            System.out.print(ident1.evaluate(stacks)+"\n");
+        if (ident1Node instanceof IdentNode ident1) {
+            String OT = stacks.getObjectType(ident1.getNom());
+            if (OT.equals("tab" )|| OT.equals("meth")){ 
+                throw new RuntimeException("Type error: cannot print array directly or method reference");
+            }
+            System.out.println(ident1.evaluate(stacks));
         } else {
-            System.out.print(ident1Node +"\n");
+            System.out.println((String) ident1Node);
         }
 
     }
