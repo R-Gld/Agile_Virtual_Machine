@@ -108,7 +108,7 @@ public class Stacks {
     /** Pop (Dépiler): remove the top element from the stack */
     public Quad pop() {
         if (!stack.isEmpty()) {
-            Quad q =stack.peek();
+            Quad q = stack.peek();
 
             if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
 
@@ -665,9 +665,7 @@ public class Stacks {
         if (entry == null)
             throw new RuntimeException("HeapEntry not found for array " + ident);
 
-
         // Now release the entire block
-        //heap.free(entry);
         heap.releaseReference(entry);
         System.out.println("← Freed array " + ident + " (block starting at " + base + ")");
     }
@@ -675,7 +673,6 @@ public class Stacks {
         Quad q = findQuad(ident);
         if (q == null) throw new RuntimeException("Unknown array " + ident);
         if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
-
 
         return info.getSize();
 

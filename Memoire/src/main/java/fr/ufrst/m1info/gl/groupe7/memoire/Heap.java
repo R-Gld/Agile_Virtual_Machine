@@ -388,6 +388,11 @@ public class Heap {
             free(entry);
         }
     }
+    /**
+     * get All Entry with baseAddress not free
+     * @param baseAddress adress where it is
+     * return null if nothing is found
+     */
     public HeapEntry getEntryNotFree(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -404,6 +409,12 @@ public class Heap {
         }
         return null;
     }
+    /**
+     * get All Entry with baseAddress
+     * @param baseAddress address where it is
+     * return null if nothing is found
+     *
+     */
     public HeapEntry getEntry(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
