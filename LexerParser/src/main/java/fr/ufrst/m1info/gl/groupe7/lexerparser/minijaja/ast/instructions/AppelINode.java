@@ -1,12 +1,11 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.context.RestoreContextNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rDeclrs;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rEntetes;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rVars;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
@@ -73,14 +72,7 @@ public class AppelINode extends InstructionNode {
             rEntetes rentetes = new rEntetes(methode.getEntetes());
             
             // Context restoration node - pops context after method execution
-            AstNode restoreContext = new AstNode() {
-                @Override
-                public String toStringTree() { return "restoreContext(" + methodName + ")"; }
-                @Override
-                public void interpret(Stacks s) {
-                    s.popContext(methodName);
-                }
-            };
+            RestoreContextNode restoreContext = new RestoreContextNode(methodName);
 
             children.add(vars);
             children.add(instrs);

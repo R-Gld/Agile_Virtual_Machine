@@ -187,6 +187,34 @@ public class Stacks {
             return varName + "@" + methodName + depth;
         }
     }
+    
+    /**
+     * Inner class to restore context - can be used as a simple object
+     * that holds the method name and provides a restore() method.
+     */
+    public class ContextRestorer {
+        private final String methodName;
+        
+        public ContextRestorer(String methodName) {
+            this.methodName = methodName;
+        }
+        
+        public void restore() {
+            popContext(methodName);
+        }
+        
+        public String getMethodName() {
+            return methodName;
+        }
+    }
+    
+    /**
+     * Create a ContextRestorer for the given method.
+     * Call restorer.restore() when you need to pop the context.
+     */
+    public ContextRestorer createContextRestorer(String methodName) {
+        return new ContextRestorer(methodName);
+    }
 
 
     // ============================================================

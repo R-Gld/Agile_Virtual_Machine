@@ -1,6 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.context.RestoreContextNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rVars;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
@@ -13,7 +14,7 @@ public class MainNode extends AstNode {
     private final rVars rvars;
     
     // Context restoration node for main
-    private AstNode restoreContext;
+    private RestoreContextNode restoreContext;
 
     public MainNode(VarsNode vars, InstructionsNode instrs) {
         this.vars = vars;
@@ -46,14 +47,7 @@ public class MainNode extends AstNode {
         stacks.pushContext("main");
         
         // Create context restoration node to pop main context after execution
-        this.restoreContext = new AstNode() {
-            @Override
-            public String toStringTree() { return "restoreContext(main)"; }
-            @Override
-            public void interpret(Stacks s) {
-                s.popContext("main");
-            }
-        };
+        this.restoreContext = new RestoreContextNode("main");
     }
     
     @Override
