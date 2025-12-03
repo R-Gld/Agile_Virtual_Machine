@@ -478,23 +478,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	}
 
-	// ======== TYPE METHODS ========
-
-	// @Override
-	// public AstNode visitTypemeth(MiniJajaParser.TypemethContext ctx) {
-	// if (ctx.TYPE() != null) {
-	// return ctx.TYPE().getText();
-	// } else {
-	// return "void";
-	// }
-	//
-	// }
 
 	/**
 	 * Résultat par défaut si une méthode 'visit' n'est pas implémentée.
 	 */
 	@Override
 	protected AstNode defaultResult() {
-		return null;
+		System.err.println("[DEBUG] defaultResult called");
+		throw new UnsupportedOperationException("Visite non implémentée pour ce nœud.");
+		
 	}
 }

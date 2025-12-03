@@ -246,7 +246,7 @@ public class SiNodeTest {
         SiNode siNode = new SiNode(condition, thenBlock);
         siNode.interpret(stacks);
         
-        assertNull(siNode.getChildren());
+        assertEquals(List.of(), siNode.getChildren());
     }
 
     @Test

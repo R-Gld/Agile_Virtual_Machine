@@ -2,9 +2,8 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
+
 
 public class VarsNode extends AstNode {
 

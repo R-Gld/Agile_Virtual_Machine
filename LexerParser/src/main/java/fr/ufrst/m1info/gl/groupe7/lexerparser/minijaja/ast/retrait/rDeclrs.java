@@ -1,8 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class rDeclrs extends AstNode {

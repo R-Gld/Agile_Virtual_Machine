@@ -28,14 +28,27 @@ public class AppelINode extends InstructionNode {
     }
 
 
-    public IdentNode getIdent() { return ident; }
+    public IdentNode getIdent() { 
+        return ident; 
+    }
 
-    public ListExpNode getListExp() { return listExp; }
+    public ListExpNode getListExp() { 
+        return listExp; 
+    }
+
+    public Iterable<AstNode> getChildren() {
+        return children;
+    }
+
+    public void RestChildren() {
+        this.children = new ArrayList<>();
+    }
+
 
     @Override
     public void interpret(Stacks stacks) {
         // Clear children for this invocation (important for recursive calls on same node)
-        this.children = new ArrayList<>();
+        RestChildren();
         
         if (this.listExp != null) {
             //list des valeur de l'entree example f(2,3,44) -> listexp = [2,3,44]
@@ -87,7 +100,29 @@ public class AppelINode extends InstructionNode {
         return "appelI(" + ident.toStringTree() + "," + listExp.toStringTree() + ")";
     }
 
-    public Iterable<AstNode> getChildren() {
-        return children;
+    
+    /**
+     * Mini-walker récursif pour exécuter les enfants de manière synchrone.
+     * Nécessaire pour AppelENode qui doit attendre que RetourNode s'exécute
+     * avant de lire la valeur de retour.
+     */
+    public void InterpretChildren(Stacks stacks) {
+        interpret(stacks);
+        for (AstNode child : children) {
+            walkNode(child, stacks);
+        }
+    }
+
+    /**
+     * Parcourt récursivement un nœud et ses enfants (comme Walker.visitNode)
+     */
+    private void walkNode(AstNode node, Stacks stacks) {
+        if (node == null) {
+            return;
+        }
+        node.interpret(stacks);
+        for (AstNode child : node.getChildren()) {
+            walkNode(child, stacks);
+        }
     }
 }

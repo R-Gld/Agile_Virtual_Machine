@@ -1,12 +1,10 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact;
 
-import java.util.List;
-
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class AppelENode extends Expression {
 
@@ -29,15 +27,15 @@ public class AppelENode extends Expression {
     public Object evaluate(Stacks stack) {
         // AppelE does not evaluate to a value directly; it represents a function/method call.
 
-        // AppelINode appelI = new AppelINode(ident, listexp);
-        // appelI.interpret(stack);
-        // String varClasse = stacks.getVariableClasse(); 
-        // if (varClasse == null) {
-        //     throw new RuntimeException("Erreur: appelE hors d'une classe");
-        // }
-        // return stacks.getValue(varClasse);
-
-        return null; // or throw an exception if evaluation is not applicable
+         AppelINode appelI = new AppelINode(ident, listexp);
+         appelI.InterpretChildren(stack);
+         String varClasse = stack.getVariableClasse();
+         System.err.println("[DEBUG] AppelENode evaluate: varClasse = " + varClasse); 
+         if (varClasse == null) {
+             throw new RuntimeException("Erreur: appelE hors d'une classe");
+         }
+         return stack.getValue(varClasse);  
+       
 
      
     }
