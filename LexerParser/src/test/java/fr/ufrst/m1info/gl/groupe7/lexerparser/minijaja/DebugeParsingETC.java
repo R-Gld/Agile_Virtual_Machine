@@ -23,20 +23,21 @@ public class DebugeParsingETC {
     Stacks stacks = new Stacks();
     String program = """
       class C {
-     
-      int t[4] ;
-    
-      main {
-      int x[2] ;
-      x[0] = 10 ;
-      x[1] = 20 ;
+    int x = 0;
+    void recursiPrint(int n) {
+        if (n > 0) {
+            writeln(n);
+            recursiPrint(n - 1);
+        };
+    };
+  
 
-    
-     
-
+    main {
+        recursiPrint(4);
+        
+	}
+}
       
-      }
-      }
       """;
 
     //System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");

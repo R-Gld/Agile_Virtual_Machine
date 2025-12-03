@@ -50,10 +50,6 @@ public class EntetesNode extends AstEntetes {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "ASTEntetes{}";
-    }
 
     @Override
     public String toStringTree() {

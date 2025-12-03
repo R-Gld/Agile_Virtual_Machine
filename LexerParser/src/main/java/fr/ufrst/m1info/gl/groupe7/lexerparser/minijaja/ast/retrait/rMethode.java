@@ -14,7 +14,6 @@ public class rMethode  {
     }
     public void interpret(Stacks stacks) {
 
-    //TODO: retirer la methode de la pile des methodes
     stacks.RetirerDecl(methode.getIdent().getNom());
 
     }

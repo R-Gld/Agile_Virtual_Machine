@@ -1,10 +1,14 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rDeclrs;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rEntetes;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rVars;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
@@ -15,6 +19,7 @@ public class AppelINode extends InstructionNode {
 
     private final IdentNode ident;
     private final ListExpNode listExp;
+   
     private List<AstNode> children;
 
     public AppelINode(IdentNode ident, ListExpNode listExp) {
@@ -30,37 +35,56 @@ public class AppelINode extends InstructionNode {
 
     @Override
     public void interpret(Stacks stacks) {
+        // Clear children for this invocation (important for recursive calls on same node)
+        this.children = new ArrayList<>();
+        
         if (this.listExp != null) {
             List<Object> listexp = this.listExp.evaluate(stacks);
 
             // Object obj = stacks.findQuad(this.ident.getNom()) // pareil
             MethodeNode methode = (MethodeNode) this.ident.evaluate(stacks);
+            String methodName = methode.getIdent().getNom();
 
             List<EnteteNode> ents = methode.getEntetes().evaluate(stacks);
 
             if (ents.size() != listexp.size()) {
-
-                String methodName = this.ident.getNom();
-
                 int expected = ents.size();
                 int received = listexp.size();
                 throw new RuntimeException("Appel de la méthode '" + methodName + "' : attendu " + expected + " argument(s), reçu " + received + ".");
             }
 
-            for(int i = 0; i < listexp.size(); i++) {
+            // Push new context for this method call (handles recursion automatically)
+            stacks.pushContext(methodName);
+            String currentContextSuffix = stacks.getCurrentContext();
 
-                String nomVariable = ents.get(i).getIdent().getNom() + "@" + methode.getIdent().getNom();
-                Object value = listexp.get(i); // résultat de l'impression
-                stacks.declareVar(nomVariable,value,ents.get(i).getType());
+            // Declare parameters with scoped names (paramName@contextSuffix)
+            // For recursive calls: paramName@fct, paramName@fct1, paramName@fct2, etc.
+            for(int i = 0; i < listexp.size(); i++) {
+                String nomVariable = ents.get(i).getIdent().getNom() + "@" + currentContextSuffix;
+                Object value = listexp.get(i);
+                stacks.declareVar(nomVariable, value, ents.get(i).getType());
             }
 
             VarsNode vars = methode.getVars();
             InstructionsNode instrs = methode.getInstrs();
+            rVars rvars = new rVars(vars);
+            rEntetes rentetes = new rEntetes(methode.getEntetes());
+            
+            // Context restoration node - pops context after method execution
+            AstNode restoreContext = new AstNode() {
+                @Override
+                public String toStringTree() { return "restoreContext(" + methodName + ")"; }
+                @Override
+                public void interpret(Stacks s) {
+                    s.popContext(methodName);
+                }
+            };
 
             children.add(vars);
             children.add(instrs);
-
-            // TODO : ajouter retrait déclarations et paramètres
+            children.add(rvars);
+            children.add(rentetes);
+            children.add(restoreContext);
         }
     }
 

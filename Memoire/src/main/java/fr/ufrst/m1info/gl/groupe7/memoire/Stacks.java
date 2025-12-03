@@ -64,11 +64,128 @@ public class Stacks {
     private final SymbolTable symbolTable;
     private final Heap heap;
     
+    // Context tracking: stack of method contexts for recursive calls
+    // Each entry is the full context suffix (e.g., "fct", "fct1", "fct2" for recursion)
+    private final java.util.Stack<String> contextStack = new java.util.Stack<>();
+    
+    // Track recursion depth per method name: methodName -> current depth
+    private final java.util.Map<String, Integer> recursionDepth = new java.util.HashMap<>();
+    
     // Constructor: create an empty stack
     public Stacks() {
         stack = new java.util.Stack<>();
         symbolTable = new SymbolTable();
         heap = new Heap();
+    }
+    
+    // ============================================================
+    // CONTEXT MANAGEMENT (for scoped variable lookup with recursion support)
+    // ============================================================
+    
+    /**
+     * Push a new method context onto the context stack.
+     * Handles recursive calls by appending depth number:
+     * - First call to "fct" -> context is "fct"
+     * - Second call to "fct" (recursive) -> context is "fct1"
+     * - Third call to "fct" -> context is "fct2"
+     */
+    public void pushContext(String methodName) {
+        int depth = recursionDepth.getOrDefault(methodName, 0);
+        String contextSuffix;
+        if (depth == 0) {
+            contextSuffix = methodName;
+        } else {
+            contextSuffix = methodName + depth;
+        }
+        recursionDepth.put(methodName, depth + 1);
+        contextStack.push(contextSuffix);
+    }
+    
+    /**
+     * Pop the current method context from the stack.
+     * Decrements the recursion depth for the method.
+     */
+    public void popContext(String methodName) {
+        if (!contextStack.isEmpty()) {
+            contextStack.pop();
+        }
+        int depth = recursionDepth.getOrDefault(methodName, 1);
+        if (depth > 0) {
+            recursionDepth.put(methodName, depth - 1);
+        }
+    }
+    
+    /** 
+     * Set the current execution context (method name). Use null for main.
+     * @deprecated Use pushContext/popContext for proper recursion support.
+     */
+    @Deprecated
+    public void setCurrentContext(String methodName) {
+        // For backward compatibility: clear stack and push new context
+        if (methodName == null) {
+            if (!contextStack.isEmpty()) {
+                String currentMethod = getCurrentMethodName();
+                if (currentMethod != null) {
+                    popContext(currentMethod);
+                }
+            }
+        } else {
+            pushContext(methodName);
+        }
+    }
+    
+    /** Get the current execution context suffix (e.g., "fct", "fct1", "fct2"). Returns null if in main. */
+    public String getCurrentContext() {
+        return contextStack.isEmpty() ? null : contextStack.peek();
+    }
+    
+    /** 
+     * Get the base method name from the current context.
+     * E.g., if context is "fct2", returns "fct".
+     */
+    public String getCurrentMethodName() {
+        if (contextStack.isEmpty()) return null;
+        String context = contextStack.peek();
+        // Remove trailing digits to get base method name
+        return context.replaceAll("\\d+$", "");
+    }
+    
+    /** Get the current recursion depth for the given method (0 = not in recursion). */
+    public int getRecursionDepth(String methodName) {
+        return recursionDepth.getOrDefault(methodName, 0);
+    }
+    
+    /** Check if currently executing inside a method (not main). */
+    public boolean isInMethodContext() {
+        return !contextStack.isEmpty();
+    }
+    
+    /**
+     * Build the scoped variable name: varName@contextSuffix.
+     * For recursive calls:
+     * - First call: varName@fct
+     * - Second call: varName@fct1
+     * - Third call: varName@fct2
+     * If not in a method context, returns the original name.
+     */
+    public String getScopedName(String varName) {
+        if (!contextStack.isEmpty()) {
+            return varName + "@" + contextStack.peek();
+        }
+        return varName;
+    }
+    
+    /**
+     * Build the scoped variable name for a specific method context.
+     * Useful when you need to declare variables for a method call.
+     */
+    public String getScopedNameForMethod(String varName, String methodName) {
+        int depth = recursionDepth.getOrDefault(methodName, 0);
+        if (depth == 0) {
+            return varName + "@" + methodName;
+        } else {
+            return varName + "@" + methodName + depth;
+        }
     }
 
 

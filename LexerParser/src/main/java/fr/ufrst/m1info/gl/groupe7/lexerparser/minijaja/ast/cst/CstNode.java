@@ -52,7 +52,12 @@ public class CstNode extends AstNode {
 
     @Override
     public void interpret(Stacks stacks) {
+        // Get the constant name - use scoped name if inside a method
         String varName = ident.getNom();
+        if (stacks.isInMethodContext()) {
+            varName = stacks.getScopedName(varName);
+        }
+        
         if (vexp != null) {
             Object value = vexp.evaluate(stacks);
             stacks.declareCst(varName, value, type);

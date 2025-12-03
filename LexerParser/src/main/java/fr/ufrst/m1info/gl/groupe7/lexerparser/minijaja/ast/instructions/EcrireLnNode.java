@@ -25,13 +25,31 @@ public class EcrireLnNode extends EcrireNode {
     @Override
     public void interpret(Stacks stacks) {
         if (ident1Node instanceof IdentNode ident1) {
-            String OT = stacks.getObjectType(ident1.getNom());
-            if (OT.equals("tab" )|| OT.equals("meth")){ 
+            String varName = ident1.getNom();
+            
+            // Try scoped name first (for function context with recursion support)
+            String actualVarName = varName;
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    actualVarName = scopedName;
+                }
+            }
+            
+            String OT = stacks.getObjectType(actualVarName);
+            if (OT == null) {
+                OT = stacks.getObjectType(varName);
+            }
+            
+            if (OT != null && (OT.equals("tab") || OT.equals("meth"))) { 
                 throw new RuntimeException("Type error: cannot print array directly or method reference");
             }
+            
             System.out.println(ident1.evaluate(stacks));
+        } else if (ident1Node instanceof Expression expr) {
+            System.out.println(expr.evaluate(stacks));
         } else {
-            System.out.println((String) ident1Node);
+            System.out.println(ident1Node);
         }
 
     }
