@@ -435,7 +435,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			if (ctx.LENGTH() != null)
 				return new LengthNode(ident);
 			if (ctx.listexp() != null)
-				return new AppelENode(ident, visit(ctx.listexp()));
+				return new AppelENode(ident, (ListExpNode) visit(ctx.listexp()));
 		}
 
 		if (ctx.exp() != null)
