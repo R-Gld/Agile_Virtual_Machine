@@ -297,7 +297,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 
         //APPELI relou
-        if (ctx.IDENT() != null) {
+        if (ctx.listexp() != null) {
             ListExpNode listExp = (ListExpNode) visit(ctx.listexp());
             IdentNode ident =  new IdentNode(ctx.IDENT().getText());
             System.err.println("[DEBUG] visitInstr: IDENT -> AppelINode");
