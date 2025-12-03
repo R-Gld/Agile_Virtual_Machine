@@ -20,10 +20,16 @@ public class RetourNode extends InstructionNode {
         return "Retour(" + Exp.toStringTree() +
                 ')';
     }
-   @Override
-   public void interpret(Stacks stacks) {
 
-    // TODO: Implement the interpretation logic for the return node here.
+    @Override
+    public void interpret(Stacks stacks) {
+        Object exp = this.getExp().evaluate(stacks);
 
-   }
+        String varClasse = stacks.getVariableClasse();
+        if (varClasse == null) {
+            throw new RuntimeException("Erreur: Variable de classe non définie dans la pile"); // TODO : message
+                                                                                               // d'erreur plus clair
+        }
+        stacks.AffecterVal(varClasse, exp);
+    }
 }
