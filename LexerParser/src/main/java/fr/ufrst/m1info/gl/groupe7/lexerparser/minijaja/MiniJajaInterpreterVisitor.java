@@ -289,7 +289,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
-			AstNode returned = visit(ctx.exp());
+			Expression returned = (Expression) visit(ctx.exp());
 			System.err.println("[DEBUG] visitInstr: RETURN -> RetourNode");
 			return new RetourNode(returned);
 		}

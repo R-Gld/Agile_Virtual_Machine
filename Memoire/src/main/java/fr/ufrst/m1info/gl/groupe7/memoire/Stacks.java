@@ -1,9 +1,12 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
-import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
-import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+import java.util.HashMap;
+import java.util.Map;
+import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class Stacks {
 
@@ -11,10 +14,10 @@ public class Stacks {
      * Inner class representing a memory cell (Quadruple)
      * ---------------------------------------------------
      * Each cell stores:
-     *   - ident : the variable name
-     *   - value : the current value
-     *   - object : the kind of object (var, cst, tab, meth)
-     *   - type : the data type (integer, boolean, void)
+     * - ident : the variable name
+     * - value : the current value
+     * - object : the kind of object (var, cst, tab, meth)
+     * - type : the data type (integer, boolean, void)
      */
     public static class Quad {
         public String ident;
@@ -33,10 +36,13 @@ public class Stacks {
         public String toString() {
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
         }
+
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
+            if (this == obj)
+                return true;
+            if (obj == null || getClass() != obj.getClass())
+                return false;
 
             Quad quad = (Quad) obj;
 
@@ -56,7 +62,6 @@ public class Stacks {
         }
     }
 
-
     // ------------------------------------------------------------
     // Main structure: a classic LIFO stack (Last In, First Out)
     // ------------------------------------------------------------
@@ -66,16 +71,19 @@ public class Stacks {
     
     // Context tracking: stack of method contexts for recursive calls
     // Each entry is the full context suffix (e.g., "fct", "fct1", "fct2" for recursion)
-    private final java.util.Stack<String> contextStack = new java.util.Stack<>();
+    private final Stack<String> contextStack = new Stack<>();
     
     // Track recursion depth per method name: methodName -> current depth
-    private final java.util.Map<String, Integer> recursionDepth = new java.util.HashMap<>();
+    private final Map<String, Integer> recursionDepth = new HashMap<>();
     
+    private String variableClasse;
+
     // Constructor: create an empty stack
     public Stacks() {
-        stack = new java.util.Stack<>();
+        stack = new Stack<>();
         symbolTable = new SymbolTable();
         heap = new Heap();
+        variableClasse = null;
     }
     
     // ============================================================
@@ -216,6 +224,25 @@ public class Stacks {
         return new ContextRestorer(methodName);
     }
 
+    // ============================================================
+    // VARIABLE DE CLASSE (pour instruction retour)
+    // ============================================================
+
+    /**
+     * Définit la variable de classe courante.
+     * Appelé lors de l'interprétation de ClasseNode.
+     */
+    public void setVariableClasse(String nomClasse) {
+        this.variableClasse = nomClasse;
+    }
+
+    /**
+     * Récupère le nom de la variable de classe courante.
+     * Utilisé par RetourNode pour affecter la valeur de retour.
+     */
+    public String getVariableClasse() {
+        return this.variableClasse;
+    }
 
     // ============================================================
     // BASIC OPERATIONS
@@ -223,8 +250,8 @@ public class Stacks {
 
     /** Push (Empiler): add a new element on top of the stack */
     public void push(Quad q) {
-        //double check
-        if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
+        // double check
+        if (("tab".equals(q.object)) && q.value instanceof ArrayInfo info) {
 
             Symbol existing = symbolTable.findSymbol(q.ident);
 
@@ -243,6 +270,7 @@ public class Stacks {
         stack.push(q);
         updateSymbolPositions();
     }
+
     /** Push (Empiler): add a new element on top of the stack for new tab */
     public void pushNewTab(Quad q) {
 
@@ -254,7 +282,7 @@ public class Stacks {
     public Quad pop() {
         if (!stack.isEmpty()) {
             Quad q = stack.pop();
-            if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
+            if (("tab".equals(q.object)) && q.value instanceof ArrayInfo info) {
 
                 Symbol existing = symbolTable.findSymbol(q.ident);
 
@@ -290,11 +318,13 @@ public class Stacks {
             updateSymbolPositions();
         }
     }
-    /**return the top of the pil */
+
+    /** return the top of the pil */
     public Quad getTop() {
         return stack.isEmpty() ? null : stack.peek();
     }
-    /*get all quad from the pill */
+
+    /* get all quad from the pill */
     public List<Quad> getStackFromTopToBottom() {
         List<Quad> result = new ArrayList<>();
         for (int i = stack.size() - 1; i >= 0; i--) {
@@ -302,6 +332,7 @@ public class Stacks {
         }
         return result;
     }
+
     /**
      * Retourne la position d'un identifiant dans la pile.
      * 0 = bas de la pile, size()-1 = haut.
@@ -329,18 +360,19 @@ public class Stacks {
         Quad q = new Quad(ident, value, "var", type);
         push(q);
         int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
+        symbolTable.creationSymbol(ident, positionStack, type);
 
     }
+
     /** Declare a variable with default value Omega */
-    public  void declareVar(String ident, Type type) {
+    public void declareVar(String ident, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
             throw new RuntimeException("var already  declare: " + ident);
         }
         declareVar(ident, Omega.getInstance(), type);
     }
-    
+
     /** Declare a constant */
     public void declareCst(String ident, Object value, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
@@ -352,6 +384,7 @@ public class Stacks {
         int positionStack = getStackPosition(ident);
         symbolTable.creationSymbol(ident, positionStack, type);
     }
+
     /** Declare a constant with default value Omega */
     public void declareCst(String ident, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
@@ -361,7 +394,7 @@ public class Stacks {
         declareCst(ident, Omega.getInstance(), type);
     }
 
-    /*Retrait de Declaration */
+    /* Retrait de Declaration */
     public void RetirerDecl(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
@@ -377,9 +410,9 @@ public class Stacks {
 
     /**
      * Declare an array:
-     *  - allocate a block in the Heap with heap.allocate(...)
-     *  - store an ArrayInfo in the Quad.value (contains base address + logical size)
-     *  - push the Quad on the stack and register the symbol as before
+     * - allocate a block in the Heap with heap.allocate(...)
+     * - store an ArrayInfo in the Quad.value (contains base address + logical size)
+     * - push the Quad on the stack and register the symbol as before
      */
     public void declareTab(String ident, int size, Type type) {
         Symbol tabSymbol = symbolTable.findSymbol(ident);
@@ -388,13 +421,16 @@ public class Stacks {
         }
         int cellPerElement;
         switch (type) {
-            case ENTIER:  cellPerElement = 1; break;
-            case BOOLEEN: cellPerElement = 1; break;
+            case ENTIER:
+                cellPerElement = 1;
+                break;
+            case BOOLEEN:
+                cellPerElement = 1;
+                break;
             default:
                 throw new RuntimeException("Unsupported array type: " + type);
         }
         int totalSize = size * cellPerElement;
-
 
         HeapEntry entry = heap.allocate(ident, totalSize, null);
         if (entry == null) {
@@ -402,14 +438,11 @@ public class Stacks {
         }
         int baseAddress = entry.getAddress();
 
-
         ArrayInfo info = new ArrayInfo(size);
         info.setBaseAddress(baseAddress);
 
-
         Quad q = new Quad(ident, info, "tab", type);
         pushNewTab(q);
-
 
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type);
@@ -420,7 +453,6 @@ public class Stacks {
 
     }
 
-
     /** Declare a method (record its signature only) */
     public void declareMeth(String ident, Object body, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
@@ -430,14 +462,16 @@ public class Stacks {
         Quad q = new Quad(ident, body, "meth", type);
         push(q);
         int positionStack = getStackPosition(ident);
-        symbolTable.creationSymbol(ident,positionStack,type);
+        symbolTable.creationSymbol(ident, positionStack, type);
     }
 
     // ============================================================
     // VALUE ASSIGNMENT & ACCESS METHODS
     // ============================================================
 
-    /** Assign a new value to an existing identifier return false if cst or not found*/
+    /**
+     * Assign a new value to an existing identifier return false if cst or not found
+     */
 
     /** Get the value of an identifier */
     public Object getValue(String ident) {
@@ -452,7 +486,7 @@ public class Stacks {
                 return q.value;
             }
         }
-        //TODO: throw exception
+        // TODO: throw exception
         return null;
     }
 
@@ -460,7 +494,8 @@ public class Stacks {
     public String getObjectType(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(ident)) return q.object;
+            if (q.ident.equals(ident))
+                return q.object;
         }
         return null;
     }
@@ -469,10 +504,12 @@ public class Stacks {
     public Type getDataType(String ident) {
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(ident)) return q.type;
+            if (q.ident.equals(ident))
+                return q.type;
         }
         return null;
     }
+
     // ============================================================
     // Axiome D'interpretation
     // ============================================================
@@ -485,35 +522,34 @@ public class Stacks {
         // Verify symbol exists
         Symbol sym = symbolTable.findSymbol(ident);
         if (sym == null) {
-            throw new RuntimeException("Variable  :" + ident+ " pas declaree.");
+            throw new RuntimeException("Variable  :" + ident + " pas declaree.");
         }
 
         // Find the Quad from top to bottom
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (!q.ident.equals(ident)) continue;
+            if (!q.ident.equals(ident))
+                continue;
 
             // Prevent assigning to constants
             if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
                 throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
             if ("tab".equals(q.object)) {
-                throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");
-                
+                throw new RuntimeException("Erreur : " + ident + " est un tableau, affectation non permise.");
+
             }
 
             // For arrays and methods, assignment should be handled by dedicated APIs
             if ("meth".equals(q.object)) {
-                throw new RuntimeException("Erreur : " + ident+" est une méthode, affectation non permise.");
+                throw new RuntimeException("Erreur : " + ident + " est une méthode, affectation non permise.");
             }
 
             // Check type compatibility
             if (!isTypeCompatible(q.type, newValue)) {
                 throw new RuntimeException("Type de variable " + ident +
-                        ": attendu " + q.type + " mais reçu " +  newValue.getClass().getSimpleName());
+                        ": attendu " + q.type + " mais reçu " + newValue.getClass().getSimpleName());
             }
-
-          
 
             // Perform assignment and update stack entry explicitly
             q.value = newValue;
@@ -524,11 +560,18 @@ public class Stacks {
         // Shouldn't happen because we checked symbol existence, but keep safe fallback
         throw new RuntimeException("Symbol found in symbol table but not on stack: " + ident);
     }
+
     /**
-     * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de String)
+     * Vérifie si la valeur donnée correspond bien au type attendu (sous forme de
+     * String)
      */
     private boolean isTypeCompatible(Type type, Object value) {
-        if (value == null) return true; // null accepté pour tous types
+        if (value == null)
+            return true; // null accepté pour tous types
+        if (type == Type.ANY) {
+
+            return value instanceof Integer || value instanceof Boolean; // pour la variable de classe
+        }
 
         switch (type) {
             case ENTIER:
@@ -541,16 +584,12 @@ public class Stacks {
                 return value instanceof String;
 
             case VOID:
-                return value == null;
+                return value == null; // pas bon ça je crois
 
             default:
                 return false;
         }
     }
-
-
-
-    
 
     // ============================================================
     // PRINT STACK CONTENT
@@ -563,6 +602,7 @@ public class Stacks {
         }
         System.out.println("------------------------------\n");
     }
+
     /**
      * Affiche tout le contenu de la table des symboles.
      */
@@ -579,11 +619,12 @@ public class Stacks {
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
             System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | adress=" + s.getAddressStack()) ;
+                    " | adress=" + s.getAddressStack());
         } else {
             System.out.println(" Symbole non trouvé : " + name);
         }
     }
+
     // ------------------------------------------------------------
     // UTILITY: Update SymbolTable positions after stack changes
     // ------------------------------------------------------------
@@ -592,11 +633,12 @@ public class Stacks {
             Quad q = stack.get(i);
             Symbol s = symbolTable.findSymbol(q.ident);
             if (s != null) {
-                symbolTable.updateAddressStack(s.getName(),i);
+                symbolTable.updateAddressStack(s.getName(), i);
             }
 
         }
     }
+
     public SymbolTable getSymbolTable() {
         return symbolTable;
     }
@@ -614,14 +656,14 @@ public class Stacks {
         return null;
     }
 
-
     /**
      * Return the element at array[ index ].
      * Returns null if not found, out-of-bounds, or not an array.
      */
     public Object getArrayValue(String ident, int index) {
         Quad q = findQuad(ident);
-        if (q == null) throw new RuntimeException("Unknown array " + ident);
+        if (q == null)
+            throw new RuntimeException("Unknown array " + ident);
 
         if (!(q.value instanceof ArrayInfo info))
             throw new RuntimeException("Not an array: " + ident);
@@ -629,21 +671,23 @@ public class Stacks {
         if (index < 0 || index >= info.getSize())
             throw new RuntimeException("Index out of bounds: " + ident + "[" + index + "]");
 
-
-        int address = info.getBaseAddress() + index ;
+        int address = info.getBaseAddress() + index;
 
         return heap.read(address);
 
     }
+
     /**
      * Set array[index] = value.
      * throw exeption if not possible
      */
     public void setArrayValue(String ident, int index, Object value) {
         Quad q = findQuad(ident);
-        if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
-        if(!(isTypeCompatible(q.type, value))){
+        if (q == null)
+            throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo info))
+            throw new RuntimeException("Not an array: " + ident);
+        if (!(isTypeCompatible(q.type, value))) {
             throw new RuntimeException("Element not compatible with type " + q.type + " and value " + value);
         }
 
@@ -655,16 +699,15 @@ public class Stacks {
         int cellSize;
         if (value instanceof Integer) {
             cellSize = 1;
-        }
-        else if (value instanceof Boolean) {
+        } else if (value instanceof Boolean) {
             cellSize = 1;
-        }
-        else {
+        } else {
             throw new RuntimeException("Unsupported type");
         }
 
         int base = info.getBaseAddress();
-        if (base < 0) throw new RuntimeException("Array not allocated");
+        if (base < 0)
+            throw new RuntimeException("Array not allocated");
 
         // compute address IN THE CONTIGUOUS BLOCK
         int address = base + (index * cellSize);
@@ -672,12 +715,9 @@ public class Stacks {
         heap.write(address, value);
     }
 
-
-
-
     // ============================================================
-// HEAP UTILITIES
-// ============================================================
+    // HEAP UTILITIES
+    // ============================================================
 
     /**
      * Print the full content of the heap from Stacks.
@@ -696,14 +736,13 @@ public class Stacks {
 
         for (int i = 0; i < 256; i++) { // check each cell in memory table
             Object mem = heap.getMemory()[i];
-            if (mem !=null) {
-                entries.add( mem);
+            if (mem != null) {
+                entries.add(mem);
             }
         }
 
         return entries.toArray(new Object[0]);
     }
-
 
     /**
      * Return all symbols currently in the symbol table.
@@ -713,12 +752,14 @@ public class Stacks {
 
         return symbolTable.getAllSymbols();
     }
+
     /**
      * Return the Heap instance (for testing or inspection purposes)
      */
     public Heap getHeap() {
         return heap;
     }
+
     public void freeArrayElement(String ident, int index) {
 
         Quad q = findQuad(ident);
@@ -735,9 +776,7 @@ public class Stacks {
         if (base < 0)
             throw new RuntimeException("Array not allocated in heap");
 
-
-
-        int address = base + (index );
+        int address = base + (index);
 
         // If already empty
         if (heap.read(address) == null) {
@@ -751,7 +790,6 @@ public class Stacks {
         System.out.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
     }
 
-   
     public void freeTab(String ident) {
 
         Quad q = findQuad(ident);
@@ -769,27 +807,25 @@ public class Stacks {
         HeapEntry entry = new HeapEntry(
                 ident,
                 base,
-                info.getSize() ,
+                info.getSize(),
                 null,
-                false
-        );
+                false);
 
         // Now release the entire block
-        //heap.free(entry);
+        // heap.free(entry);
         heap.releaseReference(entry);
         System.out.println("← Freed array " + ident + " (block starting at " + base + ")");
     }
+
     public int getArrayLength(String ident) {
         Quad q = findQuad(ident);
-        if (q == null) throw new RuntimeException("Unknown array " + ident);
-        if (!(q.value instanceof ArrayInfo info)) throw new RuntimeException("Not an array: " + ident);
-
+        if (q == null)
+            throw new RuntimeException("Unknown array " + ident);
+        if (!(q.value instanceof ArrayInfo info))
+            throw new RuntimeException("Not an array: " + ident);
 
         return info.getSize();
 
     }
 
-
 }
-
-

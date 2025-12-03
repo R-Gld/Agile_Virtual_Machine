@@ -1,12 +1,14 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe;
 
+import java.util.List;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rDeclrs;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
-import java.util.List;
 public class ClasseNode extends AstNode {
 
     private final String varClasse;
@@ -22,6 +24,7 @@ public class ClasseNode extends AstNode {
         this.methodeMain = methodeMain;
         this.rdeclrs = new rDeclrs(declarations);
     }
+
     public String getVarClasse() {
         return varClasse;
     }
@@ -44,6 +47,7 @@ public class ClasseNode extends AstNode {
                 declarations.toStringTree() + "," +
                 methodeMain.toStringTree() + ")";
     }
+
     @Override
     public Iterable<AstNode> getChildren() {
         if (declarations != null) {
@@ -52,8 +56,10 @@ public class ClasseNode extends AstNode {
             return List.of(ident, methodeMain);
         }
     }
+
     @Override
     public void interpret(Stacks stacks) {
-        // TODO ?
+        stacks.declareVar(varClasse, Type.ANY);
+        stacks.setVariableClasse(varClasse);
     }
 }
