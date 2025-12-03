@@ -309,11 +309,17 @@ public class App extends Application {
         fileToRun.setValue("MiniJaja");
         hbox.getChildren().add(fileToRun);
 
+        /* Execute button */
         Button runButton = new Button("");
         runButton.setGraphic(new ImageView(getClass().getResource("/icons/threadRunning.png").toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
         runButton.setOnAction(e -> run());
         hbox.getChildren().add(runButton);
+
+        //  Added section: debug controls (icons only, no text)
+        /**
+         * Simple debug control bar with icons only: Start Debug / Step / Stop
+         */
 
         Button debugButton = new Button();
         Button stepButton = new Button();
@@ -350,6 +356,7 @@ public class App extends Application {
      */
     private void loadFile() {
 
+        /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.getExtensionFilters().addAll(
@@ -359,6 +366,7 @@ public class App extends Application {
         File file = fileChooser.showOpenDialog(appStage);
         if (file == null) return;
 
+        /* Lecture du fichier selectionner depuis l'explorateur de fichier */
         StringBuilder fileContent = new StringBuilder();
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
@@ -378,7 +386,7 @@ public class App extends Application {
             alert.showAndWait();
             return;
         }
-
+        /* Chargement du texte dans l'interface */
         mjjCodeArea.loadText(fileContent.toString());
 
         if (console != null) {
@@ -424,6 +432,7 @@ public class App extends Application {
      * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
      */
     private void compile() {
+        // On lit le texte sur le thread FX
         String code = mjjCodeArea.getText();
 
         Task<String> task = new Task<>() {

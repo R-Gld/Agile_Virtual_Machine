@@ -1,0 +1,32 @@
+/*.lineno {
+    -fx-background-color: #141929;
+    -fx-padding: 0 15 0 10;
+    -fx-fill: #141929;
+}
+
+.lineno .text {
+    -fx-fill: #DEDEDE;
+}
+*/
+
+
+.executed-line {
+    -fx-background-color: #141929;
+}
+
+
+.current-line {
+    -fx-background-color: #EAFA00;
+}
+
+.breakpoint-node {
+    -fx-fill: #FF3B30; /* red */
+    -fx-translate-x: -15px;
+}
+.split-pane:horizontal > .split-pane-divider {
+    -fx-padding: 0 1 0 1;
+}
+
+.split-pane:vertical > .split-pane-divider {
+    -fx-padding: 1 0 1 0;
+}
