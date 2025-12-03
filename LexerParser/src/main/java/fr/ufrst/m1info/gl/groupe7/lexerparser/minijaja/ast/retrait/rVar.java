@@ -23,16 +23,16 @@ public class rVar {
         if (var instanceof VarNode) {
             VarNode varNode = (VarNode) var;
             String varName = varNode.getIdent().getNom();
-            stacks.RetirerDecl(varName);
+            stacks.retirerDecl(varName);
         } else if (var instanceof TableauNode) {
             TableauNode tableauNode = (TableauNode) var;
             String tableauName = tableauNode.getIdent().getNom();
-            //TODO: retirer le tableau de la pile des tableaux (refaire une methode specfique)
-            stacks.RetirerDecl(tableauName);
+            //TODO: retirer le tableau de la pile des tableaux (refaire une methode specfique) // fais à tester avec interprétation
+            stacks.retirerDecl(tableauName);
         }else if (var instanceof CstNode) {
             CstNode cstNode = (CstNode) var;
             String cstName = cstNode.getIdent().getNom();
-            stacks.RetirerDecl(cstName);
+            stacks.retirerDecl(cstName);
         }
 
         
