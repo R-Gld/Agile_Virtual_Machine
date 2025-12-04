@@ -42,8 +42,7 @@ public class rEntetes extends AstNode {
             if (stacks.isInMethodContext()) {
                 ident = stacks.getScopedName(ident);
             }
-            stacks.RetirerDecl(ident);
-        }
-    }
+            stacks.retirerDecl(ident);
+    }}
     
 }

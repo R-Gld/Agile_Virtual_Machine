@@ -396,18 +396,7 @@ public class Stacks {
     }
 
     /*Retrait de Declaration */
-    public void RetirerDecl(String ident) {
-        for (int i = stack.size() - 1; i >= 0; i--) {
-            Quad q = stack.get(i);
-            if (q.ident.equals(ident)) {
-                System.err.println("[RETRAIT] Retiring declaration of '" + ident + "' from stack.");
-                stack.remove(i);
-                updateSymbolPositions();
-                symbolTable.remove(ident);
-                return;
-            }
-        }
-    }
+   
 
     /**
      * Declare an array:

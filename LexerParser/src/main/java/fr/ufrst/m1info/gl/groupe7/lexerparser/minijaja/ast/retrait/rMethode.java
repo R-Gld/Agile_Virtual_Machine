@@ -14,7 +14,7 @@ public class rMethode  {
     }
     public void interpret(Stacks stacks) {
 
-    stacks.RetirerDecl(methode.getIdent().getNom());
+    stacks.retirerDecl(methode.getIdent().getNom());
 
     }
 
