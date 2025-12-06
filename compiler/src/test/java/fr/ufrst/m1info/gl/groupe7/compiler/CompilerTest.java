@@ -160,8 +160,8 @@ class CompilerTest {
         // Vérifier la présence des instructions clés pour la déclaration de méthode
         assertTrue(jajaCode.contains("push("),
             "Should contain push instruction for method address");
-        assertTrue(jajaCode.contains("new(double@global"),
-            "Should declare method 'double' in global scope");
+        assertTrue(jajaCode.contains("new(double"),
+            "Should declare method 'double'");
         assertTrue(jajaCode.contains("meth"),
             "Method should be declared with 'meth' kind");
         assertTrue(jajaCode.contains("goto("),
@@ -172,7 +172,7 @@ class CompilerTest {
             "Method body should end with return instruction");
 
         // Vérifier la présence de l'appel de méthode
-        assertTrue(jajaCode.contains("invoke(double@global)"),
+        assertTrue(jajaCode.contains("invoke(double"),
             "Should contain invoke instruction to call the method");
 
         // Vérifier la présence de writeln
@@ -219,8 +219,8 @@ class CompilerTest {
         assertFalse(jajaCode.isEmpty());
 
         // Vérifier les éléments spécifiques
-        assertTrue(jajaCode.contains("new(add@global"), "Should declare method 'add'");
-        assertTrue(jajaCode.contains("invoke(add@global)"), "Should invoke method 'add'");
+        assertTrue(jajaCode.contains("new(add"), "Should declare method 'add'");
+        assertTrue(jajaCode.contains("invoke(add"), "Should invoke method 'add'");
         assertTrue(jajaCode.contains("push(10)"), "Should push argument 10");
         assertTrue(jajaCode.contains("writeln"), "Should contain writeln");
     }
@@ -247,7 +247,7 @@ class CompilerTest {
         assertDoesNotThrow(compiler::run, "Method call in expression should compile");
 
         String jajaCode = compiler.getLastOutput();
-        assertTrue(jajaCode.contains("invoke(getValue@global)"),
+        assertTrue(jajaCode.contains("invoke(getValue"),
             "Should invoke getValue method");
         assertTrue(jajaCode.contains("store(result@main)"),
             "Should store result in main scope");

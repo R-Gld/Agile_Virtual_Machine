@@ -14,6 +14,7 @@ public class AppelENode extends Expression {
     public AppelENode(IdentNode ident2, ListExpNode listexp) {
         this.ident = ident2;
         this.listexp = listexp;
+        this.type = Type.ENTIER;
     }
 
     public IdentNode getIdent() {

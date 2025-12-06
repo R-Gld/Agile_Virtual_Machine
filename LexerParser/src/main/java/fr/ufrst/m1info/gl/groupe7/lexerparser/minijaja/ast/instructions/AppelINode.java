@@ -95,6 +95,8 @@ public class AppelINode extends InstructionNode {
         }
     }
 
+    public Type getType() { return type; }
+
     @Override
     public String toStringTree() {
         return "appelI(" + ident.toStringTree() + "," + listExp.toStringTree() + ")";
