@@ -55,8 +55,10 @@ public class MyCodeArea extends AnchorPane {
             /* Create breakpoint circle (initially hidden) */
             Circle bpCircle = new Circle(5);
             bpCircle.getStyleClass().add("breakpoint-node");
-            bpCircle.setVisible(false);
             bpCircle.setManaged(true);   // always reserve space
+
+            // restore visibility from breakpoint set (after scroll)
+            bpCircle.setVisible(breakpoints.contains(line));
 
             /* Clicking toggles breakpoint ON/OFF */
             bpCircle.setOnMouseClicked(e -> toggleBreakpoint(line, bpCircle));
@@ -67,9 +69,17 @@ public class MyCodeArea extends AnchorPane {
             /* Clicking on the number also toggles breakpoint */
             number.setOnMouseClicked(e -> toggleBreakpoint(line, bpCircle));
 
-            hbox.getChildren().addAll(number ,bpCircle);
-            hbox.setSpacing(6);
+            hbox.getChildren().addAll(number, bpCircle);
+            hbox.setSpacing(0);
             hbox.setAlignment(Pos.CENTER_LEFT);
+            hbox.setPadding(new javafx.geometry.Insets(0, 0, 0, -20));
+
+            // fix gutter width so it does not change when scrolling or line numbers grow
+            hbox.setMinWidth(57);
+            hbox.setPrefWidth(57);
+            hbox.setMaxWidth(57);
+
+            StackPane stack;
 
             if (line == 0) {
                 Rectangle rectangle = new Rectangle();
@@ -77,10 +87,19 @@ public class MyCodeArea extends AnchorPane {
                 rectangle.widthProperty().bind(hbox.widthProperty());
                 rectangle.heightProperty().bind(codeArea.heightProperty());
                 StackPane.setAlignment(rectangle, Pos.TOP_LEFT);
-                return new StackPane(rectangle, hbox);
+                stack = new StackPane(rectangle, hbox);
+            } else {
+                stack = new StackPane(hbox);
             }
-            return new StackPane(hbox);
+
+            // lock stack pane width to keep gutter width stable
+            stack.setMinWidth(70);
+            stack.setPrefWidth(70);
+            stack.setMaxWidth(70);
+
+            return stack;
         };
+
 
         codeArea.setParagraphGraphicFactory(graphicFactory);
 
@@ -138,7 +157,7 @@ public class MyCodeArea extends AnchorPane {
         codeArea.setEditable(false);
     }
 
-    // ==== START highlight ====
+    //  START highlight 
     /**
      * Highlights the specified line with the CSS class "current-line".
      * Used during debugging to indicate the current execution line.
@@ -158,6 +177,6 @@ public class MyCodeArea extends AnchorPane {
         });
     }
 
-    // ==== END highlight ====
+    //  END highlight 
     // cos of the inner style it didn't work I have removed it and i think now it works for linux please check it
 }

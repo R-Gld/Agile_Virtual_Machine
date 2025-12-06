@@ -5,7 +5,7 @@
     -fx-text-fill: #e4e5f0;
 }
 
-/* ---------- TITLE BAR (MiniJaja IDE + window buttons) ---------- */
+/*  TITLE BAR (MiniJaja IDE + window buttons)  */
 
 .app-titlebar {
     -fx-padding: 4 10 4 10;
@@ -43,7 +43,7 @@
     -fx-text-fill: #111118;
 }
 
-/* ---------- TOP STRIP (File + spacer + 🌙 toggle) ---------- */
+/*  TOP STRIP (File + spacer + 🌙 toggle)  */
 /* same tone as debug-toolbar, no visible border, only soft shadow */
 
 .top-strip {
@@ -52,7 +52,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 10, 0.0, 0, 2);
 }
 
-/* ---------- MENU BAR ---------- */
+/*  MENU BAR  */
 
 .menu-bar {
     -fx-background-color: transparent;
@@ -77,7 +77,7 @@
     -fx-text-fill: #f7f7ff;
 }
 
-/* ---------- DEBUG TOOLBAR (row with build / run / debug) ---------- */
+/*  DEBUG TOOLBAR (row with build / run / debug)  */
 
 #debug-toolbar {
     -fx-background-color: #181824;
@@ -85,7 +85,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 8, 0.0, 0, 2);
 }
 
-/* ---------- BUTTONS & TOGGLE BUTTONS ---------- */
+/*  BUTTONS & TOGGLE BUTTONS  */
 
 .button {
     -fx-background-color: transparent;
@@ -124,7 +124,7 @@
     -fx-border-width: 1;
 }
 
-/* ---------- CHOICE BOX (MiniJaja / JajaCode) ---------- */
+/*  CHOICE BOX (MiniJaja / JajaCode)  */
 
 .choice-box {
     -fx-background-color: #262637;
@@ -145,7 +145,7 @@
     -fx-text-fill: #d7d8e5;
 }
 
-/* ---------- SPLIT PANE & DIVIDERS ---------- */
+/*  SPLIT PANE & DIVIDERS  */
 
 .split-pane {
     -fx-background-color: #101017;
@@ -161,7 +161,7 @@
     -fx-padding: 1 0 1 0;
 }
 
-/* ---------- SCROLL BARS ---------- */
+/*  SCROLL BARS  */
 
 .scroll-bar:horizontal,
 .scroll-bar:vertical {
@@ -177,7 +177,7 @@
     -fx-background-color: #3b3b4a;
 }
 
-/* ---------- GENERIC TEXT AREAS ---------- */
+/*  GENERIC TEXT AREAS  */
 
 .text-area,
 .text-input {
@@ -200,13 +200,13 @@
     -fx-highlight-text-fill: #ffffff;
 }
 
-/* ---------- LABELS ---------- */
+/*  LABELS  */
 
 .label {
     -fx-text-fill: #d7d8e5;
 }
 
-/* ---------- TOOLTIP ---------- */
+/*  TOOLTIP  */
 
 .tooltip {
     -fx-background-color: #191925;
@@ -216,7 +216,7 @@
     -fx-font-size: 11px;
 }
 
-/* ---------- CONSOLE ---------- */
+/*  CONSOLE  */
 
 #console {
     -fx-background-color: #14141f;
@@ -232,7 +232,7 @@
     -fx-fill: #f0f1f7;
 }
 
-/* ---------- LINE NUMBERS (lineno) ---------- */
+/*  LINE NUMBERS (lineno)  */
 /* very close to code area, slightly separated */
 
 .lineno {
@@ -241,13 +241,20 @@
     -fx-fill: #191a25;
     -fx-border-color: transparent;
     -fx-border-width: 0;
+    -fx-pref-width: 70px;
+    -fx-min-width: 70px;
+    -fx-max-width: 70px;
+    -fx-alignment: center;
+    -fx-padding: 0 0 0 0px;
+    -fx-cursor: hand;
+
 }
 
 .lineno .text {
     -fx-fill: #8d8fa2;
 }
 
-/* ---------- DEBUG HIGHLIGHTING ---------- */
+/*  DEBUG HIGHLIGHTING  */
 
 .executed-line {
     -fx-background-color: #222233;
@@ -265,14 +272,14 @@
     -fx-fill: #ffffff;
 }
 
-/* ---------- BREAKPOINT DOT ---------- */
+/*  BREAKPOINT DOT  */
 
 .breakpoint-node {
     -fx-fill: #FF4A4A;
     -fx-translate-x: -15px;
 }
 
-/* ---------- CODE AREA (RichTextFX) ---------- */
+/*  CODE AREA (RichTextFX)  */
 
 .code-area {
     -fx-background-color: #171722;
@@ -282,7 +289,7 @@
     -fx-fill: #e4e5f0;
 }
 
-/* ---------- PANEL TITLE BARS (MiniJaja / JajaCode headers) ---------- */
+/*  PANEL TITLE BARS (MiniJaja / JajaCode headers)  */
 
 .panel-titlebar {
     -fx-padding: 4 8 4 8;

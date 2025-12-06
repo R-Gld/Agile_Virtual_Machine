@@ -219,14 +219,26 @@
 
 .lineno {
     -fx-background-color: #e7ecf5;
-    -fx-padding: 0 15 0 10;
+  /*  -fx-padding: 0 15 0 10;*/
     -fx-fill: #e7ecf5;
     -fx-border-color: #d0d7e3;
     -fx-border-width: 0 0 0 0;
+    -fx-cursor: hand;
+    -fx-pref-width: 70px;
+    -fx-min-width: 70px;
+    -fx-max-width: 70px;
+    -fx-alignment: center;
+    -fx-padding: 0 0 0 0px;
+     -fx-cursor: hand;
 }
+
 
 .lineno .text {
     -fx-fill: #6b7a8c;
+    -fx-text-alignment: left;
+
+
+
 }
 
 .executed-line {
@@ -247,20 +259,17 @@
 }
 
 .breakpoint-node {
-    -fx-fill: #E51400;
+    -fx-fill: #FF3B30;
     -fx-translate-x: -15px;
 }
 
 
 .code-area {
     -fx-background-color: #FCFCFC;
-
-
 }
 
 .code-area .text {
     -fx-fill: #30393D;
-
 }
 
 
@@ -297,80 +306,10 @@
     -fx-background-color: #c7d6f0;
 }
 
-
-.executed-line {
-    -fx-background-color: #fff7dd;
-}
-
-.current-line {
-    -fx-background-color: #fffab0;
-}
-
-.breakpoint-node {
-    -fx-fill: #FF3B30;
-    -fx-translate-x: -15px;
-}
-
 .split-pane:horizontal > .split-pane-divider {
     -fx-padding: 0 1 0 1;
 }
 
 .split-pane:vertical > .split-pane-divider {
     -fx-padding: 1 0 1 0;
-}
-
-
-
-.executed-line {
-    -fx-background-color: #fff7dd;
-}
-
-.current-line {
-    -fx-background-color: #fffab0;
-}
-
-.breakpoint-node {
-    -fx-fill: #FF3B30;
-    -fx-translate-x: -15px;
-}
-
-.split-pane:horizontal > .split-pane-divider {
-    -fx-padding: 0 1 0 1;
-}
-
-.split-pane:vertical > .split-pane-divider {
-    -fx-padding: 1 0 1 0;
-}
-.app-titlebar {
-    -fx-padding: 4 10 4 10;
-    -fx-background-color: #dde3ec;
-    -fx-border-color: #c5cfdd;
-    -fx-border-width: 0 0 1 0;
-}
-
-.app-title-label {
-    -fx-text-fill: #30393D;
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-}
-
-.window-button {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-text-fill: #30393D;
-    -fx-padding: 2 10 2 10;
-    -fx-font-size: 13px;
-}
-
-.window-button:hover {
-    -fx-background-color: #e5edf7;
-}
-
-.window-button-close {
-    -fx-text-fill: #d00000;
-}
-
-.window-button-close:hover {
-    -fx-background-color: #e81123;
-    -fx-text-fill: #ffffff;
 }
