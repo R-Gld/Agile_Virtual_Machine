@@ -4,12 +4,15 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
+
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class AppelENode extends Expression {
 
     private final IdentNode ident;
     private final ListExpNode listexp;
+    private final Type type;
 
     public AppelENode(IdentNode ident2, ListExpNode listexp) {
         this.ident = ident2;
