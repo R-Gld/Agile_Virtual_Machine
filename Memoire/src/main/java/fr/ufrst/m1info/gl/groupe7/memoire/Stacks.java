@@ -262,7 +262,7 @@ public class Stacks {
                 HeapEntry entry = heap.getEntryNotFree(base);
                 if (entry != null) {
                     entry.incrementRef();
-                    System.out.println("[GC] Increment refCount of array '" + q.ident +
+                    System.err.println("[GC] Increment refCount of array '" + q.ident +
                             "' ⇒ now " + entry.getRefCount());
                 }
             }
@@ -281,7 +281,8 @@ public class Stacks {
     /** Pop (Dépiler): remove the top element from the stack */
     public Quad pop() {
         if (!stack.isEmpty()) {
-            Quad q = stack.pop();
+            Quad q =stack.peek();
+
             if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
 
                 Symbol existing = symbolTable.findSymbol(q.ident);
@@ -296,7 +297,7 @@ public class Stacks {
                         if (entry.getRefCount() == 0) {
                             freeTab(q.ident);
                         }
-                        System.out.println("[GC] Increment refCount of array '" + q.ident +
+                        System.err.println("[GC] Increment refCount of array '" + q.ident +
                                 "' ⇒ now " + entry.getRefCount());
                     }
                 }
@@ -437,7 +438,7 @@ public class Stacks {
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type);
 
-        System.out.println("→ Array " + ident +
+        System.err.println("→ Array " + ident +
                 " allocated: base=" + baseAddress +
                 " cells=" + totalSize + " (size=" + size + ")");
 
@@ -477,7 +478,7 @@ public class Stacks {
             }
         }
         if (position == -1) {
-            System.out.println("Symbol '" + ident + "' not found — cannot remove.");
+            System.err.println("Symbol '" + ident + "' not found — cannot remove.");
             return;
         }
 
@@ -490,18 +491,18 @@ public class Stacks {
 
                     freeTab(q.ident);
 
-                System.out.println("[GC] Increment refCount of array '" + q.ident +
+                System.err.println("[GC] Increment refCount of array '" + q.ident +
                         "' ⇒ now " + entry.getRefCount());
             }
         }
 
         // 3. Remove Quad from stack
         stack.remove(position);
-        System.out.println("→ Removed declaration '" + ident + "' from stack.");
+        System.err.println("→ Removed declaration '" + ident + "' from stack.");
 
         // 4. Remove from symbol table
         symbolTable.remove(ident);
-        System.out.println("→ Symbol '" + ident + "' removed from the symbol table.");
+        System.err.println("→ Symbol '" + ident + "' removed from the symbol table.");
 
         // 5. Update stack positions (if you track positions)
         updateSymbolPositions();
@@ -643,11 +644,11 @@ public class Stacks {
     // ============================================================
     /** Display the entire stack content */
     public void printStack() {
-        System.out.println("\n--- Current Stack Content ---");
+        System.err.println("\n--- Current Stack Content ---");
         for (int i = stack.size() - 1; i >= 0; i--) {
-            System.out.println(stack.get(i));
+            System.err.println(stack.get(i));
         }
-        System.out.println("------------------------------\n");
+        System.err.println("------------------------------\n");
     }
 
     /**
@@ -665,10 +666,10 @@ public class Stacks {
 
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
-            System.out.println("🔹 " + s.getName() + " | type=" + s.getType() +
+            System.err.println("🔹 " + s.getName() + " | type=" + s.getType() +
                     " | adress=" + s.getAddressStack());
         } else {
-            System.out.println(" Symbole non trouvé : " + name);
+            System.err.println(" Symbole non trouvé : " + name);
         }
     }
 
@@ -837,11 +838,11 @@ public class Stacks {
         // Free the cell inside the contiguous block
         heap.write(address, null);
 
-        System.out.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
+        System.err.println("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
     }
 
    
-    public void freeTab(String ident) {
+ public void freeTab(String ident) {
 
         Quad q = findQuad(ident);
         if (q == null)
@@ -855,18 +856,13 @@ public class Stacks {
             throw new RuntimeException("Array not allocated");
 
         // build a HeapEntry matching the original allocation
-        HeapEntry entry = new HeapEntry(
-                ident,
-                base,
-                info.getSize() ,
-                null,
-                false
-        );
+        HeapEntry entry = heap.getEntryNotFree(base);
+        if (entry == null)
+            throw new RuntimeException("HeapEntry not found for array " + ident);
 
         // Now release the entire block
-        //heap.free(entry);
         heap.releaseReference(entry);
-        System.out.println("← Freed array " + ident + " (block starting at " + base + ")");
+        System.err.println("← Freed array " + ident + " (block starting at " + base + ")");
     }
 
     public int getArrayLength(String ident) {
@@ -914,7 +910,7 @@ public class Stacks {
             }
         }
 
-        System.out.println("[REF COPY] " + identDest + " = " + identSource +
+        System.err.println("[REF COPY] " + identDest + " = " + identSource +
                 "  (base=" + newSourceInfo.getBaseAddress() +
                 ", refCount=" + heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount() + ")");
     }
@@ -932,9 +928,9 @@ public class Stacks {
 
         if (entry.getRefCount() == 0) {
             heap.free(entry);
-            System.out.println("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
+            System.err.println("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
         } else {
-            System.out.println("   [GC] refCount-- → " + entry.getRefCount() + " (base=" + base + ")");
+            System.err.println("   [GC] refCount-- → " + entry.getRefCount() + " (base=" + base + ")");
         }
     }
     /**
@@ -949,7 +945,7 @@ public class Stacks {
 
         entry.incrementRef();
 
-        System.out.println("   [GC] refCount++ → " + entry.getRefCount() + " (base=" + base + ")");
+        System.err.println("   [GC] refCount++ → " + entry.getRefCount() + " (base=" + base + ")");
     }
 
 }

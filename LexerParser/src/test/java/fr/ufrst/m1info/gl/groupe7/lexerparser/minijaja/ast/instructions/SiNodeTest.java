@@ -147,7 +147,6 @@ public class SiNodeTest {
         
         SiNode siNode = new SiNode(condition, thenBlock, elseBlock);
         String tree = siNode.toStringTree();
-        System.out.println(tree);
         
         assertTrue(tree.startsWith("si ("));
         assertTrue(tree.contains("true"));
