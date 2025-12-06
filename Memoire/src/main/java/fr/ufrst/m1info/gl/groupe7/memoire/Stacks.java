@@ -154,8 +154,12 @@ public class Stacks {
     public String getCurrentMethodName() {
         if (contextStack.isEmpty()) return null;
         String context = contextStack.peek();
-        // Remove trailing digits to get base method name
-        return context.replaceAll("\\d+$", "");
+        // Remove trailing digits to get base method name (iterative approach to avoid ReDoS)
+        int endIndex = context.length();
+        while (endIndex > 0 && Character.isDigit(context.charAt(endIndex - 1))) {
+            endIndex--;
+        }
+        return endIndex == context.length() ? context : context.substring(0, endIndex);
     }
     
     /** Get the current recursion depth for the given method (0 = not in recursion). */
