@@ -1,0 +1,37 @@
+package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
+
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
+import java.util.Objects;
+
+public class CmpAxiome implements JajaAxiome {
+
+    @Override
+    public void execute(MachineContext ctx, String arg) {
+        // 1. Dépilement (Attention : op2 est le sommet, op1 est en dessous)
+        Stacks.Quad op2 = ctx.getStacks().pop();
+        Stacks.Quad op1 = ctx.getStacks().pop();
+
+        // 2. Vérification pile vide
+        if (op1 == null || op2 == null) {
+            throw new StackUnderflowException("Besoin de 2 opérandes", "CMP", ctx.getInstructionCounter());
+        }
+
+        // 3. Calcul de l'égalité
+        boolean result = Objects.equals(op1.value, op2.value);
+
+        // 4. Empilement du résultat
+        ctx.getStacks().push(new Stacks.Quad(
+                ctx.getTEMP_VALUE(), // Identifiant temporaire
+                result,              // Valeur calculée (true/false)
+                ctx.getTEMP_VALUE(), // Sorte temporaire
+                Type.BOOLEEN         // Type explicite
+        ));
+
+        // 5. Log et incrément PC
+        System.out.println("\t\tAxiome CMP exécuté: " + op1.value + " == " + op2.value + " = " + result);
+        ctx.incrementPC();
+    }
+}
