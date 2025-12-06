@@ -2,6 +2,8 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
@@ -35,6 +37,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,6 +52,7 @@ public class MiniJajaCompilerVisitor {
     private final DiagnosticCollector collector;
     private String currentScope = "global";
     private final Set<String> mainLocalVariables = new HashSet<>();
+    private final Set<String> currentScopeVariables = new HashSet<>();
 
 
     // TODO why does stacks param is unused here ? Lucas, Ahmed, Léo ?
@@ -83,14 +87,23 @@ public class MiniJajaCompilerVisitor {
 
     /**
      * Détermine le scope approprié pour une variable.
+     * Cherche d'abord dans le scope actuel (méthode ou main), puis dans global.
      *
      * @param variableName le nom de la variable
-     * @return "main" si la variable est locale au main, "global" sinon
+     * @return le scope approprié (signature de méthode, "main" ou "global")
      */
     private String resolveVariableScope(String variableName) {
+        // D'abord chercher dans le scope actuel (peut être une signature de méthode comme "test@int")
+        if (currentScopeVariables.contains(variableName)) {
+            return currentScope;
+        }
+
+        // Ensuite chercher dans le main
         if ("main".equals(currentScope) && mainLocalVariables.contains(variableName)) {
             return "main";
         }
+
+        // Par défaut, scope global
         return "global";
     }
 
@@ -103,45 +116,75 @@ public class MiniJajaCompilerVisitor {
         MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null, collector);
         childVisitor.currentScope = this.currentScope;
         childVisitor.mainLocalVariables.addAll(this.mainLocalVariables);
+        childVisitor.currentScopeVariables.addAll(this.currentScopeVariables);
         return childVisitor;
     }
 
+    /**
+     * Compile une classe selon la règle [cclasse] :
+     * n ⊢ classe(ident(i), dss, mma) ⇒ {init ⊕G (pdss ⊕ pmma ⊕ prdss) ⊕D pop ⊕D jcstop, ...}
+     */
     public void visit(ClasseNode node) {
         jjcBuilder.addInstruction(INIT);
 
-        // Traiter les déclarations
+        // pdss : Traiter les déclarations globales
         if (node.getDeclarations() != null) {
             visit(node.getDeclarations());
         }
 
-        // Traiter le main
+        // pmma : Traiter le main (sans le retrait des variables locales ici)
         if (node.getMethodeMain() != null) {
             visit((MainNode) node.getMethodeMain());
         }
 
-        // Dépiler les variables déclarées
+        // prdss : Retrait des déclarations globales (swap/pop pour chaque)
         while (!variablesToPop.isEmpty()) {
             variablesToPop.pop();
             jjcBuilder.addInstruction(SWAP);
             jjcBuilder.addInstruction(POP);
         }
 
+        // pop : Retrait du 0 du main
         jjcBuilder.addInstruction(POP);
+
         jjcBuilder.addInstruction(JCSTOP);
     }
 
+    /**
+     * Compile le main selon la règle [cmain] :
+     * n ⊢ main(dvs, iss) ⇒ {pdvs ⊕ piss ⊕D push(0) ⊕ prdvs, ndvs + niss + nrdvs + 1}
+     * <p>
+     * Note: Le main ne déclare pas de variables dans cet exemple simplifié,
+     * donc prdvs est vide.
+     */
     public void visit(MainNode node) {
         currentScope = "main";
 
+        // Sauvegarder le nombre de variables globales avant le main
+        int globalVarCount = variablesToPop.size();
+
+        // pdvs : Compiler les déclarations de variables locales
         if (node.getVars() != null) {
             visit(node.getVars());
         }
 
+        // Calculer le nombre de variables locales du main
+        int localVarCount = variablesToPop.size() - globalVarCount;
+
+        // piss : Compiler les instructions
         if (node.getInstrs() != null) {
             visit(node.getInstrs());
         }
 
+        // push(0) : Valeur de retour du main (méthode void)
         jjcBuilder.addInstruction(PUSH, 0);
+
+        // prdvs : Retrait des variables locales du main (swap/pop pour chaque)
+        for (int i = 0; i < localVarCount; i++) {
+            variablesToPop.pop();
+            jjcBuilder.addInstruction(SWAP);
+            jjcBuilder.addInstruction(POP);
+        }
 
         currentScope = "global";
     }
@@ -386,7 +429,7 @@ public class MiniJajaCompilerVisitor {
             visitExpression(node.getExpressionNode());
         }
 
-        // Générer l'instruction INC avec le bon scope
+        // Générer l'instruction INC
         if (node.getIdent1Node() != null) {
             String ident = extractIdentifierName(node.getIdent1Node());
             String scopeAddress = resolveVariableScope(ident);
@@ -453,70 +496,143 @@ public class MiniJajaCompilerVisitor {
 
         if ("main".equals(currentScope)) {
             mainLocalVariables.add(ident);
+        } else if (!"global".equals(currentScope)) {
+            // On est dans une méthode
+            currentScopeVariables.add(ident);
         }
     }
 
     /**
      * Compile une déclaration de méthode en code JajaCode.
      * <p>
-     * Selon la spécification de compilation :
-     * C⟦meth(T, m, e, v, i)⟧ρ =
-     *   push(adresse_début_méthode),
-     *   new(m@global, T, meth, 0),
-     *   goto(adresse_après_méthode),
-     *   [adresse_début_méthode]:
-     *   C⟦v⟧m,
-     *   C⟦i⟧m,
-     *   push(valeur_par_défaut),
-     *   return
-     *   [adresse_après_méthode]:
+     * Selon les règles [cméthode] et [cméthodeRien] :
+     * - [cméthode] pour les méthodes avec retour :
+     * n ⊢ méthode(t, ident(i), ens, dvs, iss) ⇒
+     * {jcnil ⊕D push(n+3) ⊕D new(i, t, meth, 0) ⊕D goto(...)
+     * ⊕ pens ⊕ pdvs ⊕ piss ⊕ prdvs ⊕D swap ⊕D return, ...}
+     * <p>
+     * Note: Le retrait des paramètres (pens) se fait côté appelant (après invoke),
+     * pas dans le corps de la méthode. Seules les variables locales (dvs) sont retirées ici.
      *
      * @param node le nœud MethodeNode à compiler
      */
     public void visit(MethodeNode node) {
         String methodName = node.getIdent().getNom();
+        String methodType = typeToJajaCode(node.getTypeMeth());
+        String methodSignature = methodName + "@" + methodType;
+        boolean isVoidMethod = node.getTypeMeth() == Type.VOID;
 
         // Sauvegarder le scope actuel
         String previousScope = currentScope;
+        currentScope = methodSignature;
 
-        // Compiler un builder temporaire pour le corps de la méthode
-        MiniJajaCompilerVisitor methodBodyVisitor = createChildVisitor();
-        methodBodyVisitor.currentScope = methodName; // Le scope de la méthode est son nom
+        // Compiler les entêtes (paramètres) - pens
+        MiniJajaCompilerVisitor methodBodyVisitor = new MiniJajaCompilerVisitor(null, collector);
+        methodBodyVisitor.currentScope = methodSignature;
 
-        // Compiler les variables locales
+        if (node.getEntetes() != null) {
+            visitEntetesReverse(node.getEntetes(), methodBodyVisitor, methodSignature);
+        }
+
+        // Compiler les variables locales - pdvs
+        int varCountBefore = methodBodyVisitor.variablesToPop.size();
         if (node.getVars() != null) {
             methodBodyVisitor.visit(node.getVars());
         }
+        int localVarCount = methodBodyVisitor.variablesToPop.size() - varCountBefore;
 
-        // Compiler les instructions
+        // Compiler les instructions - piss
         if (node.getInstrs() != null) {
             methodBodyVisitor.visit(node.getInstrs());
         }
 
-        // Ajouter une valeur de retour par défaut et return
-        switch (node.getTypeMeth().name()) {
-            case "VOID", "ENTIER" -> methodBodyVisitor.jjcBuilder.addInstruction(PUSH, 0);
-            case "BOOLEEN" -> methodBodyVisitor.jjcBuilder.addInstruction(PUSH, false);
-        }
-        methodBodyVisitor.jjcBuilder.addInstruction(RETURN);
-
         JajaCodeBuilder methodBody = methodBodyVisitor.getJajaCodeBuilder();
+        int bodySize = methodBody.getInstructionsAsList().size();
+
+        // Calculer le nombre d'instructions pour le retrait des variables locales uniquement
+        // Les paramètres sont retirés côté appelant
+        int retraitVarsCount = localVarCount * 2;
+
+        // Pour les méthodes void, on ajoute push(0) avant le retrait
+        int push0Count = isVoidMethod ? 1 : 0;
 
         // Calculer les adresses
         int currentAddr = jjcBuilder.getCurrentAddress();
         int methodStartAddr = currentAddr + 3; // après push + new + goto
-        int methodEndAddr = methodStartAddr + methodBody.getInstructionsAsList().size();
+
+        // L'adresse de fin est après : corps + push(0)? + retrait vars + swap + return
+        int methodEndAddr = methodStartAddr + bodySize + push0Count + retraitVarsCount + 2;
 
         // Générer le code de déclaration de la méthode
         jjcBuilder.addInstruction(PUSH, methodStartAddr);
-        jjcBuilder.addInstruction(NEW, methodName + "@global", typeToJajaCode(node.getTypeMeth()), "meth", 0);
+        jjcBuilder.addInstruction(NEW, methodName, methodType, "meth", 0);
         jjcBuilder.addInstruction(GOTO, methodEndAddr);
 
-        // Insérer le corps de la méthode
+        // Ajouter la méthode à la liste des déclarations à retirer selon [crméthode]
+        variablesToPop.push(methodName);
+
+        // Insérer le corps de la méthode (pens + pdvs + piss)
         jjcBuilder.merge(methodBody);
+
+        // Pour les méthodes void : push(0) avant le retrait
+        if (isVoidMethod) {
+            jjcBuilder.addInstruction(PUSH, 0);
+        }
+
+        // prdvs : Retrait des variables locales uniquement (pas les paramètres)
+        for (int i = 0; i < localVarCount; i++) {
+            jjcBuilder.addInstruction(SWAP);
+            jjcBuilder.addInstruction(POP);
+        }
+
+        // ⊕D swap ⊕D return
+        jjcBuilder.addInstruction(SWAP);
+        jjcBuilder.addInstruction(RETURN);
 
         // Restaurer le scope
         currentScope = previousScope;
+    }
+
+    /**
+     * Compte le nombre de paramètres dans une structure EntetesNode récursive.
+     */
+    private int countParams(EntetesNode entetes) {
+        if (entetes == null || entetes.getEntete() == null) {
+            return 0;
+        }
+        return 1 + countParams(entetes.getEntetes());
+    }
+
+    /**
+     * Visite les entêtes dans l'ordre inverse pour générer les instructions NEW
+     * avec les bonnes profondeurs (depth).
+     * <p>
+     * Selon [centête] : n ⊢ entête(t, ident(i)) ⇒ {new(i, t, var, k), 1}
+     */
+    private void visitEntetesReverse(EntetesNode entetes, MiniJajaCompilerVisitor visitor, String methodSignature) {
+
+        if (entetes == null || entetes.getEntete() == null) {
+            return;
+        }
+
+        // D'abord traiter le reste de la liste
+        if (entetes.getEntetes() != null) {
+            visitEntetesReverse(entetes.getEntetes(), visitor, methodSignature);
+        }
+
+        // Ensuite traiter l'entête actuelle
+        EnteteNode entete = entetes.getEntete();
+        String paramName = entete.getIdent().getNom();
+        String paramType = typeToJajaCode(entete.getType());
+
+        // Calculer la profondeur : les paramètres sont numérotés de 1 à n
+        int currentDepth = countParams(entetes);
+
+        visitor.jjcBuilder.addInstruction(NEW, paramName + "@" + methodSignature, paramType, "var", currentDepth);
+
+
+        // Enregistrer le paramètre dans le scope actuel du visiteur
+        visitor.currentScopeVariables.add(paramName);
     }
 
     public void visit(NbreNode node) {
@@ -661,43 +777,98 @@ public class MiniJajaCompilerVisitor {
         jjcBuilder.addInstruction(WRITE);
     }
 
+    /**
+     * Compile une instruction de retour selon la règle [cretour] :
+     * n ⊢ retour(e) ⇒ {pe, ne}
+     * <p>
+     * Note: Le return compile simplement l'expression. Le swap/return final
+     * est géré par visit(MethodeNode) après le retrait des variables locales.
+     */
     private void visitRetour(RetourNode node) {
-        // Évaluer l'expression à retourner
         if (node.getExp() != null) {
             visitExpression(node.getExp());
         }
-
-        // Générer l'instruction RETURN
-        jjcBuilder.addInstruction(RETURN);
     }
 
+    /**
+     * Compile un appel de méthode en instruction selon la règle [cappelI] :
+     * n ⊢ appelI(ident(i), lexp) ⇒ {plexp ⊕D invoke(i) ⊕ prlexp ⊕D pop, nlexp + nrlexp + 2}
+     * <p>
+     * prlexp selon [crlexp] : n ⊢retrait listexp(e, lexp) ⇒ {swap ⊕G (pop ⊕G prlexp), nrlexp + 2}
+     */
     private void visitAppelI(AppelINode node) {
         String methodName = node.getIdent().getNom();
 
-        // Compiler les arguments (listexp)
+        // Compter le nombre d'arguments
+        int argCount = countListExp(node.getListExp());
+
+        // plexp : Compiler les arguments (listexp)
         if (node.getListExp() != null) {
             visitListExp(node.getListExp());
         }
 
-        // Générer l'instruction INVOKE
-        jjcBuilder.addInstruction(INVOKE, methodName + "@global");
+        // ⊕D invoke(i) - utiliser juste le nom de la méthode
+        jjcBuilder.addInstruction(INVOKE, methodName);
 
-        // Pop le résultat car c'est un appel comme instruction (on ne l'utilise pas)
+        // prlexp : Retrait des arguments selon [crlexp]
+        // Pour chaque argument : swap ⊕G pop
+        for (int i = 0; i < argCount; i++) {
+            jjcBuilder.addInstruction(SWAP);
+            jjcBuilder.addInstruction(POP);
+        }
+
+        // ⊕D pop : On retire le résultat (inutile pour une instruction)
         jjcBuilder.addInstruction(POP);
     }
 
+    /**
+     * Compile un appel de méthode en expression selon la règle [cappelE] :
+     * n ⊢ appelE(ident(i), lexp) ⇒ {plexp ⊕D invoke(i) ⊕ prlexp, nlexp + nrlexp + 1}
+     * <p>
+     * prlexp selon [crlexp] : n ⊢retrait listexp(e, lexp) ⇒ {swap ⊕G (pop ⊕G prlexp), nrlexp + 2}
+     */
     private void visitAppelE(AppelENode node) {
         String methodName = node.getIdent().getNom();
 
-        // Compiler les arguments (listexp)
+        // Compter le nombre d'arguments
+        int argCount = 0;
+        if (node.getExp() instanceof ListExpNode listExp) {
+            argCount = countListExp(listExp);
+        }
+
+        // plexp : Compiler les arguments (listexp)
         if (node.getExp() != null) {
             visitListExp((ListExpNode) node.getExp());
         }
 
-        // Générer l'instruction INVOKE
-        jjcBuilder.addInstruction(INVOKE, methodName + "@global");
+        // ⊕D invoke(i) - utiliser juste le nom de la méthode
+        jjcBuilder.addInstruction(INVOKE, methodName);
+
+        // prlexp : Retrait des arguments selon [crlexp]
+        // Pour chaque argument : swap ⊕G pop
+        for (int i = 0; i < argCount; i++) {
+            jjcBuilder.addInstruction(SWAP);
+            jjcBuilder.addInstruction(POP);
+        }
+        // Note: On ne fait PAS pop du résultat car c'est une expression (le résultat reste sur la pile)
     }
 
+    /**
+     * Compte le nombre d'expressions dans une ListExpNode.
+     */
+    private int countListExp(ListExpNode node) {
+        if (node == null || node.getExp() == null) {
+            return 0;
+        }
+        return 1 + countListExp(node.getListExp());
+    }
+
+    /**
+     * Compile une liste d'expressions selon la règle [clistexp] :
+     * n ⊢ listexp(e, lexp) ⇒ {plexp ⊕ pe, ne + nlexp}
+     * <p>
+     * Note: Le reste de la liste (plexp) est compilé AVANT l'expression courante (pe).
+     */
     private void visitListExp(ListExpNode node) {
         if (node == null) return;
 
@@ -706,21 +877,22 @@ public class MiniJajaCompilerVisitor {
             return;
         }
 
-        // Compiler la première expression
-        if (node.getExp() != null) {
-            visitExpression(node.getExp());
-        }
-
-        // Compiler le reste de la liste
+        // D'abord compiler le reste de la liste (plexp)
         if (node.getListExp() != null) {
             visitListExp(node.getListExp());
         }
+
+        // Ensuite compiler l'expression courante (pe)
+        if (node.getExp() != null) {
+            visitExpression(node.getExp());
+        }
     }
 
-    private String typeToJajaCode(fr.ufrst.m1info.gl.groupe7.memoire.utils.Type type) {
+    private String typeToJajaCode(Type type) {
         return switch (type) {
             case ENTIER -> "int";
             case BOOLEEN -> "boolean";
+            case VOID -> "void";
             default -> throw new IllegalArgumentException("Type non supporté pour JajaCode: " + type);
         };
     }
