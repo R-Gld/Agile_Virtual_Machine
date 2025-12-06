@@ -23,6 +23,10 @@ public class EqualsNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
+       //IF the two expressions are not of the same type, throw an error
+        if(!exp1.evaluate(stack).getClass().equals(exp2.evaluate(stack).getClass())){
+            throw new RuntimeException("Type error: both expressions must be of the same type");
+        }
         return exp1.evaluate(stack).equals( exp2.evaluate(stack));
     }
 

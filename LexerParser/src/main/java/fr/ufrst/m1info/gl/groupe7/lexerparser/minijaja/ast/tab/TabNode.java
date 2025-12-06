@@ -35,8 +35,17 @@ public class TabNode extends Expression {
     @Override
     public Object evaluate(Stacks stacks) {
         String varName = ident.getNom();
+        
+        // Try scoped name first if in method context
+        if (stacks.isInMethodContext()) {
+            String scopedName = stacks.getScopedName(varName);
+            if (stacks.getObjectType(scopedName) != null) {
+                varName = scopedName;
+            }
+        }
+        
         int index = (int) expR.evaluate(stacks);
-        return stacks.getArrayValue(varName, index);
+        return (Integer) stacks.getArrayValue(varName, index);
     }
 
 }

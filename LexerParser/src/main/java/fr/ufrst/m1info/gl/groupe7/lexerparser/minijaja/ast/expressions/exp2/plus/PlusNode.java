@@ -26,6 +26,9 @@ public class PlusNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
+        if(!(exp2.evaluate(stack) instanceof Integer) || !(terme.evaluate(stack) instanceof Integer)){
+            throw new RuntimeException("Type error: both expressions must evaluate to Integer exp: " + exp2.evaluate(stack) + " terme: " + terme.evaluate(stack));
+        }
         return      (int) exp2.evaluate(stack) + (int) terme.evaluate(stack);
     }
     @Override

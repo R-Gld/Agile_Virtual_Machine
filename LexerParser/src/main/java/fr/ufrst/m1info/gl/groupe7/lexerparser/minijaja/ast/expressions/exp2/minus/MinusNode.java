@@ -24,6 +24,9 @@ public class MinusNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
+        if(!(exp2.evaluate(stack) instanceof Integer) || !(terme.evaluate(stack) instanceof Integer)){
+            throw new RuntimeException("Type error: both expressions must evaluate to Integer");
+        }
         return (int) exp2.evaluate(stack) - (int) terme.evaluate(stack);
     }
 

@@ -21,7 +21,8 @@ default:
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s .settings.xml --fail-at-end"
+  MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp -s .settings.xml --fail-at-end"
+  MAVEN_CLI_OPTS: "${MAVEN_CLI_OPTS_SINGLE_THREAD} -T 1C"
   MAVEN_HEADLESS_OPTS: "-Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dheadless=true -Djava.awt.headless=true"
 
 cache:
@@ -92,7 +93,7 @@ testIHM:
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - mvn ${MAVEN_CLI_OPTS} compile
+    - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
     - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
@@ -137,7 +138,7 @@ sonarqube-check:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
 #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
     - build
@@ -175,7 +176,7 @@ release:prepare:
     - git checkout ${CI_COMMIT_BRANCH}
     - git pull origin ${CI_COMMIT_BRANCH}
   script:
-    - mvn ${MAVEN_CLI_OPTS} release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
   after_script:
     - git push --tags
   artifacts:
@@ -193,5 +194,5 @@ release:perform:
   needs:
     - release:prepare
   script:
-    - mvn ${MAVEN_CLI_OPTS} release:perform -Darguments="-DskipTests"
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} release:perform -Darguments="-DskipTests"
   allow_failure: false

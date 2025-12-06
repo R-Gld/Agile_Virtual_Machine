@@ -28,11 +28,30 @@ public class IncrementNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (ident1 instanceof IdentNode identNode) {
             String varName = identNode.getNom();
-            int currentValue = (int) stacks.getValue(varName);
+            
+            // Try scoped name first if in method context
+            String actualVarName = varName;
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    actualVarName = scopedName;
+                }
+            }
+            
+            int currentValue = (int) stacks.getValue(actualVarName);
             int newValue = currentValue + 1;
-            stacks.AffecterVal(varName, newValue);
+            stacks.AffecterVal(actualVarName, newValue);
         } else if (ident1 instanceof TabNode tabNode) {
             String varName = tabNode.getIdent().getNom();
+            
+            // Try scoped name first if in method context
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    varName = scopedName;
+                }
+            }
+            
             int index = (int) tabNode.getIndex().evaluate(stacks);
             int currentValue = (int) stacks.getArrayValue(varName, index);
             int newValue = currentValue + 1;

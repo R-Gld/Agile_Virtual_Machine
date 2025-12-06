@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.AstEntetes;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class EnteteNode extends AstEntetes {
@@ -21,11 +22,6 @@ public class EnteteNode extends AstEntetes {
         return type;
     }
 
-    @Override
-    public String toString() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'toString'");
-    }
 
     @Override
     public String toStringTree() {
@@ -34,4 +30,8 @@ public class EnteteNode extends AstEntetes {
     }
 
 
+    @Override
+    public EnteteNode evaluate(Stacks stacks) {
+        return this;
+    }
 }
