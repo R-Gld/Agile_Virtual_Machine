@@ -20,5 +20,4 @@ public class JajaCodeInstructionBuilder {
         params.append(")");
         return base + params;
     }
-
 }

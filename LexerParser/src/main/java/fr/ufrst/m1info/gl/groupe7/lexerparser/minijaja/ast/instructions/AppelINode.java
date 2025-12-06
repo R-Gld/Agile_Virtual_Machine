@@ -10,7 +10,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rEntetes;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rVars;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
-import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -19,14 +18,11 @@ public class AppelINode extends InstructionNode {
 
     private final IdentNode ident;
     private final ListExpNode listExp;
-    private final Type type;
-   
     private List<AstNode> children;
 
     public AppelINode(IdentNode ident, ListExpNode listExp) {
         this.ident = ident;
         this.listExp = listExp;
-        this.type = Type.VOID;
         this.children = new ArrayList<>();
     }
 
@@ -97,8 +93,6 @@ public class AppelINode extends InstructionNode {
             children.add(restoreContext);
         }
     }
-
-    public Type getType() { return type; }
 
     @Override
     public String toStringTree() {
