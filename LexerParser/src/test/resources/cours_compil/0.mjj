@@ -1,0 +1,31 @@
+/********************************************/
+/* Programme MiniJaja                       */
+/* Validation de toutes les instructions	*/
+/* sans tableau, ni fonction                */
+/********************************************/
+
+class C {
+  int x;
+  int y = 10;
+  final int VAL = 5;
+  boolean b1 = true;
+  boolean b2 = false;
+  
+   main {
+ 	if (b1 && (b1 || (!b2))) {
+		x = VAL+y-0; // x = 15
+	} else {
+		x++;
+	};
+	write("x (15) = ");
+	writeln(x);
+	x = y * z;
+	x = x / z;
+	 x++; // x = 11
+	write("x (11) = ");
+	writeln(x);
+   }
+}
+
+
+	
