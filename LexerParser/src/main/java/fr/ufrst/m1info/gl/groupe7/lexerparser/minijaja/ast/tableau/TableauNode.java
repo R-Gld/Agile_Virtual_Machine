@@ -48,7 +48,12 @@ public class TableauNode extends AstNode {
     public void interpret(Stacks stacks) {
         if (exp != null) { // si taille du tableau renseignée
             int size = (int) exp.evaluate(stacks);
-            stacks.declareTab(ident.getNom(), size, type);
+            // Use scoped name if in method context
+            String tabName = ident.getNom();
+            if (stacks.isInMethodContext()) {
+                tabName = stacks.getScopedName(tabName);
+            }
+            stacks.declareTab(tabName, size, type);
         }
 
         // TODO : gestion d'erreur ?

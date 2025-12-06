@@ -4,7 +4,8 @@ public enum Type {
     ENTIER ("integer"),
     BOOLEEN ("boolean"),
     STRING ("String"),
-    VOID ("void");
+    VOID ("void"),
+    ANY ("any");  // Type pour la variable de classe
 
     private final String name;
 

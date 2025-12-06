@@ -1,6 +1,5 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode;
 
-import java.util.List;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
@@ -43,11 +42,6 @@ public class MethodeNode extends AstNode {
         return instrs;
     }
 
-    @Override
-    public Iterable<AstNode> getChildren() {
-        return List.of( entetes, vars, instrs);
-    }
-
 
 
     @Override
@@ -63,7 +57,6 @@ public class MethodeNode extends AstNode {
     public void interpret(Stacks stacks) {
         // TODO Auto-generated method stub
         stacks.declareMeth(ident.getNom(), this, typeMeth);
-
 
     }
 

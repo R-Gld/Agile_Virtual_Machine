@@ -2,7 +2,6 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -19,21 +18,23 @@ public class rVar {
     }
 
     public void interpret(Stacks stacks) {
-       
-        if (var instanceof VarNode) {
-            VarNode varNode = (VarNode) var;
-            String varName = varNode.getIdent().getNom();
-            stacks.retirerDecl(varName);
-        } else if (var instanceof TableauNode) {
-            TableauNode tableauNode = (TableauNode) var;
-            String tableauName = tableauNode.getIdent().getNom();
-            //TODO: retirer le tableau de la pile des tableaux (refaire une methode specfique) // fais à tester avec interprétation
-            stacks.retirerDecl(tableauName);
-        }else if (var instanceof CstNode) {
-            CstNode cstNode = (CstNode) var;
-            String cstName = cstNode.getIdent().getNom();
-            stacks.retirerDecl(cstName);
+    AstNode node = var;
+    String name = "";
+
+    if (node instanceof VarNode) {
+        name = ((VarNode) node).getIdent().getNom();
+    } else if (node instanceof TableauNode) {
+        name = ((TableauNode) node).getIdent().getNom();
+    } else if (node instanceof CstNode) {
+        name = ((CstNode) node).getIdent().getNom();
+    }
+
+    if (name != null) {
+        if (stacks.isInMethodContext()) {
+            name = stacks.getScopedName(name);
         }
+        stacks.retirerDecl(name);
+    }
 
         
 }}

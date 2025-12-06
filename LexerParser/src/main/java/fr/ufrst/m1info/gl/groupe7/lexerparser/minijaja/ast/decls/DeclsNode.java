@@ -2,7 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import java.util.ArrayList;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
+
 
 public class DeclsNode extends AstDecls {
 

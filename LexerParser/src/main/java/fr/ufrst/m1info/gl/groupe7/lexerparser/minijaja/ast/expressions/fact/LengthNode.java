@@ -18,14 +18,22 @@ public class LengthNode extends Expression {
     }
 
     public Object evaluate(Stacks stack) {
+        String varName = ident.getNom();
         
-        if (! stack.getObjectType(ident.getNom()).equals("tab")) {
+        // Try scoped name first if in method context
+        if (stack.isInMethodContext()) {
+            String scopedName = stack.getScopedName(varName);
+            if (stack.getObjectType(scopedName) != null) {
+                varName = scopedName;
+            }
+        }
+        
+        String objType = stack.getObjectType(varName);
+        if (objType == null || !objType.equals("tab")) {
             throw new RuntimeException("Type error: length can only be applied to arrays");
-            
         }
 
-        //todo: ADD function to get tab length
-        return stack.getArrayLength(ident.getNom());
+        return stack.getArrayLength(varName);
     }   
 
     @Override

@@ -3,16 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.*;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
@@ -298,10 +289,22 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
-			AstNode returned = visit(ctx.exp());
+			Expression returned = (Expression) visit(ctx.exp());
 			System.err.println("[DEBUG] visitInstr: RETURN -> RetourNode");
 			return new RetourNode(returned);
 		}
+
+
+
+        //APPELI relou
+        if (ctx.listexp() != null) {
+            ListExpNode listExp = (ListExpNode) visit(ctx.listexp());
+            IdentNode ident =  new IdentNode(ctx.IDENT().getText());
+            System.err.println("[DEBUG] visitInstr: IDENT -> AppelINode");
+
+            return new AppelINode(ident, listExp);
+
+        }
 
 		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
@@ -432,7 +435,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			if (ctx.LENGTH() != null)
 				return new LengthNode(ident);
 			if (ctx.listexp() != null)
-				return new AppelENode(ident, visit(ctx.listexp()));
+				return new AppelENode(ident, (ListExpNode) visit(ctx.listexp()));
 		}
 
 		if (ctx.exp() != null)
@@ -465,7 +468,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return new ListExpNode(null, null); // Nœud "exnil"
 		}
 
-		AstNode exp = visit(ctx.exp());
+		Expression exp = (Expression) visit(ctx.exp());
 
 		if (ctx.listexp() != null) {
 			ListExpNode next = (ListExpNode) visit(ctx.listexp());
@@ -475,23 +478,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	}
 
-	// ======== TYPE METHODS ========
-
-	// @Override
-	// public AstNode visitTypemeth(MiniJajaParser.TypemethContext ctx) {
-	// if (ctx.TYPE() != null) {
-	// return ctx.TYPE().getText();
-	// } else {
-	// return "void";
-	// }
-	//
-	// }
 
 	/**
 	 * Résultat par défaut si une méthode 'visit' n'est pas implémentée.
 	 */
 	@Override
 	protected AstNode defaultResult() {
-		return null;
+		System.err.println("[DEBUG] defaultResult called");
+		throw new UnsupportedOperationException("Visite non implémentée pour ce nœud.");
+		
 	}
 }

@@ -22,21 +22,87 @@ public class DebugeParsingETC {
   public void DebugeParsing() {
     Stacks stacks = new Stacks();
     String program = """
-      class C {
-     
-      int t[4] ;
+   
+class quicksort{ 
+    final int longueur ;
+    int tableau[20];
     
-      main {
-      int x[2] ;
-      x[0] = 10 ;
-      x[1] = 20 ;
-
+    void afficher() {
+        int taille = length(tableau);
+        int i = 0;
+        int a = 0;
+        
+        while(taille > i) {
+           a = tableau[i];
+           write(a);
+           write(" ");
+           i++;
+        };
+        writeln(" ");
+    };
     
-     
-
+    int partition(int deb, int fin) { 
+        int compt=deb; 
+        int pivot=tableau[deb]; 
+        int i=deb+1; 
+        int temp; 
+    
+        while(fin>i || i==fin) { 
+            if(pivot>tableau[i]) { 
+                compt++; 
+                temp=tableau[compt]; 
+                tableau[compt]=tableau[i]; 
+                tableau[i]=temp; 
+            }; 
+        i++; 
+        }; 
+        temp=tableau[compt]; 
+        tableau[compt]=tableau[deb]; 
+        tableau[deb]=temp; 
+        return(compt); 
+    }; 
+    
+    void pause(){
+    };
+    
+    void trirapide(int debut,int fin) { 
+        int pivot; 
+        if(fin>debut) { 
+            pivot=partition(debut,fin); 
+            trirapide(debut,pivot-1); 
+            trirapide(pivot+1,fin); 
+        }; 
+    }; 
+    
+    main {
+        longueur = length(tableau);
+        tableau[0]=5; 
+        tableau[1]=2; 
+        tableau[2]=10; 
+        tableau[3]=11; 
+        tableau[4]=4;
+        tableau[5]=52; 
+        tableau[6]=13; 
+        tableau[7]=12; 
+        tableau[8]=5; 
+        tableau[9]=1; 
+        tableau[10]=62; 
+        tableau[11]=32; 
+        tableau[12]=14; 	    
+        tableau[13]=16; 
+        tableau[14]=9; 
+        tableau[15]=8; 
+        tableau[16]=3; 
+        tableau[17]=21; 
+        tableau[18]=29; 
+        tableau[19]=23; 
+        afficher();
+        trirapide(0,longueur-1);
+        afficher();
+        pause();
+    }
+}
       
-      }
-      }
       """;
 
     //System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");

@@ -166,9 +166,9 @@ public class Heap {
         while (newIndex < entry.getSize()) {
             newIndex*=2;
         }
-        //System.out.println(" newIndex "+newIndex);
+        System.err.println(" newIndex "+newIndex);
         int index = hash(newIndex);
-        //System.out.println(" Index remove allocated "+index);
+        System.err.println(" Index remove allocated "+index);
         Node current = table[index];
         Node prev = null;
 
@@ -185,7 +185,7 @@ public class Heap {
                     freeCount--;
                 }
                  // keep same counting semantics as put()
-                //System.out.println("→ Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
+                System.err.println("→ Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
                 return true;
             }
             prev = current;
@@ -345,7 +345,7 @@ public class Heap {
                     System.err.print(node.entry + " \n");
                     node = node.next;
                 }
-
+                System.err.println();
             }
         }
         System.err.println("==========================\n");
@@ -388,11 +388,6 @@ public class Heap {
             free(entry);
         }
     }
-    /**
-     * get All Entry with baseAddress not free
-     * @param baseAddress adress where it is
-     * return null if nothing is found
-     */
     public HeapEntry getEntryNotFree(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -409,12 +404,6 @@ public class Heap {
         }
         return null;
     }
-    /**
-     * get All Entry with baseAddress
-     * @param baseAddress address where it is
-     * return null if nothing is found
-     *
-     */
     public HeapEntry getEntry(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
