@@ -44,11 +44,11 @@ public class MiniJajaCompiler {
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
         // Semantic analysis
-        MiniJajaSemanticAnalyser semanticAnalyser = new MiniJajaSemanticAnalyser(
-            collector,
-            stack.getSymbolTable()
-        );
-        semanticAnalyser.analyse(ast);
+        // MiniJajaSemanticAnalyser semanticAnalyser = new MiniJajaSemanticAnalyser(
+        //     collector,
+        //     stack.getSymbolTable()
+        // );
+        //semanticAnalyser.analyse(ast);
 
         if (collector.hasErrors()) {
             throw new SyntaxException(collector);
