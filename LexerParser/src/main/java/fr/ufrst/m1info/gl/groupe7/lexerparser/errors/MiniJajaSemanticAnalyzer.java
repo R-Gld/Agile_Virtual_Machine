@@ -74,10 +74,6 @@ public class MiniJajaSemanticAnalyzer {
         context.setFileName(fileName);
     }
 
-    // ============================================================
-    // PUBLIC ACCESSORS
-    // ============================================================
-
     /**
      * @return the symbol table containing all declared symbols
      */
