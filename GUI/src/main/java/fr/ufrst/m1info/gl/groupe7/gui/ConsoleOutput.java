@@ -45,7 +45,10 @@ public class ConsoleOutput extends StackPane {
     }
 
     /**
-     * Append a message to the console.
+     * Ajoute un message dans la console.
+     * Chaque message est affiché sur une nouvelle ligne.
+     *
+     * @param msg le texte à afficher dans la console
      */
     public void printMessage(String msg) {
         if (msg == null) {
@@ -56,7 +59,7 @@ public class ConsoleOutput extends StackPane {
     }
 
     /**
-     * Clear console content.
+     * Efface le contenu de la console.
      */
     public void clear() {
         console.clear();

@@ -304,6 +304,7 @@ public class App extends Application {
         buildButton.setTooltip(new Tooltip("Compile file"));
         hbox.getChildren().add(buildButton);
 
+        /* Select file to be interpreted */
         fileToRun = new ChoiceBox<>();
         fileToRun.getItems().addAll("MiniJaja", "Jajacode");
         fileToRun.setValue("MiniJaja");
@@ -386,13 +387,24 @@ public class App extends Application {
             alert.showAndWait();
             return;
         }
+
         /* Chargement du texte dans l'interface */
-        mjjCodeArea.loadText(fileContent.toString());
+        String name = file.getName().toLowerCase();
+        String content = fileContent.toString();
+
+        if (name.endsWith(".mjj")) {
+            mjjCodeArea.loadText(content);
+            fileToRun.setValue("MiniJaja");
+        } else if (name.endsWith(".jjc")) {
+            jjcCodeArea.loadText(content);
+            fileToRun.setValue("Jajacode");
+        }
 
         if (console != null) {
             console.printMessage("File loaded: " + file.getName());
         }
     }
+
 
     /**
      * Sauvegarde du contenu de la code area dans un fichier
