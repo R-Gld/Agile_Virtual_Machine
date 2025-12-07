@@ -96,6 +96,7 @@ public class App extends Application {
         appStage = stage;
         appStage.initStyle(StageStyle.UNDECORATED);
 
+        // Structure de l'interface :
         BorderPane root = new BorderPane();
         HBox titleBar = buildTitleBar();
         HBox topMenu = buildMenu();
@@ -506,6 +507,7 @@ public class App extends Application {
      * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
      */
     private void run() {
+        // On lit ce qu’il faut sur le thread FX
         String choice = fileToRun.getValue();
         String mjjText = mjjCodeArea.getText();
         String jjcText = jjcCodeArea.getText();

@@ -41,9 +41,10 @@ public class JajaCodeDebugger {
         this.visitor.load(arbreJajaCode);
 
     }
+}
 
     /** اrunner JajaCode */
-    public boolean step() {
+   /* public boolean step() {
         return visitor.step();
     }
 
@@ -51,9 +52,10 @@ public class JajaCodeDebugger {
     public boolean isFinished() {
         return visitor.isFinished();
     }
-
+/*
     /**(۰-based line) */
+    /*
     public int getCurrentInstructionIndex() {
         return visitor.getCurrentInstructionIndex();
     }
-}
+}  */

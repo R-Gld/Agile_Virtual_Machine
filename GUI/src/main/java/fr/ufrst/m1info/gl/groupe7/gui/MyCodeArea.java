@@ -37,6 +37,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -346,6 +347,7 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setLeftAnchor(scroll, 0d);
         AnchorPane.setRightAnchor(scroll, 0d);
         this.getChildren().add(scroll);
+        initCaretLineHighlight();
 
         // Auto-completion
         codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -586,6 +588,29 @@ public class MyCodeArea extends AnchorPane {
             codeArea.showParagraphAtTop(lineIndex);
         });
     }
+
+    /* Highlight caret line  */
+    private void highlightCaretLine() {
+        int caret = codeArea.getCaretPosition();
+        int currentLine = codeArea.offsetToPosition(caret, TwoDimensional.Bias.Backward).getMajor();
+
+        int paragraphCount = codeArea.getParagraphs().size();
+        for (int i = 0; i < paragraphCount; i++) {
+            codeArea.setParagraphStyle(i, Collections.emptyList());
+        }
+
+        if (currentLine >= 0 && currentLine < paragraphCount) {
+            codeArea.setParagraphStyle(currentLine, Collections.singletonList("current-caret-line"));
+        }
+    }
+
+    private void initCaretLineHighlight() {
+        codeArea.caretPositionProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+        codeArea.focusedProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+        codeArea.textProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+    }
+
+
 
     //  END highlight
     // cos of the inner style it didn't work I have removed it and i think now it works for linux please check it

@@ -76,3 +76,7 @@
     -fx-text-background-color: white;
 }
 
+.current-caret-line {
+    -fx-background-color: rgba(120, 120, 255, 0.15);
+}
+
