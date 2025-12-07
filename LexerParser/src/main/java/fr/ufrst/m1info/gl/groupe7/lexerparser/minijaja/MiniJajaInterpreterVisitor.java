@@ -306,6 +306,27 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
         }
 
+
+        // --- 1) WRITE / WRITELN ---
+        if (ctx.WRITE() != null || ctx.WRITELN() != null) {
+            boolean writeln = ctx.WRITELN() != null;
+
+            // Cas 1 : ident1
+            if (ctx.ident1() != null) {
+                Expression expr = (Expression) visit(ctx.ident1());
+                return writeln ? new EcrireLnNode(expr) : new EcrireNode(expr);
+            }
+
+            // Cas 2 : string literal
+            if (ctx.STRING() != null) {
+                String raw = ctx.STRING().getText();
+                String content = raw.substring(1, raw.length() - 1);
+                return writeln ? new EcrireLnNode(content) : new EcrireNode(content);
+            }
+
+            throw new RuntimeException("WRITE sans ident1 ni STRING");
+        }
+
 		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
 			AstNode ident1 = visit(ctx.ident1());
@@ -322,16 +343,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 				return new IncrementNode(ident1);
 			}
 
-            // WRITE / WRITELN handling (supports identifier or string literal)
-            if (ctx.WRITE() != null || ctx.WRITELN() != null) {
-                boolean writeln = ctx.WRITELN() != null;
-
-                //Expression writeExpr = new IdentNode(ctx.IDENT().getText());
-                System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + visit(ctx.ident1()) + "')");
-                return writeln ? new EcrireLnNode(ident1) : new EcrireNode(ident1);
-
-                }
 		}
+
+
 
 
 

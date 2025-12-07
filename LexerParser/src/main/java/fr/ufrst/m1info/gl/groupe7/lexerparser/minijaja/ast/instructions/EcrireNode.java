@@ -29,7 +29,7 @@ public class EcrireNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (Ident1Node instanceof IdentNode ident1) {
             String varName = ident1.getNom();
-            
+
             // Try scoped name first (for function context with recursion support)
             String actualVarName = varName;
             if (stacks.isInMethodContext()) {
@@ -38,7 +38,7 @@ public class EcrireNode extends InstructionNode {
                     actualVarName = scopedName;
                 }
             }
-            
+
             String OT = stacks.getObjectType(actualVarName);
             if (OT == null) {
                 OT = stacks.getObjectType(varName);
@@ -52,15 +52,8 @@ public class EcrireNode extends InstructionNode {
         } else if (Ident1Node instanceof Expression expr) {
             System.out.print(expr.evaluate(stacks)); // TODO STREAM ??
         } else if (Ident1Node instanceof TabNode tabNode) {
-            String varName = tabNode.getIdent().getNom();
+            String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
 
-
-            if (stacks.isInMethodContext()) {
-                String scopedName = stacks.getScopedName(varName);
-                if (stacks.getObjectType(scopedName) != null) {
-                    varName = scopedName;
-                }
-            }
 
             int index = (int) tabNode.getIndex().evaluate(stacks);
             Object currentValue =  stacks.getArrayValue(varName, index);

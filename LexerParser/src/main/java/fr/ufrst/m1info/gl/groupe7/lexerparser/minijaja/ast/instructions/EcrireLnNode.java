@@ -52,15 +52,8 @@ public class EcrireLnNode extends EcrireNode {
             System.out.println(expr.evaluate(stacks));
         } else if (ident1Node instanceof TabNode  tabNode) {
 
-            String varName = tabNode.getIdent().getNom();
+            String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
 
-
-            if (stacks.isInMethodContext()) {
-                String scopedName = stacks.getScopedName(varName);
-                if (stacks.getObjectType(scopedName) != null) {
-                    varName = scopedName;
-                }
-            }
 
             int index = (int) tabNode.getIndex().evaluate(stacks);
             Object currentValue =  stacks.getArrayValue(varName, index);
