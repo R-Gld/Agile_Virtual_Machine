@@ -24,7 +24,7 @@ public class SemanticContext {
     private String currentFileName;
 
     // Mutable state for scope tracking
-    private String currentScope = "global";
+    private String currentScope = ScopeResolver.GLOBAL_SCOPE;
     private Type currentMethodReturnType;
 
     // Variable tracking for scope resolution
@@ -145,7 +145,7 @@ public class SemanticContext {
      */
     public void enterScope(String scopeName) {
         this.currentScope = scopeName;
-        if (!"main".equals(scopeName) && !"global".equals(scopeName)) {
+        if (!ScopeResolver.MAIN_SCOPE.equals(scopeName) && !ScopeResolver.GLOBAL_SCOPE.equals(scopeName)) {
             // Entering a method scope, clear previous method's variables
             currentScopeVariables.clear();
         }
@@ -156,7 +156,7 @@ public class SemanticContext {
      * Clears method-specific state.
      */
     public void exitScope() {
-        this.currentScope = "global";
+        this.currentScope = ScopeResolver.GLOBAL_SCOPE;
         this.currentMethodReturnType = null;
         this.currentScopeVariables.clear();
     }

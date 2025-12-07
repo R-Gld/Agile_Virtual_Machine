@@ -54,10 +54,10 @@ public class DeclarationCollector {
         collectDeclarationsRecursive(ast.getDeclarations());
 
         // Process main method, enter main scope
-        context.setCurrentScope("main");
+        context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         collectVars(mainNode.getVars());
-        context.setCurrentScope("global");  // Return to global scope
+        context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
     }
 
     /**
@@ -212,9 +212,9 @@ public class DeclarationCollector {
                 context.getSymbolTable().creationSymbol(qualifiedName, 0, varType);
 
                 // Track this variable in the appropriate set
-                if ("main".equals(context.getCurrentScope())) {
+                if (ScopeResolver.MAIN_SCOPE.equals(context.getCurrentScope())) {
                     context.getMainLocalVariables().add(varName);
-                } else if (!"global".equals(context.getCurrentScope())) {
+                } else if (!ScopeResolver.GLOBAL_SCOPE.equals(context.getCurrentScope())) {
                     context.getCurrentScopeVariables().add(varName);
                 }
             }

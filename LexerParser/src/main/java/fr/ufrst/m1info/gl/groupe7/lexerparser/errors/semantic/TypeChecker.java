@@ -60,11 +60,11 @@ public class TypeChecker {
         checkMethodsInDeclarations(ast.getDeclarations());
 
         // Check main method, enter main scope
-        context.setCurrentScope("main");
+        context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         // Variables already collected in declaration phase, just verify instructions
         checkInstructions(mainNode.getInstrs());
-        context.setCurrentScope("global");  // Return to global scope
+        context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
     }
 
     /**

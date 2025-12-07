@@ -11,6 +11,9 @@ import java.util.List;
  */
 public class ScopeResolver {
 
+    public static final String GLOBAL_SCOPE = "global";
+    public static final String MAIN_SCOPE = "main";
+
     private final SemanticContext context;
 
     /**
@@ -37,11 +40,11 @@ public class ScopeResolver {
 
         // Then search in main
         if (context.getMainLocalVariables().contains(variableName)) {
-            return "main";
+            return MAIN_SCOPE;
         }
 
         // Finally, assume it's global (will be validated later)
-        return "global";
+        return GLOBAL_SCOPE;
     }
 
     /**
