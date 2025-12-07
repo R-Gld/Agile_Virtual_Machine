@@ -32,7 +32,21 @@ public class ReturnAxiome implements JajaAxiome {
 
         int returnAddress = (Integer) returnQuad.value;
 
-        System.out.println("\t\tAxiome RETURN exécuté: retour à l'adresse " + returnAddress);
+        // Récupérer le nom de la méthode depuis le quad de retour
+        // Format: %RET_methodName%
+        String returnIdent = returnQuad.ident;
+        String methodName;
+        if (returnIdent.startsWith("%RET_") && returnIdent.endsWith("%")) {
+            methodName = returnIdent.substring(5, returnIdent.length() - 1);
+        } else {
+            // Compatibilité avec l'ancien format
+            methodName = returnIdent;
+        }
+
+        System.out.println("\t\tAxiome RETURN exécuté: retour à l'adresse " + returnAddress + " (sortie de '" + methodName + "')");
+
+        // Pop le contexte de la méthode courante
+        ctx.getStacks().popContext(methodName);
 
         // Restaurer le PC à l'adresse de retour
         ctx.setInstructionCounter(returnAddress);

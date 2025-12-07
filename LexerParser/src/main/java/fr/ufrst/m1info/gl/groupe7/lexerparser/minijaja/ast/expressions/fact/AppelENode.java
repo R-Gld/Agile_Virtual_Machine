@@ -28,17 +28,16 @@ public class AppelENode extends Expression {
     public Object evaluate(Stacks stack) {
         // AppelE does not evaluate to a value directly; it represents a function/method call.
 
-         AppelINode appelI = new AppelINode(ident, listexp);
-         appelI.InterpretChildren(stack);
-         String varClasse = stack.getVariableClasse();
-         System.err.println("[DEBUG] AppelENode evaluate: varClasse = " + varClasse); 
-         if (varClasse == null) {
-             throw new RuntimeException("Erreur: appelE hors d'une classe");
-         }
-         return stack.getValue(varClasse);  
-       
+        AppelINode appelI = new AppelINode(ident, listexp);
+        appelI.InterpretChildren(stack);
+        String varClasse = stack.getVariableClasse();
+        System.err.println("[DEBUG] AppelENode evaluate: varClasse = " + varClasse);
+        if (varClasse == null) {
+            throw new RuntimeException("Erreur: appelE hors d'une classe");
+        }
+        return stack.getValue(varClasse);
 
-     
+
     }
 
     @Override

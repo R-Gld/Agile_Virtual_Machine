@@ -16,12 +16,17 @@ import static org.mockito.Mockito.*;
 class MiniJajaCompilerTest {
 
     private static final String VALID_PROGRAM = """
-        class Test {
-            int i = 5;
-            main {
-              i = 10;
+            class C {
+            	int x = 0;
+            
+            
+            	main {
+            		int res;
+            		while(5>x){
+            		    writeln(x);
+            		};
+            	}
             }
-        }
         """;
 
     private static final String INVALID_PROGRAM = """

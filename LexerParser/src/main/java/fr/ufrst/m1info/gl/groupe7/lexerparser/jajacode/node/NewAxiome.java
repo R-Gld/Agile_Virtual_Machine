@@ -41,6 +41,28 @@ public class NewAxiome implements JajaAxiome {
 
         System.out.println("\t\t[DEBUG] axiomeNew appelé: ident=" + ident + ", type=" + type + ", kind=" + kind + ", depth=" + depth);
 
+        // 3b. Gérer la récursivité: ajouter le suffixe de contexte pour les variables locales
+        // Si on est dans un contexte de méthode (récursif ou non), le contexte est stocké dans contextStack
+        String scopedIdent = ident;
+        String currentContext = ctx.getStacks().getCurrentContext();
+
+        // Si on est dans un contexte de méthode ET que la variable n'est pas une méthode
+        // On ajoute le suffixe de récursivité pour différencier les appels récursifs
+        if (currentContext != null && !kind.equalsIgnoreCase("meth")) {
+            // Vérifier si la variable est une variable locale (contient @ dans son nom mais pas @global)
+            if (ident.contains("@") && !ident.endsWith("@global")) {
+                // Récupérer la profondeur de récursion depuis le contexte
+                String methodName = ctx.getStacks().getCurrentMethodName();
+                int recursionLevel = ctx.getStacks().getRecursionDepth(methodName);
+
+                // Si recursionLevel > 1, on ajoute le suffixe pour différencier les instances
+                if (recursionLevel > 1) {
+                    scopedIdent = ident + "$" + (recursionLevel - 1);
+                    System.out.println("\t\t[DEBUG] Variable récursive renommée: " + ident + " -> " + scopedIdent);
+                }
+            }
+        }
+
         // 3. Logique selon le depth
         if (depth > 0) {
             // [newV] avec depth > 0 : IdentVal - on crée un alias vers la position depth dans la pile
@@ -61,16 +83,16 @@ public class NewAxiome implements JajaAxiome {
             int stackSize = ctx.getStacks().getStackFromTopToBottom().size();
             int realIndex = stackSize - 1 - depth; // Convertir de top-to-bottom à bottom-to-top
 
-            // On renomme le quad existant avec le nom du paramètre
-            targetQuad.ident = ident;
+            // On renomme le quad existant avec le nom du paramètre (scopé pour la récursivité)
+            targetQuad.ident = scopedIdent;
             targetQuad.object = "var";
             targetQuad.type = type;
 
             // Créer l'entrée dans la table des symboles qui pointe vers cette position
-            ctx.getStacks().getSymbolTable().creationSymbol(ident, realIndex, type);
+            ctx.getStacks().getSymbolTable().creationSymbol(scopedIdent, realIndex, type);
 
             System.out.println("\t\t[DEBUG] Valeur identifiée à depth=" + depth + ": " + valeur + " (pile non modifiée, binding créé)");
-            System.out.println("\t\tAxiome NEW exécuté: " + ident + " (" + type + "/" + kind + ") identifié à depth=" + depth);
+            System.out.println("\t\tAxiome NEW exécuté: " + scopedIdent + " (" + type + "/" + kind + ") identifié à depth=" + depth);
         } else {
             // depth = 0 : comportement normal, on dépile la valeur et on déclare
             Stacks.Quad valeurQuad = ctx.getStacks().pop();
@@ -86,15 +108,15 @@ public class NewAxiome implements JajaAxiome {
             switch (kind.toLowerCase()) {
                 case "variable":
                 case "var":
-                    ctx.getStacks().declareVar(ident, valeur, type);
+                    ctx.getStacks().declareVar(scopedIdent, valeur, type);
                     break;
                 case "cst":
                 case "meth":
-                    ctx.getStacks().declareCst(ident, valeur, type);
+                    ctx.getStacks().declareCst(scopedIdent, valeur, type);
                     break;
                 case "tab":
                     if (valeur instanceof Integer size) {
-                        ctx.getStacks().declareTab(ident, size, type);
+                        ctx.getStacks().declareTab(scopedIdent, size, type);
                     } else {
                         throw new TypeMismatchException("Taille de tableau invalide", "NEW", ctx.getInstructionCounter());
                     }
@@ -103,7 +125,7 @@ public class NewAxiome implements JajaAxiome {
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, "NEW", ctx.getInstructionCounter());
             }
 
-            System.out.println("\t\tAxiome NEW exécuté: " + ident + " (" + type + "/" + kind + ") créé.");
+            System.out.println("\t\tAxiome NEW exécuté: " + scopedIdent + " (" + type + "/" + kind + ") créé.");
         }
 
         ctx.incrementPC();

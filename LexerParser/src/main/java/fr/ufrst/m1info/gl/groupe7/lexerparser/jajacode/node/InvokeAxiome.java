@@ -27,8 +27,15 @@ public class InvokeAxiome implements JajaAxiome {
 
         int adresse = (Integer) methodAddress;
 
-        // Empiler l'adresse de retour (PC + 1) sous forme de quad <w, a+1, cst, *>
-        Stacks.Quad returnQuad = new Stacks.Quad(ctx.getTEMP_VALUE(), ctx.getInstructionCounter() + 1, "cst", Type.ENTIER);
+        // Pousser le contexte AVANT d'empiler l'adresse de retour
+        // Cela permet de savoir dans quel contexte on est lors du return
+        ctx.getStacks().pushContext(ident);
+
+        // Empiler l'adresse de retour (PC + 1) sous forme de quad
+        // On utilise un identifiant spécial "%RET_methodName%" pour éviter les conflits
+        // avec le nom de la méthode lors des appels récursifs
+        String returnIdent = "%RET_" + ident + "%";
+        Stacks.Quad returnQuad = new Stacks.Quad(returnIdent, ctx.getInstructionCounter() + 1, "cst", Type.ENTIER);
         ctx.getStacks().push(returnQuad);
 
         System.out.println("\t\tAxiome INVOKE exécuté: appel de '" + ident + "' à l'adresse " + adresse + ", retour prévu à " + (ctx.getInstructionCounter() + 1));

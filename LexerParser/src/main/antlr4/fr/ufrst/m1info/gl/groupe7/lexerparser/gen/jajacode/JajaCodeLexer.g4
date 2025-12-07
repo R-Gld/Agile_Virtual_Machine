@@ -45,7 +45,7 @@ RPAREN : ')' ;
 COMA : ',' ;
 
 // Types de données
-TYPE : 'int' | 'boolean' ;
+TYPE : 'int' | 'boolean' | 'void';
 SORTE : 'var' | 'meth' ;
 
 // Identifiant et Valeur
