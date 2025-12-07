@@ -1,13 +1,15 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireLnNode extends EcrireNode {
-    private final Object ident1Node;
+    private final AstNode ident1Node;
 
-    public EcrireLnNode(Object ident1Node) {
+    public EcrireLnNode(AstNode ident1Node) {
         super(ident1Node);
         this.ident1Node = ident1Node;
     }
@@ -20,7 +22,7 @@ public class EcrireLnNode extends EcrireNode {
             return "ecrireln (" + ident1.toStringTree() + ")";
         }
             
-        return "ecrireln (" + (String) this.getIdent1Node() + ")";
+        return "ecrireln (" +  this.getIdent1Node().toStringTree() + ")";
     }
     @Override
     public void interpret(Stacks stacks) {
@@ -48,6 +50,27 @@ public class EcrireLnNode extends EcrireNode {
             System.out.println(ident1.evaluate(stacks));
         } else if (ident1Node instanceof Expression expr) {
             System.out.println(expr.evaluate(stacks));
+        } else if (ident1Node instanceof TabNode  tabNode) {
+
+            String varName = tabNode.getIdent().getNom();
+
+
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    varName = scopedName;
+                }
+            }
+
+            int index = (int) tabNode.getIndex().evaluate(stacks);
+            Object currentValue =  stacks.getArrayValue(varName, index);
+
+            if (currentValue instanceof Integer) {
+                System.out.println(currentValue);
+            }  else if (currentValue instanceof Boolean) {
+                System.out.println(currentValue);
+            }
+
         } else {
             System.out.println(ident1Node);
         }

@@ -308,41 +308,32 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
-			AstNode ident = visit(ctx.ident1());
+			AstNode ident1 = visit(ctx.ident1());
 			if (ctx.EQ() != null) {
 				System.err.println("[DEBUG] visitInstr: IDENT + EQ -> AffectationNode");
-				return new AffectationNode(ident, (Expression) visit(ctx.exp()));
+				return new AffectationNode(ident1, (Expression) visit(ctx.exp()));
 			}
 			if (ctx.SOMME() != null) {
 				System.err.println("[DEBUG] visitInstr: IDENT + SOMME -> SommeNode");
-				return new SommeNode(ident, (Expression) visit(ctx.exp()));
+				return new SommeNode(ident1, (Expression) visit(ctx.exp()));
 			}
 			if (ctx.INCREMENT() != null) {
 				System.err.println("[DEBUG] visitInstr: IDENT + INCREMENT -> IncrementNode");
-				return new IncrementNode(ident);
+				return new IncrementNode(ident1);
 			}
+
+            // WRITE / WRITELN handling (supports identifier or string literal)
+            if (ctx.WRITE() != null || ctx.WRITELN() != null) {
+                boolean writeln = ctx.WRITELN() != null;
+
+                //Expression writeExpr = new IdentNode(ctx.IDENT().getText());
+                System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + ctx.IDENT().getText() + "')");
+                return writeln ? new EcrireLnNode(ident1) : new EcrireNode(ident1);
+
+                }
 		}
 
-		// WRITE / WRITELN handling (supports identifier or string literal)
-		if (ctx.WRITE() != null || ctx.WRITELN() != null) {
-			boolean writeln = ctx.WRITELN() != null;
 
-			// If there's a bare IDENT token (fallback), create an IdentNode
-			if (ctx.IDENT() != null) {
-				Expression writeExpr = new IdentNode(ctx.IDENT().getText());
-				System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + ctx.IDENT().getText() + "')");
-				return writeln ? new EcrireLnNode(writeExpr) : new EcrireNode(writeExpr);
-			}
-
-			// Otherwise, if it's a string literal
-			if (ctx.STRING() != null) {
-				String text = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
-			 // Remove quotes
-				System.err.println("[DEBUG] visitInstr: WRITE/WRITELN STRING -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + text + "')");
-				return writeln ? new EcrireLnNode(text) : new EcrireNode(text);
-			}
-            
-		}
 
 		throw new IllegalStateException("Unhandled instruction: " + ctx.getText());
 	}
