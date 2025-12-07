@@ -30,6 +30,13 @@ public class MiniJajaSemanticAnalyzer {
      * Creates its own internal Stacks instance for semantic analysis.
      * This ensures the analysis is independent and doesn't pollute the execution memory.
      *
+     * @see SemanticContext for details on shared state management.
+     * @see ScopeResolver for variable scope resolution.
+     * @see TypeInferenceEngine for type inference logic.
+     * @see DeclarationCollector for collecting variable and method declarations.
+     * @see MethodCallValidator for validating method calls.
+     * @see TypeChecker for type compatibility checking.
+     *
      * @param collector the DiagnosticCollector to report errors to
      */
     public MiniJajaSemanticAnalyzer(DiagnosticCollector collector) {
