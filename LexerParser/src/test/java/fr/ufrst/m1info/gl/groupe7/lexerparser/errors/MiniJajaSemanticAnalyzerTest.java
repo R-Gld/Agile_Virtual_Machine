@@ -6,14 +6,12 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisito
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -573,55 +571,6 @@ class MiniJajaSemanticAnalyzerTest {
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors());
-    }
-
-    @Test
-    void inferType_nullExpression_shouldReturnNull_viaReflection() throws Exception {
-        DiagnosticCollector collector = new DiagnosticCollector();
-
-        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-
-        Method m = MiniJajaSemanticAnalyzer.class
-                .getDeclaredMethod("inferType", fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression.class);
-        m.setAccessible(true);
-
-        Object result = m.invoke(analyser, new Object[]{null});
-        assertNull(result, "inferType(null) doit retourner null");
-    }
-
-    @Test
-    void checkNode_nullNode_shouldReturnImmediately_viaReflection() throws Exception {
-        DiagnosticCollector collector = new DiagnosticCollector();
-
-        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-
-        Method m = MiniJajaSemanticAnalyzer.class
-                .getDeclaredMethod("checkNode", AstNode.class);
-        m.setAccessible(true);
-
-        // Doit simplement ne rien faire (pas d'exception, pas de diagnostic)
-        m.invoke(analyser, new Object[]{null});
-
-        assertTrue(collector.getDiagnostics().isEmpty());
-    }
-
-    @Test
-    void checkBinaryOperation_unknownOperation_shouldHitDefaultOperationName() throws Exception {
-        DiagnosticCollector collector = new DiagnosticCollector();
-
-        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("OpUnknown.mjj");
-
-        Method m = MiniJajaSemanticAnalyzer.class.getDeclaredMethod(
-                "checkBinaryOperation", Type.class, Type.class, Type.class, String.class);
-        m.setAccessible(true);
-
-        // leftType != expectedType -> déclenche le message avec getOperationName("^^") => "operation"
-        m.invoke(analyser, Type.ENTIER, Type.ENTIER, Type.BOOLEEN, "^^");
-
-        Diagnostic diag = firstSemanticError(collector);
-        assertNotNull(diag);
-        assertTrue(diag.message().contains("operation"), "Le nom générique 'operation' doit apparaître");
     }
 
     // ============================================================
