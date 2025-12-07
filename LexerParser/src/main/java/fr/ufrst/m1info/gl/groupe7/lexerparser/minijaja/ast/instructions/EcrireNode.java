@@ -7,23 +7,23 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireNode extends InstructionNode {
-    private final AstNode Ident1Node;
+    private final Object Ident1Node;
     
-    public EcrireNode(AstNode ident1Node) {
+    public EcrireNode(Object ident1Node) {
         this.Ident1Node = ident1Node;
     }
 
-    public AstNode getIdent1Node() {
+    public Object getIdent1Node() {
         return Ident1Node;
     }
 
     @Override
     public String toStringTree() {
         if (this.Ident1Node instanceof Expression) {
-            return "ecrire(" + ((Expression) this.Ident1Node).toStringTree() + ")";
+            return "ecrire (" + ((Expression) this.Ident1Node).toStringTree() + ")";
             
         }
-        return "ecrire(" + this.Ident1Node + ")";
+        return "ecrire (" + this.Ident1Node + ")";
     }
    
     public void interpret(Stacks stacks) {
@@ -74,6 +74,8 @@ public class EcrireNode extends InstructionNode {
         } else {
             System.out.print(Ident1Node);
         }
+
+
 
     }
 

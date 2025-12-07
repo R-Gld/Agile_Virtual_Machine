@@ -7,9 +7,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireLnNode extends EcrireNode {
-    private final AstNode ident1Node;
+    private final Object ident1Node;
 
-    public EcrireLnNode(AstNode ident1Node) {
+    public EcrireLnNode(Object ident1Node) {
         super(ident1Node);
         this.ident1Node = ident1Node;
     }
@@ -22,7 +22,7 @@ public class EcrireLnNode extends EcrireNode {
             return "ecrireln (" + ident1.toStringTree() + ")";
         }
             
-        return "ecrireln (" +  this.getIdent1Node().toStringTree() + ")";
+        return "ecrireln (" +  this.getIdent1Node() + ")";
     }
     @Override
     public void interpret(Stacks stacks) {

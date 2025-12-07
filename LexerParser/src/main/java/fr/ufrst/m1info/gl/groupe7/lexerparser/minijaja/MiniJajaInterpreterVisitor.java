@@ -327,7 +327,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
                 boolean writeln = ctx.WRITELN() != null;
 
                 //Expression writeExpr = new IdentNode(ctx.IDENT().getText());
-                System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + ctx.IDENT().getText() + "')");
+                System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + visit(ctx.ident1()) + "')");
                 return writeln ? new EcrireLnNode(ident1) : new EcrireNode(ident1);
 
                 }
