@@ -6,8 +6,38 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchEx
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code sub}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ sub –» &lt;&lt;w, v1 - v2, cst,*&gt;.m, a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile deux valeurs entières {@code v1} et {@code v2},
+ * effectue la soustraction {@code v1 - v2}, puis empile le résultat.</p>
+ *
+ * <p><b>Ordre des opérandes :</b> L'avant-dernier élément de la pile ({@code v1}) est le minuende,
+ * le dernier élément ({@code v2}) est le soustracteur.</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile contient moins de 2 éléments</li>
+ *   <li>{@link TypeMismatchException} si les opérandes ne sont pas de type entier</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class SubAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code sub}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param arg paramètre non utilisé pour cette instruction
+     * @throws StackUnderflowException si la pile contient moins de 2 éléments
+     * @throws TypeMismatchException si les opérandes ne sont pas de type entier
+     */
     @Override
     public void execute(MachineContext ctx, String arg) {
         // 1. Dépilement

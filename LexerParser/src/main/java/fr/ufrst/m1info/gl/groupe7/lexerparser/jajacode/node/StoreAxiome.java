@@ -5,7 +5,37 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.AssignmentExce
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code store(i)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [store] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ store(i) –» &lt;AffecterVal(i,v,m), a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile une valeur {@code v} du sommet de la pile et l'affecte
+ * à la variable identifiée par {@code i} dans la mémoire.</p>
+ *
+ * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
+ * en résolvant les noms de variables scopées (suffixe {@code $N} pour les appels récursifs).</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide</li>
+ *   <li>{@link AssignmentException} si l'affectation échoue</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class StoreAxiome implements JajaAxiome {
+    /**
+     * Exécute l'instruction {@code store(i)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param ident l'identifiant de la variable à modifier
+     * @throws StackUnderflowException si la pile est vide
+     * @throws AssignmentException si l'affectation échoue
+     */
     @Override
     public void execute(MachineContext ctx, String ident) {
         Stacks.Quad valeur = ctx.getStacks().pop();
