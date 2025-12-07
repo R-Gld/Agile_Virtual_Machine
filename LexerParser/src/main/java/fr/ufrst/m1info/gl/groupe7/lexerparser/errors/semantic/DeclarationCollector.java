@@ -4,6 +4,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.Phase;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.Severity;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
@@ -122,6 +123,42 @@ public class DeclarationCollector {
 
             // Note: Method parameters and local variables are collected during type checking
             // in TypeChecker to properly manage scoping
+        } else if (decl instanceof CstNode cstNode) {
+            // Handle constant declarations (final)
+            String cstName = cstNode.getIdent().getNom();
+            String qualifiedName = scopeResolver.qualifyName(cstName);  // ex: "x@global"
+            Type cstType = cstNode.getType();
+
+            // Check for duplicate declarations in current scope
+            if (context.getSymbolTable().contains(qualifiedName)) {
+                context.getCollector().report(
+                    Severity.ERROR,
+                    Phase.SEMANTIC,
+                    context.createPosition(),
+                    String.format("Duplicate constant declaration: '%s' has already been declared. " +
+                                  "Each constant can only be declared once in the same scope.", cstName)
+                );
+            } else {
+                context.getSymbolTable().creationSymbol(qualifiedName, 0, cstType);
+                // Register as constant for reassignment checks
+                context.addConstant(cstName);
+            }
+
+            // Check initialization expression if present
+            Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
+            if (initExpr != null) {
+                Type initType = typeInferenceEngine.inferType(initExpr);
+                if (initType != null && cstType != initType) {
+                    context.getCollector().report(
+                        Severity.ERROR,
+                        Phase.SEMANTIC,
+                        context.createPosition(),
+                        String.format("Type mismatch in constant initialization: constant '%s' declared as '%s' but initialized with '%s'. " +
+                                      "The initialization expression must match the declared type.",
+                                      cstName, cstType, initType)
+                    );
+                }
+            }
         }
 
         // Process next declaration

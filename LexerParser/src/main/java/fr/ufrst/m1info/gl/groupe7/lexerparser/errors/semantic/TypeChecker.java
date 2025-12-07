@@ -275,6 +275,18 @@ public class TypeChecker {
             String varName = ident.getNom();
             String qualifiedName = scopeResolver.resolveAndQualifyName(varName);
 
+            // Check if trying to reassign a constant
+            if (context.isConstant(varName)) {
+                context.getCollector().report(
+                    Severity.ERROR,
+                    Phase.SEMANTIC,
+                    context.createPosition(),
+                    String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.",
+                                  varName)
+                );
+                return;
+            }
+
             // Check if variable is declared
             if (!context.getSymbolTable().contains(qualifiedName)) {
                 context.getCollector().report(

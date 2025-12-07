@@ -65,11 +65,7 @@ public class IncAxiome implements JajaAxiome {
 
         // 4. Vérification des types (doivent être des entiers)
         if (!(currentValue instanceof Integer) || !(incrementQuad.value instanceof Integer)) {
-            throw new TypeMismatchException(
-                "Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")",
-                "INC",
-                ctx.getInstructionCounter()
-            );
+            throw new TypeMismatchException("Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")", "INC", ctx.getInstructionCounter());
         }
 
         // 5. Calcul de la nouvelle valeur

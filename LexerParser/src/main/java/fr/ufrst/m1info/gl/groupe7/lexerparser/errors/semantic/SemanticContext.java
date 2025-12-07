@@ -30,6 +30,7 @@ public class SemanticContext {
     // Variable tracking for scope resolution
     private final Set<String> mainLocalVariables = new HashSet<>();
     private final Set<String> currentScopeVariables = new HashSet<>();
+    private final Set<String> globalConstants = new HashSet<>(); // Pour détecter les réassignations de constantes
 
     /**
      * Constructor.
@@ -159,5 +160,33 @@ public class SemanticContext {
         this.currentScope = ScopeResolver.GLOBAL_SCOPE;
         this.currentMethodReturnType = null;
         this.currentScopeVariables.clear();
+    }
+
+    // ============================================================
+    // CONSTANT MANAGEMENT
+    // ============================================================
+
+    /**
+     * @return the set of global constants (final variables)
+     */
+    public Set<String> getGlobalConstants() {
+        return globalConstants;
+    }
+
+    /**
+     * Check if a variable is a constant.
+     * @param varName the variable name (without scope qualifier)
+     * @return true if the variable is declared as final
+     */
+    public boolean isConstant(String varName) {
+        return globalConstants.contains(varName);
+    }
+
+    /**
+     * Register a variable as a constant.
+     * @param varName the variable name (without scope qualifier)
+     */
+    public void addConstant(String varName) {
+        globalConstants.add(varName);
     }
 }
