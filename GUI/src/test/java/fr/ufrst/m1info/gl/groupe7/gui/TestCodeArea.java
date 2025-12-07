@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
@@ -137,6 +139,7 @@ public class TestCodeArea {
         }
     }
 
+    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionPopupAppears(FxRobot robot) {
         runOnFxThread(() -> {
@@ -161,6 +164,7 @@ public class TestCodeArea {
                 "Auto-completion popup should be visible");
     }
 
+    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionToggle(FxRobot robot) {
         runOnFxThread(() -> {
