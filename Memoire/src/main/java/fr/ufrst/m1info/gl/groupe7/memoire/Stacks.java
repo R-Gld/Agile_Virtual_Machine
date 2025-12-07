@@ -562,6 +562,34 @@ public class Stacks {
         return null;
     }
 
+
+    /**
+     * Résout correctement le nom d'une variable dans le contexte MiniJaja.
+     *
+     * Si on est dans une méthode, il peut exister un nom 'scopé'
+     * Si un tel nom existe dans la mémoire, on le retourne.
+     * Sinon, on retourne le nom global.
+     */
+    public String resolveVariableName(String name) {
+
+        // Si pas dans une méthode → nom simple
+        if (!isInMethodContext()) {
+            return name;
+        }
+
+        // Nom possiblement scoped (ex: "x@myMethod")
+        String scoped = getScopedName(name);
+
+        // Si la variable scoped existe, c'est la bonne variable
+        if (getObjectType(scoped) != null) {
+            return scoped;
+        }
+
+        // Sinon → c'est une variable globale
+        return name;
+    }
+
+
     // ============================================================
     // Axiome D'interpretation
     // ============================================================

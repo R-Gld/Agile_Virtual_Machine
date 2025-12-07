@@ -1,7 +1,9 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class EcrireLnNode extends EcrireNode {
@@ -20,7 +22,7 @@ public class EcrireLnNode extends EcrireNode {
             return "ecrireln (" + ident1.toStringTree() + ")";
         }
             
-        return "ecrireln (" + (String) this.getIdent1Node() + ")";
+        return "ecrireln (" +  this.getIdent1Node() + ")";
     }
     @Override
     public void interpret(Stacks stacks) {
@@ -48,6 +50,20 @@ public class EcrireLnNode extends EcrireNode {
             System.out.println(ident1.evaluate(stacks));
         } else if (ident1Node instanceof Expression expr) {
             System.out.println(expr.evaluate(stacks));
+        } else if (ident1Node instanceof TabNode  tabNode) {
+
+            String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
+
+
+            int index = (int) tabNode.getIndex().evaluate(stacks);
+            Object currentValue =  stacks.getArrayValue(varName, index);
+
+            if (currentValue instanceof Integer) {
+                System.out.println(currentValue);
+            }  else if (currentValue instanceof Boolean) {
+                System.out.println(currentValue);
+            }
+
         } else {
             System.out.println(ident1Node);
         }
