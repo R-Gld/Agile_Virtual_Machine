@@ -19,10 +19,7 @@ import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 public class MiniJajaSemanticAnalyzer {
 
     private final SemanticContext context;
-    private final ScopeResolver scopeResolver;
     private final DeclarationCollector declarationCollector;
-    private final TypeInferenceEngine typeInferenceEngine;
-    private final MethodCallValidator methodCallValidator;
     private final TypeChecker typeChecker;
 
     /**
@@ -43,16 +40,18 @@ public class MiniJajaSemanticAnalyzer {
         // Initialize shared context
         this.context = new SemanticContext(collector);
 
-        // Initialize components in dependency order
-        this.scopeResolver = new ScopeResolver(context);
-        this.typeInferenceEngine = new TypeInferenceEngine(context, scopeResolver);
+        ScopeResolver scopeResolver = new ScopeResolver(context);
+
+        TypeInferenceEngine typeInferenceEngine = new TypeInferenceEngine(context, scopeResolver);
+
         this.declarationCollector = new DeclarationCollector(context, scopeResolver, typeInferenceEngine);
-        this.methodCallValidator = new MethodCallValidator(context, scopeResolver, declarationCollector);
-        this.typeChecker = new TypeChecker(context, scopeResolver, declarationCollector,
-                                           typeInferenceEngine, methodCallValidator);
+
+        MethodCallValidator methodCallValidator = new MethodCallValidator(context, scopeResolver, declarationCollector);
+
+        this.typeChecker = new TypeChecker(context, scopeResolver, declarationCollector, typeInferenceEngine, methodCallValidator);
 
         // Break circular dependency
-        this.typeInferenceEngine.setMethodCallValidator(methodCallValidator);
+        typeInferenceEngine.setMethodCallValidator(methodCallValidator);
     }
 
     /**
