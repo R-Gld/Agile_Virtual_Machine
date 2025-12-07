@@ -6,8 +6,35 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchEx
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code and}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ and –» &lt;&lt;w, v1 ∧ v2, cst,*&gt;.m, a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile deux valeurs booléennes {@code v1} et {@code v2},
+ * effectue l'opération ET logique {@code v1 && v2}, puis empile le résultat.</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile contient moins de 2 éléments</li>
+ *   <li>{@link TypeMismatchException} si les opérandes ne sont pas de type booléen</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class AndAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code and}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param arg paramètre non utilisé pour cette instruction
+     * @throws StackUnderflowException si la pile contient moins de 2 éléments
+     * @throws TypeMismatchException si les opérandes ne sont pas de type booléen
+     */
     @Override
     public void execute(MachineContext ctx, String arg) {
         // 1. Dépilement des opérandes

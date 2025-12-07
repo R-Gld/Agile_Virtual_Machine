@@ -7,8 +7,42 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchEx
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbolException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code inc(i)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [inc] : &lt;&lt;w,v, cst,*&gt;.m,a&gt; ⊢ inc(i) –» &lt;AffecterVal(i,Val(i,m)+v,m), a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile une valeur {@code v}, l'ajoute à la valeur actuelle
+ * de la variable identifiée par {@code i}, puis met à jour la variable avec le résultat.</p>
+ *
+ * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
+ * en résolvant les noms de variables scopées.</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide</li>
+ *   <li>{@link UndefinedSymbolException} si l'identifiant n'existe pas</li>
+ *   <li>{@link TypeMismatchException} si les valeurs ne sont pas de type entier</li>
+ *   <li>{@link AssignmentException} si l'affectation échoue</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class IncAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code inc(i)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param ident l'identifiant de la variable à incrémenter
+     * @throws StackUnderflowException si la pile est vide
+     * @throws UndefinedSymbolException si l'identifiant n'existe pas
+     * @throws TypeMismatchException si les valeurs ne sont pas de type entier
+     * @throws AssignmentException si l'affectation échoue
+     */
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. On récupère la valeur d'incrément sur la pile (le sommet)
