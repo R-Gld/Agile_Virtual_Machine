@@ -14,22 +14,15 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -80,10 +73,42 @@ public class App extends Application {
         SplitPane splitPane = new SplitPane(mjjCodeArea, jjcCodeArea);
         root.setCenter(splitPane);
 
-        // === Console initialization (clean version) ===
+        /*
+         * Bottom view
+         */
+        HBox hBox = new HBox();
+        // Console
         this.console = new ConsoleOutput("console");
-        root.setBottom(this.console);
-        // === End ===
+        hBox.getChildren().add(console);
+
+        // Setup memory table view
+        ScrollPane  scrollPane = new ScrollPane();
+        TableView<StackModel> tableView = new TableView<StackModel>();
+        ObservableList<StackModel> list = FXCollections.observableArrayList();
+
+        tableView.setItems(list);
+
+        // Setup memory table column
+        TableColumn<StackModel, Integer> address = new TableColumn<>("address");
+        address.setCellValueFactory(new PropertyValueFactory<>("address"));
+        TableColumn<StackModel, String> ident = new TableColumn<>("ident");
+        ident.setCellValueFactory(new PropertyValueFactory<>("ident"));
+        TableColumn<StackModel, Object> value = new TableColumn<>("value");
+        value.setCellValueFactory(new PropertyValueFactory<>("value"));
+        TableColumn<StackModel, String> object = new TableColumn<>("object");
+        object.setCellValueFactory(new PropertyValueFactory<>("object"));
+        TableColumn<StackModel, String> type = new TableColumn<>("type");
+        type.setCellValueFactory(new PropertyValueFactory<>("type"));
+
+        tableView.getColumns().setAll(address, ident, value, object, type);
+
+        tableView.setMinWidth(400);
+        hBox.getChildren().add(tableView);
+
+
+        HBox.setHgrow(console, Priority.ALWAYS);
+
+        root.setBottom(hBox);
 
         stage.setScene(scene);
         stage.show();
