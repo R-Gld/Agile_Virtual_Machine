@@ -15,6 +15,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unar
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus.PlusNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.vexp.Vexp;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
@@ -23,6 +24,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Instruct
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
@@ -51,6 +53,7 @@ public class MiniJajaCompilerVisitor {
     private final Stack<String> variablesToPop;
     private final DiagnosticCollector collector;
     private String currentScope = "global";
+    private final Set<String> globalVariables = new HashSet<>();
     private final Set<String> mainLocalVariables = new HashSet<>();
     private final Set<String> currentScopeVariables = new HashSet<>();
 
@@ -103,7 +106,11 @@ public class MiniJajaCompilerVisitor {
             return "main";
         }
 
-        // Par défaut, scope global
+        // Chercher dans les variables globales
+        if (globalVariables.contains(variableName)) {
+            return "global";
+        }
+
         return "global";
     }
 
@@ -115,6 +122,7 @@ public class MiniJajaCompilerVisitor {
     private MiniJajaCompilerVisitor createChildVisitor() {
         MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null, collector);
         childVisitor.currentScope = this.currentScope;
+        childVisitor.globalVariables.addAll(this.globalVariables);
         childVisitor.mainLocalVariables.addAll(this.mainLocalVariables);
         childVisitor.currentScopeVariables.addAll(this.currentScopeVariables);
         return childVisitor;
@@ -460,6 +468,8 @@ public class MiniJajaCompilerVisitor {
 
         if (node.getIdent1Node() != null) {
             String ident = extractIdentifierName(node.getIdent1Node());
+
+
             String scopeAddress = resolveVariableScope(ident);
             jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
         }
@@ -472,6 +482,8 @@ public class MiniJajaCompilerVisitor {
             visit(varNode);
         } else if (node.getDecl() instanceof MethodeNode methodeNode) {
             visit(methodeNode);
+        } else if (node.getDecl() instanceof CstNode cstNode) {
+            visit(cstNode);
         }
 
         if (node.getDecls() != null) {
@@ -490,29 +502,52 @@ public class MiniJajaCompilerVisitor {
     }
 
     public void visit(VarNode node) {
-        Expression vexp = node.getExp() != null ? node.getExp().getVexp() : null;
+        compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "var");
+    }
+
+    /**
+     * Compile une déclaration de constante en code JajaCode.
+     * Selon la règle [ccst] :
+     * n ⊢ cst(t, ident(i), e) ⇒ {pe ⊕D new(i, t, cst, 0), ne + 1}
+     *
+     * @param node le nœud CstNode à compiler
+     */
+    public void visit(CstNode node) {
+        compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "cst");
+    }
+
+    /**
+     * Méthode commune pour compiler une déclaration de variable ou de constante.
+     *
+     * @param vexpWrapper l'expression d'initialisation (peut être null)
+     * @param type        le type de la déclaration
+     * @param ident       le nom de l'identifiant
+     * @param kind        le type de déclaration ("var" ou "cst")
+     */
+    private void compileDeclaration(Vexp vexpWrapper, Type type, String ident, String kind) {
+        Expression vexp = vexpWrapper != null ? vexpWrapper.getVexp() : null;
 
         if (vexp != null) {
             visitExpression(vexp);
         } else {
             // Si pas d'expression d'initialisation, on push une valeur par défaut selon le type
-            if ("BOOLEEN".equals(node.getType().name())) {
+            if ("BOOLEEN".equals(type.name())) {
                 jjcBuilder.addInstruction(PUSH, false);
-            } else if ("ENTIER".equals(node.getType().name())) {
+            } else if ("ENTIER".equals(type.name())) {
                 jjcBuilder.addInstruction(PUSH, 0);
             }
         }
 
-        String ident = node.getIdent().getNom();
         String scopeAddress = currentScope;
-        String kind = "var";
 
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(node.getType()), kind, 0);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(type), kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
 
-        if ("main".equals(currentScope)) {
+        if ("global".equals(currentScope)) {
+            globalVariables.add(ident);
+        } else if ("main".equals(currentScope)) {
             mainLocalVariables.add(ident);
-        } else if (!"global".equals(currentScope)) {
+        } else {
             // On est dans une méthode
             currentScopeVariables.add(ident);
         }
@@ -547,6 +582,7 @@ public class MiniJajaCompilerVisitor {
         // ========== PHASE 1: Calculer les tailles avec un visiteur temporaire ==========
         MiniJajaCompilerVisitor tempVisitor = new MiniJajaCompilerVisitor(null, collector);
         tempVisitor.currentScope = methodSignature;
+        tempVisitor.globalVariables.addAll(this.globalVariables);
 
         // Calculer la taille des entêtes
         if (node.getEntetes() != null) {
