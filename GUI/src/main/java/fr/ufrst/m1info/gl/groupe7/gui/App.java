@@ -282,6 +282,10 @@ public class App extends Application {
             @Override
             protected String call() {
                 Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+                System.out.println("[DEBUG] Starting compilation task...");
+                System.out.println("[DEBUG] MiniJaja code length: " + code.length() + " characters");
+                System.out.println("Instruction jajacode générée :");
+                System.out.println("waza" + compiler.compileToString());
                 return compiler.compileToString();
             }
         };

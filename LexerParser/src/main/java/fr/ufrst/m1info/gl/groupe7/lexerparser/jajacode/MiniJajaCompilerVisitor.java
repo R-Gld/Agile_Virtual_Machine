@@ -278,44 +278,55 @@ public class MiniJajaCompilerVisitor {
      * @throws NullPointerException si node est null
      */
     private void visitSi(SiNode node) {
+        // Règle [csi] : n ⊢ si(e, iss, iss1) ⇒ {(pe ⊕D if(addr)) ⊕ (piss1 ⊕D goto(fin)) ⊕ piss, ...}
+        // Selon [csi], si condition VRAIE, on saute au bloc iss (else)
+        // Donc on génère: condition, if(addr_then), else_code, goto(fin), then_code
+        // Cela inverse l'ordre pour que le THEN s'exécute quand condition est VRAIE
+
         // Évaluer la condition
         if (node.getExpressionNode() != null) {
             visitExpression(node.getExpressionNode());
         }
 
-        // Compiler le bloc then
-        JajaCodeBuilder originalBuilder = this.jjcBuilder;
-        MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
+        // Obtenir l'adresse courante APRÈS la condition
+        int addrAfterCondition = jjcBuilder.getCurrentAddress();
 
+        // Compiler le bloc then dans un builder temporaire pour calculer sa taille
+        MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             thenVisitor.visit(node.getInstructionsNode());
         }
-        JajaCodeBuilder thenBuilder = thenVisitor.getJajaCodeBuilder();
+        int thenSize = thenVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Compiler le bloc else (si présent)
-        JajaCodeBuilder elseBuilder = null;
+        // Compiler le bloc else (si présent) dans un builder temporaire
+        int elseSize = 0;
         boolean hasElse = node.getInstructionsNode2() != null;
         if (hasElse) {
             MiniJajaCompilerVisitor elseVisitor = createChildVisitor();
             elseVisitor.visit(node.getInstructionsNode2());
-            elseBuilder = elseVisitor.getJajaCodeBuilder();
+            elseSize = elseVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
         }
 
-        // Calculer les adresses
-        int currentAddr = originalBuilder.getCurrentAddress();
-        int thenSize = thenBuilder.getInstructionsAsList().size();
-        int elseSize = hasElse ? elseBuilder.getInstructionsAsList().size() : 0;
+        // Calculer les adresses selon [csi]
+        // Structure: IF(thenAddr), [else], GOTO(endAddr), [then]
+        // if saute au then quand condition vraie
+        int ifAddr = addrAfterCondition;
+        int elseStartAddr = ifAddr + 1;
+        int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 pour GOTO
+        int endAddr = thenAddr + thenSize;
 
-        int elseAddr = currentAddr + 1 + thenSize + (hasElse ? 1 : 0);
-        int endAddr = elseAddr + elseSize;
+        // Générer IF qui saute au THEN quand condition vraie
+        jjcBuilder.addInstruction(IF, thenAddr);
 
-        // Générer les instructions
-        originalBuilder.addInstruction(IF, elseAddr);
-        originalBuilder.merge(thenBuilder);
-
+        // Compiler le bloc ELSE d'abord (exécuté quand condition fausse)
         if (hasElse) {
-            originalBuilder.addInstruction(GOTO, endAddr);
-            originalBuilder.merge(elseBuilder);
+            visit(node.getInstructionsNode2());
+            jjcBuilder.addInstruction(GOTO, endAddr);
+        }
+
+        // Compiler le bloc THEN ensuite (exécuté quand condition vraie via saut)
+        if (node.getInstructionsNode() != null) {
+            visit(node.getInstructionsNode());
         }
     }
 
@@ -383,21 +394,26 @@ public class MiniJajaCompilerVisitor {
         }
         jjcBuilder.addInstruction(NOT);
 
-        // Compiler le corps de la boucle
+        // Compiler le corps de la boucle dans un visitor temporaire pour calculer la taille
         MiniJajaCompilerVisitor bodyVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             bodyVisitor.visit(node.getInstructionsNode());
         }
-        JajaCodeBuilder bodyBuilder = bodyVisitor.getJajaCodeBuilder();
+        int bodySize = bodyVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
         // Calculer les adresses
         int currentAddr = jjcBuilder.getCurrentAddress();
-        int bodySize = bodyBuilder.getInstructionsAsList().size();
-        int loopEndAddr = currentAddr + 1 + bodySize + 1;
+        int loopEndAddr = currentAddr + 1 + bodySize + 1; // +1 pour IF, +1 pour GOTO
 
-        // Générer les instructions
+        // Générer IF
         jjcBuilder.addInstruction(IF, loopEndAddr);
-        jjcBuilder.merge(bodyBuilder);
+
+        // Compiler le corps directement dans le builder principal
+        if (node.getInstructionsNode() != null) {
+            visit(node.getInstructionsNode());
+        }
+
+        // Générer GOTO pour retourner au début
         jjcBuilder.addInstruction(GOTO, loopStartAddr);
     }
 
@@ -524,73 +540,128 @@ public class MiniJajaCompilerVisitor {
 
         // Sauvegarder le scope actuel
         String previousScope = currentScope;
+        Set<String> previousScopeVariables = new HashSet<>(currentScopeVariables);
         currentScope = methodSignature;
+        currentScopeVariables.clear();
 
-        // Compiler les entêtes (paramètres) - pens
-        MiniJajaCompilerVisitor methodBodyVisitor = new MiniJajaCompilerVisitor(null, collector);
-        methodBodyVisitor.currentScope = methodSignature;
+        // ========== PHASE 1: Calculer les tailles avec un visiteur temporaire ==========
+        MiniJajaCompilerVisitor tempVisitor = new MiniJajaCompilerVisitor(null, collector);
+        tempVisitor.currentScope = methodSignature;
 
+        // Calculer la taille des entêtes
         if (node.getEntetes() != null) {
-            visitEntetesReverse(node.getEntetes(), methodBodyVisitor, methodSignature);
+            visitEntetesReverse(node.getEntetes(), tempVisitor, methodSignature);
         }
+        int headerSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Compiler les variables locales - pdvs
-        int varCountBefore = methodBodyVisitor.variablesToPop.size();
+        // Calculer la taille des variables locales
+        int varCountBefore = tempVisitor.variablesToPop.size();
         if (node.getVars() != null) {
-            methodBodyVisitor.visit(node.getVars());
+            tempVisitor.visit(node.getVars());
         }
-        int localVarCount = methodBodyVisitor.variablesToPop.size() - varCountBefore;
+        int localVarCount = tempVisitor.variablesToPop.size() - varCountBefore;
+        int varsSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size() - headerSize;
 
-        // Compiler les instructions - piss
+        // Calculer la taille des instructions
         if (node.getInstrs() != null) {
-            methodBodyVisitor.visit(node.getInstrs());
+            tempVisitor.visit(node.getInstrs());
         }
+        int totalBodySize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        JajaCodeBuilder methodBody = methodBodyVisitor.getJajaCodeBuilder();
-        int bodySize = methodBody.getInstructionsAsList().size();
+        // Copier les variables du scope depuis le visiteur temporaire
+        currentScopeVariables.addAll(tempVisitor.currentScopeVariables);
 
-        // Calculer le nombre d'instructions pour le retrait des variables locales uniquement
-        // Les paramètres sont retirés côté appelant
+        // Calculer le nombre d'instructions pour le retrait des variables locales
         int retraitVarsCount = localVarCount * 2;
-
-        // Pour les méthodes void, on ajoute push(0) avant le retrait
         int push0Count = isVoidMethod ? 1 : 0;
+        // swap + return = 2 instructions (pour void et non-void)
+        int swapReturnCount = 2;
 
-        // Calculer les adresses
+        // ========== PHASE 2: Générer le code avec les bonnes adresses ==========
         int currentAddr = jjcBuilder.getCurrentAddress();
         int methodStartAddr = currentAddr + 3; // après push + new + goto
-
-        // L'adresse de fin est après : corps + push(0)? + retrait vars + swap + return
-        int methodEndAddr = methodStartAddr + bodySize + push0Count + retraitVarsCount + 2;
+        int methodEndAddr = methodStartAddr + totalBodySize + push0Count + retraitVarsCount + swapReturnCount;
 
         // Générer le code de déclaration de la méthode
         jjcBuilder.addInstruction(PUSH, methodStartAddr);
         jjcBuilder.addInstruction(NEW, methodName, methodType, "meth", 0);
         jjcBuilder.addInstruction(GOTO, methodEndAddr);
 
-        // Ajouter la méthode à la liste des déclarations à retirer selon [crméthode]
+        // Ajouter la méthode à la liste des déclarations à retirer
         variablesToPop.push(methodName);
 
-        // Insérer le corps de la méthode (pens + pdvs + piss)
-        jjcBuilder.merge(methodBody);
+        // ========== PHASE 3: Compiler le corps directement dans le builder principal ==========
 
-        // Pour les méthodes void : push(0) avant le retrait
+        // Sauvegarder la taille de variablesToPop avant de compiler le corps de la méthode
+        int varStackSizeBefore = variablesToPop.size();
+
+        // Compiler les entêtes (paramètres) directement
+        if (node.getEntetes() != null) {
+            visitEntetesDirectly(node.getEntetes(), methodSignature);
+        }
+
+        // Compiler les variables locales directement
+        if (node.getVars() != null) {
+            visit(node.getVars());
+        }
+
+        // Compiler les instructions directement
+        if (node.getInstrs() != null) {
+            visit(node.getInstrs());
+        }
+
+        // Selon [cméthodeRien] : piss ⊕ (push(0) ⊕G prdvs) ⊕D swap ⊕D return
+        // Pour les méthodes void : push(0) AVANT le retrait des variables locales
         if (isVoidMethod) {
             jjcBuilder.addInstruction(PUSH, 0);
         }
 
-        // prdvs : Retrait des variables locales uniquement (pas les paramètres)
+        // prdvs : Retrait des variables locales uniquement
         for (int i = 0; i < localVarCount; i++) {
             jjcBuilder.addInstruction(SWAP);
             jjcBuilder.addInstruction(POP);
         }
 
-        // ⊕D swap ⊕D return
+        // Nettoyer variablesToPop : retirer les variables locales de la méthode qui ont été ajoutées
+        // (elles sont gérées par les SWAP/POP générés ci-dessus, pas par le nettoyage global)
+        while (variablesToPop.size() > varStackSizeBefore) {
+            variablesToPop.pop();
+        }
+
+
+        // swap + return
         jjcBuilder.addInstruction(SWAP);
         jjcBuilder.addInstruction(RETURN);
 
         // Restaurer le scope
         currentScope = previousScope;
+        currentScopeVariables.clear();
+        currentScopeVariables.addAll(previousScopeVariables);
+    }
+
+    /**
+     * Visite les entêtes directement dans le builder principal (pas dans un visitor séparé).
+     */
+    private void visitEntetesDirectly(EntetesNode entetes, String methodSignature) {
+        if (entetes == null || entetes.getEntete() == null) {
+            return;
+        }
+
+        // D'abord traiter le reste de la liste
+        if (entetes.getEntetes() != null) {
+            visitEntetesDirectly(entetes.getEntetes(), methodSignature);
+        }
+
+        // Ensuite traiter l'entête actuelle
+        EnteteNode entete = entetes.getEntete();
+        String paramName = entete.getIdent().getNom();
+        String paramType = typeToJajaCode(entete.getType());
+
+        // Calculer la profondeur
+        int currentDepth = countParams(entetes);
+
+        jjcBuilder.addInstruction(NEW, paramName + "@" + methodSignature, paramType, "var", currentDepth);
+        currentScopeVariables.add(paramName);
     }
 
     /**
