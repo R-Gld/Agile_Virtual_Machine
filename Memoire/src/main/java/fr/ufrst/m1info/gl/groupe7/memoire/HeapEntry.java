@@ -23,12 +23,31 @@ public class HeapEntry {
     /** Indicates whether this block is free or allocated. */
     private boolean isFree;
 
+    /** Reference counter for GC */
+    private int refCount = 1;
+
     public HeapEntry(String id, int address, int size, Object ref, boolean isFree) {
         this.id = id;
         this.address = address;
         this.size = size;
         this.ref = ref;
         this.isFree = isFree;
+    }
+    // -------------------------------------------------------------------------
+    // Reference Counting
+    // -------------------------------------------------------------------------
+    public void incrementRef() {
+        refCount++;
+        System.err.println("[GC] Increment refCount of " + id + " → " + refCount);
+    }
+
+    public void decrementRef() {
+        refCount--;
+        System.err.println("[GC] Decrement refCount of " + id + " → " + refCount);
+    }
+
+    public int getRefCount() {
+        return refCount;
     }
 
     public String getId() { return id; }

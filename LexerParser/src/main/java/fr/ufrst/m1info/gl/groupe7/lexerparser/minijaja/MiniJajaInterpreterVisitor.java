@@ -3,16 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.*;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
@@ -103,7 +94,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	@Override
 	public AstNode visitVexp(MiniJajaParser.VexpContext ctx) {
 		System.err.println("[DEBUG] enter visitVexp: text='" + (ctx.exp() != null ? ctx.exp().getText() : "<null>") + "'");
-		if (ctx.exp() == null) {
+		if (ctx.children == null) {
 			System.err.println("[DEBUG] visitVexp: no expression (null)");
 			return null;
 		}
@@ -144,13 +135,18 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		IdentNode ident = new IdentNode(ctx.IDENT() != null ? ctx.IDENT().getText() : "");
 		System.err.println("[DEBUG] visitVar: ident='" + ident.getNom() + "', type='" + typeText + "'");
-		Expression vexp = ctx.vexp() != null ? (Expression) visit(ctx.vexp()) : null;
-	
-	
+		Expression vexp = null;
+
+		if(ctx.vexp() != null) {	
+		// Si une expression d'initialisation est présente
+		vexp =(Expression) visit(ctx.vexp()) ;
+
+		}
+
 
 		// Cas 1 : constante finale
 		if (ctx.FINAL() != null) {
-				return (ctx.vexp() != null)
+				return (vexp != null)
 				? new CstNode(type, ident, vexp)
 				: new CstNode(type, ident);
 		}
@@ -167,7 +163,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// Cas 3 : variable simple
 		System.err.println("[DEBUG] exit visitVar: created variable node for '" + ident.getNom() + "', type='" + type + "'");
-		return (ctx.vexp() != null)
+		return (vexp != null)
 				? new VarNode(type, ident , vexp)
 				: new VarNode(type, ident);
 	}
@@ -178,7 +174,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		System.err.println("[DEBUG] enter visitVars: text='" + ctx.getText() + "'");
 		if (ctx.children == null)
 			return new VarsNode();
-		VarNode firstVar = (VarNode) visit(ctx.var());
+		AstNode firstVar =  visit(ctx.var());
 		VarsNode nextVars = (VarsNode) visit(ctx.vars());
 		System.err.println("[DEBUG] exit visitVars: created VarsNode");
 		return new VarsNode(firstVar, nextVars);
@@ -187,7 +183,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	@Override
 	public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
 		System.err.println("[DEBUG] enter visitMethode: text='" + ctx.getText() + "'");
-		String typeText = ctx.typemeth().TYPE().getText();
+		String typeText = ctx.typemeth().getText();
 		Type typeMeth;
 		switch (typeText) {
 			case "int":
@@ -293,10 +289,22 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
-			AstNode returned = visit(ctx.exp());
+			Expression returned = (Expression) visit(ctx.exp());
 			System.err.println("[DEBUG] visitInstr: RETURN -> RetourNode");
 			return new RetourNode(returned);
 		}
+
+
+
+        //APPELI relou
+        if (ctx.listexp() != null) {
+            ListExpNode listExp = (ListExpNode) visit(ctx.listexp());
+            IdentNode ident =  new IdentNode(ctx.IDENT().getText());
+            System.err.println("[DEBUG] visitInstr: IDENT -> AppelINode");
+
+            return new AppelINode(ident, listExp);
+
+        }
 
 		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
@@ -427,7 +435,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			if (ctx.LENGTH() != null)
 				return new LengthNode(ident);
 			if (ctx.listexp() != null)
-				return new AppelENode(ident, visit(ctx.listexp()));
+				return new AppelENode(ident, (ListExpNode) visit(ctx.listexp()));
 		}
 
 		if (ctx.exp() != null)
@@ -460,7 +468,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return new ListExpNode(null, null); // Nœud "exnil"
 		}
 
-		AstNode exp = visit(ctx.exp());
+		Expression exp = (Expression) visit(ctx.exp());
 
 		if (ctx.listexp() != null) {
 			ListExpNode next = (ListExpNode) visit(ctx.listexp());
@@ -470,23 +478,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	}
 
-	// ======== TYPE METHODS ========
-
-	// @Override
-	// public AstNode visitTypemeth(MiniJajaParser.TypemethContext ctx) {
-	// if (ctx.TYPE() != null) {
-	// return ctx.TYPE().getText();
-	// } else {
-	// return "void";
-	// }
-	//
-	// }
 
 	/**
 	 * Résultat par défaut si une méthode 'visit' n'est pas implémentée.
 	 */
 	@Override
 	protected AstNode defaultResult() {
-		return null;
+		System.err.println("[DEBUG] defaultResult called");
+		throw new UnsupportedOperationException("Visite non implémentée pour ce nœud.");
+		
 	}
 }

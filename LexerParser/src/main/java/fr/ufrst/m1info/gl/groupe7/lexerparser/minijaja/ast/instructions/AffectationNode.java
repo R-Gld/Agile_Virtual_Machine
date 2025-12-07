@@ -96,10 +96,39 @@ public class AffectationNode extends InstructionNode {
         if (ident1Node instanceof IdentNode identNode) {
             String varName = identNode.getNom();
             Object value = expression.evaluate(stacks);
-            stacks.AffecterVal(varName, value);
+            
+            // Try scoped name first if in method context
+            String actualVarName = varName;
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    actualVarName = scopedName;
+                }
+            }
+            
+            // Check type compatibility
+            String varType = stacks.getDataType(actualVarName).toString();
+            String valueType = value instanceof Integer ? "integer"
+                    : value instanceof Boolean ? "boolean"
+                    : "unknown";
+            if (!varType.equals(valueType)) {
+                throw new RuntimeException(String.format(
+                        "Type error: cannot assign value of type %s to variable %s of type %s",
+                        valueType, varName, varType));
+            }
+            stacks.AffecterVal(actualVarName, value);
         }else if (ident1Node instanceof TabNode tabNode)
         {
          String varName = tabNode.getIdent().getNom();
+         
+         // Try scoped name first if in method context
+         if (stacks.isInMethodContext()) {
+             String scopedName = stacks.getScopedName(varName);
+             if (stacks.getObjectType(scopedName) != null) {
+                 varName = scopedName;
+             }
+         }
+         
          int index = (int) tabNode.getIndex().evaluate(stacks);
          Object value = expression.evaluate(stacks);
          stacks.setArrayValue(varName, index, value);

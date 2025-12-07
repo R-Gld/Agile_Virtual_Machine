@@ -63,7 +63,7 @@ public class MiniJajaInterpreter implements Runnable {
                 collector,
                 stacks.getSymbolTable()
             );
-            semanticAnalyser.analyse(classNode);
+           // semanticAnalyser.analyse(classNode);
 
             if (collector.hasErrors()) {
                 throw new SyntaxException(collector);

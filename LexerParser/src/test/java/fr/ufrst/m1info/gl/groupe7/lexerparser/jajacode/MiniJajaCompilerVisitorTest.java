@@ -1,21 +1,30 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entete.EnteteNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.or.OrNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp1.equals.EqualsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp1.greater.GreaterThanNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus.PlusNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -1281,8 +1290,7 @@ class MiniJajaCompilerVisitorTest {
     @Test
     void visitSomme_withComplexExpression_evaluatesBeforeInc() {
         fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode sommeNode = mock(fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode.class);
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode mult =
-            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode(new NbreNode(2), ident("x"));
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode mult = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode(new NbreNode(2), ident("x"));
         when(sommeNode.getIdent1Node()).thenReturn(ident("y"));
         when(sommeNode.getExpressionNode()).thenReturn(mult);
 
@@ -1358,8 +1366,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitUnaryMinus_withPositiveNumber_generatesNegInstruction() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
-            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(5));
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(5));
 
         AffectationNode affectation = mock(AffectationNode.class);
         when(affectation.getExpression()).thenReturn(unaryMinus);
@@ -1375,8 +1382,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitUnaryMinus_withVariable_generatesLoadThenNeg() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
-            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(ident("y"));
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(ident("y"));
 
         AffectationNode affectation = mock(AffectationNode.class);
         when(affectation.getExpression()).thenReturn(unaryMinus);
@@ -1392,8 +1398,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitUnaryMinus_withNegativeNumber_generatesNegInstruction() {
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus =
-            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(-3));
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode unaryMinus = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode(new NbreNode(-3));
 
         AffectationNode affectation = mock(AffectationNode.class);
         when(affectation.getExpression()).thenReturn(unaryMinus);
@@ -1584,5 +1589,1102 @@ class MiniJajaCompilerVisitorTest {
         verify(builderSpy).addInstruction(PUSH, false);
         verify(builderSpy).addInstruction(NEW, "mixedCase@global", "boolean", "var", 0);
     }
+
+    // ==================== Tests pour MethodeNode ====================
+
+    /**
+     * Crée un MethodeNode simple sans paramètres ni variables locales.
+     */
+    private MethodeNode createSimpleMethod(String name, Type returnType) {
+        IdentNode ident = new IdentNode(name);
+        return new MethodeNode(returnType, ident, null, null, null);
+    }
+
+    /**
+     * Crée un EnteteNode (paramètre de méthode).
+     */
+    private EnteteNode createEntete(String name, Type type) {
+        return new EnteteNode(new IdentNode(name), type);
+    }
+
+    /**
+     * Crée un EntetesNode avec un seul paramètre.
+     */
+    private EntetesNode createSingleEntetes(String name, Type type) {
+        return new EntetesNode(createEntete(name, type), null);
+    }
+
+    /**
+     * Crée un EntetesNode avec deux paramètres.
+     */
+    private EntetesNode createDoubleEntetes(String name1, Type type1, String name2, Type type2) {
+        EnteteNode entete1 = createEntete(name1, type1);
+        EntetesNode entetes2 = createSingleEntetes(name2, type2);
+        return new EntetesNode(entete1, entetes2);
+    }
+
+    @Test
+    void visitMethodeNode_simpleIntMethod_generatesCorrectStructure() {
+        // Test: int f() { } → push, new, goto, swap, return
+        MethodeNode methode = createSimpleMethod("f", Type.ENTIER);
+
+        visitor.visit(methode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        // push(adresse_début) = 4 (après init qui est à 1, puis push à 2, new à 3, goto à 4)
+        inOrder.verify(builderSpy).addInstruction(eq(PUSH), anyInt());
+        inOrder.verify(builderSpy).addInstruction(eq(NEW), eq("f"), eq("int"), eq("meth"), eq(0));
+        inOrder.verify(builderSpy).addInstruction(eq(GOTO), anyInt());
+        inOrder.verify(builderSpy).addInstruction(SWAP);
+        inOrder.verify(builderSpy).addInstruction(RETURN);
+    }
+
+    @Test
+    void visitMethodeNode_voidMethod_generatesPush0BeforeSwapReturn() {
+        // Test: void f() { } → push, new, goto, push(0), swap, return
+        MethodeNode methode = createSimpleMethod("f", Type.VOID);
+
+        visitor.visit(methode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(eq(PUSH), anyInt()); // adresse début
+        inOrder.verify(builderSpy).addInstruction(eq(NEW), eq("f"), eq("void"), eq("meth"), eq(0));
+        inOrder.verify(builderSpy).addInstruction(eq(GOTO), anyInt());
+        inOrder.verify(builderSpy).addInstruction(PUSH, 0); // valeur retour void
+        inOrder.verify(builderSpy).addInstruction(SWAP);
+        inOrder.verify(builderSpy).addInstruction(RETURN);
+    }
+
+    @Test
+    void visitMethodeNode_withOneParameter_generatesNewForParam() {
+        // Test: int f(int p) { } → new(p@f@int, int, var, 1)
+        IdentNode ident = new IdentNode("f");
+        EntetesNode entetes = createSingleEntetes("p", Type.ENTIER);
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, null, null);
+
+        visitor.visit(methode);
+
+        // Vérifier que le builder contient l'instruction pour le paramètre
+        // Les paramètres sont dans un builder séparé qui est fusionné
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(p@f@int, int, var, 1)"), "Should contain parameter declaration. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_withTwoParameters_generatesNewForEachParam() {
+        // Test: int f(int a, boolean b) { }
+        IdentNode ident = new IdentNode("f");
+        EntetesNode entetes = createDoubleEntetes("a", Type.ENTIER, "b", Type.BOOLEEN);
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, null, null);
+
+        visitor.visit(methode);
+
+        // Vérifier que le builder contient les instructions pour les paramètres
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(b@f@int, boolean, var, 1)"), "Should contain param b declaration. Output: " + output);
+        assertTrue(output.contains("new(a@f@int, int, var, 2)"), "Should contain param a declaration. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_withLocalVariable_generatesNewAndRetrait() {
+        // Test: int f() { int x; } → new pour x, puis swap/pop pour retirer x
+        IdentNode ident = new IdentNode("f");
+        VarsNode vars = mock(VarsNode.class);
+        VarNode localVar = var("x", Type.ENTIER);
+        when(vars.getVar()).thenReturn(localVar);
+        when(vars.getVars()).thenReturn(null);
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, null, vars, null);
+
+        visitor.visit(methode);
+
+        // Vérifier la sortie contient les éléments attendus
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(f, int, meth, 0)"), "Should contain method declaration. Output: " + output);
+        assertTrue(output.contains("swap"), "Should contain swap. Output: " + output);
+        assertTrue(output.contains("pop"), "Should contain pop. Output: " + output);
+        assertTrue(output.contains("return"), "Should contain return. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_withInstructions_generatesInstructionsInBody() {
+        // Test: int f() { x = 5; } où x est une variable globale (pas dans le scope de la méthode)
+        IdentNode ident = new IdentNode("f");
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+        when(affectation.getExpression()).thenReturn(new NbreNode(5));
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("x"));
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, null, null, instrs);
+
+        visitor.visit(methode);
+
+        // Vérifier que la sortie contient les instructions d'affectation
+        // x n'est pas un paramètre ni une variable locale, donc elle utilise le scope global
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(5)"), "Should contain push(5). Output: " + output);
+        assertTrue(output.contains("store(x@global)"), "Should contain store with global scope (x is not in method scope). Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_withReturnStatement_generatesLoadInstruction() {
+        // Test: int f(int p) { return p; }
+        IdentNode ident = new IdentNode("f");
+        EntetesNode entetes = createSingleEntetes("p", Type.ENTIER);
+
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        RetourNode retour = mock(RetourNode.class);
+        when(instrs.getInstructionNode()).thenReturn(retour);
+        when(instrs.getInstructions()).thenReturn(null);
+        when(retour.getExp()).thenReturn(new IdentNode("p"));
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, null, instrs);
+
+        visitor.visit(methode);
+
+        // Vérifier que la sortie contient l'instruction load avec le scope
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("load(p@f@int)"), "Should contain load with scope. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_booleanMethod_generatesCorrectType() {
+        // Test: boolean isValid() { }
+        MethodeNode methode = createSimpleMethod("isValid", Type.BOOLEEN);
+
+        visitor.visit(methode);
+
+        verify(builderSpy).addInstruction(eq(NEW), eq("isValid"), eq("boolean"), eq("meth"), eq(0));
+    }
+
+    @Test
+    void visitMethodeNode_addsMethodToVariablesToPop() {
+        // Test: la méthode doit être ajoutée à variablesToPop pour le retrait
+        MethodeNode methode = createSimpleMethod("myMethod", Type.ENTIER);
+
+        visitor.visit(methode);
+
+        // Après la visite, la méthode devrait être dans variablesToPop
+        // On vérifie indirectement via la génération du NEW
+        verify(builderSpy).addInstruction(eq(NEW), eq("myMethod"), eq("int"), eq("meth"), eq(0));
+    }
+
+    @Test
+    void visitMethodeNode_calculatesCorrectGotoAddress_noBody() {
+        // Test: int f() { } → goto pointe vers l'instruction après return
+        MethodeNode methode = createSimpleMethod("f", Type.ENTIER);
+
+        visitor.visit(methode);
+
+        // Capturer les arguments de GOTO
+        ArgumentCaptor<Integer> gotoCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(builderSpy).addInstruction(eq(GOTO), gotoCaptor.capture());
+
+        // Pour une méthode vide non-void : corps vide (0) + swap (1) + return (1) = 2
+        // goto pointe vers methodStartAddr + bodySize + 0 + 0 + 2 = adresse après return
+        int gotoTarget = gotoCaptor.getValue();
+        assertTrue(gotoTarget > 0, "GOTO target should be positive");
+    }
+
+    @Test
+    void visitMethodeNode_voidWithLocalVar_generatesPush0AndRetrait() {
+        // Test: void f() { int x; } → push(0) pour void, swap/pop pour x
+        IdentNode ident = new IdentNode("f");
+        VarsNode vars = mock(VarsNode.class);
+        VarNode localVar = var("x", Type.ENTIER);
+        when(vars.getVar()).thenReturn(localVar);
+        when(vars.getVars()).thenReturn(null);
+
+        MethodeNode methode = new MethodeNode(Type.VOID, ident, null, vars, null);
+
+        visitor.visit(methode);
+
+        // Vérifier la sortie contient les éléments attendus
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(f, void, meth, 0)"), "Should contain void method declaration. Output: " + output);
+        // Compter les occurrences de push(0) - devrait y en avoir au moins 2 (init var et void return)
+        int pushCount = output.split("push\\(0\\)").length - 1;
+        assertTrue(pushCount >= 2, "Should have at least 2 push(0). Count: " + pushCount + ". Output: " + output);
+        assertTrue(output.contains("swap"), "Should contain swap. Output: " + output);
+        assertTrue(output.contains("return"), "Should contain return. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_withMultipleLocalVars_generatesMultipleRetraits() {
+        // Test: int f() { int x; int y; } → swap/pop pour y, swap/pop pour x
+        IdentNode ident = new IdentNode("f");
+
+        VarsNode vars1 = mock(VarsNode.class);
+        VarsNode vars2 = mock(VarsNode.class);
+        VarNode localVar1 = var("x", Type.ENTIER);
+        VarNode localVar2 = var("y", Type.ENTIER);
+
+        when(vars1.getVar()).thenReturn(localVar1);
+        when(vars1.getVars()).thenReturn(vars2);
+        when(vars2.getVar()).thenReturn(localVar2);
+        when(vars2.getVars()).thenReturn(null);
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, null, vars1, null);
+
+        visitor.visit(methode);
+
+        // Vérifier qu'il y a 2 paires swap/pop pour les 2 variables locales
+        // Plus 1 paire swap/return à la fin
+        verify(builderSpy, atLeast(2)).addInstruction(SWAP);
+        verify(builderSpy, atLeast(2)).addInstruction(POP);
+        verify(builderSpy).addInstruction(RETURN);
+    }
+
+    @Test
+    void visitMethodeNode_scopeIsRestoredAfterVisit() {
+        // Test: le scope doit être restauré après la visite de la méthode
+        MethodeNode methode = createSimpleMethod("f", Type.ENTIER);
+
+        // Simuler un scope initial
+        // Le scope est "global" au départ
+        visitor.visit(methode);
+
+        // On vérifie que la méthode a été compilée correctement
+        // (le scope devrait être restauré à "global" mais c'est interne)
+        verify(builderSpy).addInstruction(eq(NEW), eq("f"), eq("int"), eq("meth"), eq(0));
+    }
+
+    @Test
+    void visitMethodeNode_complexMethod_generatesAllParts() {
+        // Test complet: int add(int a, int b) { int result; result = a + b; return result; }
+        IdentNode ident = new IdentNode("add");
+        EntetesNode entetes = createDoubleEntetes("a", Type.ENTIER, "b", Type.ENTIER);
+
+        VarsNode vars = mock(VarsNode.class);
+        VarNode localVar = var("result", Type.ENTIER);
+        when(vars.getVar()).thenReturn(localVar);
+        when(vars.getVars()).thenReturn(null);
+
+        // Instructions mockées
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        PlusNode plusNode = new PlusNode(new IdentNode("a"), new IdentNode("b"));
+        when(affectation.getExpression()).thenReturn(plusNode);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("result"));
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, vars, instrs);
+
+        visitor.visit(methode);
+
+        // Vérifier la sortie contient tous les éléments
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(add, int, meth, 0)"), "Should contain method declaration. Output: " + output);
+        assertTrue(output.contains("new(b@add@int, int, var, 1)"), "Should contain param b. Output: " + output);
+        assertTrue(output.contains("new(a@add@int, int, var, 2)"), "Should contain param a. Output: " + output);
+        assertTrue(output.contains("load(a@add@int)"), "Should contain load a. Output: " + output);
+        assertTrue(output.contains("load(b@add@int)"), "Should contain load b. Output: " + output);
+        assertTrue(output.contains("add"), "Should contain add. Output: " + output);
+        assertTrue(output.contains("store(result@add@int)"), "Should contain store result. Output: " + output);
+        assertTrue(output.contains("return"), "Should contain return. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_methodStartAddrCalculation() {
+        // Test: l'adresse de début de la méthode est currentAddr + 3
+        MethodeNode methode = createSimpleMethod("test", Type.ENTIER);
+
+        visitor.visit(methode);
+
+        // Capturer l'adresse de début (premier PUSH)
+        ArgumentCaptor<Integer> pushCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(builderSpy, atLeastOnce()).addInstruction(eq(PUSH), pushCaptor.capture());
+
+        // La première valeur capturée devrait être l'adresse de début
+        List<Integer> pushValues = pushCaptor.getAllValues();
+        assertFalse(pushValues.isEmpty(), "Should have at least one PUSH");
+        int methodStartAddr = pushValues.get(0);
+        assertTrue(methodStartAddr >= 4, "Method start address should be at least 4 (after push, new, goto)");
+    }
+
+    @Test
+    void visitMethodeNode_emptyVarsNode_doesNotCrash() {
+        // Test: vars vide ne cause pas d'erreur
+        IdentNode ident = new IdentNode("f");
+        VarsNode emptyVars = mock(VarsNode.class);
+        when(emptyVars.getVar()).thenReturn(null);
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, null, emptyVars, null);
+
+        assertDoesNotThrow(() -> visitor.visit(methode));
+    }
+
+    @Test
+    void visitMethodeNode_emptyEntetesNode_doesNotCrash() {
+        // Test: entetes vide ne cause pas d'erreur
+        IdentNode ident = new IdentNode("f");
+        EntetesNode emptyEntetes = new EntetesNode(); // Constructeur vide
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, emptyEntetes, null, null);
+
+        assertDoesNotThrow(() -> visitor.visit(methode));
+    }
+
+    @Test
+    void visitMethodeNode_emptyInstrsNode_doesNotCrash() {
+        // Test: instrs vide ne cause pas d'erreur
+        IdentNode ident = new IdentNode("f");
+        InstructionsNode emptyInstrs = mock(InstructionsNode.class);
+        when(emptyInstrs.getInstructionNode()).thenReturn(null);
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, null, null, emptyInstrs);
+
+        assertDoesNotThrow(() -> visitor.visit(methode));
+    }
+
+    @Test
+    void visitMethodeNode_withThreeParameters_generatesCorrectDepths() {
+        // Test: int f(int a, int b, int c) { }
+        IdentNode ident = new IdentNode("f");
+        EnteteNode entete1 = createEntete("a", Type.ENTIER);
+        EnteteNode entete2 = createEntete("b", Type.ENTIER);
+        EnteteNode entete3 = createEntete("c", Type.ENTIER);
+
+        EntetesNode entetes3 = new EntetesNode(entete3, null);
+        EntetesNode entetes2 = new EntetesNode(entete2, entetes3);
+        EntetesNode entetes1 = new EntetesNode(entete1, entetes2);
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes1, null, null);
+
+        visitor.visit(methode);
+
+        // Vérifier les depths dans la sortie
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(c@f@int, int, var, 1)"), "Should contain param c with depth 1. Output: " + output);
+        assertTrue(output.contains("new(b@f@int, int, var, 2)"), "Should contain param b with depth 2. Output: " + output);
+        assertTrue(output.contains("new(a@f@int, int, var, 3)"), "Should contain param a with depth 3. Output: " + output);
+    }
+
+    @Test
+    void visitMethodeNode_methodSignatureFormat() {
+        // Test: la signature de la méthode est "nom@type" pour le scope interne
+        IdentNode ident = new IdentNode("compute");
+        EntetesNode entetes = createSingleEntetes("x", Type.ENTIER);
+
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+        when(affectation.getExpression()).thenReturn(new NbreNode(1));
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("x"));
+
+        MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, null, instrs);
+
+        visitor.visit(methode);
+
+        // Le store devrait utiliser "x@compute@int" (nom avec scope de la méthode)
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("store(x@compute@int)"), "Should contain store with method scope. Output: " + output);
+    }
+
+    // ==================== Tests pour visitEcrire ====================
+
+    @Test
+    void visitEcrire_withNumberExpression_generatesPushAndWrite() {
+        // Test: write(42);
+        EcrireNode node = new EcrireNode(new NbreNode(42));
+
+        // On utilise un ClasseNode avec main pour tester
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(42)"), "Should contain push(42). Output: " + output);
+        assertTrue(output.contains("write"), "Should contain write. Output: " + output);
+    }
+
+    @Test
+    void visitEcrire_withStringLiteral_generatesPushQuotedStringAndWrite() {
+        // Test: write("Hello");
+        EcrireNode node = new EcrireNode("Hello");
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(\"Hello\")"), "Should contain push with quoted string. Output: " + output);
+        assertTrue(output.contains("write"), "Should contain write. Output: " + output);
+    }
+
+    @Test
+    void visitEcrire_withIdentifier_generatesLoadAndWrite() {
+        // Test: write(x);
+        EcrireNode node = new EcrireNode(new IdentNode("x"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("load(x@"), "Should contain load. Output: " + output);
+        assertTrue(output.contains("write"), "Should contain write. Output: " + output);
+    }
+
+    @Test
+    void visitEcrire_withBooleanExpression_generatesPushAndWrite() {
+        // Test: write(true);
+        EcrireNode node = new EcrireNode(new BoolValueNode(true));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(true)"), "Should contain push(true). Output: " + output);
+        assertTrue(output.contains("write"), "Should contain write. Output: " + output);
+    }
+
+    @Test
+    void visitEcrire_withArithmeticExpression_generatesExpressionAndWrite() {
+        // Test: write(1 + 2);
+        PlusNode plusNode = new PlusNode(new NbreNode(1), new NbreNode(2));
+        EcrireNode node = new EcrireNode(plusNode);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(1)"), "Should contain push(1). Output: " + output);
+        assertTrue(output.contains("push(2)"), "Should contain push(2). Output: " + output);
+        assertTrue(output.contains("add"), "Should contain add. Output: " + output);
+        assertTrue(output.contains("write"), "Should contain write. Output: " + output);
+    }
+
+    // ==================== Tests pour visitEcrireLn ====================
+
+    @Test
+    void visitEcrireLn_withNumberExpression_generatesPushAndWriteln() {
+        // Test: writeln(42);
+        EcrireLnNode node = new EcrireLnNode(new NbreNode(42));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(42)"), "Should contain push(42). Output: " + output);
+        assertTrue(output.contains("writeln"), "Should contain writeln. Output: " + output);
+    }
+
+    @Test
+    void visitEcrireLn_withStringLiteral_generatesPushQuotedStringAndWriteln() {
+        // Test: writeln("World");
+        EcrireLnNode node = new EcrireLnNode("World");
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(\"World\")"), "Should contain push with quoted string. Output: " + output);
+        assertTrue(output.contains("writeln"), "Should contain writeln. Output: " + output);
+    }
+
+    @Test
+    void visitEcrireLn_withIdentifier_generatesLoadAndWriteln() {
+        // Test: writeln(y);
+        EcrireLnNode node = new EcrireLnNode(new IdentNode("y"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("load(y@"), "Should contain load. Output: " + output);
+        assertTrue(output.contains("writeln"), "Should contain writeln. Output: " + output);
+    }
+
+    @Test
+    void visitEcrireLn_withBooleanFalse_generatesPushFalseAndWriteln() {
+        // Test: writeln(false);
+        EcrireLnNode node = new EcrireLnNode(new BoolValueNode(false));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(false)"), "Should contain push(false). Output: " + output);
+        assertTrue(output.contains("writeln"), "Should contain writeln. Output: " + output);
+    }
+
+    // ==================== Tests pour visitAppelI ====================
+
+    @Test
+    void visitAppelI_noArguments_generatesInvokeAndPop() {
+        // Test: f(); (appel de méthode sans arguments en tant qu'instruction)
+        IdentNode methodIdent = new IdentNode("f");
+        ListExpNode emptyList = new ListExpNode(null, null);
+        AppelINode node = new AppelINode(methodIdent, emptyList);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("invoke(f)"), "Should contain invoke(f). Output: " + output);
+        assertTrue(output.contains("pop"), "Should contain pop (result discarded). Output: " + output);
+    }
+
+    @Test
+    void visitAppelI_withOneArgument_generatesArgInvokeSwapPopPop() {
+        // Test: f(5); (appel avec un argument)
+        IdentNode methodIdent = new IdentNode("f");
+        ListExpNode listExp = new ListExpNode(new NbreNode(5), null);
+        AppelINode node = new AppelINode(methodIdent, listExp);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(5)"), "Should contain push(5). Output: " + output);
+        assertTrue(output.contains("invoke(f)"), "Should contain invoke(f). Output: " + output);
+        assertTrue(output.contains("swap"), "Should contain swap for argument removal. Output: " + output);
+        // Il doit y avoir au moins 2 pop (1 pour l'argument, 1 pour le résultat)
+        int popCount = output.split("pop").length - 1;
+        assertTrue(popCount >= 2, "Should have at least 2 pop instructions. Count: " + popCount);
+    }
+
+    @Test
+    void visitAppelI_withTwoArguments_generatesArgsInvokeSwapPopSwapPopPop() {
+        // Test: f(1, 2); (appel avec deux arguments)
+        IdentNode methodIdent = new IdentNode("g");
+        ListExpNode innerList = new ListExpNode(new NbreNode(2), null);
+        ListExpNode listExp = new ListExpNode(new NbreNode(1), innerList);
+        AppelINode node = new AppelINode(methodIdent, listExp);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(1)") || output.contains("push(2)"), "Should contain push for arguments. Output: " + output);
+        assertTrue(output.contains("invoke(g)"), "Should contain invoke(g). Output: " + output);
+        // 2 arguments = 2 swap/pop pairs + 1 final pop
+        int swapCount = output.split("swap").length - 1;
+        assertTrue(swapCount >= 2, "Should have at least 2 swap for 2 args. Count: " + swapCount);
+    }
+
+    @Test
+    void visitAppelI_withIdentifierArgument_generatesLoadInvoke() {
+        // Test: f(x);
+        IdentNode methodIdent = new IdentNode("process");
+        ListExpNode listExp = new ListExpNode(new IdentNode("x"), null);
+        AppelINode node = new AppelINode(methodIdent, listExp);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("load(x@"), "Should contain load for identifier. Output: " + output);
+        assertTrue(output.contains("invoke(process)"), "Should contain invoke. Output: " + output);
+    }
+
+    @Test
+    void visitAppelI_withExpressionArgument_generatesExpressionThenInvoke() {
+        // Test: f(1 + 2);
+        IdentNode methodIdent = new IdentNode("calc");
+        PlusNode plusNode = new PlusNode(new NbreNode(1), new NbreNode(2));
+        ListExpNode listExp = new ListExpNode(plusNode, null);
+        AppelINode node = new AppelINode(methodIdent, listExp);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(1)"), "Should contain push(1). Output: " + output);
+        assertTrue(output.contains("push(2)"), "Should contain push(2). Output: " + output);
+        assertTrue(output.contains("add"), "Should contain add. Output: " + output);
+        assertTrue(output.contains("invoke(calc)"), "Should contain invoke. Output: " + output);
+    }
+
+    // ==================== Tests pour visitAppelE ====================
+
+    @Test
+    void visitAppelE_noArguments_generatesInvokeOnly() {
+        // Test: x = f(); (appel de méthode sans arguments en tant qu'expression)
+        IdentNode methodIdent = new IdentNode("getValue");
+        ListExpNode emptyList = new ListExpNode(null, null);
+        AppelENode appelE = new AppelENode(methodIdent, emptyList);
+
+        // Utiliser dans une affectation pour tester
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(appelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("result"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("invoke(getValue)"), "Should contain invoke. Output: " + output);
+        assertTrue(output.contains("store(result@"), "Should contain store. Output: " + output);
+    }
+
+    @Test
+    void visitAppelE_withOneArgument_generatesArgInvokeSwapPop() {
+        // Test: x = f(10); (appel avec un argument, résultat stocké)
+        IdentNode methodIdent = new IdentNode("compute");
+        ListExpNode listExp = new ListExpNode(new NbreNode(10), null);
+        AppelENode appelE = new AppelENode(methodIdent, listExp);
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(appelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("y"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(10)"), "Should contain push(10). Output: " + output);
+        assertTrue(output.contains("invoke(compute)"), "Should contain invoke. Output: " + output);
+        assertTrue(output.contains("swap"), "Should contain swap for arg removal. Output: " + output);
+        // Pas de pop après le dernier swap car le résultat reste sur la pile
+        assertTrue(output.contains("store(y@"), "Should contain store. Output: " + output);
+    }
+
+    @Test
+    void visitAppelE_withTwoArguments_generatesArgsInvokeSwapPopSwapPop() {
+        // Test: z = add(3, 4);
+        IdentNode methodIdent = new IdentNode("add");
+        ListExpNode innerList = new ListExpNode(new NbreNode(4), null);
+        ListExpNode listExp = new ListExpNode(new NbreNode(3), innerList);
+        AppelENode appelE = new AppelENode(methodIdent, listExp);
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(appelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("z"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("invoke(add)"), "Should contain invoke. Output: " + output);
+        // 2 arguments = 2 swap/pop pairs
+        int swapCount = output.split("swap").length - 1;
+        assertTrue(swapCount >= 2, "Should have at least 2 swap for 2 args. Count: " + swapCount);
+    }
+
+    @Test
+    void visitAppelE_resultNotDiscarded_noFinalPop() {
+        // Test: x = f(); - le résultat est utilisé, pas de pop final
+        IdentNode methodIdent = new IdentNode("getVal");
+        ListExpNode emptyList = new ListExpNode(null, null);
+        AppelENode appelE = new AppelENode(methodIdent, emptyList);
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(appelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("x"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        // Vérifier que invoke est suivi de store (pas de pop entre les deux)
+        int invokeIdx = output.indexOf("invoke(getVal)");
+        int storeIdx = output.indexOf("store(x@");
+        assertTrue(invokeIdx < storeIdx, "invoke should come before store. Output: " + output);
+    }
+
+    @Test
+    void visitAppelE_withNestedCall_generatesCorrectSequence() {
+        // Test: x = f(g(5)); - appel imbriqué
+        IdentNode innerMethodIdent = new IdentNode("inner");
+        ListExpNode innerListExp = new ListExpNode(new NbreNode(5), null);
+        AppelENode innerAppelE = new AppelENode(innerMethodIdent, innerListExp);
+
+        IdentNode outerMethodIdent = new IdentNode("outer");
+        ListExpNode outerListExp = new ListExpNode(innerAppelE, null);
+        AppelENode outerAppelE = new AppelENode(outerMethodIdent, outerListExp);
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(outerAppelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("result"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("push(5)"), "Should contain push(5). Output: " + output);
+        assertTrue(output.contains("invoke(inner)"), "Should contain invoke(inner). Output: " + output);
+        assertTrue(output.contains("invoke(outer)"), "Should contain invoke(outer). Output: " + output);
+    }
+
+    @Test
+    void visitAppelI_nullListExp_handlesGracefully() {
+        // Test: f(); avec listExp null
+        IdentNode methodIdent = new IdentNode("noArgs");
+        AppelINode node = new AppelINode(methodIdent, null);
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(node);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        assertDoesNotThrow(() -> visitor.visit(classe));
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("invoke(noArgs)"), "Should contain invoke. Output: " + output);
+    }
+
+    @Test
+    void visitAppelE_nullExp_handlesGracefully() {
+        // Test: x = f(); avec exp null
+        IdentNode methodIdent = new IdentNode("noArgs");
+        AppelENode appelE = new AppelENode(methodIdent, null);
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getExpression()).thenReturn(appelE);
+        when(affectation.getIdent1Node()).thenReturn(new IdentNode("x"));
+
+        MainNode main = mock(MainNode.class);
+        InstructionsNode instrs = mock(InstructionsNode.class);
+        when(main.getInstrs()).thenReturn(instrs);
+        when(instrs.getInstructionNode()).thenReturn(affectation);
+        when(instrs.getInstructions()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(null);
+        when(classe.getMethodeMain()).thenReturn(main);
+
+        assertDoesNotThrow(() -> visitor.visit(classe));
+    }
+
+    // ==================== Tests pour visit(DeclsNode) avec MethodeNode ====================
+
+    @Test
+    void visitDeclsNode_withMethodeNode_generatesMethodDeclaration() {
+        // Test: class C { int f() { } main { } }
+        MethodeNode methode = createSimpleMethod("myFunc", Type.ENTIER);
+
+        DeclsNode decls = mock(DeclsNode.class);
+        when(decls.getDecl()).thenReturn(methode);
+        when(decls.getDecls()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(myFunc, int, meth, 0)"),
+            "Should contain method declaration. Output: " + output);
+        assertTrue(output.contains("swap"), "Should contain swap. Output: " + output);
+        assertTrue(output.contains("return"), "Should contain return. Output: " + output);
+    }
+
+    @Test
+    void visitDeclsNode_withMethodeNodeAndVarNode_generatesBothDeclarations() {
+        // Test: class C { int x = 0; int f() { } main { } }
+        VarNode varNode = var("x", Type.ENTIER);
+        MethodeNode methode = createSimpleMethod("compute", Type.BOOLEEN);
+
+        DeclsNode innerDecls = mock(DeclsNode.class);
+        when(innerDecls.getDecl()).thenReturn(methode);
+        when(innerDecls.getDecls()).thenReturn(null);
+
+        DeclsNode decls = mock(DeclsNode.class);
+        when(decls.getDecl()).thenReturn(varNode);
+        when(decls.getDecls()).thenReturn(innerDecls);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(x@global, int, var, 0)"),
+            "Should contain variable declaration. Output: " + output);
+        assertTrue(output.contains("new(compute, boolean, meth, 0)"),
+            "Should contain method declaration. Output: " + output);
+    }
+
+    @Test
+    void visitDeclsNode_withMultipleMethods_generatesAllMethodDeclarations() {
+        // Test: class C { int f() { } boolean g() { } main { } }
+        MethodeNode methode1 = createSimpleMethod("funcA", Type.ENTIER);
+        MethodeNode methode2 = createSimpleMethod("funcB", Type.BOOLEEN);
+
+        DeclsNode innerDecls = mock(DeclsNode.class);
+        when(innerDecls.getDecl()).thenReturn(methode2);
+        when(innerDecls.getDecls()).thenReturn(null);
+
+        DeclsNode decls = mock(DeclsNode.class);
+        when(decls.getDecl()).thenReturn(methode1);
+        when(decls.getDecls()).thenReturn(innerDecls);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(funcA, int, meth, 0)"),
+            "Should contain first method. Output: " + output);
+        assertTrue(output.contains("new(funcB, boolean, meth, 0)"),
+            "Should contain second method. Output: " + output);
+    }
+
+    @Test
+    void visitDeclsNode_withVoidMethod_generatesVoidMethodDeclaration() {
+        // Test: class C { void doSomething() { } main { } }
+        MethodeNode methode = createSimpleMethod("doSomething", Type.VOID);
+
+        DeclsNode decls = mock(DeclsNode.class);
+        when(decls.getDecl()).thenReturn(methode);
+        when(decls.getDecls()).thenReturn(null);
+
+        ClasseNode classe = mock(ClasseNode.class);
+        when(classe.getDeclarations()).thenReturn(decls);
+        when(classe.getMethodeMain()).thenReturn(null);
+
+        visitor.visit(classe);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(doSomething, void, meth, 0)"),
+            "Should contain void method declaration. Output: " + output);
+        // Les méthodes void ont un push(0) avant le retrait
+        assertTrue(output.contains("push(0)"),
+            "Void method should have push(0). Output: " + output);
+    }
+
+    // ==================== Tests pour typeToJajaCode default case ====================
+
+    @Test
+    void typeToJajaCode_withStringType_throwsIllegalArgumentException() {
+        // Test: Type.STRING n'est pas supporté et doit lancer une exception
+        // On crée une VarNode avec Type.STRING pour déclencher l'exception
+        IdentNode ident = new IdentNode("strVar");
+        VarNode varNode = new VarNode(Type.STRING, ident, null);
+
+        // Tester que l'exception est lancée lors de la visite
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> visitor.visit(varNode),
+            "Should throw IllegalArgumentException for unsupported type"
+        );
+
+        assertTrue(exception.getMessage().contains("Type non supporté"),
+            "Exception message should mention unsupported type. Message: " + exception.getMessage());
+        assertTrue(exception.getMessage().contains("String") || exception.getMessage().contains("STRING"),
+            "Exception message should mention the type. Message: " + exception.getMessage());
+    }
+
+    @Test
+    void typeToJajaCode_withEntierType_returnsInt() {
+        // Test indirect: ENTIER -> "int"
+        VarNode varNode = var("intVar", Type.ENTIER);
+
+        visitor.visit(varNode);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(intVar@global, int, var, 0)"),
+            "ENTIER should map to 'int'. Output: " + output);
+    }
+
+    @Test
+    void typeToJajaCode_withBooleenType_returnsBoolean() {
+        // Test indirect: BOOLEEN -> "boolean"
+        VarNode varNode = var("boolVar", Type.BOOLEEN);
+
+        visitor.visit(varNode);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(boolVar@global, boolean, var, 0)"),
+            "BOOLEEN should map to 'boolean'. Output: " + output);
+    }
+
+    @Test
+    void typeToJajaCode_withVoidType_returnsVoid() {
+        // Test indirect via MethodeNode: VOID -> "void"
+        MethodeNode methode = createSimpleMethod("voidMethod", Type.VOID);
+
+        visitor.visit(methode);
+
+        String output = visitor.getJajaCodeBuilder().toString();
+        assertTrue(output.contains("new(voidMethod, void, meth, 0)"),
+            "VOID should map to 'void'. Output: " + output);
+    }
+
+
 }
 

@@ -51,8 +51,12 @@ public class VarNode extends AstNode {
 
     @Override
     public void interpret(Stacks stacks) {
-        // Implement the interpretation logic for the variable declaration here.
+        // Get the variable name - use scoped name if inside a method
         String varName = ident.getNom();
+        if (stacks.isInMethodContext()) {
+            varName = stacks.getScopedName(varName);
+        }
+        
         Type varType = type;
         Object value;
         if (vexp != null) {

@@ -82,12 +82,31 @@ public class SommeNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (ident1Node instanceof IdentNode identNode) {
             String varName = identNode.getNom();
-            int currentValue = (int) stacks.getValue(varName);
+            
+            // Try scoped name first if in method context
+            String actualVarName = varName;
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    actualVarName = scopedName;
+                }
+            }
+            
+            int currentValue = (int) stacks.getValue(actualVarName);
             Object valueToAdd = expressionNode.evaluate(stacks);
             int newValue = currentValue + (int) valueToAdd;
-            stacks.AffecterVal(varName, newValue);
+            stacks.AffecterVal(actualVarName, newValue);
         }else if(ident1Node instanceof  TabNode tabNode){
             String varName = tabNode.getIdent().getNom();
+            
+            // Try scoped name first if in method context
+            if (stacks.isInMethodContext()) {
+                String scopedName = stacks.getScopedName(varName);
+                if (stacks.getObjectType(scopedName) != null) {
+                    varName = scopedName;
+                }
+            }
+            
             int index = (int) tabNode.getIndex().evaluate(stacks);
             int currentValue = (int) stacks.getArrayValue(varName, index);
             Object valueToAdd = expressionNode.evaluate(stacks);

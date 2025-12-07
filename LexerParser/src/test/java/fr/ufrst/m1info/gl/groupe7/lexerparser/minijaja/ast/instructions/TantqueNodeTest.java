@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 

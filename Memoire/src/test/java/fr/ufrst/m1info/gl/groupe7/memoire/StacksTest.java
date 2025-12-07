@@ -172,7 +172,10 @@ public class StacksTest {
     @Test
     void testAssignValueDoesNotAffectConst() {
         stacks.declareCst("PI", 3.14, Type.ENTIER);
-        stacks.AffecterVal("PI", 10);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("PI", 10);
+        });
+        assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
         assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
     }
     @Test
@@ -182,9 +185,9 @@ public class StacksTest {
     }
     @Test
     void topPil2(){
-        stacks.AffecterVal("PI", 10);
         stacks.declareVar("x", 5, Type.ENTIER);
-        assertEquals("x", stacks.getTop().ident);
+        stacks.declareCst("PI", 3.14, Type.ENTIER);
+        assertEquals("PI", stacks.getTop().ident);
     }
     @Test
     void testGetTopOnEmptyStack() {
@@ -276,27 +279,15 @@ public class StacksTest {
     /*
     test assignement coverage
      */
-    @Test
-    void testAssignValueToVariable() {
-        stacks.declareVar("x", 1, Type.ENTIER);
-
-        assertTrue(stacks.AffecterVal("x", 10));
-        assertEquals(10, stacks.getValue("x"));
-    }
-
-    @Test
-    void testAssignValueToConstant() {
-        stacks.declareCst("PI", 3.14, Type.ENTIER);
-
-        assertFalse(stacks.AffecterVal("PI", 10));
-        assertEquals(3.14, stacks.getValue("PI"));
-    }
 
     @Test
     void testAssignValueIdentifierNotFound() {
         stacks.declareVar("x", 1, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("y", 10));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -304,7 +295,10 @@ public class StacksTest {
     void testAssignValueCst() {
         stacks.declareVar("x", 1, Type.ENTIER);
 
-        assertFalse(stacks.AffecterVal("y", 10));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
         assertEquals(1, stacks.getValue("x"));
     }
@@ -327,7 +321,10 @@ public class StacksTest {
     @Test
     void testAssignValueOnEmptyStack() {
         // pile vide
-        stacks.AffecterVal("x", 10);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("x", 10);
+        });
+        assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("x"));
     }
     /*
@@ -375,32 +372,34 @@ public class StacksTest {
     void testGetDataTypeEmptyStack() {
         assertNull(stacks.getDataType("x"));
     }
-    @Test
-    void testPrintStack() {
 
-        stacks.declareVar("x", 1, Type.ENTIER);
-        stacks.declareVar("y", 2, Type.ENTIER);
+    /* Test commenter car le streamOutput nE FONCTIONNE PAS */
+    // @Test
+    // void testPrintStack() {
 
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(outputStream));
+    //     stacks.declareVar("x", 1, Type.ENTIER);
+    //     stacks.declareVar("y", 2, Type.ENTIER);
 
 
-        stacks.printStack();
+    //     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    //     PrintStream originalOut = System.out;
+    //     System.setOut(new PrintStream(outputStream));
 
 
-        System.setOut(originalOut);
+    //     stacks.printStack();
 
 
-        String output = outputStream.toString();
+    //     System.setOut(originalOut);
 
 
-        assertTrue(output.contains("<x, 1, var, integer>"));
-        assertTrue(output.contains("<y, 2, var, integer>"));
-        assertTrue(output.contains("--- Current Stack Content ---"));
-        assertTrue(output.contains("------------------------------"));
-    }
+    //     String output = outputStream.toString();
+
+
+    //     assertTrue(output.contains("<x, 1, var, integer>"));
+    //     assertTrue(output.contains("<y, 2, var, integer>"));
+    //     assertTrue(output.contains("--- Current Stack Content ---"));
+    //     assertTrue(output.contains("------------------------------"));
+    // }
     @Test
     void testAffecterValBehavior() {
         stacks.declareVar("x", 0, Type.ENTIER);
@@ -412,19 +411,23 @@ public class StacksTest {
         assertTrue(stacks.AffecterVal("x", 12));
         stacks.printSymbol("x");
         // Mauvais type
-        assertFalse(stacks.AffecterVal("x", "notAnInt"));
+        assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("x", "notAnInt");
+        });
 
-        // Constante
-        assertFalse(stacks.AffecterVal("PI", 2.71));
+
 
         // Variable inexistante
-        assertFalse(stacks.AffecterVal("y", 99));
+        assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("y", 99);
+        });
     }
     @Test
     void testIsTypeCompatible_IntegerVariants() {
         assertTrue(invokeIsTypeCompatible(Type.ENTIER, 10));
         assertTrue(invokeIsTypeCompatible(Type.ENTIER, -5));
         assertTrue(invokeIsTypeCompatible(Type.ENTIER, 0));
+
 
         assertFalse(invokeIsTypeCompatible(Type.ENTIER, true));
         assertFalse(invokeIsTypeCompatible(Type.ENTIER, "42"));
@@ -1026,28 +1029,15 @@ public class StacksTest {
         // Free the element
         stacks.freeArrayElement("t1", 2);
 
-        assertNull(stacks.getArrayValue("t1", 2));
-        /*
-                assertThrows(RuntimeException.class, () -> {
-            stacks.getArrayValue("t1", 2);
+
+        assertThrows(RuntimeException.class, () -> {
+            stacks.freeArrayElement("t1", 2);
         });
-         */
-
-    }
-
-    @Test
-    public void testFreeArrayElementAlreadyEmpty() {
-
-
-        stacks.declareTab("t1", 4, Type.ENTIER);
-
-
-
-        // Should not throw error
-        stacks.freeArrayElement("t1", 1);
 
 
     }
+
+
 
     @Test
     public void testFreeArrayElementInvalidIndexLow() {
@@ -1109,6 +1099,141 @@ public class StacksTest {
         assertEquals(stacks.getArrayValue("tab1",2),14);
 
     }
+
+    // ========================================
+    // Tests for getValue with Omega
+    // ========================================
+
+    @Test
+    void testGetValue_OmegaVariableThrowsException() {
+        stacks.declareVar("uninitializedVar", Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("uninitializedVar");
+        });
+        
+        assertTrue(ex.getMessage().contains( "Variable Omega'uninitializedVar' is declared but not initialized."));
+
+    }
+
+    @Test
+    void testGetValue_InitializedVariableReturnsValue() {
+        stacks.declareVar("initializedVar", 42, Type.ENTIER);
+        assertEquals(42, stacks.getValue("initializedVar"));
+    }
+
+    @Test
+    void testGetValue_VariableInitializedAfterOmega() {
+        stacks.declareVar("laterInitVar", Type.ENTIER);
+        stacks.AffecterVal("laterInitVar", 100);
+        assertEquals(100, stacks.getValue("laterInitVar"));
+    }
+
+    // ========================================
+    // Tests for AffecterVal exceptions
+    // ========================================
+
+    @Test
+    void testAffecterVal_UndeclaredVariableThrowsException() {
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("undeclaredVar", 50);
+        });
+        
+        assertTrue(ex.getMessage().contains("pas declaree"));
+    }
+
+    @Test
+    void testAffecterVal_ConstantThrowsException() {
+        stacks.declareCst("MY_CONST", 100, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("MY_CONST", 200);
+        });
+        
+        assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
+        assertEquals(100, stacks.getValue("MY_CONST"));
+    }
+
+    @Test
+    void testAffecterVal_ArrayThrowsException() {
+        stacks.declareTab("myArray", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("myArray", 10);
+        });
+        
+        assertTrue(ex.getMessage().contains("tableau"));
+        assertTrue(ex.getMessage().contains("affectation non permise"));
+    }
+
+    @Test
+    void testAffecterVal_MethodThrowsException() {
+        stacks.declareMeth("myMethod", "body", Type.VOID);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("myMethod", "newBody");
+        });
+        
+        assertTrue(ex.getMessage().contains("méthode"));
+        assertTrue(ex.getMessage().contains("affectation non permise"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchIntToBoolThrowsException() {
+        stacks.declareVar("intVar", 10, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("intVar", true);
+        });
+        
+        assertTrue(ex.getMessage().contains("Type de variable"));
+        assertTrue(ex.getMessage().contains("intVar"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchBoolToIntThrowsException() {
+        stacks.declareVar("boolVar", true, Type.BOOLEEN);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("boolVar", 42);
+        });
+        
+        assertTrue(ex.getMessage().contains("Type de variable"));
+        assertTrue(ex.getMessage().contains("boolVar"));
+    }
+
+    @Test
+    void testAffecterVal_TypeMismatchStringToIntThrowsException() {
+        stacks.declareVar("intVar2", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("intVar2", "not a number");
+        });
+        
+        assertTrue(ex.getMessage().contains("Type de variable"));
+    }
+
+    @Test
+    void testAffecterVal_ValidAssignmentReturnsTrue() {
+        stacks.declareVar("validVar", 0, Type.ENTIER);
+        assertTrue(stacks.AffecterVal("validVar", 99));
+        assertEquals(99, stacks.getValue("validVar"));
+    }
+
+    @Test
+    void testAffecterVal_NullToIntVariableSucceeds() {
+        stacks.declareVar("nullableInt", 10, Type.ENTIER);
+        assertTrue(stacks.AffecterVal("nullableInt", null));
+        assertNull(stacks.getValue("nullableInt"));
+    }
+
+    @Test
+    void testAffecterVal_NullToBoolVariableSucceeds() {
+        stacks.declareVar("nullableBool", false, Type.BOOLEEN);
+        assertTrue(stacks.AffecterVal("nullableBool", null));
+        assertNull(stacks.getValue("nullableBool"));
+    }
+
     @Test
     public void testFreeTabUnknownArray() {
 
@@ -1151,14 +1276,1259 @@ public class StacksTest {
 
         assertTrue(ex.getMessage().contains("Array not allocated"));
     }
+
     @Test
-    public void testFreeTabAllocated() {
-        stacks.declareTab("T", 5, Type.ENTIER);
-        stacks.freeTab("T");
+    public void testDeclareVarWithOmegaShouldThrowOnGet() {
+
+
+
+        stacks.declareVar("x", Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("x");
+        });
+
+        assertTrue(ex.getMessage().contains("Variable Omega'x' is declared but not initialized."));
+    }
+    @Test
+    public void testDeclareVarMultiple() {
+
+
+
+        stacks.declareVar("x",42 ,Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareVar("x",42 ,Type.ENTIER);
+        });
+
+        assertTrue(ex.getMessage().contains("var already  declare: x"));
+    }
+    @Test
+    public void testDeclareCstMultiple() {
+
+
+
+        stacks.declareCst("x",42 ,Type.ENTIER);
+
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareCst("x",42 ,Type.ENTIER);
+        });
+
+        assertTrue(ex.getMessage().contains("cst already declare: x"));
+    }
+
+    @Test
+    public void testDeclareCstWithOmegaShouldThrowOnGet() {
+
+
+        stacks.declareCst("y", Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("y");
+        });
+        System.out.println(ex.getMessage());
+
+        assertTrue(ex.getMessage().contains("Variable Omega'y' is declared but not initialized."));
+    }
+
+    @Test
+    public void testDeclareVarInitializedOk() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 10, Type.ENTIER);
+
+        Object val = stacks.getValue("a");
+
+        assertEquals(10, val);
+    }
+
+    @Test
+    public void testDeclareCstInitializedOk() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("b", true, Type.BOOLEEN);
+
+        Object val = stacks.getValue("b");
+
+        assertEquals(true, val);
+    }
+    @Test
+    public void testDeclareOmegaVarThenAssign() {
+        Stacks stacks = new Stacks();
+
+
+        stacks.declareVar("x", Type.ENTIER);
+
+
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x"));
+
+
+        stacks.AffecterVal("x",42);
+
+        assertEquals(42, stacks.getValue("x"));
     }
 
 
 
+
+    /*
+        @Test
+    public void testDeclareOmegaConstThenAssignFails() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("k", Type.ENTIER);
+
+
+        assertThrows(RuntimeException.class, () -> stacks.getValue("k"));
+
+
+        stacks.declareCst("k", 3, Type.ENTIER);
+        assertEquals(3, stacks.getValue("k"));
+    }
+     */
+
+    @Test
+    public void testDoubleDeclarationVarThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareVar("x", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("var already  declare: "));
+    }
+    @Test
+    public void testDoubleDeclarationConstThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("k", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareCst("k", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("cst already declare: "));
+    }
+    @Test
+    public void testVarThenConstSameNameThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareCst("a", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("cst already declare: "));
+    }
+    @Test
+    public void testConstThenVarSameNameThrows() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("z", Type.ENTIER);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareVar("z", Type.ENTIER)
+        );
+
+        assertTrue(e.getMessage().contains("var already  declare: "));
+    }
+    @Test
+    public void testDoubleDeclareMethodThrows() {
+        Stacks stacks = new Stacks();
+        stacks.declareMeth("maFonction", null, Type.VOID);
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareMeth("maFonction", null, Type.VOID)
+        );
+
+        assertTrue(e.getMessage().contains("meth already declare"));
+    }
+    @Test
+    public void testDeclareMethodWithExistingVarThrows() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", Type.ENTIER);
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                stacks.declareMeth("x", null, Type.VOID)
+        );
+        assertTrue(e.getMessage().contains("meth already declare"));
+    }
+    @Test
+    public void testAffecterConstOmegaAllowedOnce() {
+        Stacks s = new Stacks();
+        s.declareCst("c", Type.ENTIER); // c = Ω
+
+        boolean ok = s.AffecterVal("c", 7);
+
+        assertTrue(ok);
+        assertEquals(7, s.getValue("c"));
+    }
+    @Test
+    public void testAffecterConstNonOmegaThrows() {
+        Stacks s = new Stacks();
+        s.declareCst("c", 4, Type.ENTIER); // c = 4, NON OMEGA
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("c", 8)
+        );
+
+        assertTrue(e.getMessage().contains("ne peut pas être modifiée"));
+    }
+    @Test
+    public void testAffecterConstOmegaSecondTimeThrows() {
+        Stacks s = new Stacks();
+        s.declareCst("c", Type.ENTIER); // c = Ω
+
+        assertTrue(s.AffecterVal("c", 5)); // première affectation OK
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("c", 10) // deuxième → interdit
+        );
+
+        assertTrue(e.getMessage().contains("ne peut pas être modifiée"));
+    }
+    @Test
+    public void testAffecterInexistant() {
+        Stacks s = new Stacks();
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("x", 5)
+        );
+
+        assertTrue(e.getMessage().contains("pas declaree"));
+    }
+    @Test
+    public void testAffecterTypeIncompatible() {
+        Stacks s = new Stacks();
+        s.declareVar("x", Type.ENTIER); // x = Ω
+
+        RuntimeException e = assertThrows(RuntimeException.class, () ->
+                s.AffecterVal("x", true)
+        );
+
+        assertTrue(e.getMessage().contains("Type de variable"));
+    }
+    @Test
+    public void testAffecterVarOmegaAllowed() {
+        Stacks s = new Stacks();
+        s.declareVar("x", Type.ENTIER); // x = Ω
+
+        boolean ok = s.AffecterVal("x", 9);
+
+        assertTrue(ok);
+        assertEquals(9, s.getValue("x"));
+    }
+    @Test
+    public void testGetArrayLengthNormal() {
+        Stacks stacks = new Stacks();
+        stacks.declareTab("tab1", 5, Type.ENTIER);
+
+        int size = stacks.getArrayLength("tab1");
+        assertEquals(5, size);
+    }
+
+    @Test
+    public void testGetArrayLengthUnknownArray() {
+        Stacks stacks = new Stacks();
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayLength("unknown");
+        });
+        assertEquals("Unknown array unknown", ex.getMessage());
+    }
+
+    @Test
+    public void testGetArrayLengthNotAnArray() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", 42, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getArrayLength("x");
+        });
+        assertEquals("Not an array: x", ex.getMessage());
+    }
+    @Test
+    public void testPopTableFreesMemory() {
+
+
+
+        stacks.declareTab("myArray", 3, Type.ENTIER);
+
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        stacks.declareVar("y", 20, Type.ENTIER);
+
+
+        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
+        assertNotNull(arrayQuad);
+
+
+        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
+        assertNotEquals(-1, base);
+
+
+        stacks.setArrayValue("myArray", 0, 100);
+        stacks.setArrayValue("myArray", 1, 200);
+        stacks.setArrayValue("myArray", 2, 300);
+
+
+        assertEquals(100, stacks.getArrayValue("myArray", 0));
+        assertEquals(200, stacks.getArrayValue("myArray", 1));
+        assertEquals(300, stacks.getArrayValue("myArray", 2));
+
+        stacks.freeArrayElement("myArray", 0);
+        stacks.freeArrayElement("myArray", 1);
+        stacks.freeArrayElement("myArray", 2);
+
+
+
+        stacks.printStack();
+        stacks.pop(); // pop "y"
+        stacks.printStack();
+        stacks.pop(); // pop "x"
+        stacks.printStack();
+        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
+
+        assertNotNull(poppedArray);
+        assertEquals("myArray", poppedArray.ident);
+
+        // 6. check if all heap are empty
+        assertNull(stacks.getHeap().read(base));
+        assertNull(stacks.getHeap().read(base + 1));
+        assertNull(stacks.getHeap().read(base + 2));
+    }
+    @Test
+    public void testRemoveVar() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        assertNotNull(stacks.getValue("x"));
+
+        stacks.retirerDecl("x");
+
+        assertNull(stacks.getValue("x"));
+        assertNull(stacks.getObjectType("x"));
+        assertNull(stacks.getDataType("x"));
+    }
+
+    @Test
+    public void testRemoveConst() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareCst("C", 42, Type.ENTIER);
+        assertEquals(42, stacks.getValue("C"));
+
+        stacks.retirerDecl("C");
+
+        assertNull(stacks.getValue("C"));
+        assertNull(stacks.getObjectType("C"));
+    }
+    @Test
+    public void testRemoveArray() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareTab("tabA", 5, Type.ENTIER);
+
+        ArrayInfo returned = (ArrayInfo) stacks.getValue("tabA");
+
+        assertNotNull(returned);
+        assertEquals(5, returned.getSize());
+        assertEquals(0, returned.getBaseAddress());
+
+        stacks.retirerDecl("tabA");
+
+        assertNull(stacks.getValue("tabA"));
+        assertNull(stacks.getObjectType("tabA"));
+    }
+
+    @Test
+    public void testRemoveMethod() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareMeth("myFunc", "BODY", Type.VOID);
+        assertEquals("BODY", stacks.getValue("myFunc"));
+
+        stacks.retirerDecl("myFunc");
+
+        assertNull(stacks.getValue("myFunc"));
+        assertNull(stacks.getObjectType("myFunc"));
+    }
+
+    @Test
+    public void testRemoveNonexistentSymbol() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+
+        // Should not crash
+        stacks.retirerDecl("DOES_NOT_EXIST");
+
+        // Should not affect existing variable
+        assertEquals(10, stacks.getValue("x"));
+    }
+
+    @Test
+    public void testRemoveMiddleOfStack() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER);
+
+        // Ensure all exist
+        assertEquals(1, stacks.getValue("a"));
+        assertEquals(2, stacks.getValue("b"));
+        assertEquals(3, stacks.getValue("c"));
+
+        // Remove item in the MIDDLE
+        stacks.retirerDecl("b");
+
+        assertNull(stacks.getValue("b"));
+
+        // Other values should still be present
+        assertEquals(1, stacks.getValue("a"));
+        assertEquals(3, stacks.getValue("c"));
+    }
+    @Test
+    public void testRetirerDeclArrayRefcountDecrementButNotFree() {
+
+
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+        System.out.println(info);
+        int base = info.getBaseAddress();
+        stacks.printHeap();
+        assertNotNull(stacks.getHeap().getEntryNotFree(base),
+                "HeapEntry should exist right after array allocation");
+        // Simuler 2 références
+        stacks.getHeap().getEntryNotFree(base).incrementRef();
+
+        assertEquals(2, stacks.getHeap().getEntryNotFree(base).getRefCount());
+
+        stacks.retirerDecl("A");
+
+        // refCount doit passer à 1 et pas de libération
+        assertEquals(1, stacks.getHeap().getEntryNotFree(base).getRefCount());
+
+        // L'entrée doit exister (donc pas freeTab)
+        assertNotNull(stacks.getHeap().getEntryNotFree(base));
+
+        // Le symbole doit être supprimé
+        assertNull(stacks.getValue("A"));
+    }
+    @Test
+    public void testRetirerDeclArrayFreedWhenRefcountReachedZero() {
+
+
+        stacks.declareTab("A", 4, Type.ENTIER);
+
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+        int base = info.getBaseAddress();
+
+        // refCount initial = 1 (déclaration seule)
+        assertEquals(1, stacks.getHeap().getEntryNotFree(base).getRefCount());
+        stacks.printHeap();
+        stacks.retirerDecl("A");
+        stacks.printHeap();
+        // freeTab doit avoir supprimé l’entrée
+        assertNull(stacks.getHeap().getEntryNotFree(base));
+
+        // Et le symbole doit être retiré
+        assertNull(stacks.getValue("A"));
+    }
+    @Test
+    public void testRetirerDeclMultiple() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("x", 1, Type.ENTIER);
+        stacks.declareTab("A", 2, Type.ENTIER);
+        stacks.declareVar("y", 2, Type.ENTIER);
+
+        assertNotNull(stacks.getValue("x"));
+        assertNotNull(stacks.getValue("A"));
+        assertNotNull(stacks.getValue("y"));
+
+        stacks.retirerDecl("A");
+
+        assertNull(stacks.getValue("A"));
+        assertNotNull(stacks.getValue("x"));
+        assertNotNull(stacks.getValue("y"));
+
+        stacks.retirerDecl("y");
+        assertNull(stacks.getValue("y"));
+    }
+    @Test
+    public void testRetirerDeclUpdatesPositions() {
+        Stacks stacks = new Stacks();
+
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareCst("b", 2, Type.ENTIER);
+        stacks.declareMeth("c", 3, Type.ENTIER);
+
+        stacks.retirerDecl("b");
+
+        // Vérifie positions mises à jour
+        assertEquals(0, stacks.getSymbolTable().findSymbol("a").getAddressStack());
+        assertEquals(1, stacks.getSymbolTable().findSymbol("c").getAddressStack());
+    }
+    // --------------------------
+    // 1. Basic affecterTab test
+    // --------------------------
+    @Test
+    public void testAffecterTabNormal() {
+        // Declare two arrays
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 5, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+
+
+        // Perform the array assignment
+        stacks.affecterTab("B", "A");
+
+        // B should now point to A's ArrayInfo
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+
+        // RefCount of A should have incremented
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+    }
+
+    // -------------------------------------------
+    // 2. affecterTab with unknown identifier
+    // -------------------------------------------
+    @Test
+    public void testAffecterTabUnknownIdentifier() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.affecterTab("B", "A"); // B does not exist
+        });
+        assertTrue(ex.getMessage().contains("Unknown array identifier"));
+    }
+
+    // -------------------------------------------
+    // 3. affecterTab with non-array object
+    // -------------------------------------------
+    @Test
+    public void testAffecterTabNonArray() {
+        stacks.declareVar("X", 10, Type.ENTIER);
+        stacks.declareTab("A", 3, Type.ENTIER);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.affecterTab("A", "X"); // X is not an array
+        });
+        assertTrue(ex.getMessage().contains("Array reference assignment allowed only"));
+    }
+
+    // --------------------------
+    // 4. retirerReference normal decrement
+    // --------------------------
+    @Test
+    public void testRetirerReferenceDecrement() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // simulate extra references
+        stacks.getHeap().getEntry(info.getBaseAddress()).incrementRef();
+
+        stacks.retirerReference(info);
+
+        // Ref count should decrement by 1
+        assertEquals(1, stacks.getHeap().getEntry(info.getBaseAddress()).getRefCount());
+    }
+
+    // --------------------------
+    // 5. retirerReference frees block
+    // --------------------------
+    @Test
+    public void testRetirerReferenceFreeBlock() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // initial refCount = 1
+        stacks.retirerReference(info);
+
+        // The heap entry should be freed, so getEntry returns null
+        assertNull(stacks.getHeap().getEntryNotFree(info.getBaseAddress()));
+    }
+
+    // --------------------------
+    // 6. ajouterReference increments
+    // --------------------------
+    @Test
+    public void testAjouterReference() {
+        stacks.declareTab("A", 4, Type.ENTIER);
+        ArrayInfo info = (ArrayInfo) stacks.getValue("A");
+
+        // refCount should start at 1
+        stacks.ajouterReference(info);
+        assertEquals(2, stacks.getHeap().getEntry(info.getBaseAddress()).getRefCount());
+    }
+
+    // --------------------------
+    // 7. affecterTab overwrites old reference
+    // --------------------------
+    @Test
+    public void testAffecterTabOverwritesOldReference() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceFreeTab() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceFreeTabOrder() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.affecterTab("B", "A");
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+
+    }
+    @Test
+    public void testAffecterTabOverwritesOldReferenceThreeFree() {
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+        stacks.declareTab("C", 3, Type.ENTIER);
+        ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+        ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+        // B initially has one reference, should be released when we assign A to B
+        stacks.printHeap();
+        stacks.affecterTab("B", "A");
+        stacks.printHeap();
+
+        // Old B block should be freed (refCount = 0)
+        assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+        // New B points to A
+        ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+        assertEquals(infoA, newBInfo);
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.affecterTab("C", "A");
+        ArrayInfo infoC = (ArrayInfo) stacks.getValue("C");
+        stacks.printHeap();
+        assertEquals(3, stacks.getHeap().getEntry(infoC.getBaseAddress()).getRefCount());
+        stacks.freeTab("B");
+        assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+        stacks.freeTab("A");
+        assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+    }
+    /*todo ask teacher about retrait
+    @Test
+    public void testPopTableFreesMemoryWithoutFreeElements() {
+
+
+
+        stacks.declareTab("myArray", 3, Type.ENTIER);
+
+
+        stacks.declareVar("x", 10, Type.ENTIER);
+        stacks.declareVar("y", 20, Type.ENTIER);
+
+
+        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
+        assertNotNull(arrayQuad);
+
+
+        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
+        assertNotEquals(-1, base);
+
+
+        stacks.setArrayValue("myArray", 0, 100);
+        stacks.setArrayValue("myArray", 1, 200);
+        stacks.setArrayValue("myArray", 2, 300);
+
+
+        assertEquals(100, stacks.getArrayValue("myArray", 0));
+        assertEquals(200, stacks.getArrayValue("myArray", 1));
+        assertEquals(300, stacks.getArrayValue("myArray", 2));
+
+
+        stacks.printStack();
+        stacks.pop(); // pop "y"
+        stacks.printStack();
+        stacks.pop(); // pop "x"
+        stacks.printStack();
+        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
+
+        assertNotNull(poppedArray);
+        assertEquals("myArray", poppedArray.ident);
+
+        // 6. check if all heap are empty
+        assertNull(stacks.getHeap().read(base));
+        assertNull(stacks.getHeap().read(base + 1));
+        assertNull(stacks.getHeap().read(base + 2));
+    }
+     */
+
+    // ============================================================
+    // CONTEXT MANAGEMENT TESTS
+    // ============================================================
+
+    @Test
+    void testPushContext_firstCall_setsContextToMethodName() {
+        stacks.pushContext("factorial");
+        
+        assertEquals("factorial", stacks.getCurrentContext());
+        assertTrue(stacks.isInMethodContext());
+    }
+
+    @Test
+    void testPushContext_recursiveCall_appendsDepthNumber() {
+        stacks.pushContext("factorial");  // factorial
+        stacks.pushContext("factorial");  // factorial1
+        stacks.pushContext("factorial");  // factorial2
+        
+        assertEquals("factorial2", stacks.getCurrentContext());
+    }
+
+    @Test
+    void testPopContext_removesCurrentContext() {
+        stacks.pushContext("myMethod");
+        assertTrue(stacks.isInMethodContext());
+        
+        stacks.popContext("myMethod");
+        
+        assertFalse(stacks.isInMethodContext());
+        assertNull(stacks.getCurrentContext());
+    }
+
+    @Test
+    void testPopContext_withRecursion_decrementsDepth() {
+        stacks.pushContext("factorial");  // factorial
+        stacks.pushContext("factorial");  // factorial1
+        stacks.pushContext("factorial");  // factorial2
+        
+        stacks.popContext("factorial");
+        assertEquals("factorial1", stacks.getCurrentContext());
+        
+        stacks.popContext("factorial");
+        assertEquals("factorial", stacks.getCurrentContext());
+        
+        stacks.popContext("factorial");
+        assertFalse(stacks.isInMethodContext());
+    }
+
+    @Test
+    void testPopContext_onEmptyStack_doesNotThrow() {
+        assertDoesNotThrow(() -> stacks.popContext("anyMethod"));
+    }
+
+    @Test
+    void testGetCurrentContext_whenEmpty_returnsNull() {
+        assertNull(stacks.getCurrentContext());
+    }
+
+    @Test
+    void testGetCurrentMethodName_extractsBaseName() {
+        stacks.pushContext("factorial");
+        stacks.pushContext("factorial");
+        stacks.pushContext("factorial");
+        
+        // Context is "factorial2" but method name is "factorial"
+        assertEquals("factorial", stacks.getCurrentMethodName());
+    }
+
+    @Test
+    void testGetCurrentMethodName_whenEmpty_returnsNull() {
+        assertNull(stacks.getCurrentMethodName());
+    }
+
+    @Test
+    void testGetRecursionDepth_returnsCorrectDepth() {
+        assertEquals(0, stacks.getRecursionDepth("factorial"));
+        
+        stacks.pushContext("factorial");
+        assertEquals(1, stacks.getRecursionDepth("factorial"));
+        
+        stacks.pushContext("factorial");
+        assertEquals(2, stacks.getRecursionDepth("factorial"));
+        
+        stacks.popContext("factorial");
+        assertEquals(1, stacks.getRecursionDepth("factorial"));
+    }
+
+    @Test
+    void testIsInMethodContext_returnsCorrectValue() {
+        assertFalse(stacks.isInMethodContext());
+        
+        stacks.pushContext("test");
+        assertTrue(stacks.isInMethodContext());
+        
+        stacks.popContext("test");
+        assertFalse(stacks.isInMethodContext());
+    }
+
+    @Test
+    void testGetScopedName_inContext_returnsScoped() {
+        stacks.pushContext("myMethod");
+        
+        assertEquals("x@myMethod", stacks.getScopedName("x"));
+    }
+
+    @Test
+    void testGetScopedName_notInContext_returnsOriginal() {
+        assertEquals("x", stacks.getScopedName("x"));
+    }
+
+    @Test
+    void testGetScopedName_withRecursion_includesDepth() {
+        stacks.pushContext("factorial");
+        assertEquals("n@factorial", stacks.getScopedName("n"));
+        
+        stacks.pushContext("factorial");
+        assertEquals("n@factorial1", stacks.getScopedName("n"));
+        
+        stacks.pushContext("factorial");
+        assertEquals("n@factorial2", stacks.getScopedName("n"));
+    }
+
+    @Test
+    void testGetScopedNameForMethod_withoutRecursion() {
+        assertEquals("x@myMethod", stacks.getScopedNameForMethod("x", "myMethod"));
+    }
+
+    @Test
+    void testGetScopedNameForMethod_withRecursion() {
+        stacks.pushContext("factorial");  // depth becomes 1
+        
+        // For next call, depth would be 1, so suffix is "factorial1"
+        assertEquals("n@factorial1", stacks.getScopedNameForMethod("n", "factorial"));
+    }
+
+    @Test
+    void testSetCurrentContext_deprecated_pushesContext() {
+        stacks.setCurrentContext("oldMethod");
+        
+        assertTrue(stacks.isInMethodContext());
+        assertEquals("oldMethod", stacks.getCurrentContext());
+    }
+
+    @Test
+    void testSetCurrentContext_withNull_popsContext() {
+        stacks.pushContext("method1");
+        assertTrue(stacks.isInMethodContext());
+        
+        stacks.setCurrentContext(null);
+        
+        assertFalse(stacks.isInMethodContext());
+    }
+
+    @Test
+    void testNestedDifferentMethods_contextStackWorksCorrectly() {
+        stacks.pushContext("outer");
+        assertEquals("outer", stacks.getCurrentContext());
+        
+        stacks.pushContext("inner");
+        assertEquals("inner", stacks.getCurrentContext());
+        
+        stacks.popContext("inner");
+        assertEquals("outer", stacks.getCurrentContext());
+        
+        stacks.popContext("outer");
+        assertNull(stacks.getCurrentContext());
+    }
+
+    // ============================================================
+    // CONTEXT RESTORER TESTS
+    // ============================================================
+
+    @Test
+    void testCreateContextRestorer_returnsRestorer() {
+        Stacks.ContextRestorer restorer = stacks.createContextRestorer("myMethod");
+        
+        assertNotNull(restorer);
+        assertEquals("myMethod", restorer.getMethodName());
+    }
+
+    @Test
+    void testContextRestorer_restore_popsContext() {
+        stacks.pushContext("myMethod");
+        assertTrue(stacks.isInMethodContext());
+        
+        Stacks.ContextRestorer restorer = stacks.createContextRestorer("myMethod");
+        restorer.restore();
+        
+        assertFalse(stacks.isInMethodContext());
+    }
+
+    @Test
+    void testContextRestorer_withRecursion() {
+        stacks.pushContext("factorial");
+        stacks.pushContext("factorial");
+        assertEquals("factorial1", stacks.getCurrentContext());
+        
+        Stacks.ContextRestorer restorer = stacks.createContextRestorer("factorial");
+        restorer.restore();
+        
+        assertEquals("factorial", stacks.getCurrentContext());
+    }
+
+    // ============================================================
+    // VARIABLE CLASSE TESTS
+    // ============================================================
+
+    @Test
+    void testSetVariableClasse_setsValue() {
+        stacks.setVariableClasse("MaClasse");
+        
+        assertEquals("MaClasse", stacks.getVariableClasse());
+    }
+
+    @Test
+    void testGetVariableClasse_initiallyNull() {
+        assertNull(stacks.getVariableClasse());
+    }
+
+    @Test
+    void testVariableClasse_canBeChanged() {
+        stacks.setVariableClasse("Classe1");
+        assertEquals("Classe1", stacks.getVariableClasse());
+        
+        stacks.setVariableClasse("Classe2");
+        assertEquals("Classe2", stacks.getVariableClasse());
+    }
+
+    @Test
+    void testVariableClasse_canBeSetToNull() {
+        stacks.setVariableClasse("MaClasse");
+        assertEquals("MaClasse", stacks.getVariableClasse());
+        
+        stacks.setVariableClasse(null);
+        assertNull(stacks.getVariableClasse());
+    }
+
+    // ============================================================
+    // ADDITIONAL AFFECTER VAL TESTS
+    // ============================================================
+
+    @Test
+    void testAffecterVal_onTab_throwsException() {
+        stacks.declareTab("monTab", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("monTab", 10);
+        });
+        assertTrue(ex.getMessage().contains("tableau"));
+    }
+
+    @Test
+    void testAffecterVal_onMeth_throwsException() {
+        stacks.declareMeth("maMethode", null, Type.VOID);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("maMethode", 10);
+        });
+        assertTrue(ex.getMessage().contains("méthode"));
+    }
+
+    @Test
+    void testAffecterVal_typeMismatch_throwsException() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.AffecterVal("x", true);  // boolean instead of int
+        });
+        assertTrue(ex.getMessage().contains("Type"));
+    }
+
+    @Test
+    void testAffecterVal_withNullValue_accepted() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        assertTrue(stacks.AffecterVal("x", null));
+        assertNull(stacks.getValue("x"));
+    }
+
+    @Test
+    void testAffecterVal_onCstWithOmega_allowed() {
+        stacks.declareCst("PI", Type.ENTIER);  // Omega value
+        
+        assertTrue(stacks.AffecterVal("PI", 314));
+        assertEquals(314, stacks.getValue("PI"));
+    }
+
+    // ============================================================
+    // DECLARE VAR/CST WITH OMEGA DEFAULT VALUE TESTS
+    // ============================================================
+
+    @Test
+    void testDeclareVar_withOmegaDefault_throwsOnGetValue() {
+        stacks.declareVar("x", Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("x");
+        });
+        assertTrue(ex.getMessage().contains("not initialized") || ex.getMessage().contains("Omega"));
+    }
+
+    @Test
+    void testDeclareCst_withOmegaDefault_throwsOnGetValue() {
+        stacks.declareCst("C", Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.getValue("C");
+        });
+        assertTrue(ex.getMessage().contains("not initialized") || ex.getMessage().contains("Omega"));
+    }
+
+    // ============================================================
+    // DOUBLE DECLARATION TESTS
+    // ============================================================
+
+    @Test
+    void testDeclareVar_alreadyExists_throwsException() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareVar("x", 20, Type.ENTIER);
+        });
+        assertTrue(ex.getMessage().contains("already"));
+    }
+
+    @Test
+    void testDeclareCst_alreadyExists_throwsException() {
+        stacks.declareCst("PI", 314, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareCst("PI", 315, Type.ENTIER);
+        });
+        assertTrue(ex.getMessage().contains("already"));
+    }
+
+    @Test
+    void testDeclareTab_alreadyExists_throwsException() {
+        stacks.declareTab("arr", 5, Type.ENTIER);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareTab("arr", 10, Type.ENTIER);
+        });
+        assertTrue(ex.getMessage().contains("already"));
+    }
+
+    @Test
+    void testDeclareMeth_alreadyExists_throwsException() {
+        stacks.declareMeth("foo", null, Type.VOID);
+        
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareMeth("foo", null, Type.VOID);
+        });
+        assertTrue(ex.getMessage().contains("already"));
+    }
+
+    // ============================================================
+    // RETIRER DECL TESTS
+    // ============================================================
+
+    @Test
+    void testRetirerDecl_removesVariable() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        assertNotNull(stacks.getObjectType("x"));
+        
+        stacks.retirerDecl("x");
+        
+        assertNull(stacks.getObjectType("x"));
+    }
+
+    @Test
+    void testRetirerDecl_nonExistent_doesNotThrow() {
+        assertDoesNotThrow(() -> stacks.retirerDecl("unknown"));
+    }
+
+    @Test
+    void testRetirerDecl_removesFromMiddleOfStack() {
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER);
+        
+        stacks.retirerDecl("b");
+        
+        assertNull(stacks.getObjectType("b"));
+        assertNotNull(stacks.getObjectType("a"));
+        assertNotNull(stacks.getObjectType("c"));
+    }
+
+    // ============================================================
+    // FIND QUAD TESTS
+    // ============================================================
+
+    @Test
+    void testFindQuad_existingIdent_returnsQuad() {
+        stacks.declareVar("x", 42, Type.ENTIER);
+        
+        Stacks.Quad q = stacks.findQuad("x");
+        
+        assertNotNull(q);
+        assertEquals("x", q.ident);
+        assertEquals(42, q.value);
+    }
+
+    @Test
+    void testFindQuad_nonExistent_returnsNull() {
+        assertNull(stacks.findQuad("unknown"));
+    }
+
+    // ============================================================
+    // GET STACK POSITION TESTS
+    // ============================================================
+
+    @Test
+    void testGetStackPosition_existingIdent_returnsPosition() {
+        stacks.declareVar("a", 1, Type.ENTIER);
+        stacks.declareVar("b", 2, Type.ENTIER);
+        stacks.declareVar("c", 3, Type.ENTIER);
+        
+        assertEquals(0, stacks.getStackPosition("a"));
+        assertEquals(1, stacks.getStackPosition("b"));
+        assertEquals(2, stacks.getStackPosition("c"));
+    }
+
+    @Test
+    void testGetStackPosition_nonExistent_returnsMinusOne() {
+        assertEquals(-1, stacks.getStackPosition("unknown"));
+    }
+
+    // ============================================================
+    // PRINT METHODS TESTS (output capture)
+    // ============================================================
+
+    @Test
+    void testPrintStack_doesNotThrow() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        // Redirect stderr
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(errContent));
+        
+        try {
+            assertDoesNotThrow(() -> stacks.printStack());
+            assertTrue(errContent.toString().contains("Stack Content"));
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
+    void testPrintSymbolTable_doesNotThrow() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        assertDoesNotThrow(() -> stacks.printSymbolTable());
+    }
+
+    @Test
+    void testPrintSymbol_existing_doesNotThrow() {
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(errContent));
+        
+        try {
+            assertDoesNotThrow(() -> stacks.printSymbol("x"));
+            assertTrue(errContent.toString().contains("x"));
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
+    void testPrintSymbol_nonExisting_printsNotFound() {
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(errContent));
+        
+        try {
+            stacks.printSymbol("unknown");
+            assertTrue(errContent.toString().contains("non trouvé") || errContent.toString().contains("not found"));
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
+    void testPrintHeap_doesNotThrow() {
+        stacks.declareTab("arr", 5, Type.ENTIER);
+        
+        assertDoesNotThrow(() -> stacks.printHeap());
+    }
+
+    // ============================================================
+    // QUAD TO STRING TEST
+    // ============================================================
+
+    @Test
+    void testQuad_toString_formatsCorrectly() {
+        Stacks.Quad q = new Stacks.Quad("x", 42, "var", Type.ENTIER);
+        
+        String str = q.toString();
+        
+        
+        assertTrue(str.contains("x"));
+        assertTrue(str.contains("42"));
+        assertTrue(str.contains("var"));
+        assertTrue(str.contains("integer"));
+    }
 
 }
 
