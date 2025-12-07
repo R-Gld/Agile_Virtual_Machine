@@ -1,7 +1,0 @@
-class Test {
-  int x = 6;
-  main {
-    write(x);
-    writeln("ok");
-  }
-}
