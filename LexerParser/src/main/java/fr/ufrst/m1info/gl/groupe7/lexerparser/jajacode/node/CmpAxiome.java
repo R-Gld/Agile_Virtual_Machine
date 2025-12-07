@@ -6,8 +6,36 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import java.util.Objects;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code cmp}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ cmp –» &lt;&lt;w, v1 == v2, cst,*&gt;.m, a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile deux valeurs {@code v1} et {@code v2},
+ * compare leur égalité {@code v1 == v2}, puis empile le résultat booléen.</p>
+ *
+ * <p><b>Note :</b> Cette implémentation utilise {@link Objects#equals} pour
+ * supporter la comparaison de différents types de valeurs (entiers, booléens, etc.).</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile contient moins de 2 éléments</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class CmpAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code cmp}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param arg paramètre non utilisé pour cette instruction
+     * @throws StackUnderflowException si la pile contient moins de 2 éléments
+     */
     @Override
     public void execute(MachineContext ctx, String arg) {
         // 1. Dépilement (Attention : op2 est le sommet, op1 est en dessous)

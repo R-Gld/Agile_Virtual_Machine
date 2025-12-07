@@ -6,8 +6,45 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflow
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code if(a1)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [iftrue]  : &lt;&lt;w,true, cst, *&gt;.m,a&gt; ⊢ if(a1) –» &lt;m,a1&gt;
+ * [iffalse] : &lt;&lt;w,false, cst, *&gt;.m,a&gt; ⊢ if(a1) –» &lt;m,a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction effectue un branchement conditionnel basé sur la valeur
+ * au sommet de la pile :</p>
+ * <ul>
+ *   <li>Si la condition est vraie : saut à l'adresse {@code a1}</li>
+ *   <li>Si la condition est fausse : continue à l'instruction suivante</li>
+ * </ul>
+ *
+ * <p><b>Types acceptés :</b> La condition peut être de type booléen ou entier
+ * (0 = faux, toute autre valeur = vrai).</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide</li>
+ *   <li>{@link InvalidAddressException} si l'adresse de saut est invalide</li>
+ *   <li>{@link TypeMismatchException} si le type de la condition est invalide</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class IfAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code if(a1)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param adresseArg l'adresse de saut si la condition est vraie
+     * @throws StackUnderflowException si la pile est vide
+     * @throws InvalidAddressException si l'adresse de saut est invalide
+     * @throws TypeMismatchException si le type de la condition est invalide
+     */
     @Override
     public void execute(MachineContext ctx, String adresseArg) {
         // 1. Parsing de l'adresse de saut

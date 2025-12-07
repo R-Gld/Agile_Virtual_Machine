@@ -9,8 +9,54 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.List;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code new(i,t,kind,depth)}.
+ *
+ * <p><b>Sémantiques formelles :</b></p>
+ * <pre>
+ * [newV]     : &lt;m,a&gt; ⊢ new(i,t,var,s) –» &lt;IdentVal(i,t,m,s),a+1&gt;
+ * [newC]     : &lt;&lt;w,v, cst,*&gt;.m,a&gt; ⊢ new(i,t,cst,0) –» &lt;DeclCst(i,v,t,m),a+1&gt;
+ * [newM]     : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ new(i,t,meth,0) –» &lt;DeclMeth(i, v, t, m),a+1&gt;
+ * [newarray] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ newarray(i, t) –» &lt;DeclTab(i, v, t, m), a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction déclare une nouvelle entité (variable, constante, méthode, ou tableau)
+ * dans la table des symboles. Le comportement varie selon les paramètres :</p>
+ *
+ * <ul>
+ *   <li><b>depth &gt; 0</b> : Crée un alias vers un élément existant dans la pile à la position {@code depth}
+ *       (utilisé pour les paramètres de méthode)</li>
+ *   <li><b>depth = 0, kind = var</b> : Dépile une valeur et déclare une variable mutable</li>
+ *   <li><b>depth = 0, kind = cst</b> : Dépile une valeur et déclare une constante</li>
+ *   <li><b>depth = 0, kind = meth</b> : Dépile une adresse et déclare une méthode</li>
+ *   <li><b>depth = 0, kind = tab</b> : Dépile une taille et déclare un tableau</li>
+ * </ul>
+ *
+ * <p><b>Format de l'argument :</b> {@code "ident,type,kind[,depth]"}</p>
+ *
+ * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité en ajoutant
+ * un suffixe {@code $N} aux variables locales lors d'appels récursifs.</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide ou insuffisante pour le depth</li>
+ *   <li>{@link JajaCodeRuntimeException} si les arguments sont malformés ou le type/kind est inconnu</li>
+ *   <li>{@link TypeMismatchException} si la taille du tableau n'est pas un entier</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class NewAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code new(i,t,kind,depth)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param argsPacked les arguments packés au format "ident,type,kind[,depth]"
+     * @throws StackUnderflowException si la pile est vide ou insuffisante
+     * @throws JajaCodeRuntimeException si les arguments sont malformés
+     * @throws TypeMismatchException si la taille du tableau n'est pas un entier
+     */
     @Override
     public void execute(MachineContext ctx, String argsPacked) {
         // 1. Dépacking des arguments (Format attendu: "ident,type,kind,depth")

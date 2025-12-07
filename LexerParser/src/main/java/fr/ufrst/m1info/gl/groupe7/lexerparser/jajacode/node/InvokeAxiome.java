@@ -4,8 +4,35 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code invoke(i)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [invoke] : &lt;m,a&gt; ⊢ invoke(i) –» &lt;&lt;w, a+1,cst,*&gt;.m, Val(i, m)&gt;
+ * </pre>
+ *
+ * <p>Cette instruction effectue un appel de méthode :</p>
+ * <ol>
+ *   <li>Pousse le contexte de la méthode sur la pile de contextes</li>
+ *   <li>Empile l'adresse de retour (PC + 1) sur la pile</li>
+ *   <li>Saute à l'adresse de la méthode stockée dans la variable {@code i}</li>
+ * </ol>
+ *
+ * <p><b>Gestion de la récursivité :</b> L'implémentation utilise un identifiant spécial
+ * {@code %RET_methodName%} pour l'adresse de retour afin de gérer les appels récursifs.</p>
+ *
+ * @see JajaAxiome
+ * @see ReturnAxiome
+ */
 public class InvokeAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code invoke(i)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param ident l'identifiant de la méthode à invoquer
+     */
     @Override
     public void execute(MachineContext ctx, String ident) {
         System.out.println("\t\t[DEBUG] axiomeInvoke appelé: ident=" + ident);

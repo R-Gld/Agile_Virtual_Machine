@@ -5,8 +5,36 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbo
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code load(i)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [load] : &lt;m,a&gt; ⊢ load(i) –» &lt;&lt;w, Val(i,m), cst,*&gt;.m, a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction charge la valeur de la variable identifiée par {@code i}
+ * depuis la mémoire et l'empile sur la pile d'exécution.</p>
+ *
+ * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
+ * en résolvant les noms de variables scopées (suffixe {@code $N} pour les appels récursifs).</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link UndefinedSymbolException} si l'identifiant n'existe pas dans la table des symboles</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class LoadAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code load(i)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param ident l'identifiant de la variable à charger
+     * @throws UndefinedSymbolException si l'identifiant n'existe pas
+     */
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. Résoudre le nom scopé pour la récursivité
