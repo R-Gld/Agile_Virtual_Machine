@@ -6,12 +6,12 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 
 /**
- * Semantic analyzer for MiniJaja programs.
- *
+ * <b>Semantic analyzer for MiniJaja programs.</b>
+ * <p>
  * This class serves as a facade that orchestrates semantic analysis through
  * specialized components: declaration collection, type inference, method call
  * validation, and type checking.
- *
+ * <p>
  * The semantic analysis is performed in two phases:
  * 1. Declaration collection: Collects all declarations and checks for duplicates
  * 2. Type checking: Validates type compatibility and usage throughout the AST
