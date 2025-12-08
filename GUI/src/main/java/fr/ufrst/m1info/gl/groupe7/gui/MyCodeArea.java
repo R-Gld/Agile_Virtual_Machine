@@ -41,7 +41,6 @@ import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.IntFunction;
 
 /**
  * Zone d'édition de code enrichie pour JavaFX basée sur {@link CodeArea}.
