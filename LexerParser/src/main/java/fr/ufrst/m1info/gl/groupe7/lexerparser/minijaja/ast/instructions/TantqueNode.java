@@ -88,8 +88,11 @@ public class TantqueNode extends InstructionNode {
 
         if (Boolean.TRUE.equals(expressionNode.evaluate(stacks))) {
             java.util.List<AstNode> childs = new java.util.ArrayList<>();
-            for (AstNode n : this.instructionsNode.getChildren()) {
-                childs.add(n);
+            Iterable<AstNode> instructionChildren = this.instructionsNode.getChildren();
+            if (instructionChildren != null) {
+                for (AstNode n : instructionChildren) {
+                    childs.add(n);
+                }
             }
             childs.add(new TantqueNode(expressionNode, instructionsNode));
             setChildren(childs);

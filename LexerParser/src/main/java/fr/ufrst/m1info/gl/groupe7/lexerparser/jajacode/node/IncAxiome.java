@@ -7,8 +7,42 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchEx
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbolException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code inc(i)}.
+ *
+ * <p><b>Sémantique formelle :</b></p>
+ * <pre>
+ * [inc] : &lt;&lt;w,v, cst,*&gt;.m,a&gt; ⊢ inc(i) –» &lt;AffecterVal(i,Val(i,m)+v,m), a+1&gt;
+ * </pre>
+ *
+ * <p>Cette instruction dépile une valeur {@code v}, l'ajoute à la valeur actuelle
+ * de la variable identifiée par {@code i}, puis met à jour la variable avec le résultat.</p>
+ *
+ * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
+ * en résolvant les noms de variables scopées.</p>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide</li>
+ *   <li>{@link UndefinedSymbolException} si l'identifiant n'existe pas</li>
+ *   <li>{@link TypeMismatchException} si les valeurs ne sont pas de type entier</li>
+ *   <li>{@link AssignmentException} si l'affectation échoue</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class IncAxiome implements JajaAxiome {
 
+    /**
+     * Exécute l'instruction {@code inc(i)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param ident l'identifiant de la variable à incrémenter
+     * @throws StackUnderflowException si la pile est vide
+     * @throws UndefinedSymbolException si l'identifiant n'existe pas
+     * @throws TypeMismatchException si les valeurs ne sont pas de type entier
+     * @throws AssignmentException si l'affectation échoue
+     */
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. On récupère la valeur d'incrément sur la pile (le sommet)
@@ -18,35 +52,63 @@ public class IncAxiome implements JajaAxiome {
             throw new StackUnderflowException("INC", ctx.getInstructionCounter());
         }
 
-        // 2. On récupère la valeur actuelle de la variable 'ident'
-        Object currentValue = ctx.getStacks().getValue(ident);
+        // 2. Résoudre le nom scopé pour la récursivité
+        String scopedIdent = resolveScopedName(ctx, ident);
+
+        // 3. On récupère la valeur actuelle de la variable 'scopedIdent'
+        Object currentValue = ctx.getStacks().getValue(scopedIdent);
 
         // Vérification d'existence
-        if (currentValue == null && !ctx.getStacks().getSymbolTable().contains(ident)) {
-            throw new UndefinedSymbolException(ident, "INC", ctx.getInstructionCounter());
+        if (currentValue == null && !ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+            throw new UndefinedSymbolException(scopedIdent, "INC", ctx.getInstructionCounter());
         }
 
-        // 3. Vérification des types (doivent être des entiers)
+        // 4. Vérification des types (doivent être des entiers)
         if (!(currentValue instanceof Integer) || !(incrementQuad.value instanceof Integer)) {
-            throw new TypeMismatchException(
-                "Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")",
-                "INC",
-                ctx.getInstructionCounter()
-            );
+            throw new TypeMismatchException("Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")", "INC", ctx.getInstructionCounter());
         }
 
-        // 4. Calcul de la nouvelle valeur
+        // 5. Calcul de la nouvelle valeur
         int newValue = (Integer) currentValue + (Integer) incrementQuad.value;
 
-        // 5. Mise à jour en mémoire
-        boolean success = ctx.getStacks().AffecterVal(ident, newValue);
+        // 6. Mise à jour en mémoire
+        boolean success = ctx.getStacks().AffecterVal(scopedIdent, newValue);
 
         if (!success) {
-            throw new AssignmentException(ident, "échec de l'affectation", "INC", ctx.getInstructionCounter());
+            throw new AssignmentException(scopedIdent, "échec de l'affectation", "INC", ctx.getInstructionCounter());
         }
 
-        // 6. Succès
-        System.out.println("\t\tAxiome INC exécuté: " + ident + " += " + incrementQuad.value + " -> " + newValue);
+        // 7. Succès
+        System.out.println("\t\tAxiome INC exécuté: " + scopedIdent + " += " + incrementQuad.value + " -> " + newValue);
         ctx.incrementPC();
+    }
+
+    /**
+     * Résout le nom scopé pour la récursivité.
+     * Cherche d'abord la variable avec le suffixe de récursivité, puis sans.
+     */
+    private String resolveScopedName(MachineContext ctx, String ident) {
+        // Si la variable est globale, pas de scopage
+        if (ident.endsWith("@global") || !ident.contains("@")) {
+            return ident;
+        }
+
+        // Vérifier si on est dans un contexte de méthode récursif
+        String currentContext = ctx.getStacks().getCurrentContext();
+        if (currentContext != null) {
+            String methodName = ctx.getStacks().getCurrentMethodName();
+            int recursionLevel = ctx.getStacks().getRecursionDepth(methodName);
+
+            // Si on est en récursivité (niveau > 1), chercher la variable scopée
+            if (recursionLevel > 1) {
+                String scopedIdent = ident + "$" + (recursionLevel - 1);
+                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                    return scopedIdent;
+                }
+            }
+        }
+
+        // Sinon, retourner le nom original
+        return ident;
     }
 }

@@ -15,6 +15,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unar
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus.PlusNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.vexp.Vexp;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AffectationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
@@ -23,6 +24,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Instruct
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
@@ -31,6 +33,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.Nbre
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
@@ -51,6 +56,7 @@ public class MiniJajaCompilerVisitor {
     private final Stack<String> variablesToPop;
     private final DiagnosticCollector collector;
     private String currentScope = "global";
+    private final Set<String> globalVariables = new HashSet<>();
     private final Set<String> mainLocalVariables = new HashSet<>();
     private final Set<String> currentScopeVariables = new HashSet<>();
 
@@ -103,7 +109,11 @@ public class MiniJajaCompilerVisitor {
             return "main";
         }
 
-        // Par défaut, scope global
+        // Chercher dans les variables globales
+        if (globalVariables.contains(variableName)) {
+            return "global";
+        }
+
         return "global";
     }
 
@@ -115,6 +125,7 @@ public class MiniJajaCompilerVisitor {
     private MiniJajaCompilerVisitor createChildVisitor() {
         MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null, collector);
         childVisitor.currentScope = this.currentScope;
+        childVisitor.globalVariables.addAll(this.globalVariables);
         childVisitor.mainLocalVariables.addAll(this.mainLocalVariables);
         childVisitor.currentScopeVariables.addAll(this.currentScopeVariables);
         return childVisitor;
@@ -278,44 +289,55 @@ public class MiniJajaCompilerVisitor {
      * @throws NullPointerException si node est null
      */
     private void visitSi(SiNode node) {
+        // Règle [csi] : n ⊢ si(e, iss, iss1) ⇒ {(pe ⊕D if(addr)) ⊕ (piss1 ⊕D goto(fin)) ⊕ piss, ...}
+        // Selon [csi], si condition VRAIE, on saute au bloc iss (else)
+        // Donc on génère: condition, if(addr_then), else_code, goto(fin), then_code
+        // Cela inverse l'ordre pour que le THEN s'exécute quand condition est VRAIE
+
         // Évaluer la condition
         if (node.getExpressionNode() != null) {
             visitExpression(node.getExpressionNode());
         }
 
-        // Compiler le bloc then
-        JajaCodeBuilder originalBuilder = this.jjcBuilder;
-        MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
+        // Obtenir l'adresse courante APRÈS la condition
+        int addrAfterCondition = jjcBuilder.getCurrentAddress();
 
+        // Compiler le bloc then dans un builder temporaire pour calculer sa taille
+        MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             thenVisitor.visit(node.getInstructionsNode());
         }
-        JajaCodeBuilder thenBuilder = thenVisitor.getJajaCodeBuilder();
+        int thenSize = thenVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Compiler le bloc else (si présent)
-        JajaCodeBuilder elseBuilder = null;
+        // Compiler le bloc else (si présent) dans un builder temporaire
+        int elseSize = 0;
         boolean hasElse = node.getInstructionsNode2() != null;
         if (hasElse) {
             MiniJajaCompilerVisitor elseVisitor = createChildVisitor();
             elseVisitor.visit(node.getInstructionsNode2());
-            elseBuilder = elseVisitor.getJajaCodeBuilder();
+            elseSize = elseVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
         }
 
-        // Calculer les adresses
-        int currentAddr = originalBuilder.getCurrentAddress();
-        int thenSize = thenBuilder.getInstructionsAsList().size();
-        int elseSize = hasElse ? elseBuilder.getInstructionsAsList().size() : 0;
+        // Calculer les adresses selon [csi]
+        // Structure: IF(thenAddr), [else], GOTO(endAddr), [then]
+        // if saute au then quand condition vraie
+        int ifAddr = addrAfterCondition;
+        int elseStartAddr = ifAddr + 1;
+        int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 pour GOTO
+        int endAddr = thenAddr + thenSize;
 
-        int elseAddr = currentAddr + 1 + thenSize + (hasElse ? 1 : 0);
-        int endAddr = elseAddr + elseSize;
+        // Générer IF qui saute au THEN quand condition vraie
+        jjcBuilder.addInstruction(IF, thenAddr);
 
-        // Générer les instructions
-        originalBuilder.addInstruction(IF, elseAddr);
-        originalBuilder.merge(thenBuilder);
-
+        // Compiler le bloc ELSE d'abord (exécuté quand condition fausse)
         if (hasElse) {
-            originalBuilder.addInstruction(GOTO, endAddr);
-            originalBuilder.merge(elseBuilder);
+            visit(node.getInstructionsNode2());
+            jjcBuilder.addInstruction(GOTO, endAddr);
+        }
+
+        // Compiler le bloc THEN ensuite (exécuté quand condition vraie via saut)
+        if (node.getInstructionsNode() != null) {
+            visit(node.getInstructionsNode());
         }
     }
 
@@ -383,21 +405,26 @@ public class MiniJajaCompilerVisitor {
         }
         jjcBuilder.addInstruction(NOT);
 
-        // Compiler le corps de la boucle
+        // Compiler le corps de la boucle dans un visitor temporaire pour calculer la taille
         MiniJajaCompilerVisitor bodyVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             bodyVisitor.visit(node.getInstructionsNode());
         }
-        JajaCodeBuilder bodyBuilder = bodyVisitor.getJajaCodeBuilder();
+        int bodySize = bodyVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
         // Calculer les adresses
         int currentAddr = jjcBuilder.getCurrentAddress();
-        int bodySize = bodyBuilder.getInstructionsAsList().size();
-        int loopEndAddr = currentAddr + 1 + bodySize + 1;
+        int loopEndAddr = currentAddr + 1 + bodySize + 1; // +1 pour IF, +1 pour GOTO
 
-        // Générer les instructions
+        // Générer IF
         jjcBuilder.addInstruction(IF, loopEndAddr);
-        jjcBuilder.merge(bodyBuilder);
+
+        // Compiler le corps directement dans le builder principal
+        if (node.getInstructionsNode() != null) {
+            visit(node.getInstructionsNode());
+        }
+
+        // Générer GOTO pour retourner au début
         jjcBuilder.addInstruction(GOTO, loopStartAddr);
     }
 
@@ -424,26 +451,65 @@ public class MiniJajaCompilerVisitor {
      * @param node le nœud SommeNode représentant l'instruction += à compiler
      */
     private void visitSomme(SommeNode node) {
-        // Évaluer l'expression à ajouter
-        if (node.getExpressionNode() != null) {
-            visitExpression(node.getExpressionNode());
-        }
+        AstNode target = node.getIdent1Node();
 
-        // Générer l'instruction INC
-        if (node.getIdent1Node() != null) {
-            String ident = extractIdentifierName(node.getIdent1Node());
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : compiler incrément, puis inc
+            if (node.getExpressionNode() != null) {
+                visitExpression(node.getExpressionNode());
+            }
+
+            String ident = extractIdentifierName(identNode);
             String scopeAddress = resolveVariableScope(ident);
             jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
+
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis incrément, puis ainc
+            // Règle [csommeT]: pe1 ⊕ pe ⊕D ainc(i)
+            visitExpression(tabNode.getIndex());  // pe1 - index
+
+            if (node.getExpressionNode() != null) {
+                visitExpression(node.getExpressionNode());  // pe - valeur d'incrémentation
+            }
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(AINC, arrayName + "@" + scopeAddress);
         }
     }
 
     public void visit(AffectationNode node) {
-        if (node.getExpression() != null) {
-            visitExpression(node.getExpression());
-        }
+        AstNode target = node.getIdent1Node();
 
-        if (node.getIdent1Node() != null) {
-            String ident = extractIdentifierName(node.getIdent1Node());
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : compiler valeur, puis store
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());
+            }
+
+            String ident = extractIdentifierName(identNode);
+            String scopeAddress = resolveVariableScope(ident);
+            jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
+
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis valeur, puis astore
+            // Règle [caffecteT]: pe1 ⊕ pe ⊕D astore(i)
+            visitExpression(tabNode.getIndex());  // pe1 - index
+
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());  // pe - valeur
+            }
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(ASTORE, arrayName + "@" + scopeAddress);
+        } else if (target != null) {
+            // Cas par défaut : comportement original pour compatibilité avec tests
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());
+            }
+
+            String ident = extractIdentifierName(target);
             String scopeAddress = resolveVariableScope(ident);
             jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
         }
@@ -456,6 +522,10 @@ public class MiniJajaCompilerVisitor {
             visit(varNode);
         } else if (node.getDecl() instanceof MethodeNode methodeNode) {
             visit(methodeNode);
+        } else if (node.getDecl() instanceof CstNode cstNode) {
+            visit(cstNode);
+        } else if (node.getDecl() instanceof TableauNode tableauNode) {
+            visit(tableauNode);
         }
 
         if (node.getDecls() != null) {
@@ -466,7 +536,14 @@ public class MiniJajaCompilerVisitor {
     public void visit(VarsNode node) {
         if (node == null || node.getVar() == null) return;
 
-        visit(((VarNode) node.getVar()));
+        AstNode varNode = node.getVar();
+        if (varNode instanceof VarNode vn) {
+            visit(vn);
+        } else if (varNode instanceof CstNode cn) {
+            visit(cn);
+        } else if (varNode instanceof TableauNode tn) {
+            visit(tn);
+        }
 
         if (node.getVars() != null) {
             visit(node.getVars());
@@ -474,29 +551,89 @@ public class MiniJajaCompilerVisitor {
     }
 
     public void visit(VarNode node) {
-        Expression vexp = node.getExp() != null ? node.getExp().getVexp() : null;
+        compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "var");
+    }
+
+    /**
+     * Compile une déclaration de constante en code JajaCode.
+     * Selon la règle [ccst] :
+     * n ⊢ cst(t, ident(i), e) ⇒ {pe ⊕D new(i, t, cst, 0), ne + 1}
+     *
+     * @param node le nœud CstNode à compiler
+     */
+    public void visit(CstNode node) {
+        compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "cst");
+    }
+
+    /**
+     * Compile une déclaration de tableau selon la règle [ctableau]:
+     * n ⊢ tableau(t, ident(i), e) ⇒ {pe ⊕D newarray(i, t), ne + 1}
+     *
+     * Exemple: int tableau[20]; → push(20), newarray(tableau@global, int)
+     *
+     * @param node le nœud TableauNode à compiler
+     */
+    public void visit(TableauNode node) {
+        // Compiler l'expression de taille (pe)
+        if (node.getExp() != null) {
+            visitExpression(node.getExp());
+        } else {
+            jjcBuilder.addInstruction(PUSH, 0);
+        }
+
+        // Récupérer nom, type et scope
+        String ident = node.getIdent().getNom();
+        String type = typeToJajaCode(node.getType());
+        String scopeAddress = currentScope;
+
+        // ⊕D newarray(i, t)
+        jjcBuilder.addInstruction(NEWARRAY, ident + "@" + scopeAddress, type);
+
+        // Tracker pour cleanup (swap + pop)
+        variablesToPop.push(ident + "@" + scopeAddress);
+
+        // Enregistrer dans le scope
+        if ("global".equals(currentScope)) {
+            globalVariables.add(ident);
+        } else if ("main".equals(currentScope)) {
+            mainLocalVariables.add(ident);
+        } else {
+            currentScopeVariables.add(ident);
+        }
+    }
+
+    /**
+     * Méthode commune pour compiler une déclaration de variable ou de constante.
+     *
+     * @param vexpWrapper l'expression d'initialisation (peut être null)
+     * @param type        le type de la déclaration
+     * @param ident       le nom de l'identifiant
+     * @param kind        le type de déclaration ("var" ou "cst")
+     */
+    private void compileDeclaration(Vexp vexpWrapper, Type type, String ident, String kind) {
+        Expression vexp = vexpWrapper != null ? vexpWrapper.getVexp() : null;
 
         if (vexp != null) {
             visitExpression(vexp);
         } else {
             // Si pas d'expression d'initialisation, on push une valeur par défaut selon le type
-            if ("BOOLEEN".equals(node.getType().name())) {
+            if ("BOOLEEN".equals(type.name())) {
                 jjcBuilder.addInstruction(PUSH, false);
-            } else if ("ENTIER".equals(node.getType().name())) {
+            } else if ("ENTIER".equals(type.name())) {
                 jjcBuilder.addInstruction(PUSH, 0);
             }
         }
 
-        String ident = node.getIdent().getNom();
         String scopeAddress = currentScope;
-        String kind = "var";
 
-        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(node.getType()), kind, 0);
+        jjcBuilder.addInstruction(NEW, ident + "@" + scopeAddress, typeToJajaCode(type), kind, 0);
         variablesToPop.push(ident + "@" + scopeAddress);
 
-        if ("main".equals(currentScope)) {
+        if ("global".equals(currentScope)) {
+            globalVariables.add(ident);
+        } else if ("main".equals(currentScope)) {
             mainLocalVariables.add(ident);
-        } else if (!"global".equals(currentScope)) {
+        } else {
             // On est dans une méthode
             currentScopeVariables.add(ident);
         }
@@ -524,73 +661,129 @@ public class MiniJajaCompilerVisitor {
 
         // Sauvegarder le scope actuel
         String previousScope = currentScope;
+        Set<String> previousScopeVariables = new HashSet<>(currentScopeVariables);
         currentScope = methodSignature;
+        currentScopeVariables.clear();
 
-        // Compiler les entêtes (paramètres) - pens
-        MiniJajaCompilerVisitor methodBodyVisitor = new MiniJajaCompilerVisitor(null, collector);
-        methodBodyVisitor.currentScope = methodSignature;
+        // ========== PHASE 1: Calculer les tailles avec un visiteur temporaire ==========
+        MiniJajaCompilerVisitor tempVisitor = new MiniJajaCompilerVisitor(null, collector);
+        tempVisitor.currentScope = methodSignature;
+        tempVisitor.globalVariables.addAll(this.globalVariables);
 
+        // Calculer la taille des entêtes
         if (node.getEntetes() != null) {
-            visitEntetesReverse(node.getEntetes(), methodBodyVisitor, methodSignature);
+            visitEntetesReverse(node.getEntetes(), tempVisitor, methodSignature);
         }
+        int headerSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Compiler les variables locales - pdvs
-        int varCountBefore = methodBodyVisitor.variablesToPop.size();
+        // Calculer la taille des variables locales
+        int varCountBefore = tempVisitor.variablesToPop.size();
         if (node.getVars() != null) {
-            methodBodyVisitor.visit(node.getVars());
+            tempVisitor.visit(node.getVars());
         }
-        int localVarCount = methodBodyVisitor.variablesToPop.size() - varCountBefore;
+        int localVarCount = tempVisitor.variablesToPop.size() - varCountBefore;
+        int varsSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size() - headerSize;
 
-        // Compiler les instructions - piss
+        // Calculer la taille des instructions
         if (node.getInstrs() != null) {
-            methodBodyVisitor.visit(node.getInstrs());
+            tempVisitor.visit(node.getInstrs());
         }
+        int totalBodySize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        JajaCodeBuilder methodBody = methodBodyVisitor.getJajaCodeBuilder();
-        int bodySize = methodBody.getInstructionsAsList().size();
+        // Copier les variables du scope depuis le visiteur temporaire
+        currentScopeVariables.addAll(tempVisitor.currentScopeVariables);
 
-        // Calculer le nombre d'instructions pour le retrait des variables locales uniquement
-        // Les paramètres sont retirés côté appelant
+        // Calculer le nombre d'instructions pour le retrait des variables locales
         int retraitVarsCount = localVarCount * 2;
-
-        // Pour les méthodes void, on ajoute push(0) avant le retrait
         int push0Count = isVoidMethod ? 1 : 0;
+        // swap + return = 2 instructions (pour void et non-void)
+        int swapReturnCount = 2;
 
-        // Calculer les adresses
+        // ========== PHASE 2: Générer le code avec les bonnes adresses ==========
         int currentAddr = jjcBuilder.getCurrentAddress();
         int methodStartAddr = currentAddr + 3; // après push + new + goto
-
-        // L'adresse de fin est après : corps + push(0)? + retrait vars + swap + return
-        int methodEndAddr = methodStartAddr + bodySize + push0Count + retraitVarsCount + 2;
+        int methodEndAddr = methodStartAddr + totalBodySize + push0Count + retraitVarsCount + swapReturnCount;
 
         // Générer le code de déclaration de la méthode
         jjcBuilder.addInstruction(PUSH, methodStartAddr);
         jjcBuilder.addInstruction(NEW, methodName, methodType, "meth", 0);
         jjcBuilder.addInstruction(GOTO, methodEndAddr);
 
-        // Ajouter la méthode à la liste des déclarations à retirer selon [crméthode]
+        // Ajouter la méthode à la liste des déclarations à retirer
         variablesToPop.push(methodName);
 
-        // Insérer le corps de la méthode (pens + pdvs + piss)
-        jjcBuilder.merge(methodBody);
+        // ========== PHASE 3: Compiler le corps directement dans le builder principal ==========
 
-        // Pour les méthodes void : push(0) avant le retrait
+        // Sauvegarder la taille de variablesToPop avant de compiler le corps de la méthode
+        int varStackSizeBefore = variablesToPop.size();
+
+        // Compiler les entêtes (paramètres) directement
+        if (node.getEntetes() != null) {
+            visitEntetesDirectly(node.getEntetes(), methodSignature);
+        }
+
+        // Compiler les variables locales directement
+        if (node.getVars() != null) {
+            visit(node.getVars());
+        }
+
+        // Compiler les instructions directement
+        if (node.getInstrs() != null) {
+            visit(node.getInstrs());
+        }
+
+        // Selon [cméthodeRien] : piss ⊕ (push(0) ⊕G prdvs) ⊕D swap ⊕D return
+        // Pour les méthodes void : push(0) AVANT le retrait des variables locales
         if (isVoidMethod) {
             jjcBuilder.addInstruction(PUSH, 0);
         }
 
-        // prdvs : Retrait des variables locales uniquement (pas les paramètres)
+        // prdvs : Retrait des variables locales uniquement
         for (int i = 0; i < localVarCount; i++) {
             jjcBuilder.addInstruction(SWAP);
             jjcBuilder.addInstruction(POP);
         }
 
-        // ⊕D swap ⊕D return
+        // Nettoyer variablesToPop : retirer les variables locales de la méthode qui ont été ajoutées
+        // (elles sont gérées par les SWAP/POP générés ci-dessus, pas par le nettoyage global)
+        while (variablesToPop.size() > varStackSizeBefore) {
+            variablesToPop.pop();
+        }
+
+
+        // swap + return
         jjcBuilder.addInstruction(SWAP);
         jjcBuilder.addInstruction(RETURN);
 
         // Restaurer le scope
         currentScope = previousScope;
+        currentScopeVariables.clear();
+        currentScopeVariables.addAll(previousScopeVariables);
+    }
+
+    /**
+     * Visite les entêtes directement dans le builder principal (pas dans un visitor séparé).
+     */
+    private void visitEntetesDirectly(EntetesNode entetes, String methodSignature) {
+        if (entetes == null || entetes.getEntete() == null) {
+            return;
+        }
+
+        // D'abord traiter le reste de la liste
+        if (entetes.getEntetes() != null) {
+            visitEntetesDirectly(entetes.getEntetes(), methodSignature);
+        }
+
+        // Ensuite traiter l'entête actuelle
+        EnteteNode entete = entetes.getEntete();
+        String paramName = entete.getIdent().getNom();
+        String paramType = typeToJajaCode(entete.getType());
+
+        // Calculer la profondeur
+        int currentDepth = countParams(entetes);
+
+        jjcBuilder.addInstruction(NEW, paramName + "@" + methodSignature, paramType, "var", currentDepth);
+        currentScopeVariables.add(paramName);
     }
 
     /**
@@ -656,6 +849,10 @@ public class MiniJajaCompilerVisitor {
             visit(boolValueNode);
         } else if (expression instanceof IdentNode identNode) {
             visit(identNode);
+        } else if (expression instanceof TabNode tabNode) {
+            visitTab(tabNode);
+        } else if (expression instanceof LengthNode lengthNode) {
+            visitLength(lengthNode);
         } else if (expression instanceof AppelENode appelENode) {
             visitAppelE(appelENode);
         } else if (expression instanceof PlusNode plusNode) {
@@ -679,6 +876,42 @@ public class MiniJajaCompilerVisitor {
         } else if (expression instanceof EqualsNode equalsNode) {
             visitEquals(equalsNode);
         }
+    }
+
+    /**
+     * Compile un accès tableau en lecture selon la règle [ctab]:
+     * n ⊢ tab(ident(i), e) ⇒ {pe ⊕D aload(i), ne + 1}
+     *
+     * Exemple: x = tableau[5]; → push(5), aload(tableau@global)
+     *
+     * @param node le nœud TabNode représentant l'accès au tableau
+     */
+    private void visitTab(TabNode node) {
+        // Compiler l'expression d'index (pe)
+        visitExpression(node.getIndex());
+
+        // Résoudre le nom et scope du tableau
+        String arrayName = extractIdentifierName(node.getIdent());
+        String scopeAddress = resolveVariableScope(arrayName);
+
+        // ⊕D aload(i)
+        jjcBuilder.addInstruction(ALOAD, arrayName + "@" + scopeAddress);
+    }
+
+    /**
+     * Compile l'opération length selon la règle [clongueur]:
+     * n ⊢ longueur(ident(i)) ⇒ {jcnil ⊕D length(i), 1}
+     *
+     * Exemple: int n = length(tableau); → length(tableau@global)
+     *
+     * @param node le nœud LengthNode représentant l'opération length
+     */
+    private void visitLength(LengthNode node) {
+        String arrayName = node.getId().getNom();
+        String scopeAddress = resolveVariableScope(arrayName);
+
+        // ⊕D length(i)
+        jjcBuilder.addInstruction(LENGTH, arrayName + "@" + scopeAddress);
     }
 
     private void visitPlus(PlusNode node) {

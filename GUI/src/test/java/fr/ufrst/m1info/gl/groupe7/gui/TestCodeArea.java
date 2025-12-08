@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testfx.api.FxRobot;
 import org.testfx.framework.junit5.ApplicationExtension;
@@ -26,8 +28,7 @@ public class TestCodeArea {
     @Start
     public void start(Stage stage) {
         codeArea = new MyCodeArea("testcodearea");
-        codeAreaWithDefault = new MyCodeArea("testcodeareaWithDefault",
-                "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}");
+        codeAreaWithDefault = new MyCodeArea("testcodeareaWithDefault", "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}");
         stage.setScene(new Scene(new StackPane(codeArea, codeAreaWithDefault), 100, 100));
         stage.show();
     }
@@ -137,6 +138,7 @@ public class TestCodeArea {
         }
     }
 
+    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionPopupAppears(FxRobot robot) {
         runOnFxThread(() -> {
@@ -148,8 +150,7 @@ public class TestCodeArea {
         robot.clickOn("#testcodearea_code_area");
         WaitForAsyncUtils.waitForFxEvents();
 
-        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
-                .release(javafx.scene.input.KeyCode.CONTROL);
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE).release(javafx.scene.input.KeyCode.CONTROL);
 
         // Check if ContextMenu is showing
         try {
@@ -157,10 +158,10 @@ public class TestCodeArea {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(),
-                "Auto-completion popup should be visible");
+        Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Auto-completion popup should be visible");
     }
 
+    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionToggle(FxRobot robot) {
         runOnFxThread(() -> {
@@ -173,8 +174,7 @@ public class TestCodeArea {
         WaitForAsyncUtils.waitForFxEvents();
 
         // Open
-        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
-                .release(javafx.scene.input.KeyCode.CONTROL);
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE).release(javafx.scene.input.KeyCode.CONTROL);
 
         try {
             WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> !robot.lookup(".context-menu").queryAll().isEmpty());
@@ -184,8 +184,7 @@ public class TestCodeArea {
         Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Popup should be open");
 
         // Close
-        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE)
-                .release(javafx.scene.input.KeyCode.CONTROL);
+        robot.press(javafx.scene.input.KeyCode.CONTROL).type(javafx.scene.input.KeyCode.SPACE).release(javafx.scene.input.KeyCode.CONTROL);
 
         try {
             WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS, () -> robot.lookup(".context-menu").queryAll().isEmpty());

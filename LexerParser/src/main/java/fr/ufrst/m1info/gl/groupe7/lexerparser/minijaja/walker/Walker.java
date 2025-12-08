@@ -47,8 +47,7 @@ public class Walker {
      * visits each child returned by {@link AstNode#getChildren()}.
      *
      * <p>The method is resilient to a {@code null} node reference (it simply returns).
-     * Implementations assume {@link AstNode#getChildren()} returns a non-null iterable
-     * (it may be empty).</p>
+     * The method also checks if {@link AstNode#getChildren()} returns null and handles it safely.</p>
      *
      * @param node the AST node to visit (may be null)
      */
@@ -59,8 +58,11 @@ public class Walker {
             node.interpret(stack);
         }
 
-        for (AstNode child : node.getChildren()) {
-            visitNode(child);
+        Iterable<AstNode> children = node.getChildren();
+        if (children != null) {
+            for (AstNode child : children) {
+                visitNode(child);
+            }
         }
     }
 }

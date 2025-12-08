@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyser;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyzer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
@@ -44,10 +44,7 @@ public class MiniJajaCompiler {
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
         // Semantic analysis
-        MiniJajaSemanticAnalyser semanticAnalyser = new MiniJajaSemanticAnalyser(
-            collector,
-            stack.getSymbolTable()
-        );
+        MiniJajaSemanticAnalyzer semanticAnalyser = new MiniJajaSemanticAnalyzer(collector);
         semanticAnalyser.analyse(ast);
 
         if (collector.hasErrors()) {

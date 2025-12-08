@@ -2685,6 +2685,86 @@ class MiniJajaCompilerVisitorTest {
             "VOID should map to 'void'. Output: " + output);
     }
 
+    // ===== Tests pour la compilation des tableaux =====
+
+    @Test
+    void visitTableauNode_withFixedSize_generatesNewArrayInstruction() {
+        // Test de la règle [ctableau]: int arr[10]; → push(10), newarray(arr@global, int)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode tableauNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode(
+                Type.ENTIER,
+                ident("arr"),
+                new NbreNode(10)
+            );
+
+        visitor.visit(tableauNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 10);
+        inOrder.verify(builderSpy).addInstruction(NEWARRAY, "arr@global", "int");
+    }
+
+    @Test
+    void visitTabNode_inExpression_generatesAloadInstruction() {
+        // Test de la règle [ctab]: x = arr[5]; → push(5), aload(arr@global), store(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(5)
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+        when(affectation.getExpression()).thenReturn(tabNode);
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);
+        inOrder.verify(builderSpy).addInstruction(ALOAD, "arr@global");
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitAffectationNode_withTabNode_generatesAstoreInstruction() {
+        // Test de la règle [caffecteT]: arr[3] = 42; → push(3), push(42), astore(arr@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(3)
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(tabNode);
+        when(affectation.getExpression()).thenReturn(new NbreNode(42));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 3);  // index
+        inOrder.verify(builderSpy).addInstruction(PUSH, 42); // valeur
+        inOrder.verify(builderSpy).addInstruction(ASTORE, "arr@global");
+    }
+
+    @Test
+    void visitLengthNode_generatesLengthInstruction() {
+        // Test de la règle [clongueur]: x = length(arr); → length(arr@global), store(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode lengthNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode(
+                ident("arr")
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+        when(affectation.getExpression()).thenReturn(lengthNode);
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LENGTH, "arr@global");
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
 
 }
 
