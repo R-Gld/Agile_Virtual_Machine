@@ -313,3 +313,10 @@
 .split-pane:vertical > .split-pane-divider {
     -fx-padding: 1 0 1 0;
 }
+#debug-toolbar .run-stop-button {
+    -fx-background-color: transparent;
+    -fx-padding: 2 8 2 8;
+    -fx-graphic: url("icons/stop_light.png");
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}

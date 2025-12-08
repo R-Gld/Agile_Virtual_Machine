@@ -40,8 +40,7 @@ public class JajaCodeDebugger {
         this.visitor = new JajaCodeInterpreterVisitor(stacks);
         this.visitor.load(arbreJajaCode);
 
-    }
-}
+    }}
 
     /** اrunner JajaCode */
    /* public boolean step() {

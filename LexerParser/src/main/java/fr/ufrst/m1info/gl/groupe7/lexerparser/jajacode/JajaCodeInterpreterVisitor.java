@@ -210,4 +210,33 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         else if (ctx.NOT() != null) dispatch("not", null);
         return null;
     }
+
+
+
+    //for test
+
+    public void step() {
+        int pc = context.getInstructionCounter();
+        JajaCodeParser.InstrContext instruction = programme.get(pc);
+
+        if (instruction == null) {
+            System.err.println("Erreur : @ " + pc + " introuvable !");
+            context.stop();
+            return;
+        }
+
+        visit(instruction);
+    }
+
+
+    public boolean isFinished() {
+        return !context.isRunning();
+    }
+
+
+    public int getCurrentInstructionIndex() {
+        return context.getInstructionCounter();
+    }
+
+
 }

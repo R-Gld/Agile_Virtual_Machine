@@ -321,3 +321,10 @@
 .panel-title-button:pressed {
     -fx-background-color: #343447;
 }
+#debug-toolbar .run-stop-button {
+    -fx-background-color: transparent;
+    -fx-padding: 4 10 4 10;
+    -fx-graphic: url("icons/stop_dark.png");
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
