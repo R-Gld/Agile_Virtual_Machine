@@ -92,7 +92,6 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         appStage = stage;
-        appStage.initStyle(StageStyle.UNDECORATED);
 
         // Structure de l'interface :
         BorderPane root = new BorderPane();
@@ -173,6 +172,7 @@ public class App extends Application {
         scene.getStylesheets().add(lightCss);
 
         stage.setScene(scene);
+        stage.initStyle(StageStyle.UNDECORATED);
         stage.show();
     }
 
