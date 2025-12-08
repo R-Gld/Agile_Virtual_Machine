@@ -351,7 +351,6 @@ public class App extends Application {
                 Objects.requireNonNull(getClass().getResourceAsStream("/icons/bug.png")), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
-        debugButton.setOnAction(e -> startDebug());
         debugButton.setOnAction(e -> startDebugEnhanced());
 
         stepButton.setTooltip(new Tooltip("Step to next line"));
@@ -360,7 +359,7 @@ public class App extends Application {
                 Objects.requireNonNull(getClass().getResourceAsStream("/icons/next.png")), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
-        stepButton.setOnAction(e -> stepDebugLineByLine());
+        stepButton.setOnAction(e -> stepDebugEnhanced());
 
         continueButton.setTooltip(new Tooltip("Continue to next breakpoint"));
         continueButton.setDisable(true);
@@ -377,7 +376,6 @@ public class App extends Application {
                 Objects.requireNonNull(getClass().getResourceAsStream("/icons/stop.png")), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
-        stopButton.setOnAction(e -> stopDebug());
         stopButton.setOnAction(e -> stopDebugWithReset());
 
         return hbox;
@@ -574,160 +572,35 @@ public class App extends Application {
     // DEBUG (Start / Step / Stop) pour MiniJaja et JajaCode
 
     /**
-     * Starts debug mode on the current selected source (MiniJaja or JajaCode).
-     */
-    /**
-     * Starts debug mode on the current selected source (MiniJaja or JajaCode).
-     */
-    private void startDebug() {
-        if (debugMode) {
-            return;
-        }
-
-        String choice = fileToRun.getValue();
-        if ("Jajacode".equals(choice)) {
-            debugSource = DebugSource.JAJACODE;
-        } else {
-            debugSource = DebugSource.MINIJAJA;
-        }
-
-        debugMode = true;
-        debugCurrentLine = -1;
-        stepButton.setDisable(false);
-        stopButton.setDisable(false);
-        continueButton.setDisable(false);
-
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        debugBreakpoints.clear();
-        debugBreakpoints.addAll(currentArea.getBreakpoints());
-
-        if (console != null) {
-            console.printMessage("[DEBUG] Debug mode started on " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") + ".");
-        }
-        stepDebug();
-    }
-
-    /**
-     * Continues execution until the next breakpoint or end of file.
+     * Continue button jumps from breakpoint to breakpoint.
+     * If no more breakpoints exist after current line, stops execution.
      */
     private void continueDebug() {
         if (!debugMode)
             return;
 
         MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        String text = currentArea.getText();
-        String[] lines = text.split("\\R", -1);
 
-        int next = debugCurrentLine + 1;
-        while (next < lines.length) {
-            if (debugBreakpoints.contains(next)) {
-                debugCurrentLine = next;
-                if (console != null) {
-                    console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1));
-                }
-                currentArea.highlightLine(debugCurrentLine);
-                return;
-            }
-            next++;
-        }
+        // Find next breakpoint after current line
+        int nextBreakpoint = findNextBreakpointAfter(debugCurrentLine);
 
-        if (console != null) {
-            console.printMessage("[DEBUG] End of file reached (no more breakpoints).");
-        }
-        stopDebug();
-    }
-
-    /**
-     * Moves to the next line in the current debug source and highlights it.
-     */
-    private void stepDebug() {
-        if (!debugMode) {
-            return;
-        }
-
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        String text = currentArea.getText();
-        String[] lines = text.split("\\R", -1);
-        if (lines.length == 0) {
+        if (nextBreakpoint >= 0) {
+            // Jump to next breakpoint
+            debugCurrentLine = nextBreakpoint;
             if (console != null) {
-                console.printMessage("[DEBUG] No lines to debug.");
+                String text = currentArea.getText();
+                String[] lines = text.split("\\R", -1);
+                console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1) +
+                        ": " + lines[debugCurrentLine]);
             }
-            stopDebug();
-            return;
-        }
-
-        do {
-            debugCurrentLine++;
-        } while (debugCurrentLine < lines.length && lines[debugCurrentLine].trim().isEmpty());
-
-        int next = debugCurrentLine + 1;
-
-        if (!debugBreakpoints.isEmpty()) {
-            while (next < lines.length && !debugBreakpoints.contains(next)) {
-                next++;
-            }
-        }
-
-        debugCurrentLine = next;
-        if (debugCurrentLine >= lines.length) {
+            currentArea.highlightLine(debugCurrentLine);
+        } else {
+            // No more breakpoints, stop execution
             if (console != null) {
-                console.printMessage("[DEBUG] End of file reached.");
+                console.printMessage("[DEBUG] No more breakpoints. Execution stopped.");
             }
-            stopDebug();
-            return;
+            stopDebugWithReset();
         }
-
-        if (console != null) {
-            console.printMessage("[DEBUG] " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
-                    " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
-        }
-
-        currentArea.highlightLine(debugCurrentLine);
-    }
-
-    /**
-     * Steps through the code line by line without jumping to breakpoints.
-     * This is the simple line-by-line debugger.
-     */
-    private void stepDebugLineByLine() {
-        if (!debugMode) {
-            return;
-        }
-
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        String text = currentArea.getText();
-        String[] lines = text.split("\\R", -1);
-
-        if (lines.length == 0) {
-            if (console != null) {
-                console.printMessage("[DEBUG] No lines to debug.");
-            }
-            stopDebug();
-            return;
-        }
-
-        // Move to the next non-empty line
-        do {
-            debugCurrentLine++;
-        } while (debugCurrentLine < lines.length && lines[debugCurrentLine].trim().isEmpty());
-
-        if (debugCurrentLine >= lines.length) {
-            if (console != null) {
-                console.printMessage("[DEBUG] End of file reached.");
-            }
-            stopDebug();
-            return;
-        }
-
-        if (console != null) {
-            console.printMessage("[DEBUG] " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
-                    " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
-        }
-
-        currentArea.highlightLine(debugCurrentLine);
     }
 
     /**
@@ -776,13 +649,49 @@ public class App extends Application {
             console.printMessage("[DEBUG] Debug mode started on " +
                     (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") + ".");
         }
-        stepDebugEnhanced();
+
+        // Conditional start behavior based on breakpoints
+        String text = currentArea.getText();
+        String[] lines = text.split("\\R", -1);
+
+        if (debugBreakpoints.isEmpty()) {
+            // No breakpoints: start at the first executable line
+            int firstExecutable = findNextExecutableLine(lines, -1);
+            if (firstExecutable < 0) {
+                if (console != null) {
+                    console.printMessage("[DEBUG] No executable lines.");
+                }
+                stopDebugWithReset();
+                return;
+            }
+            debugCurrentLine = firstExecutable;
+            if (console != null) {
+                console.printMessage("[DEBUG] " +
+                        (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
+                        " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
+            }
+            currentArea.highlightLine(debugCurrentLine);
+        } else {
+            // Breakpoints exist: start at the first breakpoint
+            int firstBreakpoint = findNextBreakpointAfter(-1);
+            if (firstBreakpoint < 0) {
+                if (console != null) {
+                    console.printMessage("[DEBUG] No valid breakpoints found.");
+                }
+                stopDebugWithReset();
+                return;
+            }
+            debugCurrentLine = firstBreakpoint;
+            if (console != null) {
+                console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1));
+            }
+            currentArea.highlightLine(debugCurrentLine);
+        }
     }
 
     /**
-     * Steps in debug mode with real breakpoint behavior.
-     * If a breakpoint exists after the current line, jump to it.
-     * If not, move line by line until the end of the file.
+     * Steps in debug mode line by line.
+     * After the initial jump to first breakpoint (if any), always go line by line.
      */
     private void stepDebugEnhanced() {
         if (!debugMode) {
@@ -801,32 +710,16 @@ public class App extends Application {
             return;
         }
 
-        if (debugCurrentLine < 0) {
-            int firstExecutable = findNextExecutableLine(lines, -1);
-            if (firstExecutable < 0) {
-                if (console != null) {
-                    console.printMessage("[DEBUG] No executable lines.");
-                }
-                stopDebugWithReset();
-                return;
+        // Always go line by line, ignoring breakpoints
+        int nextLine = findNextExecutableLine(lines, debugCurrentLine);
+        if (nextLine < 0) {
+            if (console != null) {
+                console.printMessage("[DEBUG] End of file reached.");
             }
-            debugCurrentLine = firstExecutable;
-        } else {
-            int nextBreakpoint = findNextBreakpointAfter(debugCurrentLine);
-            if (nextBreakpoint >= 0) {
-                debugCurrentLine = nextBreakpoint;
-            } else {
-                int nextLine = findNextExecutableLine(lines, debugCurrentLine);
-                if (nextLine < 0) {
-                    if (console != null) {
-                        console.printMessage("[DEBUG] End of file reached.");
-                    }
-                    stopDebugWithReset();
-                    return;
-                }
-                debugCurrentLine = nextLine;
-            }
+            stopDebugWithReset();
+            return;
         }
+        debugCurrentLine = nextLine;
 
         if (debugCurrentLine < 0 || debugCurrentLine >= lines.length) {
             if (console != null) {
