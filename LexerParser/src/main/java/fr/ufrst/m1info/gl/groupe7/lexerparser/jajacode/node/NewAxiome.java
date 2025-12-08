@@ -20,23 +20,6 @@ import java.util.List;
  * [newarray] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ newarray(i, t) –» &lt;DeclTab(i, v, t, m), a+1&gt;
  * </pre>
  *
- * <p>Cette instruction déclare une nouvelle entité (variable, constante, méthode, ou tableau)
- * dans la table des symboles. Le comportement varie selon les paramètres :</p>
- *
- * <ul>
- *   <li><b>depth &gt; 0</b> : Crée un alias vers un élément existant dans la pile à la position {@code depth}
- *       (utilisé pour les paramètres de méthode)</li>
- *   <li><b>depth = 0, kind = var</b> : Dépile une valeur et déclare une variable mutable</li>
- *   <li><b>depth = 0, kind = cst</b> : Dépile une valeur et déclare une constante</li>
- *   <li><b>depth = 0, kind = meth</b> : Dépile une adresse et déclare une méthode</li>
- *   <li><b>depth = 0, kind = tab</b> : Dépile une taille et déclare un tableau</li>
- * </ul>
- *
- * <p><b>Format de l'argument :</b> {@code "ident,type,kind[,depth]"}</p>
- *
- * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité en ajoutant
- * un suffixe {@code $N} aux variables locales lors d'appels récursifs.</p>
- *
  * <p><b>Exceptions :</b></p>
  * <ul>
  *   <li>{@link StackUnderflowException} si la pile est vide ou insuffisante pour le depth</li>
@@ -159,13 +142,6 @@ public class NewAxiome implements JajaAxiome {
                 case "cst":
                 case "meth":
                     ctx.getStacks().declareCst(scopedIdent, valeur, type);
-                    break;
-                case "tab":
-                    if (valeur instanceof Integer size) {
-                        ctx.getStacks().declareTab(scopedIdent, size, type);
-                    } else {
-                        throw new TypeMismatchException("Taille de tableau invalide", "NEW", ctx.getInstructionCounter());
-                    }
                     break;
                 default:
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, "NEW", ctx.getInstructionCounter());
