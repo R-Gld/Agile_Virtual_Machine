@@ -14,11 +14,13 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.plus
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp2.unaryMinus.UnaryMinusNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.AppelENode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.BoolValueNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.division.DivisionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.terme.multiplication.MultiplicationNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
@@ -207,6 +209,66 @@ public class TypeInferenceEngine {
                 boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, ">");
                 return valid ? Type.BOOLEEN : null;
             }
+
+
+            // Array operations
+            case TabNode tabNode -> {
+                // Array access: arr[index] returns the array's element type
+                String arrayName = tabNode.getIdent().getNom();
+                String qualifiedName = scopeResolver.resolveAndQualifyName(arrayName);
+
+                // Check if array is declared
+                if (!context.getSymbolTable().contains(qualifiedName)) {
+                    context.getCollector().report(
+                            Severity.ERROR,
+                            Phase.SEMANTIC,
+                            context.createPosition(),
+                            String.format("Undeclared array: '%s' is used before being declared. " +
+                                            "Declare it first (ex: 'int %s[10];').",
+                                    arrayName, arrayName)
+                    );
+                    return null;
+                }
+
+                // Validate index is integer type
+                Type indexType = inferType(tabNode.getIndex());
+                if (indexType != null && indexType != Type.ENTIER) {
+                    context.getCollector().report(
+                            Severity.ERROR,
+                            Phase.SEMANTIC,
+                            context.createPosition(),
+                            String.format("Array index must be an integer: array '%s' accessed with index type '%s'. " +
+                                            "Array indices must be integer expressions.",
+                                    arrayName, indexType)
+                    );
+                }
+
+                // Return the array's element type
+                return context.getSymbolTable().type(qualifiedName);
+            }
+
+            case LengthNode lengthNode -> {
+                // length(arr) always returns int
+                String arrayName = lengthNode.getId().getNom();
+                String qualifiedName = scopeResolver.resolveAndQualifyName(arrayName);
+
+                // Check if array is declared
+                if (!context.getSymbolTable().contains(qualifiedName)) {
+                    context.getCollector().report(
+                            Severity.ERROR,
+                            Phase.SEMANTIC,
+                            context.createPosition(),
+                            String.format("Undeclared array: '%s' is used before being declared. " +
+                                            "Declare it first (ex: 'int %s[10];').",
+                                    arrayName, arrayName)
+                    );
+                    return null;
+                }
+
+                // length operation always returns ENTIER
+                return Type.ENTIER;
+            }
+
             default -> {}
         }
 
