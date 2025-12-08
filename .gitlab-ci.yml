@@ -67,7 +67,7 @@ test:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI' jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: '**/target/surefire-reports/TEST-*.xml'
