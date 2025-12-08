@@ -85,8 +85,14 @@ public class TantqueNode extends InstructionNode {
      */
     @Override
     public void interpret(Stacks stacks) {
-
-        if (Boolean.TRUE.equals(expressionNode.evaluate(stacks))) {
+        Object result = expressionNode.evaluate(stacks);
+        
+        if (!(result instanceof Boolean)) {
+            throw new ClassCastException("While condition must evaluate to Boolean, got: " + 
+                (result != null ? result.getClass().getName() : "null"));
+        }
+        
+        if (Boolean.TRUE.equals(result)) {
             java.util.List<AstNode> childs = new java.util.ArrayList<>();
             for (AstNode n : this.instructionsNode.getChildren()) {
                 childs.add(n);
