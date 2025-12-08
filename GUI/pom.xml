@@ -84,6 +84,7 @@
                 </executions>
             </plugin>
 
+            
             <!-- Shade plugins -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

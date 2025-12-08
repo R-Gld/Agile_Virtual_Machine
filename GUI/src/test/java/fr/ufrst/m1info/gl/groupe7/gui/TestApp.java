@@ -620,6 +620,7 @@ class TestApp {
 
     /**
      * Test toolbar has correct ID
+     * 
      */
     @Test
     void testToolbarHasCorrectId() {
