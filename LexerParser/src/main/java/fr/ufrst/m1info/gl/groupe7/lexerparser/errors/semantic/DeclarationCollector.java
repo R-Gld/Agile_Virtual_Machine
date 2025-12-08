@@ -25,6 +25,10 @@ import java.util.List;
  */
 public class DeclarationCollector {
 
+    private static final String TYPE_MISMATCH_MSG = "The initialization expression must match the declared type.";
+    private static final String KIND_VARIABLE = "variable";
+    private static final String KIND_CONSTANT = "constant";
+
     private final SemanticContext context;
     private final ScopeResolver scopeResolver;
     private final TypeInferenceEngine typeInferenceEngine;
@@ -32,13 +36,11 @@ public class DeclarationCollector {
     /**
      * Constructor.
      *
-     * @param context the semantic context
-     * @param scopeResolver the scope resolver
+     * @param context             the semantic context
+     * @param scopeResolver       the scope resolver
      * @param typeInferenceEngine the type inference engine for validating initialization expressions
      */
-    public DeclarationCollector(SemanticContext context,
-                                ScopeResolver scopeResolver,
-                                TypeInferenceEngine typeInferenceEngine) {
+    public DeclarationCollector(SemanticContext context, ScopeResolver scopeResolver, TypeInferenceEngine typeInferenceEngine) {
         this.context = context;
         this.scopeResolver = scopeResolver;
         this.typeInferenceEngine = typeInferenceEngine;
@@ -51,126 +53,108 @@ public class DeclarationCollector {
      * @param ast the root node of the abstract syntax tree (ClasseNode)
      */
     public void collectDeclarations(ClasseNode ast) {
-        // Collect global variable declarations
         collectDeclarationsRecursive(ast.getDeclarations());
 
-        // Process main method, enter main scope
         context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         collectVars(mainNode.getVars());
-        context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
+        context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);
     }
 
     /**
      * Collect declarations from DeclsNode (recursive).
-     * @param decls the DeclsNode to process
      */
     private void collectDeclarationsRecursive(DeclsNode decls) {
         if (decls == null) return;
 
         AstNode decl = decls.getDecl();
         if (decl instanceof VarNode varNode) {
-            String varName = varNode.getIdent().getNom();
-            String qualifiedName = scopeResolver.qualifyName(varName);  // ex: , "x@global"
-            Type varType = varNode.getType();
-
-            // Check for duplicate declarations in current scope
-            if (context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Duplicate variable declaration: '%s' has already been declared. " +
-                                  "Each variable can only be declared once in the same scope.", varName)
-                );
-            } else {
-                context.getSymbolTable().creationSymbol(qualifiedName, 0, varType);
-            }
-
-            // Check initialization expression if present
-            Expression initExpr = varNode.getExp().getVexp();
-            if (initExpr != null) {
-                Type initType = typeInferenceEngine.inferType(initExpr);
-                if (initType != null && varType != initType) {
-                    context.getCollector().report(
-                        Severity.ERROR,
-                        Phase.SEMANTIC,
-                        context.createPosition(),
-                        String.format("Type mismatch in variable initialization: variable '%s' declared as '%s' but initialized with '%s'. " +
-                                      "The initialization expression must match the declared type.",
-                                      varName, varType, initType)
-                    );
-                }
-            }
+            collectVariable(varNode);
         } else if (decl instanceof MethodeNode methodeNode) {
-            // Declare method using signature format: methodName@returnType (ex: , "f@integer")
-            String methodName = methodeNode.getIdent().getNom();
-            Type returnType = methodeNode.getTypeMeth();
-            String methodSignature = methodName + "@" + returnType.toString();
-
-            // Check for duplicate method declarations
-            if (context.getSymbolTable().contains(methodSignature)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Duplicate method declaration: method '%s' has already been declared. " +
-                                  "Each method can only be declared once.", methodName)
-                );
-            } else {
-                context.getStacks().declareMeth(methodSignature, methodeNode, returnType);
-            }
-
-            // Note: Method parameters and local variables are collected during type checking
-            // in TypeChecker to properly manage scoping
+            collectMethod(methodeNode);
         } else if (decl instanceof CstNode cstNode) {
-            // Handle constant declarations (final)
-            String cstName = cstNode.getIdent().getNom();
-            String qualifiedName = scopeResolver.qualifyName(cstName);  // ex: "x@global"
-            Type cstType = cstNode.getType();
-
-            // Check for duplicate declarations in current scope
-            if (context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Duplicate constant declaration: '%s' has already been declared. " +
-                                  "Each constant can only be declared once in the same scope.", cstName)
-                );
-            } else {
-                context.getSymbolTable().creationSymbol(qualifiedName, 0, cstType);
-                // Register as constant for reassignment checks
-                context.addConstant(cstName);
-            }
-
-            // Check initialization expression if present
-            Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
-            if (initExpr != null) {
-                Type initType = typeInferenceEngine.inferType(initExpr);
-                if (initType != null && cstType != initType) {
-                    context.getCollector().report(
-                        Severity.ERROR,
-                        Phase.SEMANTIC,
-                        context.createPosition(),
-                        String.format("Type mismatch in constant initialization: constant '%s' declared as '%s' but initialized with '%s'. " +
-                                      "The initialization expression must match the declared type.",
-                                      cstName, cstType, initType)
-                    );
-                }
-            }
+            collectConstant(cstNode);
         }
 
-        // Process next declaration
         collectDeclarationsRecursive(decls.getDecls());
+    }
+
+    private void collectVariable(VarNode varNode) {
+        String varName = varNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(varName);
+        Type varType = varNode.getType();
+
+        if (checkDuplicateAndRegister(qualifiedName, varType, KIND_VARIABLE, varName)) {
+            trackVariableInScope(varName);
+        }
+
+        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE);
+    }
+
+    private void collectConstant(CstNode cstNode) {
+        String cstName = cstNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(cstName);
+        Type cstType = cstNode.getType();
+
+        if (checkDuplicateAndRegister(qualifiedName, cstType, KIND_CONSTANT, cstName)) {
+            context.addConstant(cstName);
+            trackVariableInScope(cstName);
+        }
+
+        Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
+        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+    }
+
+    private void collectMethod(MethodeNode methodeNode) {
+        String methodName = methodeNode.getIdent().getNom();
+        Type returnType = methodeNode.getTypeMeth();
+        String methodSignature = methodName + "@" + returnType.toString();
+
+        if (context.getSymbolTable().contains(methodSignature)) {
+            reportError("Duplicate method declaration: method '%s' has already been declared. " + "Each method can only be declared once.", methodName);
+        } else {
+            context.getStacks().declareMeth(methodSignature, methodeNode, returnType);
+        }
+    }
+
+    /**
+     * Check for duplicate and register symbol if not duplicate.
+     *
+     * @return true if registered successfully, false if duplicate
+     */
+    private boolean checkDuplicateAndRegister(String qualifiedName, Type type, String kind, String name) {
+        if (context.getSymbolTable().contains(qualifiedName)) {
+            reportError("Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
+            return false;
+        }
+        context.getSymbolTable().creationSymbol(qualifiedName, 0, type);
+        return true;
+    }
+
+    private void checkInitializationType(Expression initExpr, Type declaredType, String name, String kind) {
+        if (initExpr == null) return;
+
+        Type initType = typeInferenceEngine.inferType(initExpr);
+        if (initType != null && declaredType != initType) {
+            reportError("Type mismatch in %s initialization: %s '%s' declared as '%s' but initialized with '%s'. %s", kind, kind, name, declaredType, initType, TYPE_MISMATCH_MSG);
+        }
+    }
+
+    private void trackVariableInScope(String name) {
+        String currentScope = context.getCurrentScope();
+        if (ScopeResolver.MAIN_SCOPE.equals(currentScope)) {
+            context.getMainLocalVariables().add(name);
+        } else if (!ScopeResolver.GLOBAL_SCOPE.equals(currentScope)) {
+            context.getCurrentScopeVariables().add(name);
+        }
+    }
+
+    private void reportError(String format, Object... args) {
+        context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format(format, args));
     }
 
     /**
      * Collect parameter types from EntetesNode.
-     * Public helper method used by MethodCallValidator.
-     *
-     * @param entetes the EntetesNode to process
-     * @return list of parameter types
      */
     public List<Type> collectParameterTypes(EntetesNode entetes) {
         List<Type> paramTypes = new ArrayList<>();
@@ -181,15 +165,11 @@ public class DeclarationCollector {
             paramTypes.add(current.getEntete().getType());
             current = current.getEntetes();
         }
-
         return paramTypes;
     }
 
     /**
      * Collect method parameters and add them to symbol table.
-     * Called by TypeChecker when processing method declarations.
-     *
-     * @param entetes the EntetesNode to process
      */
     public void collectMethodParameters(EntetesNode entetes) {
         if (entetes == null) return;
@@ -198,103 +178,83 @@ public class DeclarationCollector {
         while (current != null && current.getEntete() != null) {
             EnteteNode entete = current.getEntete();
             String paramName = entete.getIdent().getNom();
-            String qualifiedName = scopeResolver.qualifyName(paramName);  // ex: , "x@f@int"
+            String qualifiedName = scopeResolver.qualifyName(paramName);
             Type paramType = entete.getType();
 
-            // Check for duplicate parameter names in current scope
             if (context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Duplicate parameter name: '%s' has already been declared. " +
-                                  "Parameter names must be unique.", paramName)
-                );
+                reportError("Duplicate parameter name: '%s' has already been declared. " + "Parameter names must be unique.", paramName);
             } else {
                 context.getSymbolTable().creationSymbol(qualifiedName, 0, paramType);
-                // Track this parameter in current scope variables
                 context.getCurrentScopeVariables().add(paramName);
             }
-
             current = current.getEntetes();
         }
     }
 
     /**
      * Collect local variable declarations from VarsNode.
-     * Called by both collectDeclarations (for main) and TypeChecker (for methods).
-     *
-     * @param vars the VarsNode to process
      */
     public void collectVars(VarsNode vars) {
         if (vars == null) return;
 
-        // VarsNode has a linked-list structure: var + vars
-        AstNode var = vars.getVar();
-        if (var instanceof VarNode varNode) {
-            String varName = varNode.getIdent().getNom();
-            String qualifiedName = scopeResolver.qualifyName(varName);  // ex: , "local@main" or "local@f@int"
-            Type varType = varNode.getType();
-
-            // Check for duplicate declarations in current scope
-            if (context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Duplicate local variable: '%s' has already been declared. " +
-                                  "Please use a different variable name.", varName)
-                );
-            } else {
-                context.getSymbolTable().creationSymbol(qualifiedName, 0, varType);
-
-                // Track this variable in the appropriate set
-                if (ScopeResolver.MAIN_SCOPE.equals(context.getCurrentScope())) {
-                    context.getMainLocalVariables().add(varName);
-                } else if (!ScopeResolver.GLOBAL_SCOPE.equals(context.getCurrentScope())) {
-                    context.getCurrentScopeVariables().add(varName);
-                }
-            }
-
-            // Check initialization expression if present
-            Expression initExpr = varNode.getExp().getVexp();
-            if (initExpr != null) {
-                Type initType = typeInferenceEngine.inferType(initExpr);
-                if (initType != null && varType != initType) {
-                    context.getCollector().report(
-                        Severity.ERROR,
-                        Phase.SEMANTIC,
-                        context.createPosition(),
-                        String.format("Type mismatch in variable initialization: variable '%s' declared as '%s' but initialized with '%s'. " +
-                                      "The initialization expression must match the declared type.",
-                                      varName, varType, initType)
-                    );
-                }
-            }
+        AstNode varNode = vars.getVar();
+        if (varNode instanceof VarNode vn) {
+            collectLocalVariable(vn);
+        } else if (varNode instanceof CstNode cn) {
+            collectLocalConstant(cn);
         }
 
-        // Process the rest of the variables recursively
         collectVars(vars.getVars());
+    }
+
+    private void collectLocalVariable(VarNode varNode) {
+        String varName = varNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(varName);
+        Type varType = varNode.getType();
+
+        if (checkDuplicateLocal(qualifiedName, varName, KIND_VARIABLE)) {
+            context.getSymbolTable().creationSymbol(qualifiedName, 0, varType);
+            trackVariableInScope(varName);
+        }
+
+        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE);
+    }
+
+    private void collectLocalConstant(CstNode cstNode) {
+        String cstName = cstNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(cstName);
+        Type cstType = cstNode.getType();
+
+        if (checkDuplicateLocal(qualifiedName, cstName, KIND_CONSTANT)) {
+            context.getSymbolTable().creationSymbol(qualifiedName, 0, cstType);
+            context.addConstant(cstName);
+            trackVariableInScope(cstName);
+        }
+
+        Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
+        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+    }
+
+    private boolean checkDuplicateLocal(String qualifiedName, String name, String kind) {
+        if (context.getSymbolTable().contains(qualifiedName)) {
+            reportError("Duplicate local %s: '%s' has already been declared. " + "Please use a different %s name.", kind, name, kind);
+            return false;
+        }
+        return true;
     }
 
     /**
      * Collect argument types from ListExpNode.
-     * Public helper method used by MethodCallValidator.
-     *
-     * @param listExp the ListExpNode to process
-     * @return list of argument types
      */
     public List<Type> collectArgumentTypes(ListExpNode listExp) {
         List<Type> argTypes = new ArrayList<>();
         if (listExp == null) return argTypes;
 
-        // ListExpNode has a linked-list structure
         ListExpNode current = listExp;
         while (current != null && current.getExp() != null) {
             AstNode exp = current.getExp();
             if (exp instanceof Expression expression) {
-                Type argType = typeInferenceEngine.inferType(expression);
-                argTypes.add(argType);
+                argTypes.add(typeInferenceEngine.inferType(expression));
             }
             current = current.getListExp();
         }

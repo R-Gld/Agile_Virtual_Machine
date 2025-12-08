@@ -494,7 +494,12 @@ public class MiniJajaCompilerVisitor {
     public void visit(VarsNode node) {
         if (node == null || node.getVar() == null) return;
 
-        visit(((VarNode) node.getVar()));
+        AstNode varNode = node.getVar();
+        if (varNode instanceof VarNode vn) {
+            visit(vn);
+        } else if (varNode instanceof CstNode cn) {
+            visit(cn);
+        }
 
         if (node.getVars() != null) {
             visit(node.getVars());

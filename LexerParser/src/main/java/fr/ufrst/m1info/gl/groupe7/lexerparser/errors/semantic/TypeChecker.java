@@ -31,17 +31,13 @@ public class TypeChecker {
     /**
      * Constructor.
      *
-     * @param context the semantic context
-     * @param scopeResolver the scope resolver
+     * @param context              the semantic context
+     * @param scopeResolver        the scope resolver
      * @param declarationCollector the declaration collector
-     * @param typeInferenceEngine the type inference engine
-     * @param methodCallValidator the method call validator
+     * @param typeInferenceEngine  the type inference engine
+     * @param methodCallValidator  the method call validator
      */
-    public TypeChecker(SemanticContext context,
-                       ScopeResolver scopeResolver,
-                       DeclarationCollector declarationCollector,
-                       TypeInferenceEngine typeInferenceEngine,
-                       MethodCallValidator methodCallValidator) {
+    public TypeChecker(SemanticContext context, ScopeResolver scopeResolver, DeclarationCollector declarationCollector, TypeInferenceEngine typeInferenceEngine, MethodCallValidator methodCallValidator) {
         this.context = context;
         this.scopeResolver = scopeResolver;
         this.declarationCollector = declarationCollector;
@@ -69,6 +65,7 @@ public class TypeChecker {
 
     /**
      * Check methods declared in DeclsNode.
+     *
      * @param decls the DeclsNode to process
      */
     private void checkMethodsInDeclarations(DeclsNode decls) {
@@ -100,14 +97,7 @@ public class TypeChecker {
             // Check that non-void methods contain at least one return statement
             if (context.getCurrentMethodReturnType() != Type.VOID) {
                 if (!hasReturnStatement(methodeNode.getInstrs())) {
-                    context.getCollector().report(
-                        Severity.ERROR,
-                        Phase.SEMANTIC,
-                        context.createPosition(),
-                        String.format("Missing return statement: method '%s' must return a value of type '%s'. " +
-                                      "Add a return statement with an expression of the correct type.",
-                                      methodName, context.getCurrentMethodReturnType())
-                    );
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Missing return statement: method '%s' must return a value of type '%s'. " + "Add a return statement with an expression of the correct type.", methodName, context.getCurrentMethodReturnType()));
                 }
             }
 
@@ -122,6 +112,7 @@ public class TypeChecker {
 
     /**
      * Check if an instruction tree contains at least one return statement.
+     *
      * @param node the root node to check
      * @return true if a return statement is found, false otherwise
      */
@@ -149,6 +140,7 @@ public class TypeChecker {
 
     /**
      * Check instructions node.
+     *
      * @param instrs the InstructionsNode to check
      */
     private void checkInstructions(InstructionsNode instrs) {
@@ -164,11 +156,14 @@ public class TypeChecker {
 
     /**
      * Check any AST node recursively.
+     *
      * @param node the node to check
      */
     private void checkNode(AstNode node) {
         switch (node) {
-            case null -> {return;}
+            case null -> {
+                return;
+            }
 
             // Check specific node types
             case AffectationNode affectation -> {
@@ -206,6 +201,7 @@ public class TypeChecker {
 
     /**
      * Check return statement.
+     *
      * @param retour the RetourNode to check
      */
     private void checkRetour(RetourNode retour) {
@@ -213,13 +209,7 @@ public class TypeChecker {
 
         // If we're not in a method, return shouldn't be used
         if (context.getCurrentMethodReturnType() == null) {
-            context.getCollector().report(
-                Severity.ERROR,
-                Phase.SEMANTIC,
-                context.createPosition(),
-                "Return statement error: 'return' can only be used inside a method, not in 'main'. " +
-                "Remove the return statement or move this code to a method."
-            );
+            context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), "Return statement error: 'return' can only be used inside a method, not in 'main'. " + "Remove the return statement or move this code to a method.");
             return;
         }
 
@@ -227,20 +217,14 @@ public class TypeChecker {
         if (exp instanceof Expression expression) {
             Type returnedType = typeInferenceEngine.inferType(expression);
             if (returnedType != null && returnedType != context.getCurrentMethodReturnType()) {
-                context.getCollector().report(
-                        Severity.ERROR,
-                        Phase.SEMANTIC,
-                        context.createPosition(),
-                        String.format("Return type mismatch: method expects return type '%s', but got '%s'. " +
-                                        "The returned expression must have the same type as the method's declared return type.",
-                                context.getCurrentMethodReturnType(), returnedType)
-                );
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Return type mismatch: method expects return type '%s', but got '%s'. " + "The returned expression must have the same type as the method's declared return type.", context.getCurrentMethodReturnType(), returnedType));
             }
         }
     }
 
     /**
      * Check ecrire/ecrireln statement.
+     *
      * @param ecrire the EcrireNode to check
      */
     private void checkEcrire(EcrireNode ecrire) {
@@ -255,6 +239,7 @@ public class TypeChecker {
 
     /**
      * Check method call instruction.
+     *
      * @param appelI the AppelINode to check
      */
     private void checkAppelI(AppelINode appelI) {
@@ -265,6 +250,7 @@ public class TypeChecker {
 
     /**
      * Check assignment statement.
+     *
      * @param affectation the AffectationNode to check
      */
     private void checkAffectation(AffectationNode affectation) {
@@ -277,26 +263,13 @@ public class TypeChecker {
 
             // Check if trying to reassign a constant
             if (context.isConstant(varName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.",
-                                  varName)
-                );
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
                 return;
             }
 
             // Check if variable is declared
             if (!context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Undeclared variable: '%s' has not been declared. " +
-                                  "Make sure to declare the variable before using it (ex: , 'int %s;').",
-                                  varName, varName)
-                );
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Undeclared variable: '%s' has not been declared. " + "Make sure to declare the variable before using it (ex: , 'int %s;').", varName, varName));
                 return;
             }
 
@@ -305,14 +278,7 @@ public class TypeChecker {
             Type exprType = typeInferenceEngine.inferType(expression);
 
             if (varType != null && exprType != null && varType != exprType) {
-                context.getCollector().report(
-                    Severity.ERROR,
-                    Phase.SEMANTIC,
-                    context.createPosition(),
-                    String.format("Type mismatch in assignment: cannot assign value of type '%s' to variable '%s' of type '%s'. " +
-                                  "The assigned expression must have the same type as the variable.",
-                                  exprType, varName, varType)
-                );
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign value of type '%s' to variable '%s' of type '%s'. " + "The assigned expression must have the same type as the variable.", exprType, varName, varType));
             }
         }
     }
