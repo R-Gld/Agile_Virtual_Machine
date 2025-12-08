@@ -8,7 +8,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -39,7 +38,6 @@ public class MiniJajaCompiler {
             throw new SyntaxException(collector);
         }
 
-        Stacks stack = new Stacks();
         MiniJajaInterpreterVisitor miniJajaVisitor = new MiniJajaInterpreterVisitor();
         ClasseNode ast = (ClasseNode) miniJajaVisitor.visit(parseTree);
 
@@ -51,7 +49,7 @@ public class MiniJajaCompiler {
             throw new SyntaxException(collector);
         }
 
-        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(stack, collector);
+        MiniJajaCompilerVisitor compiler = new MiniJajaCompilerVisitor(collector);
         compiler.visit(ast);
         return compiler;
     }

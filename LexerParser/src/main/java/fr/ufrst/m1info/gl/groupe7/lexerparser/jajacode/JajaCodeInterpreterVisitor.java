@@ -63,6 +63,13 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // --- Entrées / Sorties ---
         axiomes.put("write", new WriteAxiome());
         axiomes.put("writeln", new WriteLnAxiome());
+
+        // --- Opérations sur Tableaux ---
+        axiomes.put("newarray", new NewarrayAxiome());
+        axiomes.put("aload", new AloadAxiome());
+        axiomes.put("astore", new AstoreAxiome());
+        axiomes.put("ainc", new AincAxiome());
+        axiomes.put("length", new LengthAxiome());
     }
 
     public void load(JajaCodeParser.ClasseContext arbre) {
@@ -148,9 +155,21 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 dispatch("inc", ident);
             else if (ctx.INVOKE() != null)
                 dispatch("invoke", ident);
-            // NEW est spécial (3 args)
+            // NEW est spécial (4 args)
             else if (ctx.NEW() != null)
                 handleNew(ctx);
+            // Opérations sur tableaux (from dev branch)
+            else if (ctx.ALOAD() != null)
+                dispatch("aload", ident);
+            else if (ctx.ASTORE() != null)
+                dispatch("astore", ident);
+            else if (ctx.AINC() != null)
+                dispatch("ainc", ident);
+            else if (ctx.LENGTH() != null)
+                dispatch("length", ident);
+            // NEWARRAY est spécial (2 args: ident, type)
+            else if (ctx.NEWARRAY() != null)
+                handleNewarray(ctx);
         }
 
         // 4. Instructions avec ADRESSE
@@ -204,6 +223,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // On pack les arguments pour l'interface générique (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
         dispatch("new", packedArgs);
+    }
+
+    // Gestion spécifique pour NEWARRAY (concaténation des args: ident,type)
+    private void handleNewarray(JajaCodeParser.InstrContext ctx) {
+        String ident = ctx.ident().getText();
+        String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "int";
+
+        System.out.println("\t\t[DEBUG handleNewarray] ident=" + ident + ", type=" + type);
+
+        // On pack les arguments pour l'interface générique (ident,type)
+        String packedArgs = ident + "," + type;
+        dispatch("newarray", packedArgs);
     }
 
     @Override

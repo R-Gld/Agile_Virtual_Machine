@@ -20,6 +20,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Affectat
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
@@ -41,7 +42,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueN
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.HashSet;
@@ -61,9 +61,7 @@ public class MiniJajaCompilerVisitor {
     private final Set<String> currentScopeVariables = new HashSet<>();
 
 
-    // TODO why does stacks param is unused here ? Lucas, Ahmed, Léo ?
-    // TODO UP ??
-    public MiniJajaCompilerVisitor(Stacks stacks, DiagnosticCollector collector) {
+    public MiniJajaCompilerVisitor(DiagnosticCollector collector) {
         this.variablesToPop = new Stack<>();
         this.jjcBuilder = new JajaCodeBuilder();
         this.collector = collector;
@@ -109,11 +107,6 @@ public class MiniJajaCompilerVisitor {
             return "main";
         }
 
-        // Chercher dans les variables globales
-        if (globalVariables.contains(variableName)) {
-            return "global";
-        }
-
         return "global";
     }
 
@@ -123,7 +116,7 @@ public class MiniJajaCompilerVisitor {
      * @return un nouveau visiteur avec le scope et les variables locales propagés
      */
     private MiniJajaCompilerVisitor createChildVisitor() {
-        MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(null, collector);
+        MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(collector);
         childVisitor.currentScope = this.currentScope;
         childVisitor.globalVariables.addAll(this.globalVariables);
         childVisitor.mainLocalVariables.addAll(this.mainLocalVariables);
@@ -219,6 +212,8 @@ public class MiniJajaCompilerVisitor {
             visitTantque(tantqueNode);
         } else if (instrNode instanceof SommeNode sommeNode) {
             visitSomme(sommeNode);
+        } else if (instrNode instanceof IncrementNode incrementNode) {
+            visitIncrement(incrementNode);
         } else if (instrNode instanceof EcrireLnNode ecrireLnNode) {
             visitEcrireLn(ecrireLnNode);
         } else if (instrNode instanceof EcrireNode ecrireNode) {
@@ -321,8 +316,7 @@ public class MiniJajaCompilerVisitor {
         // Calculer les adresses selon [csi]
         // Structure: IF(thenAddr), [else], GOTO(endAddr), [then]
         // if saute au then quand condition vraie
-        int ifAddr = addrAfterCondition;
-        int elseStartAddr = ifAddr + 1;
+        int elseStartAddr = addrAfterCondition + 1;
         int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 pour GOTO
         int endAddr = thenAddr + thenSize;
 
@@ -478,6 +472,42 @@ public class MiniJajaCompilerVisitor {
         }
     }
 
+    /**
+     * Compile une instruction d'incrémentation selon les règles [cincrément] et [cincrémentT]:
+     * - [cincrément]: n ⊢ incrément(ident(i)) ⇒ {jcnil ⊕D push(1) ⊕D inc(i), 2}
+     * - [cincrémentT]: n ⊢ incrément(tab(ident(i), e) ⇒ {pe ⊕D push(1) ⊕D ainc(i), ne + 2}
+     *
+     * Exemples:
+     * - x++; → push(1), inc(x@global)
+     * - arr[5]++; → push(5), push(1), ainc(arr@global)
+     *
+     * @param node le nœud IncrementNode représentant l'instruction ++ à compiler
+     */
+    private void visitIncrement(IncrementNode node) {
+        AstNode target = node.getIdent1();
+
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : push(1), puis inc
+            // Règle [cincrément]: jcnil ⊕D push(1) ⊕D inc(i)
+            jjcBuilder.addInstruction(PUSH, 1);
+
+            String ident = extractIdentifierName(identNode);
+            String scopeAddress = resolveVariableScope(ident);
+            jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
+
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis push(1), puis ainc
+            // Règle [cincrémentT]: pe ⊕D push(1) ⊕D ainc(i)
+            visitExpression(tabNode.getIndex());  // pe - index
+
+            jjcBuilder.addInstruction(PUSH, 1);
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(AINC, arrayName + "@" + scopeAddress);
+        }
+    }
+
     public void visit(AffectationNode node) {
         AstNode target = node.getIdent1Node();
 
@@ -568,7 +598,6 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile une déclaration de tableau selon la règle [ctableau]:
      * n ⊢ tableau(t, ident(i), e) ⇒ {pe ⊕D newarray(i, t), ne + 1}
-     *
      * Exemple: int tableau[20]; → push(20), newarray(tableau@global, int)
      *
      * @param node le nœud TableauNode à compiler
@@ -666,7 +695,7 @@ public class MiniJajaCompilerVisitor {
         currentScopeVariables.clear();
 
         // ========== PHASE 1: Calculer les tailles avec un visiteur temporaire ==========
-        MiniJajaCompilerVisitor tempVisitor = new MiniJajaCompilerVisitor(null, collector);
+        MiniJajaCompilerVisitor tempVisitor = new MiniJajaCompilerVisitor(collector);
         tempVisitor.currentScope = methodSignature;
         tempVisitor.globalVariables.addAll(this.globalVariables);
 
@@ -674,7 +703,6 @@ public class MiniJajaCompilerVisitor {
         if (node.getEntetes() != null) {
             visitEntetesReverse(node.getEntetes(), tempVisitor, methodSignature);
         }
-        int headerSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
         // Calculer la taille des variables locales
         int varCountBefore = tempVisitor.variablesToPop.size();
@@ -682,7 +710,6 @@ public class MiniJajaCompilerVisitor {
             tempVisitor.visit(node.getVars());
         }
         int localVarCount = tempVisitor.variablesToPop.size() - varCountBefore;
-        int varsSize = tempVisitor.getJajaCodeBuilder().getInstructionsAsList().size() - headerSize;
 
         // Calculer la taille des instructions
         if (node.getInstrs() != null) {
@@ -694,7 +721,7 @@ public class MiniJajaCompilerVisitor {
         currentScopeVariables.addAll(tempVisitor.currentScopeVariables);
 
         // Calculer le nombre d'instructions pour le retrait des variables locales
-        int retraitVarsCount = localVarCount * 2;
+        int retraitVarsCount = localVarCount * 2; // vars
         int push0Count = isVoidMethod ? 1 : 0;
         // swap + return = 2 instructions (pour void et non-void)
         int swapReturnCount = 2;
@@ -881,7 +908,6 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile un accès tableau en lecture selon la règle [ctab]:
      * n ⊢ tab(ident(i), e) ⇒ {pe ⊕D aload(i), ne + 1}
-     *
      * Exemple: x = tableau[5]; → push(5), aload(tableau@global)
      *
      * @param node le nœud TabNode représentant l'accès au tableau
@@ -901,7 +927,6 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile l'opération length selon la règle [clongueur]:
      * n ⊢ longueur(ident(i)) ⇒ {jcnil ⊕D length(i), 1}
-     *
      * Exemple: int n = length(tableau); → length(tableau@global)
      *
      * @param node le nœud LengthNode représentant l'opération length

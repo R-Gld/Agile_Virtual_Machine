@@ -27,7 +27,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ class MiniJajaCompilerVisitorTest {
      */
     @BeforeEach
     void setUp() {
-        visitor = new MiniJajaCompilerVisitor(new Stacks(), new DiagnosticCollector());
+        visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         builderSpy = spy(visitor.getJajaCodeBuilder());
         try {
             // Access the private field `jjcBuilder` via reflection to inject the spy
@@ -1902,7 +1901,7 @@ class MiniJajaCompilerVisitorTest {
         // La première valeur capturée devrait être l'adresse de début
         List<Integer> pushValues = pushCaptor.getAllValues();
         assertFalse(pushValues.isEmpty(), "Should have at least one PUSH");
-        int methodStartAddr = pushValues.get(0);
+        int methodStartAddr = pushValues.getFirst();
         assertTrue(methodStartAddr >= 4, "Method start address should be at least 4 (after push, new, goto)");
     }
 
@@ -2763,6 +2762,45 @@ class MiniJajaCompilerVisitorTest {
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(LENGTH, "arr@global");
         inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitIncrementNode_withVariable_generatesIncInstruction() {
+        // Test de la règle [cincrément]: x++; → push(1), inc(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode incrementNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode(
+                ident("x")
+            );
+
+        InstructionNode instrNode = incrementNode;
+        visitor.visit(instrNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 1);
+        inOrder.verify(builderSpy).addInstruction(INC, "x@global");
+    }
+
+    @Test
+    void visitIncrementNode_withTabNode_generatesAincInstruction() {
+        // Test de la règle [cincrémentT]: arr[5]++; → push(5), push(1), ainc(arr@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(5)
+            );
+
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode incrementNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode(
+                tabNode
+            );
+
+        InstructionNode instrNode = incrementNode;
+        visitor.visit(instrNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);  // index
+        inOrder.verify(builderSpy).addInstruction(PUSH, 1);  // valeur d'incrémentation
+        inOrder.verify(builderSpy).addInstruction(AINC, "arr@global");
     }
 
 
