@@ -31,7 +31,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 // Breakpoint support
 import java.util.HashSet;
@@ -172,7 +171,6 @@ public class App extends Application {
         scene.getStylesheets().add(lightCss);
 
         stage.setScene(scene);
-        stage.initStyle(StageStyle.UNDECORATED);
         stage.show();
     }
 
