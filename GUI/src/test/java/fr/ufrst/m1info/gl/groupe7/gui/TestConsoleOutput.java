@@ -255,4 +255,5 @@ class TestConsoleOutput {
                 .findFirst()
                 .orElse(null);
     }
+
 }
