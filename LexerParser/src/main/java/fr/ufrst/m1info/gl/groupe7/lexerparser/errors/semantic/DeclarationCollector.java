@@ -12,6 +12,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expressio
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.ListExpNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
@@ -74,6 +75,8 @@ public class DeclarationCollector {
             collectMethod(methodeNode);
         } else if (decl instanceof CstNode cstNode) {
             collectConstant(cstNode);
+        } else if (decl instanceof TableauNode tableauNode) {
+            collectArray(tableauNode);
         }
 
         collectDeclarationsRecursive(decls.getDecls());
@@ -103,6 +106,26 @@ public class DeclarationCollector {
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
         checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+    }
+
+    private void collectArray(TableauNode tableauNode) {
+        String arrayName = tableauNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(arrayName);
+        Type arrayType = tableauNode.getType();
+
+        if (checkDuplicateAndRegister(qualifiedName, arrayType, "array", arrayName)) {
+            trackVariableInScope(arrayName);
+        }
+
+        // Validate array size expression must be integer type
+        Expression sizeExpr = tableauNode.getExp();
+        if (sizeExpr != null) {
+            Type sizeType = typeInferenceEngine.inferType(sizeExpr);
+            if (sizeType != null && sizeType != Type.ENTIER) {
+                reportError("Array size must be an integer: array '%s' declared with size type '%s'. " +
+                        "Array dimensions must be integer expressions.", arrayName, sizeType);
+            }
+        }
     }
 
     private void collectMethod(MethodeNode methodeNode) {
@@ -202,6 +225,8 @@ public class DeclarationCollector {
             collectLocalVariable(vn);
         } else if (varNode instanceof CstNode cn) {
             collectLocalConstant(cn);
+        } else if (varNode instanceof TableauNode tn) {
+            collectLocalArray(tn);
         }
 
         collectVars(vars.getVars());
@@ -233,6 +258,27 @@ public class DeclarationCollector {
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
         checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+    }
+
+    private void collectLocalArray(TableauNode tableauNode) {
+        String arrayName = tableauNode.getIdent().getNom();
+        String qualifiedName = scopeResolver.qualifyName(arrayName);
+        Type arrayType = tableauNode.getType();
+
+        if (checkDuplicateLocal(qualifiedName, arrayName, "array")) {
+            context.getSymbolTable().creationSymbol(qualifiedName, 0, arrayType);
+            trackVariableInScope(arrayName);
+        }
+
+        // Validate array size expression must be integer type
+        Expression sizeExpr = tableauNode.getExp();
+        if (sizeExpr != null) {
+            Type sizeType = typeInferenceEngine.inferType(sizeExpr);
+            if (sizeType != null && sizeType != Type.ENTIER) {
+                reportError("Array size must be an integer: array '%s' declared with size type '%s'. " +
+                        "Array dimensions must be integer expressions.", arrayName, sizeType);
+            }
+        }
     }
 
     private boolean checkDuplicateLocal(String qualifiedName, String name, String kind) {

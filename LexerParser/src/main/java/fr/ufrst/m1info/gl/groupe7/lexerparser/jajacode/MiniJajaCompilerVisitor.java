@@ -33,6 +33,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.Nbre
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SiNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.TantqueNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
@@ -448,28 +451,65 @@ public class MiniJajaCompilerVisitor {
      * @param node le nœud SommeNode représentant l'instruction += à compiler
      */
     private void visitSomme(SommeNode node) {
-        // Évaluer l'expression à ajouter
-        if (node.getExpressionNode() != null) {
-            visitExpression(node.getExpressionNode());
-        }
+        AstNode target = node.getIdent1Node();
 
-        // Générer l'instruction INC
-        if (node.getIdent1Node() != null) {
-            String ident = extractIdentifierName(node.getIdent1Node());
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : compiler incrément, puis inc
+            if (node.getExpressionNode() != null) {
+                visitExpression(node.getExpressionNode());
+            }
+
+            String ident = extractIdentifierName(identNode);
             String scopeAddress = resolveVariableScope(ident);
             jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
+
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis incrément, puis ainc
+            // Règle [csommeT]: pe1 ⊕ pe ⊕D ainc(i)
+            visitExpression(tabNode.getIndex());  // pe1 - index
+
+            if (node.getExpressionNode() != null) {
+                visitExpression(node.getExpressionNode());  // pe - valeur d'incrémentation
+            }
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(AINC, arrayName + "@" + scopeAddress);
         }
     }
 
     public void visit(AffectationNode node) {
-        if (node.getExpression() != null) {
-            visitExpression(node.getExpression());
-        }
+        AstNode target = node.getIdent1Node();
 
-        if (node.getIdent1Node() != null) {
-            String ident = extractIdentifierName(node.getIdent1Node());
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : compiler valeur, puis store
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());
+            }
 
+            String ident = extractIdentifierName(identNode);
+            String scopeAddress = resolveVariableScope(ident);
+            jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
 
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis valeur, puis astore
+            // Règle [caffecteT]: pe1 ⊕ pe ⊕D astore(i)
+            visitExpression(tabNode.getIndex());  // pe1 - index
+
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());  // pe - valeur
+            }
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(ASTORE, arrayName + "@" + scopeAddress);
+        } else if (target != null) {
+            // Cas par défaut : comportement original pour compatibilité avec tests
+            if (node.getExpression() != null) {
+                visitExpression(node.getExpression());
+            }
+
+            String ident = extractIdentifierName(target);
             String scopeAddress = resolveVariableScope(ident);
             jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
         }
@@ -484,6 +524,8 @@ public class MiniJajaCompilerVisitor {
             visit(methodeNode);
         } else if (node.getDecl() instanceof CstNode cstNode) {
             visit(cstNode);
+        } else if (node.getDecl() instanceof TableauNode tableauNode) {
+            visit(tableauNode);
         }
 
         if (node.getDecls() != null) {
@@ -499,6 +541,8 @@ public class MiniJajaCompilerVisitor {
             visit(vn);
         } else if (varNode instanceof CstNode cn) {
             visit(cn);
+        } else if (varNode instanceof TableauNode tn) {
+            visit(tn);
         }
 
         if (node.getVars() != null) {
@@ -519,6 +563,43 @@ public class MiniJajaCompilerVisitor {
      */
     public void visit(CstNode node) {
         compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "cst");
+    }
+
+    /**
+     * Compile une déclaration de tableau selon la règle [ctableau]:
+     * n ⊢ tableau(t, ident(i), e) ⇒ {pe ⊕D newarray(i, t), ne + 1}
+     *
+     * Exemple: int tableau[20]; → push(20), newarray(tableau@global, int)
+     *
+     * @param node le nœud TableauNode à compiler
+     */
+    public void visit(TableauNode node) {
+        // Compiler l'expression de taille (pe)
+        if (node.getExp() != null) {
+            visitExpression(node.getExp());
+        } else {
+            jjcBuilder.addInstruction(PUSH, 0);
+        }
+
+        // Récupérer nom, type et scope
+        String ident = node.getIdent().getNom();
+        String type = typeToJajaCode(node.getType());
+        String scopeAddress = currentScope;
+
+        // ⊕D newarray(i, t)
+        jjcBuilder.addInstruction(NEWARRAY, ident + "@" + scopeAddress, type);
+
+        // Tracker pour cleanup (swap + pop)
+        variablesToPop.push(ident + "@" + scopeAddress);
+
+        // Enregistrer dans le scope
+        if ("global".equals(currentScope)) {
+            globalVariables.add(ident);
+        } else if ("main".equals(currentScope)) {
+            mainLocalVariables.add(ident);
+        } else {
+            currentScopeVariables.add(ident);
+        }
     }
 
     /**
@@ -768,6 +849,10 @@ public class MiniJajaCompilerVisitor {
             visit(boolValueNode);
         } else if (expression instanceof IdentNode identNode) {
             visit(identNode);
+        } else if (expression instanceof TabNode tabNode) {
+            visitTab(tabNode);
+        } else if (expression instanceof LengthNode lengthNode) {
+            visitLength(lengthNode);
         } else if (expression instanceof AppelENode appelENode) {
             visitAppelE(appelENode);
         } else if (expression instanceof PlusNode plusNode) {
@@ -791,6 +876,42 @@ public class MiniJajaCompilerVisitor {
         } else if (expression instanceof EqualsNode equalsNode) {
             visitEquals(equalsNode);
         }
+    }
+
+    /**
+     * Compile un accès tableau en lecture selon la règle [ctab]:
+     * n ⊢ tab(ident(i), e) ⇒ {pe ⊕D aload(i), ne + 1}
+     *
+     * Exemple: x = tableau[5]; → push(5), aload(tableau@global)
+     *
+     * @param node le nœud TabNode représentant l'accès au tableau
+     */
+    private void visitTab(TabNode node) {
+        // Compiler l'expression d'index (pe)
+        visitExpression(node.getIndex());
+
+        // Résoudre le nom et scope du tableau
+        String arrayName = extractIdentifierName(node.getIdent());
+        String scopeAddress = resolveVariableScope(arrayName);
+
+        // ⊕D aload(i)
+        jjcBuilder.addInstruction(ALOAD, arrayName + "@" + scopeAddress);
+    }
+
+    /**
+     * Compile l'opération length selon la règle [clongueur]:
+     * n ⊢ longueur(ident(i)) ⇒ {jcnil ⊕D length(i), 1}
+     *
+     * Exemple: int n = length(tableau); → length(tableau@global)
+     *
+     * @param node le nœud LengthNode représentant l'opération length
+     */
+    private void visitLength(LengthNode node) {
+        String arrayName = node.getId().getNom();
+        String scopeAddress = resolveVariableScope(arrayName);
+
+        // ⊕D length(i)
+        jjcBuilder.addInstruction(LENGTH, arrayName + "@" + scopeAddress);
     }
 
     private void visitPlus(PlusNode node) {
