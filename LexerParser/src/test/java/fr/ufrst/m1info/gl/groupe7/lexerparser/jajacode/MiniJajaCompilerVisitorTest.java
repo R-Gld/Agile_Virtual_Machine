@@ -27,7 +27,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ class MiniJajaCompilerVisitorTest {
      */
     @BeforeEach
     void setUp() {
-        visitor = new MiniJajaCompilerVisitor(new Stacks(), new DiagnosticCollector());
+        visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         builderSpy = spy(visitor.getJajaCodeBuilder());
         try {
             // Access the private field `jjcBuilder` via reflection to inject the spy
@@ -1902,7 +1901,7 @@ class MiniJajaCompilerVisitorTest {
         // La première valeur capturée devrait être l'adresse de début
         List<Integer> pushValues = pushCaptor.getAllValues();
         assertFalse(pushValues.isEmpty(), "Should have at least one PUSH");
-        int methodStartAddr = pushValues.get(0);
+        int methodStartAddr = pushValues.getFirst();
         assertTrue(methodStartAddr >= 4, "Method start address should be at least 4 (after push, new, goto)");
     }
 

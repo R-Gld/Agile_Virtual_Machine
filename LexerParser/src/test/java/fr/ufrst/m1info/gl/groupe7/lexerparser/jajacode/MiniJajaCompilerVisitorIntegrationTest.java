@@ -33,7 +33,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void sommeNode_simpleIncrement() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         SommeNode somme = new SommeNode(ident("x"), new NbreNode(5));
 
         visitor.visit(somme);
@@ -45,7 +45,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void sommeNode_withMultiplication() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         MultiplicationNode mult = new MultiplicationNode(new NbreNode(2), ident("x"));
         SommeNode somme = new SommeNode(ident("y"), mult);
 
@@ -60,7 +60,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void sommeNode_negativeIncrement() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         SommeNode somme = new SommeNode(ident("i"), new UnaryMinusNode(new NbreNode(1)));
 
         visitor.visit(somme);
@@ -75,7 +75,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void siNode_simpleIfWithoutElse() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x > 5) { y = 10; }
         GreaterThanNode condition = new GreaterThanNode(ident("x"), new NbreNode(5));
@@ -97,7 +97,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void siNode_ifWithElse() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x == 5) { y = 1; } else { y = 0; }
         EqualsNode condition = new EqualsNode(ident("x"), new NbreNode(5));
@@ -123,7 +123,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void siNode_nestedIf() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x > 0) { if(y > 0) { z = 1; } }
         GreaterThanNode outerCondition = new GreaterThanNode(ident("x"), new NbreNode(0));
@@ -149,7 +149,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void siNode_withBooleanCondition() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(true) { x = 5; }
         BoolValueNode condition = new BoolValueNode(true);
@@ -171,7 +171,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void tantqueNode_simpleWhile() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x > 0) { x = x - 1; }
         GreaterThanNode condition = new GreaterThanNode(ident("x"), new NbreNode(0));
@@ -197,7 +197,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void tantqueNode_withIncrement() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(i > 0) { i += -1; }
         GreaterThanNode condition = new GreaterThanNode(ident("i"), new NbreNode(0));
@@ -221,7 +221,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void tantqueNode_withMultipleInstructions() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x > 3) { y += 2 * x; x = x - 1; }
         GreaterThanNode condition = new GreaterThanNode(ident("x"), new NbreNode(3));
@@ -257,7 +257,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void tantqueNode_withEqualityCondition() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x == 5) { x = 0; }
         EqualsNode condition = new EqualsNode(ident("x"), new NbreNode(5));
@@ -281,7 +281,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void tantqueNode_emptyBody() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x > 0) { }
         GreaterThanNode condition = new GreaterThanNode(ident("x"), new NbreNode(0));
@@ -304,7 +304,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void complexNesting_whileInsideIfInsideWhile() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x > 0) { if(y > 0) { while(z > 0) { z = z - 1; } } x = x - 1; }
         // While externe
@@ -327,7 +327,6 @@ class MiniJajaCompilerVisitorIntegrationTest {
         MinusNode outerSub = new MinusNode(ident("x"), new NbreNode(1));
         AffectationNode outerAssignment = new AffectationNode(ident("x"), outerSub);
 
-        InstructionsNode siInstruction = singleInstruction(siNode);
         InstructionsNode outerWhileBody = new InstructionsNode(siNode, singleInstruction(outerAssignment));
 
         TantqueNode outerWhile = new TantqueNode(outerCondition, outerWhileBody);
@@ -347,7 +346,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void multipleSequentialWhileLoops() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(x > 0) { x = x - 1; } while(y > 0) { y = y - 1; } while(z > 0) { z = z - 1; }
         GreaterThanNode cond1 = new GreaterThanNode(ident("x"), new NbreNode(0));
@@ -387,7 +386,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void complexArithmeticInConditions() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while((x + y) * 2 > z - 1) { x += 1; }
         PlusNode addition = new PlusNode(ident("x"), ident("y"));
@@ -418,7 +417,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void ifElseWithComplexAssignments() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x == y) { result = x * 2 + y; } else { result = x - y * 3; }
         EqualsNode condition = new EqualsNode(ident("x"), ident("y"));
@@ -450,7 +449,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void cascadingIfElse() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x > 10) { y = 3; } else { if(x > 5) { y = 2; } else { y = 1; } }
         GreaterThanNode outerCondition = new GreaterThanNode(ident("x"), new NbreNode(10));
@@ -482,7 +481,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void multipleIncrementOperations() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // x += 1; y += 2; z += 3;
         SommeNode inc1 = new SommeNode(ident("x"), new NbreNode(1));
@@ -513,7 +512,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void whileWithComplexBodyAndMultipleStatements() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // while(counter > 0) { sum += counter; counter -= 1; if(sum > 100) { overflow = true; } }
         GreaterThanNode condition = new GreaterThanNode(ident("counter"), new NbreNode(0));
@@ -545,7 +544,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void extremeNesting_fiveLevels() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(a) { if(b) { if(c) { if(d) { if(e) { x = 1; } } } } }
         AffectationNode deepestAssignment = new AffectationNode(ident("x"), new NbreNode(1));
@@ -576,7 +575,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void mixedIncrementAndAssignment() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // x = 10; x += 5; x = x * 2; x += -3;
         AffectationNode assign1 = new AffectationNode(ident("x"), new NbreNode(10));
@@ -606,7 +605,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void emptyIfBlocks() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(x > 0) { } else { }
         GreaterThanNode condition = new GreaterThanNode(ident("x"), new NbreNode(0));
@@ -628,7 +627,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void largeNumbersInOperations() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // x = 999999; y = 1000000; z = x + y;
         AffectationNode assign1 = new AffectationNode(ident("x"), new NbreNode(999999));
@@ -652,7 +651,7 @@ class MiniJajaCompilerVisitorIntegrationTest {
 
     @Test
     void consecutiveConditions() {
-        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(null, new DiagnosticCollector());
+        MiniJajaCompilerVisitor visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
 
         // if(a) { x = 1; } if(b) { x = 2; } if(c) { x = 3; }
         SiNode if1 = new SiNode(ident("a"), singleInstruction(new AffectationNode(ident("x"), new NbreNode(1))), null);
