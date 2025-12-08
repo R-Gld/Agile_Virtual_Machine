@@ -42,7 +42,7 @@ public class JajaCodeDebugger {
 
     }}
 
-    /** اrunner JajaCode */
+    /** runner JajaCode */
    /* public boolean step() {
         return visitor.step();
     }
