@@ -18,8 +18,6 @@ class MiniJajaCompilerTest {
     private static final String VALID_PROGRAM = """
             class C {
             	int x = 0;
-            
-            
             	main {
             		int res;
             		while(5>x){
