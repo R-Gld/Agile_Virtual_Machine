@@ -12,7 +12,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 /**
  * Petit wrapper pour faire du pas-à-pas sur un programme JajaCode.
- * Utilise JajaCodeInterpreterVisitor (step(), isFinished(), getCurrentInstructionIndex()).
+ * Utilise JajaCodeInterpreterVisitor (step(), isFinished(),
+ * getCurrentInstructionIndex()).
  */
 public class JajaCodeDebugger {
 
@@ -40,21 +41,25 @@ public class JajaCodeDebugger {
         this.visitor = new JajaCodeInterpreterVisitor(stacks);
         this.visitor.load(arbreJajaCode);
 
-    }}
-
-    /** runner JajaCode */
-   /* public boolean step() {
-        return visitor.step();
     }
+}
 
-
-    public boolean isFinished() {
-        return visitor.isFinished();
-    }
+/** runner JajaCode */
 /*
-    /**(۰-based line) */
-    /*
-    public int getCurrentInstructionIndex() {
-        return visitor.getCurrentInstructionIndex();
-    }
-}  */
+ * public boolean step() {
+ * return visitor.step();
+ * }
+ * 
+ * 
+ * public boolean isFinished() {
+ * return visitor.isFinished();
+ * }
+ * /*
+ * /**(۰-based line)
+ */
+/*
+ * public int getCurrentInstructionIndex() {
+ * return visitor.getCurrentInstructionIndex();
+ * }
+ * }
+ */

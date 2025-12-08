@@ -243,7 +243,7 @@ public class MyCodeArea extends AnchorPane {
     /**
      * Crée une zone de code avec le langage précisé.
      *
-     * @param id identifiant de ce composant pour JavaFX
+     * @param id       identifiant de ce composant pour JavaFX
      * @param language langage de la zone de code
      */
     public MyCodeArea(String id, Language language) {
@@ -292,19 +292,25 @@ public class MyCodeArea extends AnchorPane {
             /* Create breakpoint circle (initially hidden) */
             Circle bpCircle = new Circle(5);
             bpCircle.getStyleClass().add("breakpoint-node");
-            bpCircle.setManaged(true);   // always reserve space
+            bpCircle.setManaged(true); // always reserve space
 
             // restore visibility from breakpoint set (after scroll)
             bpCircle.setVisible(breakpoints.contains(line));
 
             /* Clicking toggles breakpoint ON/OFF */
-            bpCircle.setOnMouseClicked(e -> toggleBreakpoint(line, bpCircle));
+            bpCircle.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
 
             /* Number label next to breakpoint circle */
             Node number = numberFactory.apply(line);
 
             /* Clicking on the number also toggles breakpoint */
-            number.setOnMouseClicked(e -> toggleBreakpoint(line, bpCircle));
+            number.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
 
             hbox.getChildren().addAll(number, bpCircle);
             hbox.setSpacing(0);
@@ -315,6 +321,18 @@ public class MyCodeArea extends AnchorPane {
             hbox.setMinWidth(57);
             hbox.setPrefWidth(57);
             hbox.setMaxWidth(57);
+
+            // Make entire gutter area clickable and add visual feedback
+            hbox.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
+
+            // Also consume mouse pressed and released to prevent any propagation
+            hbox.setOnMousePressed(e -> e.consume());
+            hbox.setOnMouseReleased(e -> e.consume());
+
+            hbox.setCursor(javafx.scene.Cursor.HAND); // Visual feedback for clickability
 
             StackPane stack;
 
@@ -334,9 +352,17 @@ public class MyCodeArea extends AnchorPane {
             stack.setPrefWidth(70);
             stack.setMaxWidth(70);
 
+            // Make the StackPane also clickable and consume all events
+            stack.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume();
+            });
+            stack.setOnMousePressed(e -> e.consume());
+            stack.setOnMouseReleased(e -> e.consume());
+            stack.setCursor(javafx.scene.Cursor.HAND);
+
             return stack;
         };
-
 
         codeArea.setParagraphGraphicFactory(graphicFactory);
 
@@ -486,7 +512,7 @@ public class MyCodeArea extends AnchorPane {
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
-                    codeArea.replaceText(finalStart, caretPosition, suggestion);
+                codeArea.replaceText(finalStart, caretPosition, suggestion);
             });
             autoCompletionPopup.getItems().add(item);
         }
@@ -566,7 +592,7 @@ public class MyCodeArea extends AnchorPane {
         codeArea.setEditable(false);
     }
 
-    //  START highlight
+    // START highlight
     /**
      * Met en évidence une ligne avec la classe CSS "current-line".
      * Utilisée durant le débogage pour indiquer la ligne d'exécution courante.
@@ -589,7 +615,7 @@ public class MyCodeArea extends AnchorPane {
         });
     }
 
-    /* Highlight caret line  */
+    /* Highlight caret line */
     private void highlightCaretLine() {
         int caret = codeArea.getCaretPosition();
         int currentLine = codeArea.offsetToPosition(caret, TwoDimensional.Bias.Backward).getMajor();
@@ -610,9 +636,8 @@ public class MyCodeArea extends AnchorPane {
         codeArea.textProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
     }
 
-
-
-    //  END highlight
-    // cos of the inner style it didn't work I have removed it and i think now it works for linux please check it
+    // END highlight
+    // cos of the inner style it didn't work I have removed it and i think now it
+    // works for linux please check it
     // works for linux please check it
 }
