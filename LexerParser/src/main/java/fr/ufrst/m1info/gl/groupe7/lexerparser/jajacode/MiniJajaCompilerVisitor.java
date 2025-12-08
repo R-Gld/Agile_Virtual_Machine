@@ -20,6 +20,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Affectat
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.EcrireLnNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.RetourNode;
@@ -219,6 +220,8 @@ public class MiniJajaCompilerVisitor {
             visitTantque(tantqueNode);
         } else if (instrNode instanceof SommeNode sommeNode) {
             visitSomme(sommeNode);
+        } else if (instrNode instanceof IncrementNode incrementNode) {
+            visitIncrement(incrementNode);
         } else if (instrNode instanceof EcrireLnNode ecrireLnNode) {
             visitEcrireLn(ecrireLnNode);
         } else if (instrNode instanceof EcrireNode ecrireNode) {
@@ -471,6 +474,42 @@ public class MiniJajaCompilerVisitor {
             if (node.getExpressionNode() != null) {
                 visitExpression(node.getExpressionNode());  // pe - valeur d'incrémentation
             }
+
+            String arrayName = extractIdentifierName(tabNode.getIdent());
+            String scopeAddress = resolveVariableScope(arrayName);
+            jjcBuilder.addInstruction(AINC, arrayName + "@" + scopeAddress);
+        }
+    }
+
+    /**
+     * Compile une instruction d'incrémentation selon les règles [cincrément] et [cincrémentT]:
+     * - [cincrément]: n ⊢ incrément(ident(i)) ⇒ {jcnil ⊕D push(1) ⊕D inc(i), 2}
+     * - [cincrémentT]: n ⊢ incrément(tab(ident(i), e) ⇒ {pe ⊕D push(1) ⊕D ainc(i), ne + 2}
+     *
+     * Exemples:
+     * - x++; → push(1), inc(x@global)
+     * - arr[5]++; → push(5), push(1), ainc(arr@global)
+     *
+     * @param node le nœud IncrementNode représentant l'instruction ++ à compiler
+     */
+    private void visitIncrement(IncrementNode node) {
+        AstNode target = node.getIdent1();
+
+        if (target instanceof IdentNode identNode) {
+            // Variable simple : push(1), puis inc
+            // Règle [cincrément]: jcnil ⊕D push(1) ⊕D inc(i)
+            jjcBuilder.addInstruction(PUSH, 1);
+
+            String ident = extractIdentifierName(identNode);
+            String scopeAddress = resolveVariableScope(ident);
+            jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
+
+        } else if (target instanceof TabNode tabNode) {
+            // Élément de tableau : compiler index, puis push(1), puis ainc
+            // Règle [cincrémentT]: pe ⊕D push(1) ⊕D ainc(i)
+            visitExpression(tabNode.getIndex());  // pe - index
+
+            jjcBuilder.addInstruction(PUSH, 1);
 
             String arrayName = extractIdentifierName(tabNode.getIdent());
             String scopeAddress = resolveVariableScope(arrayName);
