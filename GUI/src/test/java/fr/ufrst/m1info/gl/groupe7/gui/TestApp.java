@@ -467,8 +467,8 @@ class TestApp {
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
 
-        assertTrue(miniWrapper.getChildren().get(1) instanceof MyCodeArea, "MJJ area should be MyCodeArea");
-        assertTrue(jajaWrapper.getChildren().get(1) instanceof MyCodeArea, "JJC area should be MyCodeArea");
+        assertInstanceOf(MyCodeArea.class, miniWrapper.getChildren().get(1), "MJJ area should be MyCodeArea");
+        assertInstanceOf(MyCodeArea.class, jajaWrapper.getChildren().get(1), "JJC area should be MyCodeArea");
     }
 
     /**
