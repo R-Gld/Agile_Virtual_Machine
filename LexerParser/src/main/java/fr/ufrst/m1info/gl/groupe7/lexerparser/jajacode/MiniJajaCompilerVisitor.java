@@ -478,8 +478,8 @@ public class MiniJajaCompilerVisitor {
      * - [cincrémentT]: n ⊢ incrément(tab(ident(i), e) ⇒ {pe ⊕D push(1) ⊕D ainc(i), ne + 2}
      *
      * Exemples:
-     * - x++; → push(1), inc(x@global)
-     * - arr[5]++; → push(5), push(1), ainc(arr@global)
+     * - x++; -> push(1), inc(x@global)
+     * - arr[5]++; -> push(5), push(1), ainc(arr@global)
      *
      * @param node le nœud IncrementNode représentant l'instruction ++ à compiler
      */
@@ -598,7 +598,7 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile une déclaration de tableau selon la règle [ctableau]:
      * n ⊢ tableau(t, ident(i), e) ⇒ {pe ⊕D newarray(i, t), ne + 1}
-     * Exemple: int tableau[20]; → push(20), newarray(tableau@global, int)
+     * Exemple: int tableau[20]; -> push(20), newarray(tableau@global, int)
      *
      * @param node le nœud TableauNode à compiler
      */
@@ -908,7 +908,7 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile un accès tableau en lecture selon la règle [ctab]:
      * n ⊢ tab(ident(i), e) ⇒ {pe ⊕D aload(i), ne + 1}
-     * Exemple: x = tableau[5]; → push(5), aload(tableau@global)
+     * Exemple: x = tableau[5]; -> push(5), aload(tableau@global)
      *
      * @param node le nœud TabNode représentant l'accès au tableau
      */
@@ -927,7 +927,7 @@ public class MiniJajaCompilerVisitor {
     /**
      * Compile l'opération length selon la règle [clongueur]:
      * n ⊢ longueur(ident(i)) ⇒ {jcnil ⊕D length(i), 1}
-     * Exemple: int n = length(tableau); → length(tableau@global)
+     * Exemple: int n = length(tableau); -> length(tableau@global)
      *
      * @param node le nœud LengthNode représentant l'opération length
      */
