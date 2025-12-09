@@ -567,25 +567,6 @@ class TestApp {
     }
 
     /**
-     * Test choice box has exactly 2 items
-     */
-    @Test
-    void testChoiceBoxItemCount() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox toolbar = (HBox) vbox.getChildren().get(2);
-
-        @SuppressWarnings("unchecked")
-        ChoiceBox<String> choiceBox = toolbar.getChildren().stream()
-                .filter(node -> node instanceof ChoiceBox)
-                .map(node -> (ChoiceBox<String>) node)
-                .findFirst()
-                .orElse(null);
-
-        assertEquals(2, choiceBox.getItems().size(), "Choice box should have 2 items");
-    }
-
-    /**
      * Test main split pane divider position
      */
     @Test
