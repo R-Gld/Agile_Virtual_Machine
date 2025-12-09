@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
@@ -27,6 +30,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class InvokeAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(InvokeAxiome.class);
+
     /**
      * Exécute l'instruction {@code invoke(i)}.
      *
@@ -35,19 +40,19 @@ public class InvokeAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String ident) {
-        System.out.println("\t\t[DEBUG] axiomeInvoke appelé: ident=" + ident);
+        logger.debug("\t\t[DEBUG] axiomeInvoke appelé: ident={}", ident);
 
         // Récupérer l'adresse de la méthode depuis la mémoire
         Object methodAddress = ctx.getStacks().getValue(ident);
 
         if (methodAddress == null) {
-            System.out.println("Erreur dans axiomeInvoke : méthode '" + ident + "' non trouvée.");
+            logger.debug("Erreur dans axiomeInvoke : méthode '{}' non trouvée.", ident);
             ctx.stop();
             return;
         }
 
         if (!(methodAddress instanceof Integer)) {
-            System.out.println("Erreur dans axiomeInvoke : l'adresse de la méthode '" + ident + "' n'est pas un entier : " + methodAddress);
+            logger.debug("Erreur dans axiomeInvoke : l'adresse de la méthode '{}' n'est pas un entier : {}", ident, methodAddress);
             ctx.stop();
             return;
         }
@@ -65,7 +70,7 @@ public class InvokeAxiome implements JajaAxiome {
         Stacks.Quad returnQuad = new Stacks.Quad(returnIdent, ctx.getInstructionCounter() + 1, "cst", Type.ENTIER);
         ctx.getStacks().push(returnQuad);
 
-        System.out.println("\t\tAxiome INVOKE exécuté: appel de '" + ident + "' à l'adresse " + adresse + ", retour prévu à " + (ctx.getInstructionCounter() + 1));
+        logger.debug("\t\tAxiome INVOKE exécuté: appel de '{}' à l'adresse {}, retour prévu à {}", ident, adresse, ctx.getInstructionCounter() + 1);
 
         // Sauter à l'adresse de la méthode
         ctx.setInstructionCounter(adresse);

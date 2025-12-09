@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.ArrayList;
@@ -17,6 +20,8 @@ import java.util.List;
  *
  */
 public class SymbolTable {
+
+    private static final Logger logger = LoggerFactory.getLogger(SymbolTable.class);
 
     /** Fixed size of the hash table (prime number for better distribution). */
     private static final int TABLE_SIZE = 97;
@@ -218,20 +223,19 @@ public class SymbolTable {
      * Print the full content of the table (for debugging or visualization).
      */
     public void printTable() {
-        System.err.println("\n--- Current Symbol Table (Hash) ---");
+        logger.info("\n--- Current Symbol Table (Hash) ---");
         for (int i = 0; i < TABLE_SIZE; i++) {
             Node e = table[i];
             if (e != null) {
-                System.err.print("[" + i + "] -> ");
+                logger.info("[{}] -> ", i);
                 while (e != null) {
-                    System.err.print("<" + e.symbol.getName() + ", " + e.symbol.getType() +
-                             ", " + e.symbol.getAddressStack()+ "> ");
+                    logger.info("<{}, {}, {}> ", e.symbol.getName(), e.symbol.getType(), e.symbol.getAddressStack());
                     e = e.next;
                 }
-                System.err.println();
+                logger.info("");
             }
         }
-        System.err.println("-----------------------------------\n");
+        logger.info("-----------------------------------\n");
     }
 
     // =========================================================================

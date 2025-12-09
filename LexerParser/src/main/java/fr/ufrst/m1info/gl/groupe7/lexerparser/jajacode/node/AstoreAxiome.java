@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -26,6 +29,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  */
 public class AstoreAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(AstoreAxiome.class);
+
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. Dépiler la VALEUR (sommet de pile)
@@ -51,8 +56,8 @@ public class AstoreAxiome implements JajaAxiome {
 
         Object valeur = valueQuad.value;
 
-        System.out.println("\t\t[DEBUG] Valeur dépilée: " + valeur);
-        System.out.println("\t\t[DEBUG] Indice dépilé: " + index);
+        logger.debug("\t\t[DEBUG] Valeur dépilée: {}", valeur);
+        logger.debug("\t\t[DEBUG] Indice dépilé: {}", index);
 
         // 4. Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
@@ -65,7 +70,7 @@ public class AstoreAxiome implements JajaAxiome {
         // 6. Affecter la valeur au tableau (gère bornes et types en interne)
         ctx.getStacks().setArrayValue(scopedIdent, index, valeur);
 
-        System.out.println("\t\tAxiome ASTORE exécuté: " + scopedIdent + "[" + index + "] = " + valeur);
+        logger.debug("\t\tAxiome ASTORE exécuté: {}[{}] = {}", scopedIdent, index, valeur);
 
         // 7. Incrémenter PC
         ctx.incrementPC();
