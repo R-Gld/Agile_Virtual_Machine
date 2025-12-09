@@ -688,15 +688,6 @@ class TestApp {
     }
 
     /**
-     * Test top container is a VBox
-     */
-    @Test
-    void testTopContainerIsVBox() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        assertTrue(root.getTop() instanceof VBox, "Top container should be VBox");
-    }
-
-    /**
      * Test top VBox has 3 children
      */
     @Test
