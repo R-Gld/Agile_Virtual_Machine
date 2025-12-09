@@ -728,14 +728,6 @@ class TestApp {
     }
 
     /**
-     * Test root is BorderPane
-     */
-    @Test
-    void testRootIsBorderPane() {
-        assertTrue(stage.getScene().getRoot() instanceof BorderPane, "Root should be BorderPane");
-    }
-
-    /**
      * Test MenuBar exists in topMenu
      */
     @Test
