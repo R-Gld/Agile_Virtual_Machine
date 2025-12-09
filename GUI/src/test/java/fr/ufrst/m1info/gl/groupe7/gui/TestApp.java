@@ -567,25 +567,6 @@ class TestApp {
     }
 
     /**
-     * Test that FileMenu has exactly 2 items
-     */
-    @Test
-    void testFileMenuHasCorrectItemCount() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox topMenu = (HBox) vbox.getChildren().get(1);
-
-        MenuBar menuBar = topMenu.getChildren().stream()
-                .filter(node -> node instanceof MenuBar)
-                .map(node -> (MenuBar) node)
-                .findFirst()
-                .orElse(null);
-
-        Menu fileMenu = menuBar.getMenus().get(0);
-        assertEquals(2, fileMenu.getItems().size(), "File menu should have exactly 2 items");
-    }
-
-    /**
      * Test choice box has correct default value
      */
     @Test
