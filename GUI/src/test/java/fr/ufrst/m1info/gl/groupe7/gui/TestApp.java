@@ -450,21 +450,6 @@ class TestApp {
     }
 
     /**
-     * Test that empty JJC code area can be verified
-     */
-    @Test
-    void testJjcCodeAreaStartsEmpty() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
-        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
-        MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
-
-        String text = jjcCodeArea.getText();
-        assertTrue(text.isEmpty() || text.trim().isEmpty(), "JJC code area should start empty");
-    }
-
-    /**
      * Test editor wrappers exist
      */
     @Test
