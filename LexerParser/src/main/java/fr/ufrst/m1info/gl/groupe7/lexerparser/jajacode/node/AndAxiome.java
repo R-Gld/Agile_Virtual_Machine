@@ -68,7 +68,7 @@ public class AndAxiome implements JajaAxiome {
         ));
 
         // 6. Log et passage à l'instruction suivante
-        System.out.println("\t\tAxiome AND exécuté: " + op1.value + " && " + op2.value + " = " + result);
+        logger.debug("\t\tAxiome AND exécuté: " + op1.value + " && " + op2.value + " = " + result);
         ctx.incrementPC();
     }
 }
