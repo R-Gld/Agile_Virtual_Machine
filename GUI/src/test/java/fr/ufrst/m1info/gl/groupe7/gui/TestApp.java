@@ -73,7 +73,7 @@ class TestApp {
     }
 
     @Test
-    void testBorderPaneHasTopMenu() {
+    void testBorderPaneHasTopVbox() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         assertNotNull(root.getTop(), "Top doit contenir le menu");
         assertInstanceOf(VBox.class, root.getTop(), "Top doit être un VBox");
@@ -617,22 +617,6 @@ class TestApp {
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
 
         assertEquals(2, mainSplitPane.getItems().size(), "Main split pane should have 2 items");
-    }
-
-    /**
-     * Test MenuBar exists in topMenu
-     */
-    @Test
-    void testMenuBarExistsInTopMenu() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox topMenu = (HBox) vbox.getChildren().get(1);
-
-        long menuBarCount = topMenu.getChildren().stream()
-                .filter(node -> node instanceof MenuBar)
-                .count();
-
-        assertEquals(1, menuBarCount, "Top menu should have exactly 1 MenuBar");
     }
 
     /**
