@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -28,6 +31,8 @@ import java.util.Objects;
  * @see JajaAxiome
  */
 public class CmpAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(CmpAxiome.class);
 
     /**
      * Exécute l'instruction {@code cmp}.
@@ -59,7 +64,7 @@ public class CmpAxiome implements JajaAxiome {
         ));
 
         // 5. Log et incrément PC
-        System.out.println("\t\tAxiome CMP exécuté: " + op1.value + " == " + op2.value + " = " + result);
+        logger.debug("\t\tAxiome CMP exécuté: {} == {} = {}", op1.value, op2.value, result);
         ctx.incrementPC();
     }
 }

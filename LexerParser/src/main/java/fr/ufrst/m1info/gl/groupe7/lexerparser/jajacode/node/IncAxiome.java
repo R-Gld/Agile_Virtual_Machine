@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.AssignmentException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -32,6 +35,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * @see JajaAxiome
  */
 public class IncAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(IncAxiome.class);
 
     /**
      * Exécute l'instruction {@code inc(i)}.
@@ -79,7 +84,7 @@ public class IncAxiome implements JajaAxiome {
         }
 
         // 7. Succès
-        System.out.println("\t\tAxiome INC exécuté: " + scopedIdent + " += " + incrementQuad.value + " -> " + newValue);
+        logger.debug("\t\tAxiome INC exécuté: {} += {} -> {}", scopedIdent, incrementQuad.value, newValue);
         ctx.incrementPC();
     }
 

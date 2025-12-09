@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -26,6 +29,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  * @see JajaAxiome
  */
 public class NotAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(NotAxiome.class);
 
     /**
      * Exécute l'instruction {@code not}.
@@ -65,7 +70,7 @@ public class NotAxiome implements JajaAxiome {
         ));
 
         // 6. Log et suite
-        System.out.println("\t\tAxiome NOT exécuté: !" + op.value + " = " + result);
+        logger.debug("\t\tAxiome NOT exécuté: !{} = {}", op.value, result);
         ctx.incrementPC();
     }
 }
