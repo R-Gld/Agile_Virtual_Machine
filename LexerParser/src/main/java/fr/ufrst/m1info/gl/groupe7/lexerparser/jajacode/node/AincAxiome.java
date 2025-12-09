@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -26,6 +29,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * @see JajaAxiome
  */
 public class AincAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(AincAxiome.class);
 
     @Override
     public void execute(MachineContext ctx, String ident) {
@@ -57,8 +62,8 @@ public class AincAxiome implements JajaAxiome {
                                              "AINC", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] Incrément dépilé: " + increment);
-        System.out.println("\t\t[DEBUG] Indice dépilé: " + index);
+        logger.debug("\t\t[DEBUG] Incrément dépilé: {}", increment);
+        logger.debug("\t\t[DEBUG] Indice dépilé: {}", index);
 
         // 5. Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
@@ -84,8 +89,7 @@ public class AincAxiome implements JajaAxiome {
         // 10. Stocker la nouvelle valeur
         ctx.getStacks().setArrayValue(scopedIdent, index, newValue);
 
-        System.out.println("\t\tAxiome AINC exécuté: " + scopedIdent + "[" + index + "] += " +
-                           increment + " -> " + newValue);
+        logger.debug("\t\tAxiome AINC exécuté: {}[{}] += {} -> {}", scopedIdent, index, increment, newValue);
 
         // 11. Incrémenter PC
         ctx.incrementPC();

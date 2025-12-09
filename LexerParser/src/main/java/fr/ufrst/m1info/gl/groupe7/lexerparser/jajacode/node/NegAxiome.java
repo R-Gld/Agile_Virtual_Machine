@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -27,6 +30,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class NegAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(NegAxiome.class);
+
     /**
      * Exécute l'instruction {@code neg}.
      *
@@ -50,7 +55,7 @@ public class NegAxiome implements JajaAxiome {
         int result = -(Integer) op.value;
         ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), result, ctx.getTEMP_VALUE(), Type.ENTIER));
 
-        System.out.println("\t\tAxiome UNARY MINUS exécuté: -" + op.value + " = " + result);
+        logger.debug("\t\tAxiome UNARY MINUS exécuté: -{} = {}", op.value, result);
         ctx.incrementPC();
     }
 }

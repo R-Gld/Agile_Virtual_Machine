@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.JajaCodeRuntimeException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -25,6 +28,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class NewarrayAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(NewarrayAxiome.class);
+
     @Override
     public void execute(MachineContext ctx, String argsPacked) {
         // 1. Dépacking des arguments (Format: "ident,type")
@@ -44,7 +49,7 @@ public class NewarrayAxiome implements JajaAxiome {
                                                 "NEWARRAY", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] axiomeNewarray appelé: ident=" + ident + ", type=" + type);
+        logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident=" + ident + ", type=" + type);
 
         // 3. Dépiler la taille depuis la pile
         Stacks.Quad sizeQuad = ctx.getStacks().pop();
@@ -60,7 +65,7 @@ public class NewarrayAxiome implements JajaAxiome {
                                              "NEWARRAY", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] Taille dépilée: " + size);
+        logger.debug("\t\t[DEBUG] Taille dépilée: {}", size);
 
         // 5. Gérer la récursivité: résoudre le nom scopé
         String scopedIdent = resolveScopedName(ctx, ident);
@@ -68,8 +73,7 @@ public class NewarrayAxiome implements JajaAxiome {
         // 6. Déclarer le tableau (alloue dans le tas via Stacks.declareTab)
         ctx.getStacks().declareTab(scopedIdent, size, type);
 
-        System.out.println("\t\tAxiome NEWARRAY exécuté: " + scopedIdent +
-                           "[" + size + "] (" + type + ") créé.");
+        logger.debug("\t\tAxiome NEWARRAY exécuté: {}[{}] ({}) créé.", scopedIdent, size, type);
 
         // 7. Incrémenter PC
         ctx.incrementPC();

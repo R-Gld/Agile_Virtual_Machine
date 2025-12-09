@@ -5,11 +5,15 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParserBaseVis
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.JajaCodeRuntimeException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node.*; // Importez vos axiomes
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object> implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(JajaCodeInterpreterVisitor.class);
 
     // L'état de la machine est maintenant encapsulé ici
     private final MachineContext context;
@@ -91,25 +95,25 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // Reset du contexte
         context.setInstructionCounter(1);
 
-        System.out.println("Interpréteur: Exécution démarrée à l'adresse 1.");
+        logger.debug("Interpréteur: Exécution démarrée à l'adresse 1.");
 
         while (context.isRunning()) {
             int pc = context.getInstructionCounter();
             JajaCodeParser.InstrContext instruction = programme.get(pc);
 
             if (instruction == null) {
-                System.err.println("Error : @ " + pc + " introuvable !");
+                logger.error("Error : @ {} introuvable !", pc);
                 context.stop();
                 break;
             }
 
-            System.out.println("PC: " + pc + " → " + instruction.getText());
+            logger.debug("PC: {} -> {}", pc, instruction.getText());
 
             // Le visiteur va dispatcher vers le bon axiome
             visit(instruction);
         }
 
-        System.out.println("--- Exécution Terminée ---");
+        logger.info("--- Exécution Terminée ---");
         context.getStacks().printStack();
         context.getStacks().printSymbolTable();
     }
@@ -196,16 +200,16 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             try {
                 axiome.execute(context, arg);
             } catch (JajaCodeRuntimeException e) {
-                System.err.println("\nERREUR D'EXÉCUTION JAJACODE:");
-                System.err.println(e.getMessage());
-                System.err.println();
+                logger.error("\nERREUR D'EXÉCUTION JAJACODE:");
+                logger.error(e.getMessage());
+                logger.error("");
 
                 context.stop();
 
                 throw e;
             }
         } else {
-            System.err.println("Axiome non implémenté : " + command);
+            logger.error("Axiome non implémenté : {}", command);
             context.incrementPC(); // Pour éviter boucle infinie
         }
     }
@@ -217,8 +221,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         String sorte = (ctx.SORTE() != null) ? ctx.SORTE().getText() : "var";
         String depth = (ctx.adresse() != null) ? ctx.adresse().getText() : "0";
 
-        System.out.println(
-                "\t\t[DEBUG handleNew] ident=" + ident + ", type=" + type + ", sorte=" + sorte + ", depth=" + depth);
+        logger.debug("\t\t[DEBUG handleNew] ident={}, type={}, sorte={}, depth={}", ident, type, sorte, depth);
 
         // On pack les arguments pour l'interface générique (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
@@ -230,7 +233,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "int";
 
-        System.out.println("\t\t[DEBUG handleNewarray] ident=" + ident + ", type=" + type);
+        logger.debug("\t\t[DEBUG handleNewarray] ident={}, type={}", ident, type);
 
         // On pack les arguments pour l'interface générique (ident,type)
         String packedArgs = ident + "," + type;
@@ -274,7 +277,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         JajaCodeParser.InstrContext instruction = programme.get(pc);
 
         if (instruction == null) {
-            System.err.println("Erreur : @ " + pc + " introuvable !");
+            logger.error("Erreur : @{} introuvable !", pc);
             context.stop();
             return false; // Program finished (error case)
         }
