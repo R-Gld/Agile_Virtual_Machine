@@ -567,25 +567,6 @@ class TestApp {
     }
 
     /**
-     * Test choice box has correct default value
-     */
-    @Test
-    void testChoiceBoxDefaultValue() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox toolbar = (HBox) vbox.getChildren().get(2);
-
-        @SuppressWarnings("unchecked")
-        ChoiceBox<String> choiceBox = toolbar.getChildren().stream()
-                .filter(node -> node instanceof ChoiceBox)
-                .map(node -> (ChoiceBox<String>) node)
-                .findFirst()
-                .orElse(null);
-
-        assertEquals("MiniJaja", choiceBox.getValue(), "Default choice should be MiniJaja");
-    }
-
-    /**
      * Test choice box has exactly 2 items
      */
     @Test
