@@ -434,6 +434,8 @@ class TestApp {
 
         for (Button button : buttons) {
             assertNotNull(button.getTooltip(), "Chaque bouton doit avoir un tooltip");
+            assertNotNull(button.getTooltip().getText(), "Tooltip should have text");
+            assertFalse(button.getTooltip().getText().isEmpty(), "Tooltip text should not be empty");
         }
     }
 
@@ -723,27 +725,6 @@ class TestApp {
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
 
         assertEquals(2, mainSplitPane.getItems().size(), "Main split pane should have 2 items");
-    }
-
-    /**
-     * Test button tooltips are not empty
-     */
-    @Test
-    void testButtonTooltipsNotEmpty() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox toolbar = (HBox) vbox.getChildren().get(2);
-
-        java.util.List<Button> buttons = toolbar.getChildren().stream()
-                .filter(node -> node instanceof Button)
-                .map(node -> (Button) node)
-                .collect(java.util.stream.Collectors.toList());
-
-        for (Button button : buttons) {
-            assertNotNull(button.getTooltip(), "Button should have tooltip");
-            assertNotNull(button.getTooltip().getText(), "Tooltip should have text");
-            assertFalse(button.getTooltip().getText().isEmpty(), "Tooltip text should not be empty");
-        }
     }
 
     /**
