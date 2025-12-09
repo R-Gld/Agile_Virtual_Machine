@@ -95,7 +95,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // Reset du contexte
         context.setInstructionCounter(1);
 
-        logger.info("Interpréteur: Exécution démarrée à l'adresse 1.");
+        logger.debug("Interpréteur: Exécution démarrée à l'adresse 1.");
 
         while (context.isRunning()) {
             int pc = context.getInstructionCounter();

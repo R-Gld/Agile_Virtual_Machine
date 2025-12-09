@@ -58,7 +58,7 @@ public class MiniJajaInterpreter implements Runnable {
         if (astRoot != null) {
             logger.info(astRoot.toStringTree());
         } else {
-            logger.info("ERREUR: L'AST est null.");
+            logger.error("ERREUR: L'AST est null.");
         }
 
         // Semantic analysis
