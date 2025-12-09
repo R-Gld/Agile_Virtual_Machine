@@ -38,12 +38,12 @@ public class HeapEntry {
     // -------------------------------------------------------------------------
     public void incrementRef() {
         refCount++;
-        System.err.println("[GC] Increment refCount of " + id + " → " + refCount);
+        System.err.println("[GC] Increment refCount of " + id + " -> " + refCount);
     }
 
     public void decrementRef() {
         refCount--;
-        System.err.println("[GC] Decrement refCount of " + id + " → " + refCount);
+        System.err.println("[GC] Decrement refCount of " + id + " -> " + refCount);
     }
 
     public int getRefCount() {

@@ -145,7 +145,7 @@ public class Heap {
         // Allocate final block
         HeapEntry allocated = new HeapEntry(id, block.entry.getAddress(), blockSize, ref, false);
         put(new Node(allocated));
-        System.err.println("→ Allocated " + id + " (" + blockSize + " cells) at address " + allocated.getAddress());
+        System.err.println("-> Allocated " + id + " (" + blockSize + " cells) at address " + allocated.getAddress());
 
         return allocated;
     }
@@ -185,7 +185,7 @@ public class Heap {
                     freeCount--;
                 }
                  // keep same counting semantics as put()
-                System.err.println("→ Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
+                System.err.println("-> Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
                 return true;
             }
             prev = current;
@@ -216,7 +216,7 @@ public class Heap {
                     if(current.entry.isFree()){
                         freeCount--;
                     }
-                    System.err.println("→ Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
+                    System.err.println("-> Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
                     return true;
                 }
                 prev = current;
@@ -247,7 +247,7 @@ public class Heap {
                 if(current.entry.isFree()){
                     freeCount--;
                 }
-                System.err.println("→ Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
+                System.err.println("-> Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
                 return true;
             }
             prev = current;
@@ -340,7 +340,7 @@ public class Heap {
         for (int i = 0; i < TABLE_SIZE; i++) {
             Node node = table[i];
             if (node != null) {
-                System.err.print("Bucket[" + i + "] → ");
+                System.err.print("Bucket[" + i + "] -> ");
                 while (node != null) {
                     System.err.print(node.entry + " \n");
                     node = node.next;

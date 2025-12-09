@@ -259,7 +259,7 @@ public class Stacks {
 
             Symbol existing = symbolTable.findSymbol(q.ident);
 
-            // Si le tableau existe déjà → on incrémente les références
+            // Si le tableau existe déjà -> on incrémente les références
             if (existing != null) {
                 int base = info.getBaseAddress();
 
@@ -291,7 +291,7 @@ public class Stacks {
 
                 Symbol existing = symbolTable.findSymbol(q.ident);
 
-                // Si le tableau existe déjà → on incrémente les références
+                // Si le tableau existe déjà -> on incrémente les références
                 if (existing != null) {
                     int base = info.getBaseAddress();
 
@@ -442,7 +442,7 @@ public class Stacks {
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type);
 
-        System.err.println("→ Array " + ident +
+        System.err.println("-> Array " + ident +
                 " allocated: base=" + baseAddress +
                 " cells=" + totalSize + " (size=" + size + ")");
 
@@ -502,11 +502,11 @@ public class Stacks {
 
         // 3. Remove Quad from stack
         stack.remove(position);
-        System.err.println("→ Removed declaration '" + ident + "' from stack.");
+        System.err.println("-> Removed declaration '" + ident + "' from stack.");
 
         // 4. Remove from symbol table
         symbolTable.remove(ident);
-        System.err.println("→ Symbol '" + ident + "' removed from the symbol table.");
+        System.err.println("-> Symbol '" + ident + "' removed from the symbol table.");
 
         // 5. Update stack positions (if you track positions)
         updateSymbolPositions();
@@ -572,7 +572,7 @@ public class Stacks {
      */
     public String resolveVariableName(String name) {
 
-        // Si pas dans une méthode → nom simple
+        // Si pas dans une méthode -> nom simple
         if (!isInMethodContext()) {
             return name;
         }
@@ -585,7 +585,7 @@ public class Stacks {
             return scoped;
         }
 
-        // Sinon → c'est une variable globale
+        // Sinon -> c'est une variable globale
         return name;
     }
 
@@ -962,7 +962,7 @@ public class Stacks {
             heap.free(entry);
             System.err.println("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
         } else {
-            System.err.println("   [GC] refCount-- → " + entry.getRefCount() + " (base=" + base + ")");
+            System.err.println("   [GC] refCount-- -> " + entry.getRefCount() + " (base=" + base + ")");
         }
     }
     /**
@@ -977,7 +977,7 @@ public class Stacks {
 
         entry.incrementRef();
 
-        System.err.println("   [GC] refCount++ → " + entry.getRefCount() + " (base=" + base + ")");
+        System.err.println("   [GC] refCount++ -> " + entry.getRefCount() + " (base=" + base + ")");
     }
 
 }

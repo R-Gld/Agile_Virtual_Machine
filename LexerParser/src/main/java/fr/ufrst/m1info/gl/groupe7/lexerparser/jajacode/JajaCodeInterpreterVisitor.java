@@ -103,7 +103,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 break;
             }
 
-            System.out.println("PC: " + pc + " → " + instruction.getText());
+            System.out.println("PC: " + pc + " -> " + instruction.getText());
 
             // Le visiteur va dispatcher vers le bon axiome
             visit(instruction);
