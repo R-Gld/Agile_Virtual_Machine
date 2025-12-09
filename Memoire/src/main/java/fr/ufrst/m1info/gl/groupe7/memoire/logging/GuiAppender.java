@@ -6,6 +6,7 @@ import ch.qos.logback.core.AppenderBase;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Custom Logback appender that redirects log messages to a JavaFX ConsoleOutput widget.
@@ -17,7 +18,8 @@ import java.util.Date;
 public class GuiAppender extends AppenderBase<ILoggingEvent> {
 
     // Static reference to the GUI console widget (set by GUI module at startup)
-    private static volatile Object guiConsole = null;
+    // Thread-safe using AtomicReference to ensure proper visibility across threads See https://disc.univ-fcomte.fr/cr700-sonarqube/coding_rules?open=java%3AS3077&rule_key=java%3AS3077
+    private static final AtomicReference<Object> guiConsole = new AtomicReference<>(null);
 
     // Cached reflection methods for performance
     private static Method printMessageMethod = null;
@@ -33,7 +35,7 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
      * @param console the ConsoleOutput widget instance
      */
     public static void setGuiConsole(Object console) {
-        guiConsole = console;
+        guiConsole.set(console);
 
         // Pre-cache reflection methods for better performance
         if (console != null) {
@@ -56,7 +58,7 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
      * Unregister the GUI console (e.g., when GUI is closing).
      */
     public static void unsetGuiConsole() {
-        guiConsole = null;
+        guiConsole.set(null);
         printMessageMethod = null;
         platformRunLaterMethod = null;
     }
@@ -69,8 +71,11 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
      */
     @Override
     protected void append(ILoggingEvent event) {
+        // Get console reference atomically
+        Object console = guiConsole.get();
+
         // Ignore if no GUI console is registered (headless mode)
-        if (guiConsole == null) {
+        if (console == null) {
             return;
         }
 
@@ -79,7 +84,7 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
 
         // Send to GUI on JavaFX application thread
         try {
-            sendToGui(formattedMessage);
+            sendToGui(formattedMessage, console);
         } catch (Exception e) {
             // Silent fail - don't disrupt logging if GUI has issues
             // The CONSOLE and FILE appenders will still work
@@ -117,14 +122,15 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
      * Uses reflection to avoid compile-time dependency on JavaFX.
      *
      * @param message the formatted log message
+     * @param console the GUI console instance (passed to avoid reading from AtomicReference multiple times)
      * @throws Exception if reflection fails
      */
-    private void sendToGui(String message) throws Exception {
+    private void sendToGui(String message, Object console) throws Exception {
         if (platformRunLaterMethod != null && printMessageMethod != null) {
             // Fast path: use cached reflection methods
             Runnable task = () -> {
                 try {
-                    printMessageMethod.invoke(guiConsole, message);
+                    printMessageMethod.invoke(console, message);
                 } catch (Exception e) {
                     // Ignore GUI errors
                 }
@@ -137,9 +143,9 @@ public class GuiAppender extends AppenderBase<ILoggingEvent> {
 
             Runnable task = () -> {
                 try {
-                    Method printMessage = guiConsole.getClass()
+                    Method printMessage = console.getClass()
                         .getMethod("printMessage", String.class);
-                    printMessage.invoke(guiConsole, message);
+                    printMessage.invoke(console, message);
                 } catch (Exception e) {
                     // Ignore GUI errors
                 }
