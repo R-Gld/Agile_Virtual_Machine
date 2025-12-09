@@ -1,6 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.compiler;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +16,8 @@ import static fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompiler.g
  * Compiles MiniJaja code into JajaCode, with flexible output selection.
  */
 public class Compiler implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(Compiler.class);
 
     /**
      * Represents the destination where the output of the compilation process will be directed.
@@ -86,8 +90,7 @@ public class Compiler implements Runnable {
                 }
                 break;
             case SYSOUT:
-                System.out.print(compiled);
-                System.out.flush();
+                logger.info(compiled);
                 break;
             case STRING: break;
             default: throw new IllegalStateException("Unknown destination: " + destination);

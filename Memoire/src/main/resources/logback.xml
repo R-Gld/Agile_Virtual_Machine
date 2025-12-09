@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ==================================================================== -->
+    <!-- APPENDERS: Define where and how log messages are output             -->
+    <!-- ==================================================================== -->
+
+    <!-- Console Appender: for CLI/terminal execution and tests -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- GUI Appender: redirects logs to JavaFX ConsoleOutput widget -->
+    <appender name="GUI" class="fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%-5level] %logger{20} - %msg</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender: persistent logs saved to disk -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/minijaja.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ==================================================================== -->
+    <!-- ROOT LOGGER: Global configuration for all loggers                   -->
+    <!-- Contrôlé dynamiquement via le GUI (LogControlPanel)                 -->
+    <!-- ==================================================================== -->
+
+    <root level="INFO">
+        <!-- Send logs to all three appenders -->
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="GUI"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

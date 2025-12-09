@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -26,6 +29,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  * @see JajaAxiome
  */
 public class MulAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(MulAxiome.class);
 
     /**
      * Exécute l'instruction {@code mul}.
@@ -62,7 +67,7 @@ public class MulAxiome implements JajaAxiome {
         ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), result, ctx.getTEMP_VALUE(), Type.ENTIER));
 
         // 7. Log et suite
-        System.out.println("\t\tAxiome MUL exécuté: " + op1.value + " * " + op2.value + " = " + result);
+        logger.debug("\t\tAxiome MUL exécuté: {} * {} = {}", op1.value, op2.value, result);
         ctx.incrementPC();
     }
 }

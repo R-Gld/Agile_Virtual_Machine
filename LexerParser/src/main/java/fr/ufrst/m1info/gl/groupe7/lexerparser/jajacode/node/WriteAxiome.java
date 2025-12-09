@@ -3,6 +3,8 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Axiome représentant l'instruction JajaCode {@code write}.
@@ -25,6 +27,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflow
  */
 public class WriteAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(WriteAxiome.class);
+
     /**
      * Exécute l'instruction {@code write}.
      *
@@ -40,8 +44,8 @@ public class WriteAxiome implements JajaAxiome {
             throw new StackUnderflowException("Manque la valeur à écrire", "WRITE", ctx.getInstructionCounter());
         }
 
-        System.out.print(valeur.value);
-        System.out.println("\t\tAxiome WRITE exécuté: " + valeur.value + " affiché.");
+        logger.info("{}", valeur.value);
+        logger.debug("\t\tAxiome WRITE exécuté: {} affiché.", valeur.value);
         ctx.incrementPC();
     }
 }

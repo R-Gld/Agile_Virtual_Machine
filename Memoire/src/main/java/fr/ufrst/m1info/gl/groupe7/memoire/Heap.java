@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Heap (with HeapEntry)
  * ---------------------------------------------------------------------------
@@ -7,6 +10,8 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
  * Each block is represented by a Node containing a HeapEntry.
  */
 public class Heap {
+
+    private static final Logger logger = LoggerFactory.getLogger(Heap.class);
 
     private static final int HEAP_SIZE = 256;
     private static final int TABLE_SIZE = 97;
@@ -56,7 +61,7 @@ public class Heap {
 
     private void put(Node block) {
         int index = hash(block.entry.getSize());
-        System.err.println("index table allocated: " + index+"block.entry.getSize() :"+block.entry.getSize());
+        logger.debug("index table allocated: " + index+"block.entry.getSize() :"+block.entry.getSize());
         block.next = table[index];
         table[index] = block;
         if(block.entry.isFree()){
@@ -120,7 +125,7 @@ public class Heap {
 
         Node block = findBlock(blockSize);
         if (block == null) {
-            System.err.println("Error: not enough memory for " + id);
+            logger.debug("Error: not enough memory for " + id);
             return null;
         }
 
@@ -145,7 +150,7 @@ public class Heap {
         // Allocate final block
         HeapEntry allocated = new HeapEntry(id, block.entry.getAddress(), blockSize, ref, false);
         put(new Node(allocated));
-        System.err.println("→ Allocated " + id + " (" + blockSize + " cells) at address " + allocated.getAddress());
+        logger.debug("-> Allocated " + id + " (" + blockSize + " cells) at address " + allocated.getAddress());
 
         return allocated;
     }
@@ -166,9 +171,9 @@ public class Heap {
         while (newIndex < entry.getSize()) {
             newIndex*=2;
         }
-        System.err.println(" newIndex "+newIndex);
+        logger.debug(" newIndex "+newIndex);
         int index = hash(newIndex);
-        System.err.println(" Index remove allocated "+index);
+        logger.debug(" Index remove allocated "+index);
         Node current = table[index];
         Node prev = null;
 
@@ -185,7 +190,7 @@ public class Heap {
                     freeCount--;
                 }
                  // keep same counting semantics as put()
-                System.err.println("→ Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
+                logger.debug("-> Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
                 return true;
             }
             prev = current;
@@ -216,7 +221,7 @@ public class Heap {
                     if(current.entry.isFree()){
                         freeCount--;
                     }
-                    System.err.println("→ Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
+                    logger.debug("-> Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
                     return true;
                 }
                 prev = current;
@@ -224,7 +229,7 @@ public class Heap {
             }
         }
         // nothing found
-        System.err.println("⚠️ removeEntryByAddressAndSize: not found addr=" + entry.getAddress() + " size=" + entry.getSize() + " id=" + entry.getId());
+        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr=" + entry.getAddress() + " size=" + entry.getSize() + " id=" + entry.getId());
         return false;
     }
     /**
@@ -247,14 +252,14 @@ public class Heap {
                 if(current.entry.isFree()){
                     freeCount--;
                 }
-                System.err.println("→ Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
+                logger.debug("-> Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
                 return true;
             }
             prev = current;
             current = current.next;
         }
 
-        System.err.println("⚠️ removeEntry (by identity) did not find: " + entry);
+        logger.debug("⚠️ removeEntry (by identity) did not find: " + entry);
         return false;
     }
 
@@ -270,7 +275,7 @@ public class Heap {
         // 1. Supprimer l'entrée de la liste des allocations actives
         boolean removed = this.removeAllocatedEntry(entry);
         if (!removed) {
-            System.err.println("⚠️ Entry not found in allocated blocks: " + entry.getId());
+            logger.debug("⚠️ Entry not found in allocated blocks: " + entry.getId());
             return;
         }
 
@@ -283,7 +288,7 @@ public class Heap {
                 true    // indique que c'est libre
         );
 
-        System.err.println("← Freed block [" + entry.getId() + "] addr=" + entry.getAddress() + " size=" + entry.getSize());
+        logger.debug("← Freed block [" + entry.getId() + "] addr=" + entry.getAddress() + " size=" + entry.getSize());
 
         // 3. Ajouter ce bloc libre dans la liste des blocs libres
         Node newFreeNode = new Node(freeEntry);
@@ -336,19 +341,20 @@ public class Heap {
     // =========================================================================
 
     public void printHeap() {
-        System.err.println("\n=== Current Heap State ===");
+        StringBuilder sb = new StringBuilder("\n=== Current Heap State ===\n");
         for (int i = 0; i < TABLE_SIZE; i++) {
             Node node = table[i];
             if (node != null) {
-                System.err.print("Bucket[" + i + "] → ");
+                sb.append("Bucket[").append(i).append("] -> ");
                 while (node != null) {
-                    System.err.print(node.entry + " \n");
+                    sb.append(node.entry).append(" \n");
                     node = node.next;
                 }
-                System.err.println();
+                sb.append("\n");
             }
         }
-        System.err.println("==========================\n");
+        sb.append("==========================\n");
+        logger.debug(sb.toString());
     }
 
     public int getFreeCount() {
@@ -374,11 +380,10 @@ public class Heap {
         }
         memory[address] = value;
         // Debug log
-        System.err.println(
-                "[HEAP WRITE] address=" + address +
-                        "  stored_value=" + value +
-                        " (" + (value != null ? value.getClass().getSimpleName() : "null") + ")"
-        );
+        logger.debug("[HEAP WRITE] address={}  stored_value={}  ({})",
+                address,
+                value,
+                (value != null ? value.getClass().getSimpleName() : "null"));
     }
     public void releaseReference(HeapEntry entry) {
         if (entry == null) return;

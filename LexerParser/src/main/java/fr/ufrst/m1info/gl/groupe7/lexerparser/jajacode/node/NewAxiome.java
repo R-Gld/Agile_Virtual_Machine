@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.JajaCodeRuntimeException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -30,6 +33,8 @@ import java.util.List;
  * @see JajaAxiome
  */
 public class NewAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(NewAxiome.class);
 
     /**
      * Exécute l'instruction {@code new(i,t,kind,depth)}.
@@ -68,7 +73,7 @@ public class NewAxiome implements JajaAxiome {
             throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'", "NEW", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] axiomeNew appelé: ident=" + ident + ", type=" + type + ", kind=" + kind + ", depth=" + depth);
+        logger.debug("\t\t[DEBUG] axiomeNew appelé: ident={}, type={}, kind={}, depth={}", ident, type, kind, depth);
 
         // 3b. Gérer la récursivité: ajouter le suffixe de contexte pour les variables locales
         // Si on est dans un contexte de méthode (récursif ou non), le contexte est stocké dans contextStack
@@ -87,7 +92,7 @@ public class NewAxiome implements JajaAxiome {
                 // Si recursionLevel > 1, on ajoute le suffixe pour différencier les instances
                 if (recursionLevel > 1) {
                     scopedIdent = ident + "$" + (recursionLevel - 1);
-                    System.out.println("\t\t[DEBUG] Variable récursive renommée: " + ident + " -> " + scopedIdent);
+                    logger.debug("\t\t[DEBUG] Variable récursive renommée: {} -> {}", ident, scopedIdent);
                 }
             }
         }
@@ -120,8 +125,8 @@ public class NewAxiome implements JajaAxiome {
             // Créer l'entrée dans la table des symboles qui pointe vers cette position
             ctx.getStacks().getSymbolTable().creationSymbol(scopedIdent, realIndex, type);
 
-            System.out.println("\t\t[DEBUG] Valeur identifiée à depth=" + depth + ": " + valeur + " (pile non modifiée, binding créé)");
-            System.out.println("\t\tAxiome NEW exécuté: " + scopedIdent + " (" + type + "/" + kind + ") identifié à depth=" + depth);
+            logger.debug("\t\t[DEBUG] Valeur identifiée à depth={}: {} (pile non modifiée, binding créé)", depth, valeur);
+            logger.debug("\t\tAxiome NEW exécuté: {} ({}/{}) identifié à depth={}", scopedIdent, type, kind, depth);
         } else {
             // depth = 0 : comportement normal, on dépile la valeur et on déclare
             Stacks.Quad valeurQuad = ctx.getStacks().pop();
@@ -131,7 +136,7 @@ public class NewAxiome implements JajaAxiome {
             }
 
             Object valeur = valeurQuad.value;
-            System.out.println("\t\t[DEBUG] Valeur dépilée: " + valeur);
+            logger.debug("\t\t[DEBUG] Valeur dépilée: {}", valeur);
 
             // Logique de déclaration selon la sorte (kind)
             switch (kind.toLowerCase()) {
@@ -147,7 +152,7 @@ public class NewAxiome implements JajaAxiome {
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, "NEW", ctx.getInstructionCounter());
             }
 
-            System.out.println("\t\tAxiome NEW exécuté: " + scopedIdent + " (" + type + "/" + kind + ") créé.");
+            logger.debug("\t\tAxiome NEW exécuté: {} ({}/{}) créé.", scopedIdent, type, kind);
         }
 
         ctx.incrementPC();

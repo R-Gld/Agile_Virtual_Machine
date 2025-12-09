@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbolException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -28,6 +31,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class LoadAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(LoadAxiome.class);
+
     /**
      * Exécute l'instruction {@code load(i)}.
      *
@@ -55,7 +60,7 @@ public class LoadAxiome implements JajaAxiome {
         ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), valeur, ctx.getTEMP_VALUE(), type));
 
         // 5. Log et suite
-        System.out.println("\t\tAxiome LOAD exécuté: " + scopedIdent + " = " + valeur + " chargé sur la pile.");
+        logger.debug("\t\tAxiome LOAD exécuté: {} = {} chargé sur la pile.", scopedIdent, valeur);
         ctx.incrementPC();
     }
 

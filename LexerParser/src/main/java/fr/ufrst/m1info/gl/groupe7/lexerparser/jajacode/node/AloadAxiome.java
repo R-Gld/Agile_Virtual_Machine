@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.TypeMismatchException;
@@ -27,6 +30,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class AloadAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(AloadAxiome.class);
+
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. Dépiler l'indice depuis la pile
@@ -43,7 +48,7 @@ public class AloadAxiome implements JajaAxiome {
                                              "ALOAD", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] Indice dépilé: " + index);
+        logger.debug("\t\t[DEBUG] Indice dépilé: {}", index);
 
         // 3. Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
@@ -63,8 +68,7 @@ public class AloadAxiome implements JajaAxiome {
         ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), valeur,
                                               ctx.getTEMP_VALUE(), type));
 
-        System.out.println("\t\tAxiome ALOAD exécuté: " + scopedIdent + "[" + index + "] = " +
-                           valeur + " chargé sur la pile.");
+        logger.debug("\t\tAxiome ALOAD exécuté: {}[{}] = {} chargé sur la pile.", scopedIdent, index, valeur);
 
         // 8. Incrémenter PC
         ctx.incrementPC();

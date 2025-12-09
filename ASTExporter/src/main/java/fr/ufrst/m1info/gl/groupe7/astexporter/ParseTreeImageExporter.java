@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.astexporter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -47,6 +50,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
  */
 public class ParseTreeImageExporter {
 
+    private static final Logger logger = LoggerFactory.getLogger(ParseTreeImageExporter.class);
+
     public static void main(String[] args) {
         int exitCode = run(args);
         if (exitCode != 0) {
@@ -56,7 +61,7 @@ public class ParseTreeImageExporter {
 
     public static int run(String[] args) {
         if (args.length < 1) {
-            System.err.println("Usage: ParseTreeImageExporter <code|minijaja|@fichier> [sortie.png]");
+            logger.error("Usage: ParseTreeImageExporter <code|minijaja|@fichier> [sortie.png]");
             return 1;
         }
 
@@ -67,12 +72,12 @@ public class ParseTreeImageExporter {
         try {
             source = resolveSource(inputArg);
         } catch (IOException e) {
-            System.err.println("Erreur lecture source: " + e.getMessage());
+            logger.error("Erreur lecture source: {}", e.getMessage());
             return 2;
         }
 
         if (source.isBlank()) {
-            System.err.println("La source MiniJaja est vide.");
+            logger.error("La source MiniJaja est vide.");
             return 3;
         }
 
@@ -91,8 +96,8 @@ public class ParseTreeImageExporter {
         ParseTree tree = parser.classe();
 
         if (collector.hasErrors()) {
-            System.err.println("Des erreurs de syntaxe ont été détectées:" + collector.formatDiagnostics());
-            System.err.println("Aucune image générée (arrêt sur erreurs).");
+            logger.error("Des erreurs de syntaxe ont été détectées:{}", collector.formatDiagnostics());
+            logger.error("Aucune image générée (arrêt sur erreurs).");
             return 4;
         }
 
@@ -101,15 +106,14 @@ public class ParseTreeImageExporter {
             MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
             AstNode astRoot = visitor.visit(tree);
             exportAstImage(astRoot, Path.of(outputFile));
-            System.out.println("AST exporté dans: " + outputFile);
+            logger.info("AST exporté dans: {}", outputFile);
         } catch (Exception e) {
-            System.err.println("Erreur lors de la construction de l'AST (" + e.getMessage()
-                    + "). Export de l'arbre CST à la place.");
+            logger.error("Erreur lors de la construction de l'AST ({}). Export de l'arbre CST à la place.", e.getMessage());
             try {
                 exportTreeImage(tree, Path.of(outputFile));
-                System.out.println("Arbre CST exporté dans: " + outputFile);
+                logger.info("Arbre CST exporté dans: {}", outputFile);
             } catch (IOException ex) {
-                System.err.println("Erreur lors de l'export de l'image: " + ex.getMessage());
+                logger.error("Erreur lors de l'export de l'image: {}", ex.getMessage());
                 return 5;
             }
         }
