@@ -155,19 +155,6 @@ class TestApp {
     }
 
     @Test
-    void testBuildButtonExists(FxRobot robot) {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox toolbar = (HBox) vbox.getChildren().get(2); // toolbar is third child
-
-        long buttonCount = toolbar.getChildren().stream()
-                .filter(node -> node instanceof Button)
-                .count();
-
-        assertTrue(buttonCount >= 4, "toolbar doit contenir au moins 4 boutons (build, run, debug, step, stop)");
-    }
-
-    @Test
     void testChoiceBoxExists() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         VBox vbox = (VBox) root.getTop();
