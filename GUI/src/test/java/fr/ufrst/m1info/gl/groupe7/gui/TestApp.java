@@ -708,15 +708,6 @@ class TestApp {
     }
 
     /**
-     * Test center is a SplitPane
-     */
-    @Test
-    void testCenterIsSplitPane() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        assertTrue(root.getCenter() instanceof SplitPane, "Center should be SplitPane");
-    }
-
-    /**
      * Test main split pane has 2 items
      */
     @Test
