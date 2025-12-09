@@ -51,9 +51,9 @@ public class EcrireLnNode extends EcrireNode {
                 throw new RuntimeException("Type error: cannot print array directly or method reference");
             }
             
-            logger.info("{}", ident1.evaluate(stacks));
+            logger.info("{}\n", ident1.evaluate(stacks));
         } else if (ident1Node instanceof Expression expr) {
-            logger.info("{}", expr.evaluate(stacks));
+            logger.info("{}\n", expr.evaluate(stacks));
         } else if (ident1Node instanceof TabNode  tabNode) {
 
             String varName = stacks.getScopedName(tabNode.getIdent().getNom());
@@ -63,13 +63,13 @@ public class EcrireLnNode extends EcrireNode {
             Object currentValue =  stacks.getArrayValue(varName, index);
 
             if (currentValue instanceof Integer) {
-                logger.info("{}", currentValue);
+                logger.info("{}\n", currentValue);
             }  else if (currentValue instanceof Boolean) {
-                logger.info("{}", currentValue);
+                logger.info("{}\n", currentValue);
             }
 
         } else {
-            logger.info("{}", ident1Node);
+            logger.info("{}\n", ident1Node);
         }
 
     }

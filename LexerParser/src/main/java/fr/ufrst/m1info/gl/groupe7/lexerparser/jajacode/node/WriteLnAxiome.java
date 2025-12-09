@@ -42,7 +42,7 @@ public class WriteLnAxiome implements JajaAxiome{
         if (valeur == null) {
             throw new StackUnderflowException("Manque la valeur à écrire", "WRITELN", ctx.getInstructionCounter());
         }
-        logger.info("{}", valeur.value);
+        logger.info("{}\n", valeur.value);
         logger.debug("\t\tAxiome WRITELN exécuté: {} affiché avec retour à la ligne.", valeur.value);
         ctx.incrementPC();
     }
