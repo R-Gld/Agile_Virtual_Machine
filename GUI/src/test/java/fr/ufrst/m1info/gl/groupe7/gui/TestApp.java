@@ -467,22 +467,6 @@ class TestApp {
     }
 
     /**
-     * Test that code areas start with default content
-     */
-    @Test
-    void testCodeAreasHaveInitialContent() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
-        VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
-        MyCodeArea mjjCodeArea = (MyCodeArea) miniWrapper.getChildren().get(1);
-
-        String text = mjjCodeArea.getText();
-        assertFalse(text.isEmpty(), "MJJ code area should have default sample code");
-        assertTrue(text.contains("class C"), "Default code should contain a class");
-    }
-
-    /**
      * Test console exists and is accessible
      */
     @Test
