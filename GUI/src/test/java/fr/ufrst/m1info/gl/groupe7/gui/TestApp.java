@@ -69,21 +69,21 @@ class TestApp {
 
     @Test
     void testSceneHasBorderPaneRoot() {
-        assertTrue(stage.getScene().getRoot() instanceof BorderPane, "Root doit être un BorderPane");
+        assertInstanceOf(BorderPane.class, stage.getScene().getRoot(), "Root doit être un BorderPane");
     }
 
     @Test
     void testBorderPaneHasTopMenu() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         assertNotNull(root.getTop(), "Top doit contenir le menu");
-        assertTrue(root.getTop() instanceof VBox, "Top doit être un VBox");
+        assertInstanceOf(VBox.class, root.getTop(), "Top doit être un VBox");
     }
 
     @Test
     void testBorderPaneHasCenterSplitPane() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         assertNotNull(root.getCenter(), "Center doit contenir le SplitPane");
-        assertTrue(root.getCenter() instanceof SplitPane, "Center doit être un SplitPane");
+        assertInstanceOf(SplitPane.class, root.getCenter(), "Center doit être un SplitPane");
     }
 
     @Test
@@ -91,7 +91,7 @@ class TestApp {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         // Console is now inside mainSplitPane, not at bottom
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        assertTrue(mainSplitPane.getItems().get(1) instanceof ConsoleOutput, "Console doit être dans mainSplitPane");
+        assertInstanceOf(ConsoleOutput.class, mainSplitPane.getItems().get(1), "Console doit être dans mainSplitPane");
     }
 
     @Test
