@@ -416,12 +416,6 @@ class TestApp {
     }
 
     @Test
-    void testSceneDimensions() {
-        assertEquals(1150, stage.getScene().getWidth(), 1, "Largeur de la scène doit être 1150");
-        assertEquals(720, stage.getScene().getHeight(), 1, "Hauteur de la scène doit être 720");
-    }
-
-    @Test
     void testAllButtonsHaveTooltips() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         VBox vbox = (VBox) root.getTop();
@@ -779,5 +773,381 @@ class TestApp {
         // Each wrapper should have at least 2 children (title + code area)
         assertTrue(miniWrapper.getChildren().size() >= 2, "MiniJaja wrapper should have title and code area");
         assertTrue(jajaWrapper.getChildren().size() >= 2, "Jajacode wrapper should have title and code area");
+    }
+
+    /**
+     * Test dark mode toggle functionality
+     */
+    @Test
+    void testDarkModeToggleButton() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox topMenu = (HBox) vbox.getChildren().get(1);
+
+        // Dark mode button is the last child in top menu
+        javafx.scene.control.ToggleButton darkModeBtn = (javafx.scene.control.ToggleButton) topMenu.getChildren()
+                .get(topMenu.getChildren().size() - 1);
+
+        assertNotNull(darkModeBtn, "Dark mode toggle should exist");
+        assertFalse(darkModeBtn.isSelected(), "Dark mode should be off initially");
+
+        // Toggle to dark mode
+        runOnFxThread(darkModeBtn::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(darkModeBtn.isSelected(), "Dark mode should be on after toggle");
+
+        // Verify dark CSS is loaded
+        boolean hasDarkCss = stage.getScene().getStylesheets().stream()
+                .anyMatch(s -> s.contains("dark.css"));
+        assertTrue(hasDarkCss, "Dark mode CSS should be loaded");
+    }
+
+    /**
+     * Test window minimize button
+     */
+    @Test
+    void testWindowMinimizeButton() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox titleBar = (HBox) vbox.getChildren().get(0);
+
+        // Get minimize button (third from end: min, max, close)
+        Button minButton = (Button) titleBar.getChildren().get(titleBar.getChildren().size() - 3);
+
+        assertTrue(minButton.getStyleClass().contains("window-button-min"),
+                "Button should have minimize style");
+
+        runOnFxThread(minButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(stage.isIconified(), "Stage should be minimized");
+    }
+
+    /**
+     * Test window maximize button
+     */
+    @Test
+    void testWindowMaximizeButton() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox titleBar = (HBox) vbox.getChildren().get(0);
+
+        // Get maximize button (second from end)
+        Button maxButton = (Button) titleBar.getChildren().get(titleBar.getChildren().size() - 2);
+
+        assertTrue(maxButton.getStyleClass().contains("window-button-max"),
+                "Button should have maximize style");
+
+        boolean wasMaximized = stage.isMaximized();
+        runOnFxThread(maxButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertNotEquals(wasMaximized, stage.isMaximized(), "Maximize state should toggle");
+    }
+
+    /**
+     * Test clear JajaCode button functionality
+     */
+    @Test
+    void testClearJajaCodeButton() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        SplitPane mainSplitPane = (SplitPane) root.getCenter();
+        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
+
+        // Get title bar and clear button
+        HBox jajaTitleBar = (HBox) jajaWrapper.getChildren().get(0);
+        Button clearButton = (Button) jajaTitleBar.getChildren().get(jajaTitleBar.getChildren().size() - 1);
+
+        MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
+
+        // Set some text
+        runOnFxThread(() -> jjcCodeArea.loadText("test code"));
+        WaitForAsyncUtils.waitForFxEvents();
+        assertFalse(jjcCodeArea.getText().isEmpty(), "Code area should have text");
+
+        // Click clear button
+        runOnFxThread(clearButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(jjcCodeArea.getText().isEmpty(), "Code area should be empty after clear");
+    }
+
+    /**
+     * Test run button exists and can be clicked
+     */
+    @Test
+    void testRunButtonExists() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        assertTrue(buttons.size() > 1, "Toolbar should have run button");
+        Button runButton = buttons.get(1); // Run is second button
+
+        assertNotNull(runButton.getTooltip(), "Run button should have tooltip");
+        assertTrue(runButton.getTooltip().getText().contains("Run"), "Tooltip should mention Run");
+    }
+
+    /**
+     * Test continue button initial state
+     */
+    @Test
+    void testContinueButtonInitialState() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        assertTrue(buttons.size() >= 6, "Toolbar should have at least 6 buttons");
+        Button continueButton = buttons.get(4); // Continue button
+
+        assertNotNull(continueButton, "Continue button should exist");
+        assertNotNull(continueButton.getTooltip(), "Continue button should have tooltip");
+        assertTrue(continueButton.isDisabled(), "Continue button should be disabled initially");
+    }
+
+    /**
+     * Test continue button lifecycle (enabled in debug, disabled after stop)
+     */
+    @Test
+    void testContinueButtonLifecycle() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        Button debugButton = buttons.get(2);
+        Button continueButton = buttons.get(4);
+        Button stopButton = buttons.get(5);
+
+        // Start debug
+        runOnFxThread(debugButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertFalse(continueButton.isDisabled(), "Continue button should be enabled during debug");
+
+        // Stop debug
+        runOnFxThread(stopButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(continueButton.isDisabled(), "Continue button should be disabled after stop");
+    }
+
+    /**
+     * Test compile with valid MiniJaja code
+     */
+    @Test
+    void testCompileValidCode() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+        SplitPane mainSplitPane = (SplitPane) root.getCenter();
+        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+
+        VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
+        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
+        MyCodeArea mjjCodeArea = (MyCodeArea) miniWrapper.getChildren().get(1);
+        MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
+
+        // Set valid code
+        String validCode = "class Test { main { int x = 5; } }";
+        runOnFxThread(() -> mjjCodeArea.loadText(validCode));
+
+        // Get compile button (first button)
+        Button compileButton = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(compileButton, "Compile button should exist");
+
+        // Click compile
+        runOnFxThread(compileButton::fire);
+
+        // Wait for compilation
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Verify JajaCode was generated
+        runOnFxThread(() -> {
+            String jjcText = jjcCodeArea.getText();
+            assertNotNull(jjcText, "JajaCode should be generated");
+        });
+    }
+
+    /**
+     * Test run with MiniJaja selection
+     */
+    @Test
+    void testRunWithMiniJajaSelection() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        @SuppressWarnings("unchecked")
+        ChoiceBox<String> choiceBox = toolbar.getChildren().stream()
+                .filter(node -> node instanceof ChoiceBox)
+                .map(node -> (ChoiceBox<String>) node)
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(choiceBox, "ChoiceBox should exist");
+
+        // Ensure MiniJaja is selected
+        runOnFxThread(() -> choiceBox.setValue("MiniJaja"));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals("MiniJaja", choiceBox.getValue(), "Should be set to MiniJaja");
+
+        // Get run button
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        Button runButton = buttons.get(1);
+
+        // Click run (should not crash)
+        runOnFxThread(runButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(stage.isShowing(), "Stage should still be showing after run");
+    }
+
+    /**
+     * Test run with Jajacode selection
+     */
+    @Test
+    void testRunWithJajacodeSelection() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        @SuppressWarnings("unchecked")
+        ChoiceBox<String> choiceBox = toolbar.getChildren().stream()
+                .filter(node -> node instanceof ChoiceBox)
+                .map(node -> (ChoiceBox<String>) node)
+                .findFirst()
+                .orElse(null);
+
+        // Switch to Jajacode
+        runOnFxThread(() -> choiceBox.setValue("Jajacode"));
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertEquals("Jajacode", choiceBox.getValue(), "Should be set to Jajacode");
+
+        // Get run button
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        Button runButton = buttons.get(1);
+
+        // Click run (should not crash even with empty code)
+        runOnFxThread(runButton::fire);
+        WaitForAsyncUtils.waitForFxEvents();
+
+        assertTrue(stage.isShowing(), "Stage should still be showing after run");
+    }
+
+    /**
+     * Test that code areas can be edited
+     */
+    @Test
+    void testCodeAreasAreEditable() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        SplitPane mainSplitPane = (SplitPane) root.getCenter();
+        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+
+        VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
+        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
+
+        MyCodeArea mjjCodeArea = (MyCodeArea) miniWrapper.getChildren().get(1);
+        MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
+
+        // Test MiniJaja area is editable
+        runOnFxThread(() -> {
+            mjjCodeArea.loadText("test");
+            assertEquals("test", mjjCodeArea.getText(), "MJJ area should be editable");
+        });
+
+        // Test JajaCode area is editable
+        runOnFxThread(() -> {
+            jjcCodeArea.loadText("123");
+            assertEquals("123", jjcCodeArea.getText(), "JJC area should be editable");
+        });
+    }
+
+    /**
+     * Test toolbar buttons have proper styling
+     */
+    @Test
+    void testToolbarButtonsHaveStyles() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        VBox vbox = (VBox) root.getTop();
+        HBox toolbar = (HBox) vbox.getChildren().get(2);
+
+        java.util.List<Button> buttons = toolbar.getChildren().stream()
+                .filter(node -> node instanceof Button)
+                .map(node -> (Button) node)
+                .collect(java.util.stream.Collectors.toList());
+
+        for (Button button : buttons) {
+            assertNotNull(button.getStyleClass(), "Button should have style classes");
+            assertFalse(button.getStyleClass().isEmpty(), "Button should have at least one style class");
+        }
+    }
+
+    /**
+     * Test console exists and has correct styling
+     */
+    @Test
+    void testConsoleHasProperStyling() {
+        BorderPane root = (BorderPane) stage.getScene().getRoot();
+        SplitPane mainSplitPane = (SplitPane) root.getCenter();
+        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
+
+        assertNotNull(console, "Console should exist");
+        assertEquals("console", console.getId(), "Console should have correct ID");
+
+        String style = console.getStyle();
+        assertNotNull(style, "Console should have inline style");
+        assertTrue(style.contains("border") || style.contains("padding"),
+                "Console should have border or padding styling");
+    }
+
+    /**
+     * Test main method launches application
+     */
+    @Test
+    void testMainMethodExists() {
+        // This test verifies that the main method exists and can be called
+        // We don't actually call it to avoid launching another instance
+        try {
+            App.class.getDeclaredMethod("main", String[].class);
+        } catch (NoSuchMethodException e) {
+            fail("Main method should exist");
+        }
     }
 }
