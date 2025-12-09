@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
@@ -27,6 +30,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  * @see JajaAxiome
  */
 public class PushAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(PushAxiome.class);
 
     /**
      * Exécute l'instruction {@code push(v)}.
@@ -67,7 +72,7 @@ public class PushAxiome implements JajaAxiome {
                 type                 // Le type déduit
         ));
 
-        System.out.println("\t\tAxiome PUSH exécuté: " + valeur + " (" + type + ") poussé sur la pile.");
+        logger.debug("\t\tAxiome PUSH exécuté: {} ({}) poussé sur la pile.", valeur, type);
         ctx.incrementPC();
     }
 }

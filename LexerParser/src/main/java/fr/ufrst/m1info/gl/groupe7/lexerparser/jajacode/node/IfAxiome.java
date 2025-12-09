@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.InvalidAddressException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -35,6 +38,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * @see JajaAxiome
  */
 public class IfAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(IfAxiome.class);
 
     /**
      * Exécute l'instruction {@code if(a1)}.
@@ -78,11 +83,11 @@ public class IfAxiome implements JajaAxiome {
         if (isTrue) {
             // Saut : On force le PC à la nouvelle adresse
             ctx.setInstructionCounter(targetAddress);
-            System.out.println("\t\tAxiome IF exécuté: VRAI -> saut à " + targetAddress);
+            logger.debug("\t\tAxiome IF exécuté: VRAI -> saut à {}", targetAddress);
         } else {
             // Pas de saut : On continue séquentiellement
             ctx.incrementPC();
-            System.out.println("\t\tAxiome IF exécuté: FAUX -> suite séquentielle");
+            logger.debug("\t\tAxiome IF exécuté: FAUX -> suite séquentielle");
         }
     }
 }

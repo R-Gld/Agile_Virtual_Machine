@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Configuration pour les tests du Compiler -->
+    <!-- Le pattern ne doit pas avoir %n pour que la sortie soit identique à lastOutput -->
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger spécifique pour Compiler.class au niveau INFO -->
+    <!-- Pour que logger.info(compiled) soit visible -->
+    <logger name="fr.ufrst.m1info.gl.groupe7.compiler.Compiler" level="INFO"/>
+
+    <!-- Tous les autres loggers au niveau ERROR pour éviter les logs parasites -->
+    <root level="ERROR">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

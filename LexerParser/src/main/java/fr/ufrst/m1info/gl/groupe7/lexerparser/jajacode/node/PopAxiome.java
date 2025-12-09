@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -24,6 +27,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  */
 public class PopAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(PopAxiome.class);
+
     /**
      * Exécute l'instruction {@code pop}.
      *
@@ -39,7 +44,7 @@ public class PopAxiome implements JajaAxiome {
             throw new StackUnderflowException("Rien à dépiler", "POP", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\tAxiome POP exécuté: valeur dépilée = " + popped.value);
+        logger.debug("\t\tAxiome POP exécuté: valeur dépilée = {}", popped.value);
         ctx.incrementPC();
     }
 }

@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbolException;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
@@ -23,6 +26,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
  */
 public class LengthAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(LengthAxiome.class);
+
     @Override
     public void execute(MachineContext ctx, String ident) {
         // 1. Résoudre le nom scopé pour la récursivité
@@ -40,8 +45,7 @@ public class LengthAxiome implements JajaAxiome {
         ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), length,
                                               ctx.getTEMP_VALUE(), Type.ENTIER));
 
-        System.out.println("\t\tAxiome LENGTH exécuté: length(" + scopedIdent + ") = " +
-                           length + " empilé sur la pile.");
+        logger.debug("\t\tAxiome LENGTH exécuté: length({}) = {} empilé sur la pile.", scopedIdent, length);
 
         // 5. Incrémenter PC
         ctx.incrementPC();

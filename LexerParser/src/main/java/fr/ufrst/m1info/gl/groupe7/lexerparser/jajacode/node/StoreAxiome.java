@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.AssignmentException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -28,6 +31,9 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * @see JajaAxiome
  */
 public class StoreAxiome implements JajaAxiome {
+
+    private static final Logger logger = LoggerFactory.getLogger(StoreAxiome.class);
+
     /**
      * Exécute l'instruction {@code store(i)}.
      *
@@ -53,7 +59,7 @@ public class StoreAxiome implements JajaAxiome {
             throw new AssignmentException(scopedIdent, "impossible d'affecter la valeur", "STORE", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\tAxiome STORE exécuté: " + scopedIdent + " mis à jour avec valeur " + valeur.value + ".");
+        logger.debug("\t\tAxiome STORE exécuté: {} mis à jour avec valeur {}.", scopedIdent, valeur.value);
         ctx.incrementPC();
     }
 

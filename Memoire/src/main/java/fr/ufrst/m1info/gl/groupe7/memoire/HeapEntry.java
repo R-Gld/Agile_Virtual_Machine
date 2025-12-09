@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * HeapEntry
  * ---------------------------------------------------------------------------
@@ -7,6 +10,8 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
  * Stores the logical ID, address, size, and optional reference.
  */
 public class HeapEntry {
+
+    private static final Logger logger = LoggerFactory.getLogger(HeapEntry.class);
 
     /** Logical identifier (e.g. variable or symbol name). */
     private final String id;
@@ -38,12 +43,12 @@ public class HeapEntry {
     // -------------------------------------------------------------------------
     public void incrementRef() {
         refCount++;
-        System.err.println("[GC] Increment refCount of " + id + " -> " + refCount);
+        logger.error("[GC] Increment refCount of {} -> {}", id, refCount);
     }
 
     public void decrementRef() {
         refCount--;
-        System.err.println("[GC] Decrement refCount of " + id + " -> " + refCount);
+        logger.error("[GC] Decrement refCount of {} -> {}", id, refCount);
     }
 
     public int getRefCount() {

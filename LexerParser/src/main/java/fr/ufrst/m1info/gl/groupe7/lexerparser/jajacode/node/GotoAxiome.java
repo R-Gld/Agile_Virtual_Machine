@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.InvalidAddressException;
 
@@ -24,6 +27,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.InvalidAddress
  */
 public class GotoAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(GotoAxiome.class);
+
     /**
      * Exécute l'instruction {@code goto(a1)}.
      *
@@ -40,7 +45,7 @@ public class GotoAxiome implements JajaAxiome {
             // 2. Mise à jour directe du PC
             ctx.setInstructionCounter(adresse);
 
-            System.out.println("\t\tAxiome GOTO exécuté: saut à l'adresse " + adresse + ".");
+            logger.debug("\t\tAxiome GOTO exécuté: saut à l'adresse {}.", adresse);
 
         } catch (NumberFormatException e) {
             throw new InvalidAddressException(adresseArg, "GOTO", ctx.getInstructionCounter());
