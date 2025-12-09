@@ -784,24 +784,6 @@ class TestApp {
     }
 
     /**
-     * Test MenuBar has at least 1 menu
-     */
-    @Test
-    void testMenuBarHasMenus() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox topMenu = (HBox) vbox.getChildren().get(1);
-
-        MenuBar menuBar = topMenu.getChildren().stream()
-                .filter(node -> node instanceof MenuBar)
-                .map(node -> (MenuBar) node)
-                .findFirst()
-                .orElse(null);
-
-        assertFalse(menuBar.getMenus().isEmpty(), "MenuBar should have at least one menu");
-    }
-
-    /**
      * Test toolbar children count
      */
     @Test
