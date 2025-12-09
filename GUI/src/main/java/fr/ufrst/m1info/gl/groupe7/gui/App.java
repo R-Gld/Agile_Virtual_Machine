@@ -298,7 +298,7 @@ public class App extends Application {
                 logger.debug("Starting compilation task...");
                 logger.debug("MiniJaja code length: {} characters", code.length());
                 logger.debug("Instruction jajacode générée :");
-                logger.debug("waza{}", compiler.compileToString());
+                logger.debug("{}", compiler.compileToString());
                 return compiler.compileToString();
             }
         };
