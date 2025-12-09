@@ -52,9 +52,9 @@ public class EcrireNode extends InstructionNode {
                 throw new RuntimeException("Type error: cannot print array directly or method reference");
             }
             
-            logger.info("{}", ident1.evaluate(stacks)); // TODO STREAM ??
+            logger.info("{}", ident1.evaluate(stacks));
         } else if (Ident1Node instanceof Expression expr) {
-            logger.info("{}", expr.evaluate(stacks)); // TODO STREAM ??
+            logger.info("{}", expr.evaluate(stacks));
         } else if (Ident1Node instanceof TabNode tabNode) {
             String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
 
