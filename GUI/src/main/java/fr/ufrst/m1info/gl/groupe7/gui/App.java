@@ -13,6 +13,7 @@ import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
@@ -32,11 +33,15 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * JavaFX App
  */
 public class App extends Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     private Stage appStage;
     private MyCodeArea mjjCodeArea;
@@ -83,6 +88,10 @@ public class App extends Application {
         // === Console initialization (clean version) ===
         this.console = new ConsoleOutput("console");
         root.setBottom(this.console);
+
+        // Register the console with the logging system
+        GuiAppender.setGuiConsole(this.console);
+        logger.info("GUI application started successfully");
         // === End ===
 
         stage.setScene(scene);
@@ -126,6 +135,10 @@ public class App extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         hbox.getChildren().add(spacer);
+
+        /* Log Control Panel */
+        LogControlPanel logControlPanel = new LogControlPanel();
+        hbox.getChildren().add(logControlPanel);
 
         /* Build button */
         Button buildButton = new Button("");
@@ -282,10 +295,10 @@ public class App extends Application {
             @Override
             protected String call() {
                 Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
-                System.out.println("[DEBUG] Starting compilation task...");
-                System.out.println("[DEBUG] MiniJaja code length: " + code.length() + " characters");
-                System.out.println("Instruction jajacode générée :");
-                System.out.println("waza" + compiler.compileToString());
+                logger.debug("Starting compilation task...");
+                logger.debug("MiniJaja code length: {} characters", code.length());
+                logger.debug("Instruction jajacode générée :");
+                logger.debug("waza{}", compiler.compileToString());
                 return compiler.compileToString();
             }
         };
