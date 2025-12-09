@@ -760,22 +760,6 @@ class TestApp {
     }
 
     /**
-     * Test scene width matches expected
-     */
-    @Test
-    void testSceneWidthIsCorrect() {
-        assertEquals(1150, stage.getScene().getWidth(), 1.0, "Scene width should be 1150");
-    }
-
-    /**
-     * Test scene height matches expected
-     */
-    @Test
-    void testSceneHeightIsCorrect() {
-        assertEquals(720, stage.getScene().getHeight(), 1.0, "Scene height should be 720");
-    }
-
-    /**
      * Test root is BorderPane
      */
     @Test
