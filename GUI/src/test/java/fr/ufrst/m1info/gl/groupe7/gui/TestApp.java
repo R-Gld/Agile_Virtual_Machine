@@ -95,11 +95,17 @@ class TestApp {
     }
 
     @Test
-    void testSplitPaneHasTwoCodeAreas() {
+    void testSplitPaneHasTwoWrapperForCodeAreas() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
         SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
         assertEquals(2, editorSplitPane.getItems().size(), "editorSplitPane doit contenir 2 éléments");
+
+        VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
+        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
+
+        assertNotNull(miniWrapper, "MiniJaja wrapper should exist");
+        assertNotNull(jajaWrapper, "Jajacode wrapper should exist");
     }
 
     @Test
@@ -447,24 +453,6 @@ class TestApp {
         for (Button button : buttons) {
             assertNotNull(button.getGraphic(), "Chaque bouton doit avoir un graphique (icône)");
         }
-    }
-
-    /**
-     * Test editor wrappers exist
-     */
-    @Test
-    void testEditorWrappersExist() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
-
-        assertEquals(2, editorSplitPane.getItems().size(), "Editor split pane should have 2 items");
-
-        VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
-        VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
-
-        assertNotNull(miniWrapper, "MiniJaja wrapper should exist");
-        assertNotNull(jajaWrapper, "Jajacode wrapper should exist");
     }
 
     /**
