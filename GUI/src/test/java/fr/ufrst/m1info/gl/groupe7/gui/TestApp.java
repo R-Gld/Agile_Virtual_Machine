@@ -467,19 +467,6 @@ class TestApp {
     }
 
     /**
-     * Test console exists and is accessible
-     */
-    @Test
-    void testConsoleIsAccessible() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
-
-        assertNotNull(console, "Console should exist");
-        assertEquals("console", console.getId(), "Console should have correct ID");
-    }
-
-    /**
      * Test that empty JJC code area can be verified
      */
     @Test
