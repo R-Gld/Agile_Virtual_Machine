@@ -113,7 +113,7 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(arrayName);
         Type arrayType = tableauNode.getType();
 
-        if (checkDuplicateAndRegister(qualifiedName, arrayType, "array", arrayName)) {
+        if (checkDuplicateAndRegisterArray(qualifiedName, arrayType, "array", arrayName)) {
             trackVariableInScope(arrayName);
         }
 
@@ -151,6 +151,20 @@ public class DeclarationCollector {
             return false;
         }
         context.getSymbolTable().creationSymbol(qualifiedName, 0, type);
+        return true;
+    }
+
+    /**
+     * Check for duplicate and register array symbol if not duplicate.
+     *
+     * @return true if registered successfully, false if duplicate
+     */
+    private boolean checkDuplicateAndRegisterArray(String qualifiedName, Type type, String kind, String name) {
+        if (context.getSymbolTable().contains(qualifiedName)) {
+            reportError("Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
+            return false;
+        }
+        context.getSymbolTable().creationSymbol(qualifiedName, 0, type, true); // true = isArray
         return true;
     }
 
@@ -266,7 +280,7 @@ public class DeclarationCollector {
         Type arrayType = tableauNode.getType();
 
         if (checkDuplicateLocal(qualifiedName, arrayName, "array")) {
-            context.getSymbolTable().creationSymbol(qualifiedName, 0, arrayType);
+            context.getSymbolTable().creationSymbol(qualifiedName, 0, arrayType, true); // true = isArray
             trackVariableInScope(arrayName);
         }
 

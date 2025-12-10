@@ -326,4 +326,20 @@ public class TypeInferenceEngine {
             default -> "operation";
         };
     }
+
+    /**
+     * Check if an expression represents an array variable.
+     * @param expr the Expression to check
+     * @return true if the expression is an array variable, false otherwise
+     */
+    public boolean isArrayExpression(Expression expr) {
+        if (expr instanceof IdentNode ident) {
+            String varName = ident.getNom();
+            String qualifiedName = scopeResolver.resolveAndQualifyName(varName);
+
+            var symbol = context.getSymbolTable().findSymbol(qualifiedName);
+            return symbol != null && symbol.isArray();
+        }
+        return false;
+    }
 }
