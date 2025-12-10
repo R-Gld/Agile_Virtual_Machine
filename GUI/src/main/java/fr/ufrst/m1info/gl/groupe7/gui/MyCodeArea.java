@@ -138,18 +138,7 @@ public class MyCodeArea extends AnchorPane {
         int lastKwEnd = 0;
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         while (matcher.find()) {
-            String styleClass = matcher.group("KEYWORD") != null ? "keyword"
-                    : matcher.group("TYPE") != null ? "type"
-                            : (language == Language.MINIJAJA && matcher.group("FUNCTION") != null) ? "function"
-                                    : matcher.group("BOOLEAN") != null ? "boolean"
-                                            : matcher.group("PAREN") != null ? "paren"
-                                                    : matcher.group("BRACE") != null ? "brace"
-                                                            : matcher.group("BRACKET") != null ? "bracket"
-                                                                    : matcher.group("SEMICOLON") != null ? "semicolon"
-                                                                            : matcher.group("STRING") != null ? "string"
-                                                                                    : matcher.group("COMMENT") != null
-                                                                                            ? "comment"
-                                                                                            : null;
+            String styleClass = getStyleClass(matcher, language);
             /* never happens */ assert styleClass != null;
             spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
             spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
@@ -157,6 +146,29 @@ public class MyCodeArea extends AnchorPane {
         }
         spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);
         return spansBuilder.create();
+    }
+
+    /**
+     * Détermine la classe de style CSS à appliquer en fonction du groupe capturé.
+     *
+     * @param matcher le matcher regex contenant les groupes capturés
+     * @param language le langage actif pour la coloration
+     * @return la classe CSS correspondante ou null si aucun groupe ne correspond
+     */
+    private String getStyleClass(Matcher matcher, Language language) {
+        List<String> groups = List.of("KEYWORD", "TYPE", "FUNCTION", "BOOLEAN",
+                                        "PAREN", "BRACE", "BRACKET", "SEMICOLON",
+                                        "STRING", "COMMENT");
+
+        for (String group : groups) {
+            if (group.equals("FUNCTION") && language != Language.MINIJAJA) {
+                continue;
+            }
+            if (matcher.group(group) != null) {
+                return group.toLowerCase();
+            }
+        }
+        return null;
     }
 
     /**
