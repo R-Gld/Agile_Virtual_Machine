@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javafx.event.Event;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -86,10 +87,10 @@ public class MyCodeArea extends AnchorPane {
     private static final String FUNCTION_PATTERN = "\\b(" + String.join("|", FUNCTIONS) + ")\\b";
     private static final String BOOLEAN_PATTERN = "\\b(" + String.join("|", BOOLEANS) + ")\\b";
 
-    private static final String PAREN_PATTERN = "\\(|\\)";
-    private static final String BRACE_PATTERN = "\\{|\\}";
-    private static final String BRACKET_PATTERN = "\\[|\\]";
-    private static final String SEMICOLON_PATTERN = "\\;";
+    private static final String PAREN_PATTERN = "[()]";
+    private static final String BRACE_PATTERN = "[{}]";
+    private static final String BRACKET_PATTERN = "[\\[\\]]";
+    private static final String SEMICOLON_PATTERN = ";";
     /** Chaînes et commentaires (compatible multi-lignes). */
     private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
     private static final String COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/";
@@ -119,11 +120,64 @@ public class MyCodeArea extends AnchorPane {
     private StyleSpans<Collection<String>> computeHighlighting(String text) {
         StyleSpans<Collection<String>> syntaxHighlighting = computeSyntaxHighlighting(text);
         StyleSpans<Collection<String>> errorHighlighting = computeErrorHighlighting(text);
-        return syntaxHighlighting.overlay(errorHighlighting, (style1, style2) -> {
-            Collection<String> combined = new ArrayList<>(style1);
-            combined.addAll(style2);
-            return combined;
-        });
+        StyleSpans<Collection<String>> semanticHighlighting = computeSemanticHighlighting(text); // pour higlight les fonctions
+
+        return syntaxHighlighting
+                .overlay(errorHighlighting, (style1, style2) -> {
+                    Collection<String> combined = new ArrayList<>(style1);
+                    combined.addAll(style2);
+                    return combined;
+                })
+                .overlay(semanticHighlighting, (style1, style2) -> {
+                    Collection<String> combined = new ArrayList<>(style1);
+                    combined.addAll(style2);
+                    return combined;
+                });
+    }
+
+    /**
+     * Performs semantic analysis to find user-defined function declarations and calls.
+     *
+     * @param text text to analyze
+     * @return StyleSpans for user-defined functions
+     */
+    private StyleSpans<Collection<String>> computeSemanticHighlighting(String text) {
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        
+        if (language == Language.MINIJAJA) {
+            // Run the parser and listener
+            MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
+            lexer.removeErrorListeners();
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            MiniJajaParser parser = new MiniJajaParser(tokens);
+            parser.removeErrorListeners();
+
+            org.antlr.v4.runtime.tree.ParseTree tree = parser.classe();
+            MiniJajaSymbolListener listener = new MiniJajaSymbolListener();
+            org.antlr.v4.runtime.tree.ParseTreeWalker walker = new org.antlr.v4.runtime.tree.ParseTreeWalker();
+            walker.walk(listener, tree);
+
+            // Get the ranges and build the StyleSpans
+            List<javafx.scene.control.IndexRange> functionRanges = listener.getFunctionStyleRanges();
+            int lastEnd = 0;
+            for (javafx.scene.control.IndexRange range : functionRanges) {
+                if (range.getStart() > lastEnd) {
+                    spansBuilder.add(Collections.emptyList(), range.getStart() - lastEnd);
+                }
+                int length = range.getLength();
+                if (length > 0) {
+                    spansBuilder.add(Collections.singleton("function"), length);
+                }
+                lastEnd = range.getEnd();
+            }
+            if (lastEnd < text.length()) {
+                spansBuilder.add(Collections.emptyList(), text.length() - lastEnd);
+            }
+        } else {
+             spansBuilder.add(Collections.emptyList(), text.length());
+        }
+
+        return spansBuilder.create();
     }
 
     /**
@@ -211,8 +265,8 @@ public class MyCodeArea extends AnchorPane {
 
             try {
                 parser.classe();
-            } catch (Exception e) {
-                // Ignore parser exceptions
+            } catch (Exception ignored) {
+
             }
         }
 
@@ -339,8 +393,8 @@ public class MyCodeArea extends AnchorPane {
             });
 
             // Also consume mouse pressed and released to prevent any propagation
-            hbox.setOnMousePressed(e -> e.consume());
-            hbox.setOnMouseReleased(e -> e.consume());
+            hbox.setOnMousePressed(Event::consume);
+            hbox.setOnMouseReleased(Event::consume);
 
             hbox.setCursor(javafx.scene.Cursor.HAND); // Visual feedback for clickability
 
@@ -367,8 +421,8 @@ public class MyCodeArea extends AnchorPane {
                 toggleBreakpoint(line, bpCircle);
                 e.consume();
             });
-            stack.setOnMousePressed(e -> e.consume());
-            stack.setOnMouseReleased(e -> e.consume());
+            stack.setOnMousePressed(Event::consume);
+            stack.setOnMouseReleased(Event::consume);
             stack.setCursor(javafx.scene.Cursor.HAND);
 
             return stack;
