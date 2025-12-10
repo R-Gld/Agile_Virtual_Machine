@@ -122,15 +122,22 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     public Object visitInstr(JajaCodeParser.InstrContext ctx) {
 
         // 1. Instructions sans arguments
-        if (ctx.INIT() != null) dispatch("init", null);
-        else if (ctx.SWAP() != null) dispatch("swap", null);
-        else if (ctx.POP() != null) dispatch("pop", null);
-        else if (ctx.JCSTOP() != null) dispatch("jcstop", null);
-        else if (ctx.WRITE() != null) dispatch("write", null);
-        else if (ctx.WRITELN() != null) dispatch("writeln", null);
-        else if (ctx.RETURN() != null) dispatch("return", null);
+        if (ctx.INIT() != null)
+            dispatch("init", null);
+        else if (ctx.SWAP() != null)
+            dispatch("swap", null);
+        else if (ctx.POP() != null)
+            dispatch("pop", null);
+        else if (ctx.JCSTOP() != null)
+            dispatch("jcstop", null);
+        else if (ctx.WRITE() != null)
+            dispatch("write", null);
+        else if (ctx.WRITELN() != null)
+            dispatch("writeln", null);
+        else if (ctx.RETURN() != null)
+            dispatch("return", null);
 
-            // 2. Instructions avec VALEUR
+        // 2. Instructions avec VALEUR
         else if (ctx.PUSH() != null) {
             // On extrait le texte brut ("5", "true", "x")
             String valText = ctx.valeur().getText();
@@ -144,26 +151,38 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // 3. Instructions avec IDENTIFIANT
         else if (ctx.ident() != null) {
             String ident = ctx.ident().getText();
-            if (ctx.STORE() != null) dispatch("store", ident);
-            else if (ctx.LOAD() != null) dispatch("load", ident);
-            else if (ctx.INC() != null) dispatch("inc", ident);
-            else if (ctx.INVOKE() != null) dispatch("invoke", ident);
-                // NEW est spécial (4 args)
-            else if (ctx.NEW() != null) handleNew(ctx);
-                // Opérations sur tableaux
-            else if (ctx.ALOAD() != null) dispatch("aload", ident);
-            else if (ctx.ASTORE() != null) dispatch("astore", ident);
-            else if (ctx.AINC() != null) dispatch("ainc", ident);
-            else if (ctx.LENGTH() != null) dispatch("length", ident);
-                // NEWARRAY est spécial (2 args: ident, type)
-            else if (ctx.NEWARRAY() != null) handleNewarray(ctx);
+            if (ctx.STORE() != null)
+                dispatch("store", ident);
+            else if (ctx.LOAD() != null)
+                dispatch("load", ident);
+            else if (ctx.INC() != null)
+                dispatch("inc", ident);
+            else if (ctx.INVOKE() != null)
+                dispatch("invoke", ident);
+            // NEW est spécial (4 args)
+            else if (ctx.NEW() != null)
+                handleNew(ctx);
+            // Opérations sur tableaux (from dev branch)
+            else if (ctx.ALOAD() != null)
+                dispatch("aload", ident);
+            else if (ctx.ASTORE() != null)
+                dispatch("astore", ident);
+            else if (ctx.AINC() != null)
+                dispatch("ainc", ident);
+            else if (ctx.LENGTH() != null)
+                dispatch("length", ident);
+            // NEWARRAY est spécial (2 args: ident, type)
+            else if (ctx.NEWARRAY() != null)
+                handleNewarray(ctx);
         }
 
         // 4. Instructions avec ADRESSE
         else if (ctx.adresse() != null) {
             String addr = ctx.adresse().getText();
-            if (ctx.IF() != null) dispatch("if", addr);
-            else if (ctx.GOTO() != null) dispatch("goto", addr);
+            if (ctx.IF() != null)
+                dispatch("if", addr);
+            else if (ctx.GOTO() != null)
+                dispatch("goto", addr);
         }
 
         // 5. Opérations (Déléguées aux sous-visiteurs)
@@ -223,21 +242,58 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     @Override
     public Object visitOper2(JajaCodeParser.Oper2Context ctx) {
-        if (ctx.ADD() != null) dispatch("add", null);
-        else if (ctx.SUB() != null) dispatch("sub", null);
-        else if (ctx.MUL() != null) dispatch("mul", null);
-        else if (ctx.DIV() != null) dispatch("div", null);
-        else if (ctx.AND() != null) dispatch("and", null);
-        else if (ctx.OR() != null) dispatch("or", null);
-        else if (ctx.SUP() != null) dispatch("sup", null);
-        else if (ctx.CMP() != null) dispatch("cmp", null);
+        if (ctx.ADD() != null)
+            dispatch("add", null);
+        else if (ctx.SUB() != null)
+            dispatch("sub", null);
+        else if (ctx.MUL() != null)
+            dispatch("mul", null);
+        else if (ctx.DIV() != null)
+            dispatch("div", null);
+        else if (ctx.AND() != null)
+            dispatch("and", null);
+        else if (ctx.OR() != null)
+            dispatch("or", null);
+        else if (ctx.SUP() != null)
+            dispatch("sup", null);
+        else if (ctx.CMP() != null)
+            dispatch("cmp", null);
         return null;
     }
 
     @Override
     public Object visitOper1(JajaCodeParser.Oper1Context ctx) {
-        if (ctx.NEG() != null) dispatch("neg", null);
-        else if (ctx.NOT() != null) dispatch("not", null);
+        if (ctx.NEG() != null)
+            dispatch("neg", null);
+        else if (ctx.NOT() != null)
+            dispatch("not", null);
         return null;
     }
+
+    // for test
+
+    public boolean step() {
+        int pc = context.getInstructionCounter();
+        JajaCodeParser.InstrContext instruction = programme.get(pc);
+
+        if (instruction == null) {
+            logger.error("Erreur : @{} introuvable !", pc);
+            context.stop();
+            return false; // Program finished (error case)
+        }
+
+        visit(instruction);
+
+        // Return true if there are more instructions, false if finished
+        return context.isRunning();
+    }
+
+    public boolean isFinished() {
+        return !context.isRunning();
+    }
+
+    public int getCurrentInstructionIndex() {
+        return context.getInstructionCounter();
+    }
+
 }

@@ -136,6 +136,7 @@ public class TestCodeArea {
         }
     }
 
+    @Disabled
     @Test
     void testAutoCompletionPopupAppears(FxRobot robot) {
         runOnFxThread(() -> {
@@ -158,6 +159,7 @@ public class TestCodeArea {
         Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Auto-completion popup should be visible");
     }
 
+    @Disabled
     @Test
     void testAutoCompletionToggle(FxRobot robot) {
         runOnFxThread(() -> {

@@ -35,7 +35,12 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import org.fxmisc.richtext.model.TwoDimensional;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Zone d'édition de code enrichie pour JavaFX basée sur {@link CodeArea}.
@@ -234,6 +239,9 @@ public class MyCodeArea extends AnchorPane {
     /** Popup pour l'auto-complétion. */
     private ContextMenu autoCompletionPopup;
 
+    /* Stores all active breakpoints by line index */
+    private final Set<Integer> breakpoints = new HashSet<>();
+
     /**
      * Crée une zone de code MiniJaja avec identifiant donné.
      *
@@ -246,7 +254,7 @@ public class MyCodeArea extends AnchorPane {
     /**
      * Crée une zone de code avec le langage précisé.
      *
-     * @param id identifiant de ce composant pour JavaFX
+     * @param id       identifiant de ce composant pour JavaFX
      * @param language langage de la zone de code
      */
     public MyCodeArea(String id, Language language) {
@@ -287,21 +295,86 @@ public class MyCodeArea extends AnchorPane {
 
         /* Add line numbers */
         IntFunction<Node> numberFactory = LineNumberFactory.get(codeArea);
+
         /* Keep line numbers aligned with content */
         IntFunction<Node> graphicFactory = line -> {
-            HBox hbox = new HBox(numberFactory.apply(line));
-            hbox.setSpacing(1);
-            hbox.setAlignment(Pos.CENTER);
+            HBox hbox = new HBox();
+
+            /* Create breakpoint circle (initially hidden) */
+            Circle bpCircle = new Circle(5);
+            bpCircle.getStyleClass().add("breakpoint-node");
+            bpCircle.setManaged(true); // always reserve space
+
+            // restore visibility from breakpoint set (after scroll)
+            bpCircle.setVisible(breakpoints.contains(line));
+
+            /* Clicking toggles breakpoint ON/OFF */
+            bpCircle.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
+
+            /* Number label next to breakpoint circle */
+            Node number = numberFactory.apply(line);
+
+            /* Clicking on the number also toggles breakpoint */
+            number.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
+
+            hbox.getChildren().addAll(number, bpCircle);
+            hbox.setSpacing(0);
+            hbox.setAlignment(Pos.CENTER_LEFT);
+            hbox.setPadding(new javafx.geometry.Insets(0, 0, 0, -20));
+
+            // fix gutter width so it does not change when scrolling or line numbers grow
+            hbox.setMinWidth(57);
+            hbox.setPrefWidth(57);
+            hbox.setMaxWidth(57);
+
+            // Make entire gutter area clickable and add visual feedback
+            hbox.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume(); // Prevent click from reaching code area
+            });
+
+            // Also consume mouse pressed and released to prevent any propagation
+            hbox.setOnMousePressed(e -> e.consume());
+            hbox.setOnMouseReleased(e -> e.consume());
+
+            hbox.setCursor(javafx.scene.Cursor.HAND); // Visual feedback for clickability
+
+            StackPane stack;
+
             if (line == 0) {
                 Rectangle rectangle = new Rectangle();
                 rectangle.getStyleClass().add("lineno");
                 rectangle.widthProperty().bind(hbox.widthProperty());
                 rectangle.heightProperty().bind(codeArea.heightProperty());
                 StackPane.setAlignment(rectangle, Pos.TOP_LEFT);
-                return new StackPane(rectangle, hbox);
+                stack = new StackPane(rectangle, hbox);
+            } else {
+                stack = new StackPane(hbox);
             }
-            return new StackPane(hbox);
+
+            // lock stack pane width to keep gutter width stable
+            stack.setMinWidth(70);
+            stack.setPrefWidth(70);
+            stack.setMaxWidth(70);
+
+            // Make the StackPane also clickable and consume all events
+            stack.setOnMouseClicked(e -> {
+                toggleBreakpoint(line, bpCircle);
+                e.consume();
+            });
+            stack.setOnMousePressed(e -> e.consume());
+            stack.setOnMouseReleased(e -> e.consume());
+            stack.setCursor(javafx.scene.Cursor.HAND);
+
+            return stack;
         };
+
         codeArea.setParagraphGraphicFactory(graphicFactory);
 
         /* Add scroll pane */
@@ -311,6 +384,7 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setLeftAnchor(scroll, 0d);
         AnchorPane.setRightAnchor(scroll, 0d);
         this.getChildren().add(scroll);
+        initCaretLineHighlight();
 
         // Auto-completion
         codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -449,7 +523,7 @@ public class MyCodeArea extends AnchorPane {
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
-                    codeArea.replaceText(finalStart, caretPosition, suggestion);
+                codeArea.replaceText(finalStart, caretPosition, suggestion);
             });
             autoCompletionPopup.getItems().add(item);
         }
@@ -457,6 +531,28 @@ public class MyCodeArea extends AnchorPane {
         Optional<Bounds> bounds = codeArea.getCaretBounds();
         if (bounds.isPresent()) {
             autoCompletionPopup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
+        }
+    }
+
+    /**
+     * Returns the set of all active breakpoint line indices.
+     */
+    public Set<Integer> getBreakpoints() {
+        return breakpoints;
+    }
+
+    /**
+     * Toggles the breakpoint on the given line.
+     * If breakpoint is active → remove it and hide the circle.
+     * If breakpoint is not active → add it and show the circle.
+     */
+    private void toggleBreakpoint(int line, Circle bpCircle) {
+        if (breakpoints.contains(line)) {
+            breakpoints.remove(line);
+            bpCircle.setVisible(false);
+        } else {
+            breakpoints.add(line);
+            bpCircle.setVisible(true);
         }
     }
 
@@ -507,6 +603,7 @@ public class MyCodeArea extends AnchorPane {
         codeArea.setEditable(false);
     }
 
+    // START highlight
     /**
      * Met en évidence une ligne avec la classe CSS "current-line".
      * Utilisée durant le débogage pour indiquer la ligne d'exécution courante.
@@ -529,6 +626,24 @@ public class MyCodeArea extends AnchorPane {
         });
     }
 
-    // cos of the inner style it didn't work I have removed it and i think now it
-    // works for linux please check it
+    /* Highlight caret line */
+    private void highlightCaretLine() {
+        int caret = codeArea.getCaretPosition();
+        int currentLine = codeArea.offsetToPosition(caret, TwoDimensional.Bias.Backward).getMajor();
+
+        int paragraphCount = codeArea.getParagraphs().size();
+        for (int i = 0; i < paragraphCount; i++) {
+            codeArea.setParagraphStyle(i, Collections.emptyList());
+        }
+
+        if (currentLine >= 0 && currentLine < paragraphCount) {
+            codeArea.setParagraphStyle(currentLine, Collections.singletonList("current-caret-line"));
+        }
+    }
+
+    private void initCaretLineHighlight() {
+        codeArea.caretPositionProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+        codeArea.focusedProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+        codeArea.textProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
+    }
 }
