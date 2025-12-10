@@ -136,7 +136,6 @@ public class TestCodeArea {
         }
     }
 
-    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionPopupAppears(FxRobot robot) {
         runOnFxThread(() -> {
@@ -159,7 +158,6 @@ public class TestCodeArea {
         Assertions.assertFalse(robot.lookup(".context-menu").queryAll().isEmpty(), "Auto-completion popup should be visible");
     }
 
-    @DisabledOnOs(value = OS.MAC, disabledReason = "Auto-completion popup tests are unstable on macOS")
     @Test
     void testAutoCompletionToggle(FxRobot robot) {
         runOnFxThread(() -> {
