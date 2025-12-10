@@ -397,7 +397,7 @@ public class Stacks {
     public void declareCst(String ident, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("cst already declare: " + ident);
+            throw new RuntimeException("cst already declared: " + ident);
         }
         declareCst(ident, Omega.getInstance(), type);
     }
@@ -445,7 +445,7 @@ public class Stacks {
     public void declareMeth(String ident, Object body, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("meth already declare: " + ident);
+            throw new RuntimeException("meth already declared: " + ident);
         }
         Quad q = new Quad(ident, body, "meth", type);
         push(q);

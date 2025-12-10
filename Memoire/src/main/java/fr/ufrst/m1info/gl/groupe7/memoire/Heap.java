@@ -69,7 +69,7 @@ public class Heap {
         }
     }
 
-    private void remove(int size) {
+    private Node remove(int size) {
         int index = hash(size);
         Node current = table[index];
         Node prev = null;
@@ -85,11 +85,12 @@ public class Heap {
                 }
 
                 current.next = null;
-                return;
+                return current;
             }
             prev = current;
             current = current.next;
         }
+        return null;
     }
 
     private Node findBlock(int minSize) {

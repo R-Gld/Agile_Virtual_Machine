@@ -1317,7 +1317,7 @@ public class StacksTest {
             stacks.declareCst("x",42 ,Type.ENTIER);
         });
 
-        assertTrue(ex.getMessage().contains("cst already declare: x"));
+        assertTrue(ex.getMessage().contains("cst already declared: x"));
     }
 
     @Test
@@ -1400,7 +1400,7 @@ public class StacksTest {
                 stacks.declareVar("x", Type.ENTIER)
         );
 
-        assertTrue(e.getMessage().contains("var already  declare: "));
+        assertTrue(e.getMessage().contains("var already declared: "));
     }
     @Test
     public void testDoubleDeclarationConstThrows() {
@@ -1411,8 +1411,7 @@ public class StacksTest {
         RuntimeException e = assertThrows(RuntimeException.class, () ->
                 stacks.declareCst("k", Type.ENTIER)
         );
-
-        assertTrue(e.getMessage().contains("cst already declare: "));
+        assertTrue(e.getMessage().contains("cst already declared: "));
     }
     @Test
     public void testVarThenConstSameNameThrows() {
@@ -1424,7 +1423,7 @@ public class StacksTest {
                 stacks.declareCst("a", Type.ENTIER)
         );
 
-        assertTrue(e.getMessage().contains("cst already declare: "));
+        assertTrue(e.getMessage().contains("cst already declared: "));
     }
     @Test
     public void testConstThenVarSameNameThrows() {
@@ -1435,8 +1434,7 @@ public class StacksTest {
         RuntimeException e = assertThrows(RuntimeException.class, () ->
                 stacks.declareVar("z", Type.ENTIER)
         );
-
-        assertTrue(e.getMessage().contains("var already  declare: "));
+        assertTrue(e.getMessage().contains("var already declared: "));
     }
     @Test
     public void testDoubleDeclareMethodThrows() {
@@ -1446,8 +1444,8 @@ public class StacksTest {
         RuntimeException e = assertThrows(RuntimeException.class, () ->
                 stacks.declareMeth("maFonction", null, Type.VOID)
         );
-
-        assertTrue(e.getMessage().contains("meth already declare"));
+        System.out.println("e.getMessage() = " + e.getMessage());
+        assertTrue(e.getMessage().contains("meth already declared"));
     }
     @Test
     public void testDeclareMethodWithExistingVarThrows() {
@@ -1456,7 +1454,7 @@ public class StacksTest {
         RuntimeException e = assertThrows(RuntimeException.class, () ->
                 stacks.declareMeth("x", null, Type.VOID)
         );
-        assertTrue(e.getMessage().contains("meth already declare"));
+        assertTrue(e.getMessage().contains("meth already declared"));
     }
     @Test
     public void testAffecterConstOmegaAllowedOnce() {
