@@ -477,9 +477,39 @@ public class MyCodeArea extends AnchorPane {
      * @param event événement clavier ENTER consommé
      */
     private void handleSmartIndentation(KeyEvent event) {
-        int currentParagraph = codeArea.getCurrentParagraph();
+        int caretPosition = codeArea.getCaretPosition();
+        String text = codeArea.getText();
 
-        // Get previous line content
+        // Case 1: Enter is pressed between {}
+        if (caretPosition > 0 && caretPosition < text.length() &&
+            text.charAt(caretPosition - 1) == '{' && text.charAt(caretPosition) == '}') {
+
+            int currentParagraph = codeArea.getCurrentParagraph();
+            String lineText = codeArea.getText(currentParagraph);
+            
+            // Get base indentation of the current line
+            String baseIndentation = "";
+            Matcher matcher = Pattern.compile("^\\s*").matcher(lineText);
+            if (matcher.find()) {
+                baseIndentation = matcher.group();
+            }
+            
+            int tabSize = EditorPreferences.getInstance().getTabSize();
+            String indentedLine = baseIndentation + " ".repeat(tabSize);
+
+
+            String toInsert = "\n" + indentedLine + "\n" + baseIndentation;
+            
+
+            codeArea.replaceSelection(toInsert);
+
+            codeArea.moveTo(caretPosition + 1 + indentedLine.length());
+            event.consume();
+            return;
+        }
+
+        // Case 2: Original logic for line ending with {
+        int currentParagraph = codeArea.getCurrentParagraph();
         if (currentParagraph >= 0) {
             String lineText = codeArea.getText(currentParagraph);
             String indentation = "";
@@ -488,8 +518,7 @@ public class MyCodeArea extends AnchorPane {
                 indentation = matcher.group();
             }
 
-            // Check if the line ends with {
-            String trimmedLine = lineText.trim();
+            String trimmedLine = lineText.substring(0, codeArea.getCaretColumn()).trim();
             if (trimmedLine.endsWith("{")) {
                 int tabSize = EditorPreferences.getInstance().getTabSize();
                 indentation += " ".repeat(tabSize);
