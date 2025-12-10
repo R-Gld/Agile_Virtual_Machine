@@ -35,6 +35,9 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+
 // Breakpoint support
 import java.util.HashSet;
 import java.util.Set;
@@ -177,10 +180,40 @@ public class App extends Application {
 
         root.setCenter(mainSplitPane);
 
+        // --- Drag and Drop ---
+        root.setOnDragOver(event -> {
+            if (event.getGestureSource() != root && event.getDragboard().hasFiles()) {
+                // Accept the drop only if one of the files is a .mjj or .jjc file
+                boolean canAccept = event.getDragboard().getFiles().stream()
+                        .anyMatch(file -> file.getName().toLowerCase().endsWith(".mjj") ||
+                                          file.getName().toLowerCase().endsWith(".jjc"));
+                if (canAccept) {
+                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                }
+            }
+            event.consume();
+        });
+
+        root.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                // Find the first valid file and load it.
+                db.getFiles().stream()
+                        .filter(file -> file.getName().toLowerCase().endsWith(".mjj") ||
+                                       file.getName().toLowerCase().endsWith(".jjc"))
+                        .findFirst()
+                        .ifPresent(this::loadFileContent);
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+
         // Scene + styles
         Scene scene = new Scene(root, 1150, 720);
 
-        String themeCss = getClass().getResource("/theme.css").toExternalForm();
+        String themeCss = Objects.requireNonNull(getClass().getResource("/theme.css")).toExternalForm();
         scene.getStylesheets().add(themeCss);
         root.getStyleClass().add("theme-light");
 
@@ -392,18 +425,26 @@ public class App extends Application {
      * Fonction pour gerer l'ouverture d'un fichier
      */
     private void loadFile() {
-
-        /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showOpenDialog(appStage);
-        if (file == null)
-            return;
+        loadFileContent(file);
+    }
 
-        /* Lecture du fichier selectionner depuis l'explorateur de fichier */
+    /**
+     * Reads the content of a given file and loads it into the appropriate editor.
+     *
+     * @param file The file to load.
+     */
+    private void loadFileContent(File file) {
+        if (file == null) {
+            return;
+        }
+
+        /* Lecture du fichier selectionner */
         StringBuilder fileContent = new StringBuilder();
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
