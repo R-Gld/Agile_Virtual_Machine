@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-public class ParseTreeImageExporterTest {
+class ParseTreeImageExporterTest {
 
     @Test
-    public void testImageGeneration() throws IOException {
+    void testImageGeneration() throws IOException {
         String code = "class Test { main { int x = 1; write(x); } }";
         Path tempInput = Files.createTempFile("test_input", ".mjj");
         Files.writeString(tempInput, code);
@@ -41,31 +41,31 @@ public class ParseTreeImageExporterTest {
     }
 
     @Test
-    public void testMissingArguments() {
+    void testMissingArguments() {
         int exitCode = ParseTreeImageExporter.run(new String[] {});
         assertEquals(1, exitCode, "Should return 1 when no arguments provided");
     }
 
     @Test
-    public void testFileNotFound() {
+    void testFileNotFound() {
         int exitCode = ParseTreeImageExporter.run(new String[] { "@nonexistent_file_12345.mjj" });
         assertEquals(2, exitCode, "Should return 2 when file not found");
     }
 
     @Test
-    public void testEmptySource() {
+    void testEmptySource() {
         int exitCode = ParseTreeImageExporter.run(new String[] { "   " });
         assertEquals(3, exitCode, "Should return 3 when source is empty or blank");
     }
 
     @Test
-    public void testSyntaxError() {
+    void testSyntaxError() {
         int exitCode = ParseTreeImageExporter.run(new String[] { "class { invalid syntax }" });
         assertEquals(4, exitCode, "Should return 4 when syntax errors occur");
     }
 
     @Test
-    public void testDirectCodeInput() throws IOException {
+    void testDirectCodeInput() throws IOException {
         Path tempOutput = Files.createTempFile("test_direct", ".png");
         Files.delete(tempOutput);
 
@@ -79,7 +79,7 @@ public class ParseTreeImageExporterTest {
     }
 
     @Test
-    public void testDefaultOutputPath() throws IOException {
+    void testDefaultOutputPath() throws IOException {
         String code = "class Default { main { } }";
         Path tempInput = Files.createTempFile("test_default", ".mjj");
         Files.writeString(tempInput, code);
@@ -96,7 +96,7 @@ public class ParseTreeImageExporterTest {
     }
 
     // @Test
-    // public void testAstConstructionFailure() throws IOException {
+    // void testAstConstructionFailure() throws IOException {
 
     //     String code = "class Fail { main { f(); } }";
     //     Path tempInput = Files.createTempFile("test_fail", ".mjj");
