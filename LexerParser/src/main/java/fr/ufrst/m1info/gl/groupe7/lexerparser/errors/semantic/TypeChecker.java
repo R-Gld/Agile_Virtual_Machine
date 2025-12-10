@@ -273,6 +273,21 @@ public class TypeChecker {
                 return;
             }
 
+            // Get symbol to check if it's an array
+            var symbol = context.getSymbolTable().findSymbol(qualifiedName);
+            boolean varIsArray = symbol != null && symbol.isArray();
+            boolean exprIsArray = typeInferenceEngine.isArrayExpression(expression);
+
+            // Check array compatibility
+            if (varIsArray != exprIsArray) {
+                if (varIsArray) {
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign a scalar value to array variable '%s'. " + "Use array syntax (e.g., '%s[index] = value') to assign to array elements.", varName, varName));
+                } else {
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign an array to scalar variable '%s'. " + "Arrays must be assigned to array variables of the same type.", varName));
+                }
+                return;
+            }
+
             // Check type compatibility
             Type varType = context.getSymbolTable().type(qualifiedName);
             Type exprType = typeInferenceEngine.inferType(expression);
