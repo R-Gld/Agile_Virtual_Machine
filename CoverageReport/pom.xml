@@ -34,6 +34,11 @@
             <artifactId>compiler</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
+            <artifactId>ASTExporter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -26,7 +26,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.Tree;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
@@ -107,16 +106,11 @@ public class ParseTreeImageExporter {
             AstNode astRoot = visitor.visit(tree);
             exportAstImage(astRoot, Path.of(outputFile));
             logger.info("AST exporté dans: {}", outputFile);
-        } catch (Exception e) {
-            logger.error("Erreur lors de la construction de l'AST ({}). Export de l'arbre CST à la place.", e.getMessage());
-            try {
-                exportTreeImage(tree, Path.of(outputFile));
-                logger.info("Arbre CST exporté dans: {}", outputFile);
-            } catch (IOException ex) {
+        } catch (IOException ex) {
                 logger.error("Erreur lors de l'export de l'image: {}", ex.getMessage());
                 return 5;
-            }
         }
+
         return 0;
     }
 
@@ -131,130 +125,6 @@ public class ParseTreeImageExporter {
         return arg;
     }
 
-    /**
-     * Calcule la largeur et la hauteur nécessaires pour dessiner l'arbre.
-     */
-    private static Dimension computeTreeSize(Tree tree, Graphics2D g, int hGap, int vGap, Font font) {
-        if (tree == null)
-            return new Dimension(0, 0);
-        FontRenderContext frc = g.getFontRenderContext();
-        String label = sanitizeNode(tree);
-        Rectangle2D bounds = font.getStringBounds(label, frc);
-        int width = (int) bounds.getWidth() + 10; // padding
-        int height = (int) bounds.getHeight() + 6;
-        int childCount = tree.getChildCount();
-        if (childCount == 0) {
-            return new Dimension(width, height);
-        }
-        int totalChildrenWidth = 0;
-        int maxChildHeight = 0;
-        for (int i = 0; i < childCount; i++) {
-            Dimension d = computeTreeSize(tree.getChild(i), g, hGap, vGap, font);
-            totalChildrenWidth += d.width;
-            if (i < childCount - 1)
-                totalChildrenWidth += hGap;
-            maxChildHeight = Math.max(maxChildHeight, d.height);
-        }
-        int totalWidth = Math.max(width, totalChildrenWidth);
-        int totalHeight = height + vGap + maxChildHeight;
-        return new Dimension(totalWidth, totalHeight);
-    }
-
-    private static void drawTree(Tree tree, Graphics2D g, int x, int y, int availableWidth, int hGap, int vGap,
-            Font font) {
-        if (tree == null)
-            return;
-        FontRenderContext frc = g.getFontRenderContext();
-        String label = sanitizeNode(tree);
-        Rectangle2D bounds = font.getStringBounds(label, frc);
-        int nodeWidth = (int) bounds.getWidth() + 10;
-        int nodeHeight = (int) bounds.getHeight() + 6;
-        int nodeX = x + (availableWidth - nodeWidth) / 2;
-
-
-        // Dessin du rectangle du noeud
-        g.setColor(new Color(235, 242, 255));
-        g.fillRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
-        g.setColor(new Color(60, 100, 160));
-        g.drawRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
-        g.drawString(label, nodeX + 5, y + nodeHeight - 8);
-
-        int childCount = tree.getChildCount();
-        if (childCount == 0)
-            return;
-
-        // Calcul largeur totale des enfants
-        int[] childWidths = new int[childCount];
-        int totalChildrenWidth = 0;
-        int maxChildHeight = 0;
-        for (int i = 0; i < childCount; i++) {
-            Dimension d = computeTreeSize(tree.getChild(i), g, hGap, vGap, font);
-            childWidths[i] = d.width;
-            totalChildrenWidth += d.width;
-            if (i < childCount - 1)
-                totalChildrenWidth += hGap;
-            maxChildHeight = Math.max(maxChildHeight, d.height);
-        }
-
-        int childX = x + (availableWidth - totalChildrenWidth) / 2;
-        int childY = y + nodeHeight + vGap;
-
-        int centerParentX = nodeX + nodeWidth / 2;
-        int parentBottomY = y + nodeHeight;
-
-        for (int i = 0; i < childCount; i++) {
-            Tree child = tree.getChild(i);
-            int cw = childWidths[i];
-            int childCenterX = childX + cw / 2;
-            // Ligne vers l'enfant
-            g.setColor(new Color(100, 120, 150));
-            g.drawLine(centerParentX, parentBottomY, childCenterX, childY);
-            drawTree(child, g, childX, childY, cw, hGap, vGap, font);
-            childX += cw + hGap;
-        }
-    }
-
-    private static String sanitizeNode(Tree t) {
-        String s = t.toString();
-        // Réduction du bruit ANTLR pour les tokens
-        if (s.startsWith("[") && s.contains("]")) {
-            // token format: [@TOKEN...] => garder type
-            int spaceIdx = s.indexOf(' ');
-            if (spaceIdx > 0) {
-                return s.substring(1, spaceIdx);
-            }
-        }
-        return s;
-    }
-
-    private static void exportTreeImage(ParseTree tree, Path output) throws IOException {
-        // Font et gaps
-        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 14);
-        BufferedImage tmp = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2tmp = tmp.createGraphics();
-        g2tmp.setFont(font);
-        Dimension size = computeTreeSize(tree, g2tmp, 25, 40, font);
-        g2tmp.dispose();
-
-        int width = Math.min(Math.max(size.width + 40, 200), 8000);
-        int height = Math.min(Math.max(size.height + 40, 200), 8000);
-
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = image.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(Color.WHITE);
-        g2.fillRect(0, 0, width, height);
-        g2.setFont(font);
-
-        drawTree(tree, g2, 20, 20, size.width, 25, 40, font);
-        g2.dispose();
-
-        if (output.getParent() != null) {
-            Files.createDirectories(output.getParent());
-        }
-        ImageIO.write(image, "png", output.toFile());
-    }
 
     private static void exportAstImage(AstNode node, Path output) throws IOException {
         Font font = new Font(Font.MONOSPACED, Font.PLAIN, 14);
@@ -322,7 +192,6 @@ public class ParseTreeImageExporter {
         int nodeWidth = (int) bounds.getWidth() + 10;
         int nodeHeight = (int) bounds.getHeight() + 6;
         int nodeX = x + (availableWidth - nodeWidth) / 2;
-
 
         g.setColor(new Color(235, 255, 242));
         g.fillRoundRect(nodeX, y, nodeWidth, nodeHeight, 8, 8);
