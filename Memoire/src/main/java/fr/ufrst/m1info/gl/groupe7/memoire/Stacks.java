@@ -414,19 +414,12 @@ public class Stacks {
     public void declareTab(String ident, int size, Type type) {
         Symbol tabSymbol = symbolTable.findSymbol(ident);
         if (tabSymbol != null) {
-            throw new RuntimeException(" array already in tab declare" + ident);
+            throw new RuntimeException("array already in tab declare" + ident);
         }
-        int cellPerElement;
-        switch (type) {
-            case ENTIER:
-                cellPerElement = 1;
-                break;
-            case BOOLEEN:
-                cellPerElement = 1;
-                break;
-            default:
-                throw new RuntimeException("Unsupported array type: " + type);
-        }
+        int cellPerElement = switch (type) {
+            case ENTIER, BOOLEEN -> 1;
+            default -> throw new RuntimeException("Unsupported array type: " + type);
+        };
         int totalSize = size * cellPerElement;
 
         HeapEntry entry = heap.allocate(ident, totalSize, null);
