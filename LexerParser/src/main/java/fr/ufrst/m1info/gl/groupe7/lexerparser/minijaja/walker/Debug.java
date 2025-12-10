@@ -177,6 +177,7 @@ public class Debug {
                     logger.debug(" Debug session ended.");
                     mode = Mode.DISABLED;
                     paused = false;
+                    scanner.close();
                     return false; // Signal to stop execution
                 }
                 
