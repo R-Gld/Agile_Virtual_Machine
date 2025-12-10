@@ -35,7 +35,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(), "Should report error for return type mismatch");
@@ -67,7 +67,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(), "No error expected for correct return type");
@@ -87,7 +87,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(), "Should report error for return in main");
