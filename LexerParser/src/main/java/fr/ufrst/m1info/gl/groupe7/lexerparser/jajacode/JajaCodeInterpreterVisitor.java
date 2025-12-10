@@ -173,9 +173,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
-    private void dispatch(JajaCodeInstr command) {
-        dispatch(command, null);
-    }
+    private void dispatch(JajaCodeInstr command) { dispatch(command, null); }
 
     // Helper pour exécuter un axiome
     private void dispatch(JajaCodeInstr command, String arg) {
