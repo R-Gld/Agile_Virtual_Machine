@@ -96,7 +96,7 @@ public class ParseTreeImageExporter {
         ParseTree tree = parser.classe();
 
         if (collector.hasErrors()) {
-            logger.error("Des erreurs de syntaxe ont été détectées:{}", collector.formatDiagnostics());
+            logger.error("Des erreurs de syntaxe ont été détectées: {}", collector.formatDiagnostics());
             logger.error("Aucune image générée (arrêt sur erreurs).");
             return 4;
         }

@@ -270,8 +270,7 @@ public class Stacks {
                 HeapEntry entry = heap.getEntryNotFree(base);
                 if (entry != null) {
                     entry.incrementRef();
-                    logger.debug("[GC] Increment refCount of array '" + q.ident +
-                            "' ⇒ now " + entry.getRefCount());
+                    logger.debug("[GC] Increment refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
                 }
             }
         }
@@ -305,8 +304,7 @@ public class Stacks {
                         if (entry.getRefCount() == 0) {
                             freeTab(q.ident);
                         }
-                        logger.debug("[GC] Increment refCount of array '" + q.ident +
-                                "' ⇒ now " + entry.getRefCount());
+                        logger.debug("[GC] Decrement refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
                     }
                 }
             }
@@ -446,9 +444,7 @@ public class Stacks {
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type);
 
-        logger.debug("-> Array " + ident +
-                " allocated: base=" + baseAddress +
-                " cells=" + totalSize + " (size=" + size + ")");
+        logger.debug("-> Array {} allocated: base={} cells={} (size={})", ident, baseAddress, totalSize, size);
 
     }
 
@@ -486,7 +482,7 @@ public class Stacks {
             }
         }
         if (position == -1) {
-            logger.debug("Symbol '" + ident + "' not found — cannot remove.");
+            logger.debug("Symbol '{}' not found — cannot remove.", ident);
             return;
         }
 
@@ -497,20 +493,19 @@ public class Stacks {
 
             if (entry != null) {
 
-                    freeTab(q.ident);
+                freeTab(q.ident);
 
-                logger.debug("[GC] Increment refCount of array '" + q.ident +
-                        "' ⇒ now " + entry.getRefCount());
+                logger.debug("[GC] Increment refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
             }
         }
 
         // 3. Remove Quad from stack
         stack.remove(position);
-        logger.debug("-> Removed declaration '" + ident + "' from stack.");
+        logger.debug("-> Removed declaration '{}' from stack.", ident);
 
         // 4. Remove from symbol table
         symbolTable.remove(ident);
-        logger.debug("-> Symbol '" + ident + "' removed from the symbol table.");
+        logger.debug("-> Symbol '{}' removed from the symbol table.", ident);
 
         // 5. Update stack positions (if you track positions)
         updateSymbolPositions();
@@ -702,10 +697,9 @@ public class Stacks {
 
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
-            logger.debug("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | adress=" + s.getAddressStack());
+            logger.debug("\uD83D\uDD39 {} | type={} | adress={}", s.getName(), s.getType(), s.getAddressStack());
         } else {
-            logger.debug(" Symbole non trouvé : " + name);
+            logger.debug(" Symbole non trouvé : {}", name);
         }
     }
 
@@ -874,7 +868,7 @@ public class Stacks {
         // Free the cell inside the contiguous block
         heap.write(address, null);
 
-        logger.debug("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
+        logger.debug("[ARRAY FREE] cleared element {}[{}] at heap address={}", ident, index, address);
     }
 
    
@@ -946,9 +940,7 @@ public class Stacks {
             }
         }
 
-        logger.debug("[REF COPY] " + identDest + " = " + identSource +
-                "  (base=" + newSourceInfo.getBaseAddress() +
-                ", refCount=" + heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount() + ")");
+        logger.debug("[REF COPY] {} = {}  (base={}, refCount={})", identDest, identSource, newSourceInfo.getBaseAddress(), heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount());
     }
     /**
      * Decrements the reference counter of a heap block.
@@ -964,9 +956,9 @@ public class Stacks {
 
         if (entry.getRefCount() == 0) {
             heap.free(entry);
-            logger.debug("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
+            logger.debug("   [GC] Block freed because refCount reached 0 (base={})", base);
         } else {
-            logger.debug("   [GC] refCount-- -> " + entry.getRefCount() + " (base=" + base + ")");
+            logger.debug("   [GC] refCount-- -> {} (base={})", entry.getRefCount(), base);
         }
     }
     /**
@@ -981,7 +973,7 @@ public class Stacks {
 
         entry.incrementRef();
 
-        logger.debug("   [GC] refCount++ -> " + entry.getRefCount() + " (base=" + base + ")");
+        logger.debug("   [GC] refCount++ -> {} (base={})", entry.getRefCount(), base);
     }
 
 }

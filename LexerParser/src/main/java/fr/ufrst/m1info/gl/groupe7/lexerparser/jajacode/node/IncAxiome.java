@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,7 @@ public class IncAxiome implements JajaAxiome {
 
         // Vérification d'existence
         if (currentValue == null && !ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
-            throw new UndefinedSymbolException(scopedIdent, "INC", ctx.getInstructionCounter());
+            throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.INC.toString(), ctx.getInstructionCounter());
         }
 
         // 4. Vérification des types (doivent être des entiers)

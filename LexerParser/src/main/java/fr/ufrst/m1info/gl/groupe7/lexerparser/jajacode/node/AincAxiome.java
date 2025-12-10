@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,7 @@ public class AincAxiome implements JajaAxiome {
 
         // 6. Vérifier que le tableau existe
         if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
-            throw new UndefinedSymbolException(scopedIdent, "AINC", ctx.getInstructionCounter());
+            throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.AINC.toString(), ctx.getInstructionCounter());
         }
 
         // 7. Charger la valeur actuelle du tableau

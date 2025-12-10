@@ -49,7 +49,7 @@ public class NewarrayAxiome implements JajaAxiome {
                                                 "NEWARRAY", ctx.getInstructionCounter());
         }
 
-        logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident=" + ident + ", type=" + type);
+        logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident={}, type={}", ident, type);
 
         // 3. Dépiler la taille depuis la pile
         Stacks.Quad sizeQuad = ctx.getStacks().pop();

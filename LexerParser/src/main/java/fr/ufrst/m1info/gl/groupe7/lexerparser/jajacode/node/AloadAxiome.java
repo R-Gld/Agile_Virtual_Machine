@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class AloadAxiome implements JajaAxiome {
 
         // 4. Vérifier que le tableau existe
         if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
-            throw new UndefinedSymbolException(scopedIdent, "ALOAD", ctx.getInstructionCounter());
+            throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.ALOAD.toString(), ctx.getInstructionCounter());
         }
 
         // 5. Charger la valeur depuis le tableau (gère les bornes en interne)
