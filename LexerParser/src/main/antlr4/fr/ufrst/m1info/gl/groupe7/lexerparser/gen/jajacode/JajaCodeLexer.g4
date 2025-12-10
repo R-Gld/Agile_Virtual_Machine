@@ -45,8 +45,8 @@ RPAREN : ')' ;
 COMA : ',' ;
 
 // Types de données
-TYPE : 'int' | 'boolean' ;
-SORTE : 'var' | 'meth' ;
+TYPE : 'int' | 'boolean' | 'void';
+SORTE : 'var' | 'meth' | 'cst' ;
 
 // Identifiant et Valeur
 IDENTIFIER: [a-zA-Z_][a-zA-Z_0-9@]* ;

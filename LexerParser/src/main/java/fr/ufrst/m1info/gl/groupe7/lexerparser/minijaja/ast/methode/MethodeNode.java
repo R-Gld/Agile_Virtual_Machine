@@ -10,7 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class MethodeNode extends AstNode {
-    //methode → typemeth ident ”(”entetes”)” ”{” vars instrs ”}”
+    //methode -> typemeth ident ”(”entetes”)” ”{” vars instrs ”}”
     private final Type typeMeth;
     private final IdentNode ident;
     private final EntetesNode entetes;

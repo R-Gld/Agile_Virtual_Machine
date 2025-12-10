@@ -1,4 +1,5 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -29,8 +31,7 @@ class JajaCodeBuilderUnitTest {
                 // IMPORTANT: utiliser des matchers typés pour varargs
                 mocked.when(() -> JajaCodeInstructionBuilder.build(
                         any(JajaCodeInstr.class),
-                        any(Object[].class)
-                )).thenReturn("APP 1");
+                        any(Object[].class))).thenReturn("APP 1");
 
                 builder.addInstruction(mock(JajaCodeInstr.class));
 
@@ -49,8 +50,7 @@ class JajaCodeBuilderUnitTest {
             try (MockedStatic<JajaCodeInstructionBuilder> mocked = mockStatic(JajaCodeInstructionBuilder.class)) {
                 mocked.when(() -> JajaCodeInstructionBuilder.build(
                         any(JajaCodeInstr.class),
-                        any(Object[].class)
-                )).thenReturn("TAIL");
+                        any(Object[].class))).thenReturn("TAIL");
                 builder.addInstruction(mock(JajaCodeInstr.class));
             }
 
@@ -58,8 +58,7 @@ class JajaCodeBuilderUnitTest {
             try (MockedStatic<JajaCodeInstructionBuilder> mocked = mockStatic(JajaCodeInstructionBuilder.class)) {
                 mocked.when(() -> JajaCodeInstructionBuilder.build(
                         any(JajaCodeInstr.class),
-                        any(Object[].class)
-                )).thenReturn("HEAD");
+                        any(Object[].class))).thenReturn("HEAD");
                 builder.prependInstruction(mock(JajaCodeInstr.class));
             }
 
@@ -77,8 +76,7 @@ class JajaCodeBuilderUnitTest {
         try (MockedStatic<JajaCodeInstructionBuilder> mocked = mockStatic(JajaCodeInstructionBuilder.class)) {
             mocked.when(() -> JajaCodeInstructionBuilder.build(
                     any(JajaCodeInstr.class),
-                    any(Object[].class)
-            )).thenReturn("A", "B");
+                    any(Object[].class))).thenReturn("A", "B");
             left.addInstruction(mock(JajaCodeInstr.class));
             left.addInstruction(mock(JajaCodeInstr.class));
         }
@@ -87,8 +85,7 @@ class JajaCodeBuilderUnitTest {
         try (MockedStatic<JajaCodeInstructionBuilder> mocked = mockStatic(JajaCodeInstructionBuilder.class)) {
             mocked.when(() -> JajaCodeInstructionBuilder.build(
                     any(JajaCodeInstr.class),
-                    any(Object[].class)
-            )).thenReturn("C");
+                    any(Object[].class))).thenReturn("C");
             right.addInstruction(mock(JajaCodeInstr.class));
         }
 
@@ -137,21 +134,25 @@ class JajaCodeBuilderUnitTest {
     class JajaCodeInstructionBuilderTests {
 
         /**
-         * Helper that finds an instruction with the exact number of args, or returns null.
+         * Helper that finds an instruction with the exact number of args, or returns
+         * null.
          */
         private JajaCodeInstr findInstrWithNumArgs(int n) {
             for (JajaCodeInstr instr : JajaCodeInstr.values()) {
-                if (instr.getNumArgs() == n) return instr;
+                if (instr.getNumArgs() == n)
+                    return instr;
             }
             return null;
         }
 
         /**
-         * Helper that finds an instruction with at least the given number of args, or returns null.
+         * Helper that finds an instruction with at least the given number of args, or
+         * returns null.
          */
         private JajaCodeInstr findInstrWithAtLeast(int n) {
             for (JajaCodeInstr instr : JajaCodeInstr.values()) {
-                if (instr.getNumArgs() >= n) return instr;
+                if (instr.getNumArgs() >= n)
+                    return instr;
             }
             return null;
         }
@@ -159,9 +160,11 @@ class JajaCodeBuilderUnitTest {
         @Test
         @DisplayName("build() retourne la base quand il n'y a pas d'arguments")
         void build_returnsBase_whenZeroArgs() {
-            // On cherche dynamiquement une instruction à 0 argument (souvent INIT/STOP, etc.)
+            // On cherche dynamiquement une instruction à 0 argument (souvent INIT/STOP,
+            // etc.)
             JajaCodeInstr zero = findInstrWithNumArgs(0);
-            org.junit.jupiter.api.Assumptions.assumeTrue(zero != null, "Aucune instruction avec 0 argument dans JajaCodeInstr");
+            org.junit.jupiter.api.Assumptions.assumeTrue(zero != null,
+                    "Aucune instruction avec 0 argument dans JajaCodeInstr");
 
             String result = JajaCodeInstructionBuilder.build(zero);
             assertEquals(zero.toString(), result);
@@ -171,7 +174,8 @@ class JajaCodeBuilderUnitTest {
         @DisplayName("build() formate correctement un seul argument")
         void build_formatsSingleArg() {
             JajaCodeInstr one = findInstrWithNumArgs(1);
-            org.junit.jupiter.api.Assumptions.assumeTrue(one != null, "Aucune instruction avec 1 argument dans JajaCodeInstr");
+            org.junit.jupiter.api.Assumptions.assumeTrue(one != null,
+                    "Aucune instruction avec 1 argument dans JajaCodeInstr");
 
             String result = JajaCodeInstructionBuilder.build(one, 42);
             assertEquals(one + "(42)", result);
@@ -180,7 +184,8 @@ class JajaCodeBuilderUnitTest {
         @Test
         @DisplayName("build() formate correctement plusieurs arguments (séparateur ', ')")
         void build_formatsMultipleArgs_withCommas() {
-            // On cherche une instruction ayant au moins 2 arguments pour déclencher la branche i != 0
+            // On cherche une instruction ayant au moins 2 arguments pour déclencher la
+            // branche i != 0
             JajaCodeInstr multi = findInstrWithAtLeast(2);
             org.junit.jupiter.api.Assumptions.assumeTrue(multi != null && multi.getNumArgs() >= 2,
                     "Aucune instruction avec au moins 2 arguments dans JajaCodeInstr");
@@ -191,7 +196,8 @@ class JajaCodeBuilderUnitTest {
             expectedParams.append('(');
             for (int i = 0; i < n; i++) {
                 args[i] = (i == 0) ? "A" : i; // mélange String / Integer pour vérifier toString()
-                if (i > 0) expectedParams.append(", ");
+                if (i > 0)
+                    expectedParams.append(", ");
                 expectedParams.append(args[i]);
             }
             expectedParams.append(')');
@@ -214,8 +220,7 @@ class JajaCodeBuilderUnitTest {
 
             IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
                     IllegalArgumentException.class,
-                    () -> JajaCodeInstructionBuilder.build(needsAtLeastOne, tooFew)
-            );
+                    () -> JajaCodeInstructionBuilder.build(needsAtLeastOne, tooFew));
             String expectedMsg = "Amount of argument given to '" + needsAtLeastOne + "' is incorrect (expected "
                     + expected + ", given " + given + ").";
             assertEquals(expectedMsg, ex.getMessage());
@@ -224,16 +229,17 @@ class JajaCodeBuilderUnitTest {
         @Test
         @DisplayName("build() lève une IllegalArgumentException si trop d'arguments")
         void build_throwsOnTooManyArgs() {
-            // On prend n'importe quelle instruction (même 0 arg) et on en fournit plus que prévu
+            // On prend n'importe quelle instruction (même 0 arg) et on en fournit plus que
+            // prévu
             JajaCodeInstr any = JajaCodeInstr.values()[0];
             int expected = any.getNumArgs();
             Object[] tooMany = new Object[expected + 1];
-            for (int i = 0; i < tooMany.length; i++) tooMany[i] = i;
+            for (int i = 0; i < tooMany.length; i++)
+                tooMany[i] = i;
 
             IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
                     IllegalArgumentException.class,
-                    () -> JajaCodeInstructionBuilder.build(any, tooMany)
-            );
+                    () -> JajaCodeInstructionBuilder.build(any, tooMany));
             String expectedMsg = "Amount of argument given to '" + any + "' is incorrect (expected "
                     + expected + ", given " + (expected + 1) + ").";
             assertEquals(expectedMsg, ex.getMessage());

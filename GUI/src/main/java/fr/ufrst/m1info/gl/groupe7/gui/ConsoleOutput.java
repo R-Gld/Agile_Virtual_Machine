@@ -4,53 +4,45 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.*;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 
 /**
- * ConsoleOutput
- * Composant graphique affichant la sortie texte de l'application (logs, messages, erreurs)
- * avec une apparence type terminal (fond noir / texte vert) et un bouton Clear intégré.
+ * ConsoleOutput component displaying application logs.
+ * Uses external CSS (light/dark) for colors.
  */
+
 public class ConsoleOutput extends StackPane {
     private final TextArea console;
     private final Button clearButton;
 
     /**
-     * Crée une console stylisée avec fond noir et texte vert,
-     * et un bouton 🧹 Clear positionné en haut à droite à l'intérieur.
+     * Creates a console with an internal Clear button.
      *
-     * @param id identifiant du composant JavaFX
+     * @param id JavaFX node id used for CSS.
      */
     public ConsoleOutput(String id) {
+        // Root node id (e.g. "console")
         this.setId(id);
 
-        // Configuration du TextArea (console)
         console = new TextArea();
         console.setWrapText(true);
         console.setEditable(false);
-        console.setFont(Font.font("Consolas", 14));
-        console.setStyle("-fx-control-inner-background: black; -fx-text-fill: #F8F8F2;");
+        console.setFont(Font.font("Consolas", 12));
         console.setFocusTraversable(false);
 
-        //   Bouton Clear
-        clearButton = new Button("clear");
-        clearButton.setStyle(
-                "-fx-background-color: rgba(60,60,60,0.8);" +
-                        "-fx-text-fill: white;" +
-                        "-fx-font-size: 10;" +
-                        "-fx-background-radius: 6;"
-        );
+        // Clear button inside the console
+        clearButton = new Button("Clear");
+        clearButton.getStyleClass().add("console-clear-button");
         clearButton.setOnAction(e -> clear());
         clearButton.setFocusTraversable(false);
+
         StackPane.setAlignment(clearButton, Pos.TOP_RIGHT);
-        StackPane.setMargin(clearButton, new Insets(5, 5, 0, 0));
+        StackPane.setMargin(clearButton, new Insets(5, 20, 0, 0));
 
-        // StackPane
+        // StackPane children
         this.getChildren().addAll(console, clearButton);
-
     }
-
 
     /**
      * Ajoute un message dans la console.
@@ -59,9 +51,11 @@ public class ConsoleOutput extends StackPane {
      * @param msg le texte à afficher dans la console
      */
     public void printMessage(String msg) {
-        if (msg == null) return;
+        if (msg == null) {
+            return;
+        }
         console.appendText(msg + "\n");
-        console.setScrollTop(Double.MAX_VALUE); // auto-scroll vers le bas
+        console.setScrollTop(Double.MAX_VALUE);
     }
 
     /**
@@ -70,5 +64,4 @@ public class ConsoleOutput extends StackPane {
     public void clear() {
         console.clear();
     }
-    // ==== END  ====
 }

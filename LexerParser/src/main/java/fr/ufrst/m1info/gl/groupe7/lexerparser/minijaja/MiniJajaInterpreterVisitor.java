@@ -33,6 +33,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -44,19 +46,21 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
  */
 public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNode> {
 
+	private static final Logger logger = LoggerFactory.getLogger(MiniJajaInterpreterVisitor.class);
+
 	// ======== CLASS ========
 
 	@Override
 	public AstNode visitClasse(MiniJajaParser.ClasseContext ctx) {
-		System.err.println("[DEBUG] enter visitClasse: text='" + ctx.getText() + "'");
+		logger.debug("enter visitClasse: text='{}'", ctx.getText());
 		String className = ctx.IDENT().getText();
-		System.err.println("[DEBUG] visitClasse: className='" + className + "'");
+		logger.debug("visitClasse: className='{}'", className);
 		IdentNode ident = new IdentNode(className);
 
 		DeclsNode decls = (DeclsNode) visit(ctx.decls());
 		MainNode main = (MainNode) visit(ctx.methmain());
 
-		System.err.println("[DEBUG] exit visitClasse: built ClasseNode for '" + className + "'");
+		logger.debug("exit visitClasse: built ClasseNode for '{}'", className);
 		return new ClasseNode(ident, decls, main);
 	}
 
@@ -64,38 +68,38 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitDecls(MiniJajaParser.DeclsContext ctx) {
-		System.err.println("[DEBUG] enter visitDecls: text='" + ctx.getText() + "'");
+		logger.debug("enter visitDecls: text='{}'", ctx.getText());
 		// Base case: no more declarations
 		if (ctx.decl() == null) {
-			System.err.println("[DEBUG] visitDecls: no declarations (vnil)");
+			logger.debug("visitDecls: no declarations (vnil)");
 			return new DeclsNode(); // empty declaration list
 		}
 
 		AstNode firstDecl = visit(ctx.decl());
 		DeclsNode nextDecls = (DeclsNode) visit(ctx.decls());
-		System.err.println("[DEBUG] exit visitDecls: created DeclsNode");
+		logger.debug("exit visitDecls: created DeclsNode");
 		return new DeclsNode(firstDecl, nextDecls);
 	}
 
 	@Override
 	public AstNode visitDecl(MiniJajaParser.DeclContext ctx) {
-		System.err.println("[DEBUG] enter visitDecl: text='" + ctx.getText() + "'");
+		logger.debug("enter visitDecl: text='{}'", ctx.getText());
 		if (ctx.var() != null) {
-			System.err.println("[DEBUG] visitDecl: delegating to visitVar");
+			logger.debug("visitDecl: delegating to visitVar");
 			return visit(ctx.var());
 		} else if (ctx.methode() != null) {
-			System.err.println("[DEBUG] visitDecl: delegating to visitMethode");
+			logger.debug("visitDecl: delegating to visitMethode");
 			return visit(ctx.methode());
 		}
-		System.err.println("[DEBUG] visitDecl: unexpected decl type");
+		logger.debug("visitDecl: unexpected decl type");
 		return null; // Should not reach here
 	}
 
 	@Override
 	public AstNode visitVexp(MiniJajaParser.VexpContext ctx) {
-		System.err.println("[DEBUG] enter visitVexp: text='" + (ctx.exp() != null ? ctx.exp().getText() : "<null>") + "'");
+		logger.debug("enter visitVexp: text='{}'", (ctx.exp() != null ? ctx.exp().getText() : "<null>"));
 		if (ctx.children == null) {
-			System.err.println("[DEBUG] visitVexp: no expression (null)");
+			logger.debug("visitVexp: no expression (null)");
 			return null;
 		}
 		return visit(ctx.exp());
@@ -105,10 +109,10 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitMethmain(MiniJajaParser.MethmainContext ctx) {
-		System.err.println("[DEBUG] enter visitMethmain: text='" + ctx.getText() + "'");
+        logger.debug("enter visitMethmain: text='{}'", ctx.getText());
 		VarsNode vars = (VarsNode) visit(ctx.vars());
 		InstructionsNode instructions = (InstructionsNode) visit(ctx.instrs());
-		System.err.println("[DEBUG] exit visitMethmain: built MainNode");
+		logger.debug("exit visitMethmain: built MainNode");
 		return new MainNode(vars, instructions);
 	}
 
@@ -134,7 +138,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		
 
 		IdentNode ident = new IdentNode(ctx.IDENT() != null ? ctx.IDENT().getText() : "");
-		System.err.println("[DEBUG] visitVar: ident='" + ident.getNom() + "', type='" + typeText + "'");
+        logger.debug("visitVar: ident='{}', type='{}'", ident.getNom(), typeText);
 		Expression vexp = null;
 
 		if(ctx.vexp() != null) {	
@@ -162,7 +166,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		}
 
 		// Cas 3 : variable simple
-		System.err.println("[DEBUG] exit visitVar: created variable node for '" + ident.getNom() + "', type='" + type + "'");
+        logger.debug("exit visitVar: created variable node for '{}', type='{}'", ident.getNom(), type);
 		return (vexp != null)
 				? new VarNode(type, ident , vexp)
 				: new VarNode(type, ident);
@@ -171,18 +175,18 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitVars(MiniJajaParser.VarsContext ctx) {
-		System.err.println("[DEBUG] enter visitVars: text='" + ctx.getText() + "'");
+        logger.debug("enter visitVars: text='{}'", ctx.getText());
 		if (ctx.children == null)
 			return new VarsNode();
 		AstNode firstVar =  visit(ctx.var());
 		VarsNode nextVars = (VarsNode) visit(ctx.vars());
-		System.err.println("[DEBUG] exit visitVars: created VarsNode");
+		logger.debug("exit visitVars: created VarsNode");
 		return new VarsNode(firstVar, nextVars);
 	}
 
 	@Override
 	public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
-		System.err.println("[DEBUG] enter visitMethode: text='" + ctx.getText() + "'");
+        logger.debug("enter visitMethode: text='{}'", ctx.getText());
 		String typeText = ctx.typemeth().getText();
 		Type typeMeth;
 		switch (typeText) {
@@ -202,27 +206,27 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		EntetesNode entetes = (EntetesNode) visit(ctx.entetes());
 		VarsNode vars = (VarsNode) visit(ctx.vars());
 		InstructionsNode instrs = (InstructionsNode) visit(ctx.instrs());
-		System.err.println("[DEBUG] exit visitMethode: methode='" + ident.getNom() + "' type='" + typeText + "'");
+        logger.debug("exit visitMethode: methode='{}' type='{}'", ident.getNom(), typeText);
 		return new MethodeNode(typeMeth, ident, entetes, vars, instrs);
 	}
 
 	@Override
 	public AstNode visitEntetes(MiniJajaParser.EntetesContext ctx) {
-		System.err.println("[DEBUG] enter visitEntetes: text='" + ctx.getText() + "'");
+        logger.debug("enter visitEntetes: text='{}'", ctx.getText());
 		// Base case: no more parameters
 		if (ctx.entete() == null) {
-			System.err.println("[DEBUG] visitEntetes: empty entetes");
+			logger.debug("visitEntetes: empty entetes");
 			return new EntetesNode(); // empty parameter list
 		}
 
 		EnteteNode firstEntete = ctx.entete() != null ? (EnteteNode) visit(ctx.entete()) : null;
 		EntetesNode nextEntetes = ctx.entetes() != null ? (EntetesNode) visit(ctx.entetes()) : new EntetesNode();
-		System.err.println("[DEBUG] exit visitEntetes: created EntetesNode");
+		logger.debug("exit visitEntetes: created EntetesNode");
 		return new EntetesNode(firstEntete, nextEntetes);
 	}
 	@Override
 	public AstNode visitEntete(MiniJajaParser.EnteteContext ctx) {
-		System.err.println("[DEBUG] enter visitEntete: text='" + ctx.getText() + "'");
+        logger.debug("enter visitEntete: text='{}'", ctx.getText());
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		String typeText = ctx.TYPE().getText();
 		Type type;
@@ -237,7 +241,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 				return null;
 		}
 
-		System.err.println("[DEBUG] exit visitEntete: ident='" + ident.getNom() + "' type='" + type + "'");
+        logger.debug("exit visitEntete: ident='{}' type='{}'", ident.getNom(), type);
 		return new EnteteNode(ident, type);
 	}
 
@@ -251,7 +255,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitInstrs(MiniJajaParser.InstrsContext ctx) {
-		System.err.println("[DEBUG] enter visitInstrs: text='" + ctx.getText() + "'");
+        logger.debug("enter visitInstrs: text='{}'", ctx.getText());
 
 		if (ctx.instr() == null) {
 			return new InstructionsNode(); // Empty list (Inil)
@@ -266,7 +270,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitInstr(MiniJajaParser.InstrContext ctx) {
-		System.err.println("[DEBUG] enter visitInstr: text='" + ctx.getText() + "'");
+        logger.debug("enter visitInstr: text='{}'", ctx.getText());
 
 		// IF statement
 		if (ctx.IF() != null) {
@@ -275,7 +279,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			InstructionsNode elseBlock = (ctx.ELSE() != null && ctx.instrs().size() > 1)
 					? (InstructionsNode) visit(ctx.instrs(1))
 					: null;
-			System.err.println("[DEBUG] visitInstr: IF -> SiNode");
+			logger.debug("visitInstr: IF -> SiNode");
 			return new SiNode(condition, thenBlock, elseBlock);
 		}
 
@@ -283,14 +287,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		if (ctx.WHILE() != null) {
 			Expression condition = (Expression) visit(ctx.exp());
 			InstructionsNode loopBody = (InstructionsNode) visit(ctx.instrs(0));
-			System.err.println("[DEBUG] visitInstr: WHILE -> TantqueNode");
+			logger.debug("visitInstr: WHILE -> TantqueNode");
 			return new TantqueNode(condition, loopBody);
 		}
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
 			Expression returned = (Expression) visit(ctx.exp());
-			System.err.println("[DEBUG] visitInstr: RETURN -> RetourNode");
+			logger.debug("visitInstr: RETURN -> RetourNode");
 			return new RetourNode(returned);
 		}
 
@@ -300,49 +304,54 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
         if (ctx.listexp() != null) {
             ListExpNode listExp = (ListExpNode) visit(ctx.listexp());
             IdentNode ident =  new IdentNode(ctx.IDENT().getText());
-            System.err.println("[DEBUG] visitInstr: IDENT -> AppelINode");
+            logger.debug("visitInstr: IDENT -> AppelINode");
 
             return new AppelINode(ident, listExp);
 
         }
 
+
+        // --- 1) WRITE / WRITELN ---
+        if (ctx.WRITE() != null || ctx.WRITELN() != null) {
+            boolean writeln = ctx.WRITELN() != null;
+
+            // Cas 1 : ident1
+            if (ctx.ident1() != null) {
+                Expression expr = (Expression) visit(ctx.ident1());
+                return writeln ? new EcrireLnNode(expr) : new EcrireNode(expr);
+            }
+
+            // Cas 2 : string literal
+            if (ctx.STRING() != null) {
+                String raw = ctx.STRING().getText();
+                String content = raw.substring(1, raw.length() - 1);
+                return writeln ? new EcrireLnNode(content) : new EcrireNode(content);
+            }
+
+            throw new RuntimeException("WRITE sans ident1 ni STRING");
+        }
+
 		// Assignment, addition, or increment on an identifier (e.g. a = ..., a += ..., a++)
 		if (ctx.ident1() != null) {
-			AstNode ident = visit(ctx.ident1());
+			AstNode ident1 = visit(ctx.ident1());
 			if (ctx.EQ() != null) {
-				System.err.println("[DEBUG] visitInstr: IDENT + EQ -> AffectationNode");
-				return new AffectationNode(ident, (Expression) visit(ctx.exp()));
+				logger.debug("visitInstr: IDENT + EQ -> AffectationNode");
+				return new AffectationNode(ident1, (Expression) visit(ctx.exp()));
 			}
 			if (ctx.SOMME() != null) {
-				System.err.println("[DEBUG] visitInstr: IDENT + SOMME -> SommeNode");
-				return new SommeNode(ident, (Expression) visit(ctx.exp()));
+				logger.debug("visitInstr: IDENT + SOMME -> SommeNode");
+				return new SommeNode(ident1, (Expression) visit(ctx.exp()));
 			}
 			if (ctx.INCREMENT() != null) {
-				System.err.println("[DEBUG] visitInstr: IDENT + INCREMENT -> IncrementNode");
-				return new IncrementNode(ident);
+				logger.debug("visitInstr: IDENT + INCREMENT -> IncrementNode");
+				return new IncrementNode(ident1);
 			}
+
 		}
 
-		// WRITE / WRITELN handling (supports identifier or string literal)
-		if (ctx.WRITE() != null || ctx.WRITELN() != null) {
-			boolean writeln = ctx.WRITELN() != null;
 
-			// If there's a bare IDENT token (fallback), create an IdentNode
-			if (ctx.IDENT() != null) {
-				Expression writeExpr = new IdentNode(ctx.IDENT().getText());
-				System.err.println("[DEBUG] visitInstr: WRITE/WRITELN IDENT -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + ctx.IDENT().getText() + "')");
-				return writeln ? new EcrireLnNode(writeExpr) : new EcrireNode(writeExpr);
-			}
 
-			// Otherwise, if it's a string literal
-			if (ctx.STRING() != null) {
-				String text = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
-			 // Remove quotes
-				System.err.println("[DEBUG] visitInstr: WRITE/WRITELN STRING -> " + (writeln ? "EcrireLnNode" : "EcrireNode") + "('" + text + "')");
-				return writeln ? new EcrireLnNode(text) : new EcrireNode(text);
-			}
-            
-		}
+
 
 		throw new IllegalStateException("Unhandled instruction: " + ctx.getText());
 	}
@@ -351,7 +360,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitExp(MiniJajaParser.ExpContext ctx) {
-		System.err.println("[DEBUG] enter visitExp: text='" + ctx.getText() + "'");
+        logger.debug("enter visitExp: text='{}'", ctx.getText());
 		if (ctx.exp1() != null && ctx.exp() != null) {
 			Expression exp1 = (Expression) visit(ctx.exp1());
 			Expression exp = (Expression) visit(ctx.exp());
@@ -365,13 +374,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		if (ctx.exp1() != null)
 			return visit(ctx.exp1());
 
-		System.err.println("[visitExp] Unexpected expression: " + ctx.getText());
+        logger.warn("[visitExp] Unexpected expression: {}", ctx.getText());
 		return null;
 	}
 
 	@Override
 	public AstNode visitExp1(MiniJajaParser.Exp1Context ctx) {
-		System.err.println("[DEBUG] enter visitExp1: text='" + ctx.getText() + "'");
+        logger.debug("enter visitExp1: text='{}'", ctx.getText());
 		if (ctx.exp1() != null && ctx.exp2() != null) {
 			Expression exp1 = (Expression) visit(ctx.exp1());
 			Expression exp2 = (Expression) visit(ctx.exp2());
@@ -382,13 +391,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		}
 		if (ctx.exp2() != null)
 			return visit(ctx.exp2());
-		System.err.println("[visitExp1] Unexpected expression: " + ctx.getText());
+        logger.warn("[visitExp1] Unexpected expression: {}", ctx.getText());
 		return null;
 	}
 
 	@Override
 	public AstNode visitExp2(MiniJajaParser.Exp2Context ctx) {
-		System.err.println("[DEBUG] enter visitExp2: text='" + ctx.getText() + "'");
+        logger.debug("enter visitExp2: text='{}'", ctx.getText());
 		if (ctx.exp2() != null && ctx.terme() != null) {
 			Expression exp2 = (Expression) visit(ctx.exp2());
 			Expression terme = (Expression) visit(ctx.terme());
@@ -401,13 +410,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return new UnaryMinusNode((Expression) visit(ctx.terme()));
 		if (ctx.terme() != null)
 			return visit(ctx.terme());
-		System.err.println("[visitExp2] Unexpected expression: " + ctx.getText());
+        logger.warn("[visitExp2] Unexpected expression: {}", ctx.getText());
 		return null;
 	}
 
 	@Override
-	public AstNode visitTerme(MiniJajaParser.TermeContext ctx) {	
-		System.err.println("[DEBUG] enter visitTerme: text='" + ctx.getText() + "'");
+	public AstNode visitTerme(MiniJajaParser.TermeContext ctx) {
+        logger.debug("enter visitTerme: text='{}'", ctx.getText());
 		if (ctx.fact() != null && ctx.terme() != null) {
 			Expression fact = (Expression) visit(ctx.fact());
 			Expression terme = (Expression) visit(ctx.terme());
@@ -418,7 +427,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		}
 		if (ctx.fact() != null)
 			return visit(ctx.fact());
-		System.err.println("[visitTerme] Unexpected term: " + ctx.getText());
+        logger.warn("[visitTerme] Unexpected term: {}", ctx.getText());
 		return null;
 	}
 
@@ -426,7 +435,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitFact(MiniJajaParser.FactContext ctx) {
-		System.err.println("[DEBUG] enter visitFact: text='" + ctx.getText() + "'");
+        logger.debug("enter visitFact: text='{}'", ctx.getText());
 		if (ctx.ident1() != null)
 			return visit(ctx.ident1());
 
@@ -445,13 +454,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		if (ctx.BOOLEAN() != null)
 			return new BoolValueNode(Boolean.parseBoolean(ctx.BOOLEAN().getText()));
 
-		System.err.println("[visitFact] Unexpected fact node: " + ctx.getText());
+        logger.warn("[visitFact] Unexpected fact node: {}", ctx.getText());
 		return null;
 	}
 
 	@Override
 	public AstNode visitIdent1(MiniJajaParser.Ident1Context ctx) {
-		System.err.println("[DEBUG] enter visitIdent1: text='" + ctx.getText() + "'");
+        logger.debug("enter visitIdent1: text='{}'", ctx.getText());
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		if (ctx.exp() != null) {
 			Expression index = (Expression) visit(ctx.exp());
@@ -462,7 +471,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	@Override
 	public AstNode visitListexp(MiniJajaParser.ListexpContext ctx) {
-		System.err.println("[DEBUG] enter visitListexp: text='" + ctx.getText() + "'");
+        logger.debug("enter visitListexp: text='{}'", ctx.getText());
 
 		if (ctx.exp() == null) {
 			return new ListExpNode(null, null); // Nœud "exnil"
@@ -484,7 +493,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	 */
 	@Override
 	protected AstNode defaultResult() {
-		System.err.println("[DEBUG] defaultResult called");
+		logger.debug("defaultResult called");
 		throw new UnsupportedOperationException("Visite non implémentée pour ce nœud.");
 		
 	}

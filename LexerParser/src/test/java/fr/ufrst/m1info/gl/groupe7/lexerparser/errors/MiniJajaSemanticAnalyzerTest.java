@@ -5,27 +5,19 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
-import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class MiniJajaSemanticAnalyserTest {
+class MiniJajaSemanticAnalyzerTest {
 
     // ============================================================
     //  Constructeur / accès aux dépendances
@@ -34,12 +26,12 @@ class MiniJajaSemanticAnalyserTest {
     @Test
     void constructor_and_accessors_shouldExposeDependencies() {
         DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
 
         assertSame(collector, analyser.collector());
-        assertSame(symbolTable, analyser.symbolTable());
+        assertNotNull(analyser.symbolTable(), "SymbolTable should be created internally");
+        assertNotNull(analyser.stacks(), "Stacks should be created internally");
     }
 
     // ============================================================
@@ -60,7 +52,7 @@ class MiniJajaSemanticAnalyserTest {
 
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("Test.mjj");
 
         analyser.analyse(classe);
@@ -89,7 +81,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("ValidExpr.mjj");
 
         analyser.analyse(classe);
@@ -116,7 +108,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("DuplicateGlobal.mjj");
 
         analyser.analyse(classe);
@@ -143,7 +135,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("DuplicateLocal.mjj");
 
         analyser.analyse(classe);
@@ -173,7 +165,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("UndeclaredAssign.mjj");
 
         analyser.analyse(classe);
@@ -198,7 +190,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("TypeMismatch.mjj");
 
         analyser.analyse(classe);
@@ -223,7 +215,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("TabAssign.mjj");
 
         analyser.analyse(classe);
@@ -247,7 +239,7 @@ class MiniJajaSemanticAnalyserTest {
         ClasseNode classe = parseClasse(code, collector);
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("UndeclaredExpr.mjj");
 
         analyser.analyse(classe);
@@ -277,7 +269,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("PlusOk.mjj");
 
         analyser.analyse(classe);
@@ -299,7 +291,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("PlusLeftBad.mjj");
 
         analyser.analyse(classe);
@@ -324,7 +316,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("PlusRightBad.mjj");
 
         analyser.analyse(classe);
@@ -349,7 +341,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("UnaryMinusBad.mjj");
 
         analyser.analyse(classe);
@@ -377,7 +369,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("AndOk.mjj");
 
         analyser.analyse(classe);
@@ -399,15 +391,13 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("AndLeftBad.mjj");
 
         analyser.analyse(classe);
 
         Diagnostic diag = firstSemanticError(collector);
         assertNotNull(diag);
-        System.out.println("logicalAnd_leftOperandWrongType_shouldReportError");
-        System.out.println("diag.message() = " + diag.message());
         assertTrue(diag.message().contains("Type error in logical operation"));
         assertTrue(diag.message().contains("right operand of 'and'"));
     }
@@ -426,15 +416,13 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("AndRightBad.mjj");
 
         analyser.analyse(classe);
 
         Diagnostic diag = firstSemanticError(collector);
         assertNotNull(diag);
-        System.out.println("logicalAnd_rightOperandWrongType_shouldReportError");
-        System.out.println("diag.message() = " + diag.message());
         assertTrue(diag.message().contains("Type error in logical operation"));
         assertTrue(diag.message().contains("left operand of 'and'"));
     }
@@ -453,7 +441,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("NotBad.mjj");
 
         analyser.analyse(classe);
@@ -481,7 +469,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("EqualsBad.mjj");
 
         analyser.analyse(classe);
@@ -505,7 +493,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("EqualsOk.mjj");
 
         analyser.analyse(classe);
@@ -527,7 +515,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("GreaterOk.mjj");
 
         analyser.analyse(classe);
@@ -549,7 +537,7 @@ class MiniJajaSemanticAnalyserTest {
         DiagnosticCollector collector = new DiagnosticCollector();
         ClasseNode classe = parseClasse(code, collector);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, new SymbolTable());
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
         analyser.setFileName("GreaterBad.mjj");
 
         analyser.analyse(classe);
@@ -564,43 +552,10 @@ class MiniJajaSemanticAnalyserTest {
     // ============================================================
 
     @Test
-    void checkType_withMethodeNodeAsMain_shouldSkipInstructionsBranch() {
-        DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
-
-        // MethodeNode "fake" servant de main
-        MethodeNode methodeMain = new MethodeNode(
-                Type.VOID,
-                new IdentNode("m"),
-                new EntetesNode(),
-                new VarsNode(),
-                new InstructionsNode()
-        );
-
-        // Decls contenant la méthode aussi (pour couvrir le cas non-VarNode)
-        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode decls =
-                new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode(
-                        methodeMain,
-                        new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode()
-                );
-
-        ClasseNode classe = new ClasseNode(new IdentNode("C"), decls, methodeMain);
-
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
-        analyser.setFileName("MethodeMain.mjj");
-
-        analyser.analyse(classe);
-
-        // Ici on veut juste vérifier que ça ne plante pas et que le code passe
-        assertFalse(collector.hasErrors());
-    }
-
-    @Test
     void nullVarsAndNullInstrs_shouldHitNullGuards() {
         DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
 
         ClasseNode classe = mock(ClasseNode.class);
         MainNode mainNode = mock(MainNode.class);
@@ -618,56 +573,105 @@ class MiniJajaSemanticAnalyserTest {
         assertFalse(collector.hasErrors());
     }
 
-    @Test
-    void inferType_nullExpression_shouldReturnNull_viaReflection() throws Exception {
-        DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
-
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
-
-        Method m = MiniJajaSemanticAnalyser.class
-                .getDeclaredMethod("inferType", fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression.class);
-        m.setAccessible(true);
-
-        Object result = m.invoke(analyser, new Object[]{null});
-        assertNull(result, "inferType(null) doit retourner null");
-    }
+    // ============================================================
+    //  Tests for missing return statement
+    // ============================================================
 
     @Test
-    void checkNode_nullNode_shouldReturnImmediately_viaReflection() throws Exception {
+    void methodWithoutReturn_shouldReportError() {
+        String code = """
+                class C {
+                    int f(int z) {
+                        int x = 5;
+                    };
+                    main {
+                        int y = 0;
+                    }
+                }
+                """;
+
         DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
 
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("MissingReturn.mjj");
 
-        Method m = MiniJajaSemanticAnalyser.class
-                .getDeclaredMethod("checkNode", AstNode.class);
-        m.setAccessible(true);
+        analyser.analyse(classe);
 
-        // Doit simplement ne rien faire (pas d'exception, pas de diagnostic)
-        m.invoke(analyser, new Object[]{null});
-
-        assertTrue(collector.getDiagnostics().isEmpty());
-    }
-
-    @Test
-    void checkBinaryOperation_unknownOperation_shouldHitDefaultOperationName() throws Exception {
-        DiagnosticCollector collector = new DiagnosticCollector();
-        SymbolTable symbolTable = mock(SymbolTable.class);
-
-        MiniJajaSemanticAnalyser analyser = new MiniJajaSemanticAnalyser(collector, symbolTable);
-        analyser.setFileName("OpUnknown.mjj");
-
-        Method m = MiniJajaSemanticAnalyser.class.getDeclaredMethod(
-                "checkBinaryOperation", Type.class, Type.class, Type.class, String.class);
-        m.setAccessible(true);
-
-        // leftType != expectedType -> déclenche le message avec getOperationName("^^") => "operation"
-        m.invoke(analyser, Type.ENTIER, Type.ENTIER, Type.BOOLEEN, "^^");
-
+        assertTrue(collector.hasErrors(), "Should report missing return error");
         Diagnostic diag = firstSemanticError(collector);
         assertNotNull(diag);
-        assertTrue(diag.message().contains("operation"), "Le nom générique 'operation' doit apparaître");
+        assertTrue(diag.message().contains("Missing return statement") || diag.message().contains("must return"),
+                "Error message should mention missing return");
+    }
+
+    // ============================================================
+    //  Tests for undeclared variable in initialization
+    // ============================================================
+
+    @Test
+    void undeclaredVariableInInitialization_shouldReportError() {
+        String code = """
+                class C {
+                    int f(int z) {
+                        boolean t = a;
+                        return 0;
+                    };
+                    main {
+                        int x = 0;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("UndeclaredInInit.mjj");
+
+        analyser.analyse(classe);
+
+        assertTrue(collector.hasErrors(), "Should report undeclared variable error");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Undeclared variable") && diag.message().contains("'a'"),
+                "Error message should mention undeclared variable 'a'");
+    }
+
+    // ============================================================
+    //  Tests for type mismatch in initialization
+    // ============================================================
+
+    @Test
+    void typeMismatchInInitialization_shouldReportError() {
+        String code = """
+                class C {
+                    int f(int z) {
+                        boolean o = z;
+                        return 0;
+                    };
+                    main {
+                        int x = 0;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("TypeMismatchInit.mjj");
+
+        analyser.analyse(classe);
+
+        assertTrue(collector.hasErrors(), "Should report type mismatch error");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Type mismatch") && diag.message().contains("initialization"),
+                "Error message should mention type mismatch in initialization");
     }
 
     // ============================================================

@@ -230,5 +230,46 @@ class TestInstructionsJJC {
                 """;
         executeJajaCode(code, stacks);
     }
+
+    /**
+     * Test de récursivité simple.
+     * countdown(n): retourne n directement (version simplifiée sans récursion pour tester)
+     * D'abord testons une version simple sans récursion.
+     */
+    @Test
+    void testRecursiveMethod_simpleCountdown() {
+        Stacks stacks = new Stacks();
+        // Méthode simple: countdown retourne juste son argument n
+        // Structure identique à testFonctions:
+        // 1-5: init, result@global, countdown
+        // 6: goto(11) - saute au main (après corps)
+        // 7-10: corps de countdown (4 instructions comme testFonctions)
+        // 11+: main
+        String code = """
+                1 init
+                2 push(0)
+                3 new(result@global, int, var, 0)
+                4 push(7)
+                5 new(countdown, int, meth, 0)
+                6 goto(11)
+                7 new(n@countdown, int, var, 1)
+                8 load(n@countdown)
+                9 swap
+                10 return
+                11 push(5)
+                12 invoke(countdown)
+                13 swap
+                14 pop
+                15 store(result@global)
+                16 push(0)
+                17 swap
+                18 pop
+                19 pop
+                20 jcstop
+                """;
+        executeJajaCode(code, stacks);
+        // countdown(5) retourne 5
+        assertEquals(5, stacks.getValue("result@global"));
+    }
 }
 

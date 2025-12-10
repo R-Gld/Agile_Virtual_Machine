@@ -1,23 +1,25 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINode;
 
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
-import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 public class AppelENode extends Expression {
 
+    private static final Logger logger = LoggerFactory.getLogger(AppelENode.class);
+
     private final IdentNode ident;
     private final ListExpNode listexp;
-    private final Type type;
 
     public AppelENode(IdentNode ident2, ListExpNode listexp) {
         this.ident = ident2;
         this.listexp = listexp;
-        this.type = Type.ENTIER;
     }
 
     public IdentNode getIdent() {
@@ -31,17 +33,16 @@ public class AppelENode extends Expression {
     public Object evaluate(Stacks stack) {
         // AppelE does not evaluate to a value directly; it represents a function/method call.
 
-         AppelINode appelI = new AppelINode(ident, listexp);
-         appelI.InterpretChildren(stack);
-         String varClasse = stack.getVariableClasse();
-         System.err.println("[DEBUG] AppelENode evaluate: varClasse = " + varClasse); 
-         if (varClasse == null) {
-             throw new RuntimeException("Erreur: appelE hors d'une classe");
-         }
-         return stack.getValue(varClasse);  
-       
+        AppelINode appelI = new AppelINode(ident, listexp);
+        appelI.InterpretChildren(stack);
+        String varClasse = stack.getVariableClasse();
+        logger.error("[DEBUG] AppelENode evaluate: varClasse = {}", varClasse);
+        if (varClasse == null) {
+            throw new RuntimeException("Erreur: appelE hors d'une classe");
+        }
+        return stack.getValue(varClasse);
 
-     
+
     }
 
     @Override

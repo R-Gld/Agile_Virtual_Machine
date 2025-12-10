@@ -1,10 +1,16 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EcrireNode extends InstructionNode {
+
+    private static final Logger logger = LoggerFactory.getLogger(EcrireNode.class);
     private final Object Ident1Node;
     
     public EcrireNode(Object ident1Node) {
@@ -15,12 +21,6 @@ public class EcrireNode extends InstructionNode {
         return Ident1Node;
     }
 
-    @Override
-    public String toString() {
-        return "EcrireNode{" +
-                "Ident1Node=" + Ident1Node +
-                '}';
-    }
     @Override
     public String toStringTree() {
         if (this.Ident1Node instanceof Expression) {
@@ -33,7 +33,7 @@ public class EcrireNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (Ident1Node instanceof IdentNode ident1) {
             String varName = ident1.getNom();
-            
+
             // Try scoped name first (for function context with recursion support)
             String actualVarName = varName;
             if (stacks.isInMethodContext()) {
@@ -42,7 +42,7 @@ public class EcrireNode extends InstructionNode {
                     actualVarName = scopedName;
                 }
             }
-            
+
             String OT = stacks.getObjectType(actualVarName);
             if (OT == null) {
                 OT = stacks.getObjectType(varName);
@@ -52,12 +52,27 @@ public class EcrireNode extends InstructionNode {
                 throw new RuntimeException("Type error: cannot print array directly or method reference");
             }
             
-            System.out.print(ident1.evaluate(stacks));
+            logger.info("{}", ident1.evaluate(stacks));
         } else if (Ident1Node instanceof Expression expr) {
-            System.out.print(expr.evaluate(stacks));
+            logger.info("{}", expr.evaluate(stacks));
+        } else if (Ident1Node instanceof TabNode tabNode) {
+            String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
+
+
+            int index = (int) tabNode.getIndex().evaluate(stacks);
+            Object currentValue =  stacks.getArrayValue(varName, index);
+
+            if (currentValue instanceof Integer) {
+                logger.info("{}", currentValue);
+            }  else if (currentValue instanceof Boolean) {
+                logger.info("{}", currentValue);
+            }
+
         } else {
-            System.out.print(Ident1Node);
+            logger.info("{}", Ident1Node);
         }
+
+
 
     }
 

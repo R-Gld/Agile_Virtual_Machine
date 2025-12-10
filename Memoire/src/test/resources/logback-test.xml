@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Configuration simplifiée pour les tests Memoire -->
+    <!-- Les logs vont vers System.err pour être capturés par les tests qui utilisent System.setErr() -->
+
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Niveau DEBUG pour que printStack() et autres méthodes de debug soient visibles dans les tests -->
+    <root level="DEBUG">
+        <appender-ref ref="STDERR"/>
+    </root>
+</configuration>

@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.JajaCodeRuntimeException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -9,8 +12,39 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 import java.util.List;
 
+/**
+ * Axiome représentant l'instruction JajaCode {@code new(i,t,kind,depth)}.
+ *
+ * <p><b>Sémantiques formelles :</b></p>
+ * <pre>
+ * [newV]     : &lt;m,a&gt; ⊢ new(i,t,var,s) –» &lt;IdentVal(i,t,m,s),a+1&gt;
+ * [newC]     : &lt;&lt;w,v, cst,*&gt;.m,a&gt; ⊢ new(i,t,cst,0) –» &lt;DeclCst(i,v,t,m),a+1&gt;
+ * [newM]     : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ new(i,t,meth,0) –» &lt;DeclMeth(i, v, t, m),a+1&gt;
+ * [newarray] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ newarray(i, t) –» &lt;DeclTab(i, v, t, m), a+1&gt;
+ * </pre>
+ *
+ * <p><b>Exceptions :</b></p>
+ * <ul>
+ *   <li>{@link StackUnderflowException} si la pile est vide ou insuffisante pour le depth</li>
+ *   <li>{@link JajaCodeRuntimeException} si les arguments sont malformés ou le type/kind est inconnu</li>
+ *   <li>{@link TypeMismatchException} si la taille du tableau n'est pas un entier</li>
+ * </ul>
+ *
+ * @see JajaAxiome
+ */
 public class NewAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(NewAxiome.class);
+
+    /**
+     * Exécute l'instruction {@code new(i,t,kind,depth)}.
+     *
+     * @param ctx le contexte de la machine virtuelle contenant l'état d'exécution
+     * @param argsPacked les arguments packés au format "ident,type,kind[,depth]"
+     * @throws StackUnderflowException si la pile est vide ou insuffisante
+     * @throws JajaCodeRuntimeException si les arguments sont malformés
+     * @throws TypeMismatchException si la taille du tableau n'est pas un entier
+     */
     @Override
     public void execute(MachineContext ctx, String argsPacked) {
         // 1. Dépacking des arguments (Format attendu: "ident,type,kind,depth")
@@ -39,7 +73,29 @@ public class NewAxiome implements JajaAxiome {
             throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'", "NEW", ctx.getInstructionCounter());
         }
 
-        System.out.println("\t\t[DEBUG] axiomeNew appelé: ident=" + ident + ", type=" + type + ", kind=" + kind + ", depth=" + depth);
+        logger.debug("\t\t[DEBUG] axiomeNew appelé: ident={}, type={}, kind={}, depth={}", ident, type, kind, depth);
+
+        // 3b. Gérer la récursivité: ajouter le suffixe de contexte pour les variables locales
+        // Si on est dans un contexte de méthode (récursif ou non), le contexte est stocké dans contextStack
+        String scopedIdent = ident;
+        String currentContext = ctx.getStacks().getCurrentContext();
+
+        // Si on est dans un contexte de méthode ET que la variable n'est pas une méthode
+        // On ajoute le suffixe de récursivité pour différencier les appels récursifs
+        if (currentContext != null && !kind.equalsIgnoreCase("meth")) {
+            // Vérifier si la variable est une variable locale (contient @ dans son nom mais pas @global)
+            if (ident.contains("@") && !ident.endsWith("@global")) {
+                // Récupérer la profondeur de récursion depuis le contexte
+                String methodName = ctx.getStacks().getCurrentMethodName();
+                int recursionLevel = ctx.getStacks().getRecursionDepth(methodName);
+
+                // Si recursionLevel > 1, on ajoute le suffixe pour différencier les instances
+                if (recursionLevel > 1) {
+                    scopedIdent = ident + "$" + (recursionLevel - 1);
+                    logger.debug("\t\t[DEBUG] Variable récursive renommée: {} -> {}", ident, scopedIdent);
+                }
+            }
+        }
 
         // 3. Logique selon le depth
         if (depth > 0) {
@@ -61,16 +117,16 @@ public class NewAxiome implements JajaAxiome {
             int stackSize = ctx.getStacks().getStackFromTopToBottom().size();
             int realIndex = stackSize - 1 - depth; // Convertir de top-to-bottom à bottom-to-top
 
-            // On renomme le quad existant avec le nom du paramètre
-            targetQuad.ident = ident;
+            // On renomme le quad existant avec le nom du paramètre (scopé pour la récursivité)
+            targetQuad.ident = scopedIdent;
             targetQuad.object = "var";
             targetQuad.type = type;
 
             // Créer l'entrée dans la table des symboles qui pointe vers cette position
-            ctx.getStacks().getSymbolTable().creationSymbol(ident, realIndex, type);
+            ctx.getStacks().getSymbolTable().creationSymbol(scopedIdent, realIndex, type);
 
-            System.out.println("\t\t[DEBUG] Valeur identifiée à depth=" + depth + ": " + valeur + " (pile non modifiée, binding créé)");
-            System.out.println("\t\tAxiome NEW exécuté: " + ident + " (" + type + "/" + kind + ") identifié à depth=" + depth);
+            logger.debug("\t\t[DEBUG] Valeur identifiée à depth={}: {} (pile non modifiée, binding créé)", depth, valeur);
+            logger.debug("\t\tAxiome NEW exécuté: {} ({}/{}) identifié à depth={}", scopedIdent, type, kind, depth);
         } else {
             // depth = 0 : comportement normal, on dépile la valeur et on déclare
             Stacks.Quad valeurQuad = ctx.getStacks().pop();
@@ -80,30 +136,23 @@ public class NewAxiome implements JajaAxiome {
             }
 
             Object valeur = valeurQuad.value;
-            System.out.println("\t\t[DEBUG] Valeur dépilée: " + valeur);
+            logger.debug("\t\t[DEBUG] Valeur dépilée: {}", valeur);
 
             // Logique de déclaration selon la sorte (kind)
             switch (kind.toLowerCase()) {
                 case "variable":
                 case "var":
-                    ctx.getStacks().declareVar(ident, valeur, type);
+                    ctx.getStacks().declareVar(scopedIdent, valeur, type);
                     break;
                 case "cst":
                 case "meth":
-                    ctx.getStacks().declareCst(ident, valeur, type);
-                    break;
-                case "tab":
-                    if (valeur instanceof Integer size) {
-                        ctx.getStacks().declareTab(ident, size, type);
-                    } else {
-                        throw new TypeMismatchException("Taille de tableau invalide", "NEW", ctx.getInstructionCounter());
-                    }
+                    ctx.getStacks().declareCst(scopedIdent, valeur, type);
                     break;
                 default:
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, "NEW", ctx.getInstructionCounter());
             }
 
-            System.out.println("\t\tAxiome NEW exécuté: " + ident + " (" + type + "/" + kind + ") créé.");
+            logger.debug("\t\tAxiome NEW exécuté: {} ({}/{}) créé.", scopedIdent, type, kind);
         }
 
         ctx.incrementPC();

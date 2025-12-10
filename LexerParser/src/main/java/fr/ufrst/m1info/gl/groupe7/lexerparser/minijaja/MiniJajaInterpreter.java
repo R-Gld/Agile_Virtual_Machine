@@ -1,7 +1,10 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyser;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyzer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
@@ -16,6 +19,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 public class MiniJajaInterpreter implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(MiniJajaInterpreter.class);
     private final DiagnosticCollector collector;
     private final String input;
 
@@ -46,33 +51,30 @@ public class MiniJajaInterpreter implements Runnable {
             throw new SyntaxException(collector);
         }
 
-        System.out.println("Debut de l'interprétation du minijaja");
+        logger.info("Debut de l'interprétation du minijaja");
 
         AstNode astRoot = visitor.visit(tree);
-        System.out.println("\n=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====");
+        logger.info("\n=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====");
         if (astRoot != null) {
-            System.out.println(astRoot.toStringTree());
+            logger.info(astRoot.toStringTree());
         } else {
-            System.out.println("ERREUR: L'AST est null.");
+            logger.error("ERREUR: L'AST est null.");
         }
 
         // Semantic analysis
         if (astRoot instanceof ClasseNode classNode) {
-            System.out.println("\n=====  ANALYSE SÉMANTIQUE  =====");
-            MiniJajaSemanticAnalyser semanticAnalyser = new MiniJajaSemanticAnalyser(
-                collector,
-                stacks.getSymbolTable()
-            );
-           // semanticAnalyser.analyse(classNode);
+            logger.info("\n=====  ANALYSE SÉMANTIQUE  =====");
+            MiniJajaSemanticAnalyzer semanticAnalyser = new MiniJajaSemanticAnalyzer(collector);
+            semanticAnalyser.analyse(classNode);
 
             if (collector.hasErrors()) {
                 throw new SyntaxException(collector);
             }
-            System.out.println("Analyse sémantique réussie - aucune erreur détectée");
+            logger.info("Analyse sémantique réussie - aucune erreur détectée");
         }
 
-        System.out.println("==============================================");
-        System.out.println("\n=====  INTERPRETATION  =====");
+        logger.info("==============================================");
+        logger.info("\n=====  INTERPRETATION  =====");
         if (astRoot != null) {
            Walker walker = new Walker(astRoot,stacks);
            walker.walk();
