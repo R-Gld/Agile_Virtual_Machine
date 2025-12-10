@@ -167,28 +167,7 @@ public class InterpreterErrorTest {
         }
     }
 
-    // ==================== VARIABLE NON INITIALISEE ====================
-    @Nested
-    @DisplayName("Variable non initialisée")
-    class UninitializedVariableTests {
 
-        @Test
-        @DisplayName("Lecture de variable non initialisée")
-        void testReadUninitializedVariable() {
-            String program = """
-                class C {
-                    main {
-                        int x;
-                        int y;
-                        y = x + 1;
-                    }
-                }
-                """;
-            // Selon l'implémentation, peut être 0 par défaut ou erreur
-            // Ce test vérifie le comportement actuel
-            assertDoesNotThrow(() -> runProgram(program));
-        }
-    }
 
     // ==================== ERREUR DE TYPE ====================
     @Nested

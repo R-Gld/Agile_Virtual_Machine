@@ -8,7 +8,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode; // Assurez-vous d'importer AstNode
@@ -161,7 +160,7 @@ public class DebugeParsingETC {
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       // 4) Affichage de l'AST
-    Debug debug = new Debug(Debug.Mode.BREAKPOINTS);
+    Debug debug = new Debug(Debug.Mode.DISABLED);
     debug.addBreakPoint(60); // Exemple de breakpoint
     System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks, debug);

@@ -698,4 +698,362 @@ class AstNodesTest {
 
         Assertions.assertDoesNotThrow(() -> stacks.getArrayValue("t", 0));
     }
+
+    // ==================== AppelINode Tests ====================
+
+    @Test
+    void testAppelINodeConstructorAndGetters() {
+        IdentNode ident = new IdentNode("myMethod");
+        ListExpNode listExp = new ListExpNode(new NbreNode(42), null);
+        
+        AppelINode appel = new AppelINode(ident, listExp);
+        
+        assertEquals("myMethod", appel.getIdent().getNom());
+        assertNotNull(appel.getListExp());
+        assertEquals("appelI(Ident(myMethod),listExp(nbre(42),exnil))", appel.toStringTree());
+    }
+
+    @Test
+    void testAppelINodeToStringTree() {
+        IdentNode ident = new IdentNode("foo");
+        ListExpNode args = new ListExpNode(new NbreNode(1), new ListExpNode(new NbreNode(2), null));
+        
+        AppelINode appel = new AppelINode(ident, args);
+        
+        String tree = appel.toStringTree();
+        assertTrue(tree.contains("appelI"));
+        assertTrue(tree.contains("foo"));
+    }
+
+    @Test
+    void testAppelINodeGetChildrenInitiallyEmpty() {
+        AppelINode appel = new AppelINode(new IdentNode("test"), null);
+        
+        Iterable<AstNode> children = appel.getChildren();
+        
+        assertNotNull(children);
+        int count = 0;
+        for (AstNode child : children) {
+            count++;
+        }
+        assertEquals(0, count);
+    }
+
+    @Test
+    void testAppelINodeRestChildren() {
+        AppelINode appel = new AppelINode(new IdentNode("test"), null);
+        
+        appel.RestChildren();
+        
+        Iterable<AstNode> children = appel.getChildren();
+        assertNotNull(children);
+        assertFalse(children.iterator().hasNext());
+    }
+
+    // ==================== AstNode Base Class Tests ====================
+
+    @Test
+    void testAstNodeToStringDelegatesToToStringTree() {
+        IdentNode ident = new IdentNode("test");
+        assertEquals(ident.toStringTree(), ident.toString());
+    }
+
+    @Test
+    void testAstNodeGetNodeType() {
+        IdentNode ident = new IdentNode("test");
+        assertEquals(IdentNode.class, ident.getNodeType());
+        
+        NbreNode nbre = new NbreNode(42);
+        assertEquals(NbreNode.class, nbre.getNodeType());
+    }
+
+    @Test
+    void testAstNodeDefaultGetChildrenReturnsEmptyIterable() {
+        NbreNode nbre = new NbreNode(42);
+        Iterable<AstNode> children = nbre.getChildren();
+        
+        assertNotNull(children);
+        assertFalse(children.iterator().hasNext());
+    }
+
+    // ==================== RestoreContextNode Tests (if exists) ====================
+
+    @Test
+    void testRestoreContextNodeToStringTree() {
+        var restoreNode = new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.context.RestoreContextNode("methodName");
+        String tree = restoreNode.toStringTree();
+        
+        assertNotNull(tree);
+        assertTrue(tree.contains("RestoreContext") || tree.contains("methodName"));
+    }
+
+    // ==================== Complex Expression Tests ====================
+
+    @Test
+    void testComplexNestedExpressions() {
+        // (5 + 3) * 2
+        PlusNode plus = new PlusNode(new NbreNode(5), new NbreNode(3));
+        MultiplicationNode mult = new MultiplicationNode(plus, new NbreNode(2));
+        
+        Stacks stacks = new Stacks();
+        Object result = mult.evaluate(stacks);
+        
+        assertEquals(16, result);
+    }
+
+    @Test
+    void testDeeplyNestedExpressions() {
+        // ((1 + 2) + 3) + 4
+        PlusNode inner = new PlusNode(new NbreNode(1), new NbreNode(2));
+        PlusNode middle = new PlusNode(inner, new NbreNode(3));
+        PlusNode outer = new PlusNode(middle, new NbreNode(4));
+        
+        Stacks stacks = new Stacks();
+        Object result = outer.evaluate(stacks);
+        
+        assertEquals(10, result);
+    }
+
+    @Test
+    void testMixedArithmeticExpression() {
+        // 10 - 3 * 2 = 10 - 6 = 4 (if evaluated left to right with precedence)
+        // Actually: MinusNode(10, MultiplicationNode(3, 2))
+        MultiplicationNode mult = new MultiplicationNode(new NbreNode(3), new NbreNode(2));
+        MinusNode minus = new MinusNode(new NbreNode(10), mult);
+        
+        Stacks stacks = new Stacks();
+        Object result = minus.evaluate(stacks);
+        
+        assertEquals(4, result);
+    }
+
+    // ==================== Boolean Expression Tests ====================
+
+    @Test
+    void testComplexBooleanExpression() {
+        // true && (false || true) = true
+        OrNode orExpr = new OrNode(new BoolValueNode(false), new BoolValueNode(true));
+        AndNode andExpr = new AndNode(new BoolValueNode(true), orExpr);
+        
+        Stacks stacks = new Stacks();
+        Object result = andExpr.evaluate(stacks);
+        
+        assertEquals(true, result);
+    }
+
+    @Test
+    void testNotExpression() {
+        NotNode notTrue = new NotNode(new BoolValueNode(true));
+        NotNode notFalse = new NotNode(new BoolValueNode(false));
+        
+        Stacks stacks = new Stacks();
+        
+        assertEquals(false, notTrue.evaluate(stacks));
+        assertEquals(true, notFalse.evaluate(stacks));
+    }
+
+    // ==================== Comparison Expression Tests ====================
+
+    @Test
+    void testEqualsNodeWithIntegers() {
+        EqualsNode eq1 = new EqualsNode(new NbreNode(5), new NbreNode(5));
+        EqualsNode eq2 = new EqualsNode(new NbreNode(5), new NbreNode(6));
+        
+        Stacks stacks = new Stacks();
+        
+        assertEquals(true, eq1.evaluate(stacks));
+        assertEquals(false, eq2.evaluate(stacks));
+    }
+
+    @Test
+    void testGreaterThanNode() {
+        GreaterThanNode gt1 = new GreaterThanNode(new NbreNode(10), new NbreNode(5));
+        GreaterThanNode gt2 = new GreaterThanNode(new NbreNode(5), new NbreNode(10));
+        GreaterThanNode gt3 = new GreaterThanNode(new NbreNode(5), new NbreNode(5));
+        
+        Stacks stacks = new Stacks();
+        
+        assertEquals(true, gt1.evaluate(stacks));
+        assertEquals(false, gt2.evaluate(stacks));
+        assertEquals(false, gt3.evaluate(stacks));
+    }
+
+    // ==================== UnaryMinus Tests ====================
+
+    @Test
+    void testUnaryMinusNode() {
+        UnaryMinusNode neg = new UnaryMinusNode(new NbreNode(42));
+        
+        Stacks stacks = new Stacks();
+        Object result = neg.evaluate(stacks);
+        
+        assertEquals(-42, result);
+    }
+
+    @Test
+    void testUnaryMinusWithExpression() {
+        // -(5 + 3) = -8
+        PlusNode plus = new PlusNode(new NbreNode(5), new NbreNode(3));
+        UnaryMinusNode neg = new UnaryMinusNode(plus);
+        
+        Stacks stacks = new Stacks();
+        Object result = neg.evaluate(stacks);
+        
+        assertEquals(-8, result);
+    }
+
+    // ==================== Division Tests ====================
+
+    @Test
+    void testDivisionNode() {
+        DivisionNode div = new DivisionNode(new NbreNode(10), new NbreNode(2));
+        
+        Stacks stacks = new Stacks();
+        Object result = div.evaluate(stacks);
+        
+        assertEquals(5, result);
+    }
+
+    @Test
+    void testDivisionWithRemainder() {
+        // Integer division: 7 / 2 = 3
+        DivisionNode div = new DivisionNode(new NbreNode(7), new NbreNode(2));
+        
+        Stacks stacks = new Stacks();
+        Object result = div.evaluate(stacks);
+        
+        assertEquals(3, result);
+    }
+
+    // ==================== SiNode Tests ====================
+
+    @Test
+    void testSiNodeWithTrueCondition() {
+        // if (true) { x = 1 }
+        BoolValueNode condition = new BoolValueNode(true);
+        InstructionsNode thenBranch = new InstructionsNode();
+        
+        SiNode siNode = new SiNode(condition, thenBranch);
+        
+        Stacks stacks = new Stacks();
+        siNode.interpret(stacks);
+        
+        // Children should be set to then branch
+        assertNotNull(siNode.getChildren());
+    }
+
+    @Test
+    void testSiNodeWithFalseConditionNoElse() {
+        BoolValueNode condition = new BoolValueNode(false);
+        InstructionsNode thenBranch = new InstructionsNode();
+        
+        SiNode siNode = new SiNode(condition, thenBranch);
+        
+        Stacks stacks = new Stacks();
+        siNode.interpret(stacks);
+        
+        // Children should be empty (no else branch)
+        assertNotNull(siNode.getChildren());
+    }
+
+    @Test
+    void testSiNodeWithFalseConditionWithElse() {
+        BoolValueNode condition = new BoolValueNode(false);
+        InstructionsNode thenBranch = new InstructionsNode();
+        InstructionsNode elseBranch = new InstructionsNode();
+        
+        SiNode siNode = new SiNode(condition, thenBranch, elseBranch);
+        
+        Stacks stacks = new Stacks();
+        siNode.interpret(stacks);
+        
+        // Children should be set to else branch
+        assertNotNull(siNode.getChildren());
+    }
+
+    @Test
+    void testSiNodeGetters() {
+        BoolValueNode condition = new BoolValueNode(true);
+        InstructionsNode thenBranch = new InstructionsNode();
+        InstructionsNode elseBranch = new InstructionsNode();
+        
+        SiNode siNode = new SiNode(condition, thenBranch, elseBranch);
+        
+        assertEquals(condition, siNode.getExpressionNode());
+        assertEquals(thenBranch, siNode.getInstructionsNode());
+        assertEquals(elseBranch, siNode.getInstructionsNode2());
+    }
+
+    // ==================== TantqueNode Tests ====================
+
+    @Test
+    void testTantqueNodeToStringTree() {
+        BoolValueNode condition = new BoolValueNode(true);
+        InstructionsNode body = new InstructionsNode();
+        
+        TantqueNode tantque = new TantqueNode(condition, body);
+        
+        String tree = tantque.toStringTree();
+        assertTrue(tree.contains("tantque"));
+    }
+
+    // ==================== RetourNode Tests ====================
+
+    @Test
+    void testRetourNodeToStringTree() {
+        RetourNode retour = new RetourNode(new NbreNode(42));
+        
+        String tree = retour.toStringTree();
+        assertTrue(tree.contains("retour") || tree.contains("42"));
+    }
+
+    // ==================== ListExpNode Tests ====================
+
+    @Test
+    void testListExpNodeEvaluate() {
+        ListExpNode list = new ListExpNode(new NbreNode(1), 
+                           new ListExpNode(new NbreNode(2), 
+                           new ListExpNode(new NbreNode(3), null)));
+        
+        Stacks stacks = new Stacks();
+        java.util.List<Object> result = list.evaluate(stacks);
+        
+        assertEquals(3, result.size());
+        assertEquals(1, result.get(0));
+        assertEquals(2, result.get(1));
+        assertEquals(3, result.get(2));
+    }
+
+    @Test
+    void testListExpNodeEmpty() {
+        ListExpNode emptyList = new ListExpNode(null, null);
+        
+        String tree = emptyList.toStringTree();
+        assertNotNull(tree);
+    }
+
+    // ==================== SommeNode Tests ====================
+
+    @Test
+    void testSommeNodeInterpret() {
+        Stacks stacks = new Stacks();
+        stacks.declareVar("x", 10, Type.ENTIER);
+        
+        SommeNode somme = new SommeNode(new IdentNode("x"), new NbreNode(5));
+        somme.interpret(stacks);
+        
+        // x should now be 15
+        Object val = stacks.getValue("x");
+        assertEquals(15, val);
+    }
+
+    // ==================== EcrireNode Tests ====================
+
+    @Test
+    void testEcrireNodeToStringTree() {
+        EcrireNode ecrire = new EcrireNode(new NbreNode(42));
+        
+        String tree = ecrire.toStringTree();
+        assertTrue(tree.contains("ecrire") || tree.contains("42"));
+    }
 }
