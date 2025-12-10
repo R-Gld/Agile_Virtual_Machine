@@ -646,9 +646,4 @@ public class MyCodeArea extends AnchorPane {
         codeArea.focusedProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
         codeArea.textProperty().addListener((obs, oldV, newV) -> highlightCaretLine());
     }
-
-    // END highlight
-    // cos of the inner style it didn't work I have removed it and i think now it
-    // works for linux please check it
-    // works for linux please check it
 }
