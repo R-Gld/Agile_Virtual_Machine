@@ -131,15 +131,21 @@ public class SiNode extends InstructionNode {
     @Override
     public void interpret(Stacks stacks) {
         // Always reset children to avoid stale state from previous interpretations
-        // (critical when same AST node is reused across recursive calls)
         setchildren(java.util.List.of());
         
-        if ((Boolean) expressionNode.evaluate(stacks)) {
+        Object conditionResult = expressionNode.evaluate(stacks);
+        
+        // Type check: ensure condition evaluates to Boolean
+        if (!(conditionResult instanceof Boolean)) {
+            throw new ClassCastException("Condition expression must evaluate to Boolean, got " + 
+                (conditionResult == null ? "null" : conditionResult.getClass().getSimpleName()));
+        }
+        
+        if ((Boolean) conditionResult) {
             setchildren(instructionsNode.getChildren());
         } else if (instructionsNode2 != null) {
             setchildren(instructionsNode2.getChildren());
         }
-        // If condition is false and no else branch, children remains empty
     }
 
 }
