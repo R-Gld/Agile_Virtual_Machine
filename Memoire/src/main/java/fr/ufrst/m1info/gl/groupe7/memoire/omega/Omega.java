@@ -1,4 +1,4 @@
-package fr.ufrst.m1info.gl.groupe7.memoire.Omega;
+package fr.ufrst.m1info.gl.groupe7.memoire.omega;
 
 public class Omega {
     private static final Omega instance = new Omega();

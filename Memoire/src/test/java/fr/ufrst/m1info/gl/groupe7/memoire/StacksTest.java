@@ -165,7 +165,7 @@ public class StacksTest {
     @Test
     void testAssignValueOnVar() {
         stacks.declareVar("x", 5, Type.ENTIER);
-        stacks.AffecterVal("x", 20);
+        stacks.affecterVal("x", 20);
         assertEquals(20, stacks.getValue("x"));
     }
 
@@ -173,7 +173,7 @@ public class StacksTest {
     void testAssignValueDoesNotAffectConst() {
         stacks.declareCst("PI", 3.14, Type.ENTIER);
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("PI", 10);
+            stacks.affecterVal("PI", 10);
         });
         assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
         assertEquals(3.14, stacks.getValue("PI"), "La constante ne doit pas être modifiée");
@@ -285,7 +285,7 @@ public class StacksTest {
         stacks.declareVar("x", 1, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("y", 10);
+            stacks.affecterVal("y", 10);
         });
         assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
@@ -296,7 +296,7 @@ public class StacksTest {
         stacks.declareVar("x", 1, Type.ENTIER);
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("y", 10);
+            stacks.affecterVal("y", 10);
         });
         assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("y"));
@@ -309,7 +309,7 @@ public class StacksTest {
         stacks.declareVar("b", 2, Type.ENTIER);
         stacks.declareVar("c", 3, Type.ENTIER); // top
 
-        stacks.AffecterVal("a", 10);
+        stacks.affecterVal("a", 10);
 
         List<Stacks.Quad> stackList = stacks.getStackFromTopToBottom();
         assertEquals("c", stackList.get(0).ident);
@@ -322,7 +322,7 @@ public class StacksTest {
     void testAssignValueOnEmptyStack() {
         // pile vide
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("x", 10);
+            stacks.affecterVal("x", 10);
         });
         assertTrue(ex.getMessage().contains("pas declaree"));
         assertNull(stacks.getValue("x"));
@@ -408,18 +408,18 @@ public class StacksTest {
         stacks.printSymbol("li");
 
         // OK
-        assertTrue(stacks.AffecterVal("x", 12));
+        assertTrue(stacks.affecterVal("x", 12));
         stacks.printSymbol("x");
         // Mauvais type
         assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("x", "notAnInt");
+            stacks.affecterVal("x", "notAnInt");
         });
 
 
 
         // Variable inexistante
         assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("y", 99);
+            stacks.affecterVal("y", 99);
         });
     }
     @Test
@@ -1125,7 +1125,7 @@ public class StacksTest {
     @Test
     void testGetValue_VariableInitializedAfterOmega() {
         stacks.declareVar("laterInitVar", Type.ENTIER);
-        stacks.AffecterVal("laterInitVar", 100);
+        stacks.affecterVal("laterInitVar", 100);
         assertEquals(100, stacks.getValue("laterInitVar"));
     }
 
@@ -1136,7 +1136,7 @@ public class StacksTest {
     @Test
     void testAffecterVal_UndeclaredVariableThrowsException() {
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("undeclaredVar", 50);
+            stacks.affecterVal("undeclaredVar", 50);
         });
         
         assertTrue(ex.getMessage().contains("pas declaree"));
@@ -1147,7 +1147,7 @@ public class StacksTest {
         stacks.declareCst("MY_CONST", 100, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("MY_CONST", 200);
+            stacks.affecterVal("MY_CONST", 200);
         });
         
         assertTrue(ex.getMessage().contains("ne peut pas être modifiée"));
@@ -1159,7 +1159,7 @@ public class StacksTest {
         stacks.declareTab("myArray", 5, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("myArray", 10);
+            stacks.affecterVal("myArray", 10);
         });
         
         assertTrue(ex.getMessage().contains("tableau"));
@@ -1171,7 +1171,7 @@ public class StacksTest {
         stacks.declareMeth("myMethod", "body", Type.VOID);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("myMethod", "newBody");
+            stacks.affecterVal("myMethod", "newBody");
         });
         
         assertTrue(ex.getMessage().contains("méthode"));
@@ -1183,7 +1183,7 @@ public class StacksTest {
         stacks.declareVar("intVar", 10, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("intVar", true);
+            stacks.affecterVal("intVar", true);
         });
         
         assertTrue(ex.getMessage().contains("Type de variable"));
@@ -1195,7 +1195,7 @@ public class StacksTest {
         stacks.declareVar("boolVar", true, Type.BOOLEEN);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("boolVar", 42);
+            stacks.affecterVal("boolVar", 42);
         });
         
         assertTrue(ex.getMessage().contains("Type de variable"));
@@ -1207,7 +1207,7 @@ public class StacksTest {
         stacks.declareVar("intVar2", 5, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("intVar2", "not a number");
+            stacks.affecterVal("intVar2", "not a number");
         });
         
         assertTrue(ex.getMessage().contains("Type de variable"));
@@ -1216,21 +1216,21 @@ public class StacksTest {
     @Test
     void testAffecterVal_ValidAssignmentReturnsTrue() {
         stacks.declareVar("validVar", 0, Type.ENTIER);
-        assertTrue(stacks.AffecterVal("validVar", 99));
+        assertTrue(stacks.affecterVal("validVar", 99));
         assertEquals(99, stacks.getValue("validVar"));
     }
 
     @Test
     void testAffecterVal_NullToIntVariableSucceeds() {
         stacks.declareVar("nullableInt", 10, Type.ENTIER);
-        assertTrue(stacks.AffecterVal("nullableInt", null));
+        assertTrue(stacks.affecterVal("nullableInt", null));
         assertNull(stacks.getValue("nullableInt"));
     }
 
     @Test
     void testAffecterVal_NullToBoolVariableSucceeds() {
         stacks.declareVar("nullableBool", false, Type.BOOLEEN);
-        assertTrue(stacks.AffecterVal("nullableBool", null));
+        assertTrue(stacks.affecterVal("nullableBool", null));
         assertNull(stacks.getValue("nullableBool"));
     }
 
@@ -1366,7 +1366,7 @@ public class StacksTest {
         assertThrows(RuntimeException.class, () -> stacks.getValue("x"));
 
 
-        stacks.AffecterVal("x",42);
+        stacks.affecterVal("x",42);
 
         assertEquals(42, stacks.getValue("x"));
     }
@@ -1463,7 +1463,7 @@ public class StacksTest {
         Stacks s = new Stacks();
         s.declareCst("c", Type.ENTIER); // c = Ω
 
-        boolean ok = s.AffecterVal("c", 7);
+        boolean ok = s.affecterVal("c", 7);
 
         assertTrue(ok);
         assertEquals(7, s.getValue("c"));
@@ -1474,7 +1474,7 @@ public class StacksTest {
         s.declareCst("c", 4, Type.ENTIER); // c = 4, NON OMEGA
 
         RuntimeException e = assertThrows(RuntimeException.class, () ->
-                s.AffecterVal("c", 8)
+                s.affecterVal("c", 8)
         );
 
         assertTrue(e.getMessage().contains("ne peut pas être modifiée"));
@@ -1484,10 +1484,10 @@ public class StacksTest {
         Stacks s = new Stacks();
         s.declareCst("c", Type.ENTIER); // c = Ω
 
-        assertTrue(s.AffecterVal("c", 5)); // première affectation OK
+        assertTrue(s.affecterVal("c", 5)); // première affectation OK
 
         RuntimeException e = assertThrows(RuntimeException.class, () ->
-                s.AffecterVal("c", 10) // deuxième -> interdit
+                s.affecterVal("c", 10) // deuxième -> interdit
         );
 
         assertTrue(e.getMessage().contains("ne peut pas être modifiée"));
@@ -1497,7 +1497,7 @@ public class StacksTest {
         Stacks s = new Stacks();
 
         RuntimeException e = assertThrows(RuntimeException.class, () ->
-                s.AffecterVal("x", 5)
+                s.affecterVal("x", 5)
         );
 
         assertTrue(e.getMessage().contains("pas declaree"));
@@ -1508,7 +1508,7 @@ public class StacksTest {
         s.declareVar("x", Type.ENTIER); // x = Ω
 
         RuntimeException e = assertThrows(RuntimeException.class, () ->
-                s.AffecterVal("x", true)
+                s.affecterVal("x", true)
         );
 
         assertTrue(e.getMessage().contains("Type de variable"));
@@ -1518,7 +1518,7 @@ public class StacksTest {
         Stacks s = new Stacks();
         s.declareVar("x", Type.ENTIER); // x = Ω
 
-        boolean ok = s.AffecterVal("x", 9);
+        boolean ok = s.affecterVal("x", 9);
 
         assertTrue(ok);
         assertEquals(9, s.getValue("x"));
@@ -2267,7 +2267,7 @@ public class StacksTest {
         stacks.declareTab("monTab", 5, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("monTab", 10);
+            stacks.affecterVal("monTab", 10);
         });
         assertTrue(ex.getMessage().contains("tableau"));
     }
@@ -2277,7 +2277,7 @@ public class StacksTest {
         stacks.declareMeth("maMethode", null, Type.VOID);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("maMethode", 10);
+            stacks.affecterVal("maMethode", 10);
         });
         assertTrue(ex.getMessage().contains("méthode"));
     }
@@ -2287,7 +2287,7 @@ public class StacksTest {
         stacks.declareVar("x", 10, Type.ENTIER);
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> {
-            stacks.AffecterVal("x", true);  // boolean instead of int
+            stacks.affecterVal("x", true);  // boolean instead of int
         });
         assertTrue(ex.getMessage().contains("Type"));
     }
@@ -2296,7 +2296,7 @@ public class StacksTest {
     void testAffecterVal_withNullValue_accepted() {
         stacks.declareVar("x", 10, Type.ENTIER);
         
-        assertTrue(stacks.AffecterVal("x", null));
+        assertTrue(stacks.affecterVal("x", null));
         assertNull(stacks.getValue("x"));
     }
 
@@ -2304,7 +2304,7 @@ public class StacksTest {
     void testAffecterVal_onCstWithOmega_allowed() {
         stacks.declareCst("PI", Type.ENTIER);  // Omega value
         
-        assertTrue(stacks.AffecterVal("PI", 314));
+        assertTrue(stacks.affecterVal("PI", 314));
         assertEquals(314, stacks.getValue("PI"));
     }
 

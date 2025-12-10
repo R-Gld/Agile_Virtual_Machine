@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Stack;
 import java.util.HashMap;
 import java.util.Map;
-import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import fr.ufrst.m1info.gl.groupe7.memoire.omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -514,10 +514,6 @@ public class Stacks {
     // VALUE ASSIGNMENT & ACCESS METHODS
     // ============================================================
 
-    /**
-     * Assign a new value to an existing identifier return false if cst or not found
-     */
-
     /** Get the value of an identifier */
     public Object getValue(String ident) {
 
@@ -593,11 +589,11 @@ public class Stacks {
     // Axiome D'interpretation
     // ============================================================
     /**
-     * AffecterVal : assign a new value to an identifier.
+     * affecterVal : assign a new value to an identifier.
      * Returns true on success, throws RuntimeException on error (unknown symbol,
      * attempt to assign to constant/array/method, or type mismatch).
      */
-    public boolean AffecterVal(String ident, Object newValue) {
+    public boolean affecterVal(String ident, Object newValue) {
         // Verify symbol exists
         Symbol sym = symbolTable.findSymbol(ident);
         if (sym == null) {
@@ -652,22 +648,12 @@ public class Stacks {
             return value instanceof Integer || value instanceof Boolean; // pour la variable de classe
         }
 
-        switch (type) {
-            case Type.ENTIER:
-                return value instanceof Integer;
-
-            case Type.BOOLEEN:
-                return value instanceof Boolean;
-
-            case Type.STRING:
-                return value instanceof String;
-
-            case VOID:
-                return value == null;
-
-            default:
-                return false;
-        }
+        return switch (type) {
+            case Type.ENTIER -> value instanceof Integer;
+            case Type.BOOLEEN -> value instanceof Boolean;
+            case Type.STRING -> value instanceof String;
+            default -> false;
+        };
     }
 
     // ============================================================

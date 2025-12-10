@@ -13,7 +13,7 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * {@link IdentNode}) and a right-hand side expression. During interpretation
  * the expression is evaluated and the resulting value is assigned to the
  * variable name resolved from the identifier by calling
- * {@link Stacks#AffecterVal(String, Object)}.</p>
+ * {@link Stacks#affecterVal(String, Object)}.</p>
  *
  * <p>Only simple identifier targets are supported by this implementation; if
  * the target is not an {@link IdentNode} the {@link #interpret(Stacks)} method
@@ -79,12 +79,12 @@ public class AffectationNode extends InstructionNode {
      * <p>The expression is evaluated via {@code expression.evaluate(stacks)} and
      * the resulting value is assigned to the variable whose name is obtained
      * from the {@link IdentNode} target by calling
-     * {@link Stacks#AffecterVal(String, Object)}.</p>
+     * {@link Stacks#affecterVal(String, Object)}.</p>
      *
      * <p>Behavior and side-effects:
      * <ul>
      *   <li>If {@code ident1Node} is not an {@link IdentNode} this method does nothing.</li>
-     *   <li>If {@code expression.evaluate} or {@link Stacks#AffecterVal} produce
+     *   <li>If {@code expression.evaluate} or {@link Stacks#affecterVal} produce
      *       runtime exceptions, they propagate to the caller.</li>
      * </ul>
      * </p>
@@ -116,7 +116,7 @@ public class AffectationNode extends InstructionNode {
                         "Type error: cannot assign value of type %s to variable %s of type %s",
                         valueType, varName, varType));
             }
-            stacks.AffecterVal(actualVarName, value);
+            stacks.affecterVal(actualVarName, value);
         }else if (ident1Node instanceof TabNode tabNode)
         {
          String varName = tabNode.getIdent().getNom();

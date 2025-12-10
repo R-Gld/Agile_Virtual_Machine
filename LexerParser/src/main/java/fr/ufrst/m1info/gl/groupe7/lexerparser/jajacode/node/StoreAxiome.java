@@ -53,7 +53,7 @@ public class StoreAxiome implements JajaAxiome {
         // Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
 
-        boolean success = ctx.getStacks().AffecterVal(scopedIdent, valeur.value);
+        boolean success = ctx.getStacks().affecterVal(scopedIdent, valeur.value);
 
         if (!success) {
             throw new AssignmentException(scopedIdent, "impossible d'affecter la valeur", "STORE", ctx.getInstructionCounter());

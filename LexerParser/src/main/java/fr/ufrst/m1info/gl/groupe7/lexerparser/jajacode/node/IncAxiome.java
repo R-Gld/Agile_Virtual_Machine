@@ -78,7 +78,7 @@ public class IncAxiome implements JajaAxiome {
         int newValue = (Integer) currentValue + (Integer) incrementQuad.value;
 
         // 6. Mise à jour en mémoire
-        boolean success = ctx.getStacks().AffecterVal(scopedIdent, newValue);
+        boolean success = ctx.getStacks().affecterVal(scopedIdent, newValue);
 
         if (!success) {
             throw new AssignmentException(scopedIdent, "échec de l'affectation", "INC", ctx.getInstructionCounter());
