@@ -68,9 +68,9 @@ public class SupAxiome implements JajaAxiome {
 
         // 5. Empiler le résultat (Type BOOLEEN)
         ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTEMP_VALUE(), // Identifiant temporaire (oméga)
+                ctx.getTempValue(), // Identifiant temporaire (oméga)
                 result,              // La valeur calculée (true/false)
-                ctx.getTEMP_VALUE(), // Sorte temporaire
+                ctx.getTempValue(), // Sorte temporaire
                 Type.BOOLEEN         // Type explicite
         ));
 

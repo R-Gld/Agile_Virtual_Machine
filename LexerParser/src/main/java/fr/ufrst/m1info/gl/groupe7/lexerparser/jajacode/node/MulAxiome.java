@@ -64,7 +64,7 @@ public class MulAxiome implements JajaAxiome {
         int result = (Integer) op1.value * (Integer) op2.value;
 
         // 6. Empilement du résultat
-        ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), result, ctx.getTEMP_VALUE(), Type.ENTIER));
+        ctx.getStacks().push(new Stacks.Quad(ctx.getTempValue(), result, ctx.getTempValue(), Type.ENTIER));
 
         // 7. Log et suite
         logger.debug("\t\tAxiome MUL exécuté: {} * {} = {}", op1.value, op2.value, result);

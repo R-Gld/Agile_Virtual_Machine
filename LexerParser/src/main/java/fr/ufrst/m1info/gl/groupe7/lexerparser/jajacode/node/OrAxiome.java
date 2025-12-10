@@ -66,9 +66,9 @@ public class OrAxiome implements JajaAxiome {
 
         // 5. Empilement du résultat
         ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTEMP_VALUE(), // Identifiant temporaire
+                ctx.getTempValue(), // Identifiant temporaire
                 result,              // Résultat
-                ctx.getTEMP_VALUE(), // Sorte temporaire
+                ctx.getTempValue(), // Sorte temporaire
                 Type.BOOLEEN         // Type explicite
         ));
 

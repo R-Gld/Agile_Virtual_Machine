@@ -53,7 +53,7 @@ public class NegAxiome implements JajaAxiome {
         }
 
         int result = -(Integer) op.value;
-        ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), result, ctx.getTEMP_VALUE(), Type.ENTIER));
+        ctx.getStacks().push(new Stacks.Quad(ctx.getTempValue(), result, ctx.getTempValue(), Type.ENTIER));
 
         logger.debug("\t\tAxiome UNARY MINUS exécuté: -{} = {}", op.value, result);
         ctx.incrementPC();

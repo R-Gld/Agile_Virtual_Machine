@@ -57,9 +57,9 @@ public class CmpAxiome implements JajaAxiome {
 
         // 4. Empilement du résultat
         ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTEMP_VALUE(), // Identifiant temporaire
+                ctx.getTempValue(), // Identifiant temporaire
                 result,              // Valeur calculée (true/false)
-                ctx.getTEMP_VALUE(), // Sorte temporaire
+                ctx.getTempValue(), // Sorte temporaire
                 Type.BOOLEEN         // Type explicite
         ));
 

@@ -42,7 +42,7 @@ public class MachineContext {
         return running;
     }
 
-    public String getTEMP_VALUE() {
+    public String getTempValue() {
         return TEMP_VALUE;
     }
 }

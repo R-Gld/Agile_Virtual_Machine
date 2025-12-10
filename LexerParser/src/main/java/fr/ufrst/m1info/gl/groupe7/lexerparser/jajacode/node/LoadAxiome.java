@@ -57,7 +57,7 @@ public class LoadAxiome implements JajaAxiome {
         // 4. Empilement
         // On crée un Quad avec la valeur récupérée.
         // L'identifiant et la sorte sur la pile sont souvent temporaires (oméga) pour une valeur chargée.
-        ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), valeur, ctx.getTEMP_VALUE(), type));
+        ctx.getStacks().push(new Stacks.Quad(ctx.getTempValue(), valeur, ctx.getTempValue(), type));
 
         // 5. Log et suite
         logger.debug("\t\tAxiome LOAD exécuté: {} = {} chargé sur la pile.", scopedIdent, valeur);
