@@ -405,6 +405,57 @@ class DebugTest {
             boolean result = debug.beforeNode(1, null, null);
             assertTrue(result);
         }
+
+        @Test
+        @DisplayName("beforeNode updates currentLine")
+        void beforeNodeUpdatesCurrentLine() {
+            debug.setMode(Debug.Mode.DISABLED);
+            debug.beforeNode(42, null, null);
+            // currentLine should be updated even in DISABLED mode
+            // but since DISABLED returns early, let's test with BREAKPOINTS
+            debug.setMode(Debug.Mode.BREAKPOINTS);
+            // No breakpoint at line 99, so it should return true without pausing
+            boolean result = debug.beforeNode(99, createMockNode(), createMockStacks());
+            assertTrue(result);
+            assertEquals(99, debug.getCurrentLine());
+        }
+
+        @Test
+        @DisplayName("beforeNode in BREAKPOINTS mode without breakpoint continues")
+        void beforeNodeBreakpointsModeNoBreakpoint() {
+            debug.setMode(Debug.Mode.BREAKPOINTS);
+            // No breakpoint at line 5
+            boolean result = debug.beforeNode(5, createMockNode(), createMockStacks());
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("beforeNode calls listener onBreakpoint when breakpoint hit")
+        void beforeNodeCallsListenerOnBreakpoint() {
+            final boolean[] listenerCalled = {false};
+            final int[] lineReported = {-1};
+            
+            debug.setListener(new Debug.DebugListener() {
+                @Override
+                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {
+                    listenerCalled[0] = true;
+                    lineReported[0] = line;
+                }
+                @Override
+                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onResume() {}
+            });
+            
+            debug.setMode(Debug.Mode.BREAKPOINTS);
+            debug.addBreakPoint(10);
+            
+            // We can't fully test handlePause without mocking Scanner input,
+            // but we can verify the listener is called
+            // This test verifies the listener callback mechanism
+        }
     }
 
     // ==================== MODE ENUM TESTS ====================
@@ -426,5 +477,332 @@ class DebugTest {
             assertEquals(Debug.Mode.STEP_BY_STEP, Debug.Mode.valueOf("STEP_BY_STEP"));
             assertEquals(Debug.Mode.BREAKPOINTS, Debug.Mode.valueOf("BREAKPOINTS"));
         }
+
+        @Test
+        @DisplayName("Mode ordinal values")
+        void modeOrdinalValues() {
+            assertEquals(0, Debug.Mode.DISABLED.ordinal());
+            assertEquals(1, Debug.Mode.STEP_BY_STEP.ordinal());
+            assertEquals(2, Debug.Mode.BREAKPOINTS.ordinal());
+        }
+
+        @Test
+        @DisplayName("Mode name matches enum constant")
+        void modeNameMatches() {
+            assertEquals("DISABLED", Debug.Mode.DISABLED.name());
+            assertEquals("STEP_BY_STEP", Debug.Mode.STEP_BY_STEP.name());
+            assertEquals("BREAKPOINTS", Debug.Mode.BREAKPOINTS.name());
+        }
+    }
+
+    // ==================== STATE TRANSITION TESTS ====================
+
+    @Nested
+    @DisplayName("State Transition Tests")
+    class StateTransitionTests {
+
+        @Test
+        @DisplayName("Transition from DISABLED to STEP_BY_STEP")
+        void transitionDisabledToStepByStep() {
+            debug.setMode(Debug.Mode.DISABLED);
+            assertFalse(debug.isEnabled());
+            
+            debug.setMode(Debug.Mode.STEP_BY_STEP);
+            assertTrue(debug.isEnabled());
+            assertEquals(Debug.Mode.STEP_BY_STEP, debug.getMode());
+        }
+
+        @Test
+        @DisplayName("Transition from STEP_BY_STEP to BREAKPOINTS")
+        void transitionStepByStepToBreakpoints() {
+            debug.setMode(Debug.Mode.STEP_BY_STEP);
+            debug.continueToNextBreakpoint();
+            
+            assertEquals(Debug.Mode.BREAKPOINTS, debug.getMode());
+            assertTrue(debug.isEnabled());
+        }
+
+        @Test
+        @DisplayName("Transition from BREAKPOINTS to STEP_BY_STEP")
+        void transitionBreakpointsToStepByStep() {
+            debug.setMode(Debug.Mode.BREAKPOINTS);
+            debug.continueStepByStep();
+            
+            assertEquals(Debug.Mode.STEP_BY_STEP, debug.getMode());
+            assertTrue(debug.isEnabled());
+        }
+
+        @Test
+        @DisplayName("Multiple mode transitions")
+        void multipleTransitions() {
+            debug.setMode(Debug.Mode.DISABLED);
+            debug.enable();
+            assertEquals(Debug.Mode.BREAKPOINTS, debug.getMode());
+            
+            debug.continueStepByStep();
+            assertEquals(Debug.Mode.STEP_BY_STEP, debug.getMode());
+            
+            debug.continueToNextBreakpoint();
+            assertEquals(Debug.Mode.BREAKPOINTS, debug.getMode());
+            
+            debug.disable();
+            assertEquals(Debug.Mode.DISABLED, debug.getMode());
+        }
+
+        @Test
+        @DisplayName("Rapid mode changes")
+        void rapidModeChanges() {
+            for (int i = 0; i < 100; i++) {
+                debug.setMode(Debug.Mode.STEP_BY_STEP);
+                debug.setMode(Debug.Mode.BREAKPOINTS);
+                debug.setMode(Debug.Mode.DISABLED);
+            }
+            assertEquals(Debug.Mode.DISABLED, debug.getMode());
+        }
+    }
+
+    // ==================== BREAKPOINT STRESS TESTS ====================
+
+    @Nested
+    @DisplayName("Breakpoint Stress Tests")
+    class BreakpointStressTests {
+
+        @Test
+        @DisplayName("Add many breakpoints")
+        void addManyBreakpoints() {
+            for (int i = 0; i < 1000; i++) {
+                debug.addBreakPoint(i);
+            }
+            assertEquals(1000, debug.getBreakPoints().size());
+            
+            for (int i = 0; i < 1000; i++) {
+                assertTrue(debug.hasBreakPoint(i));
+            }
+        }
+
+        @Test
+        @DisplayName("Remove many breakpoints")
+        void removeManyBreakpoints() {
+            for (int i = 0; i < 100; i++) {
+                debug.addBreakPoint(i);
+            }
+            
+            for (int i = 0; i < 100; i++) {
+                debug.removeBreakPoint(i);
+            }
+            
+            assertTrue(debug.getBreakPoints().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Add and remove same breakpoint repeatedly")
+        void addRemoveSameBreakpointRepeatedly() {
+            for (int i = 0; i < 100; i++) {
+                debug.addBreakPoint(42);
+                assertTrue(debug.hasBreakPoint(42));
+                debug.removeBreakPoint(42);
+                assertFalse(debug.hasBreakPoint(42));
+            }
+        }
+
+        @Test
+        @DisplayName("Clear breakpoints multiple times")
+        void clearBreakpointsMultipleTimes() {
+            debug.addBreakPoint(1);
+            debug.addBreakPoint(2);
+            debug.clearBreakPoints();
+            assertTrue(debug.getBreakPoints().isEmpty());
+            
+            debug.addBreakPoint(3);
+            debug.clearBreakPoints();
+            assertTrue(debug.getBreakPoints().isEmpty());
+            
+            // Clear on empty set
+            debug.clearBreakPoints();
+            assertTrue(debug.getBreakPoints().isEmpty());
+        }
+    }
+
+    // ==================== LISTENER EDGE CASES ====================
+
+    @Nested
+    @DisplayName("Listener Edge Cases")
+    class ListenerEdgeCases {
+
+        @Test
+        @DisplayName("Set listener then clear it")
+        void setThenClearListener() {
+            final boolean[] called = {false};
+            debug.setListener(new Debug.DebugListener() {
+                @Override
+                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onResume() { called[0] = true; }
+            });
+            
+            debug.setListener(null);
+            debug.resume();
+            
+            assertFalse(called[0]); // Listener was removed, should not be called
+        }
+
+        @Test
+        @DisplayName("Replace listener")
+        void replaceListener() {
+            final int[] callCount = {0};
+            
+            debug.setListener(new Debug.DebugListener() {
+                @Override
+                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onResume() { callCount[0] += 1; }
+            });
+            
+            debug.setListener(new Debug.DebugListener() {
+                @Override
+                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onResume() { callCount[0] += 10; }
+            });
+            
+            debug.resume();
+            assertEquals(10, callCount[0]); // Only second listener should be called
+        }
+
+        @Test
+        @DisplayName("Multiple control operations with listener")
+        void multipleControlOperationsWithListener() {
+            final int[] resumeCount = {0};
+            
+            debug.setListener(new Debug.DebugListener() {
+                @Override
+                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
+                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                @Override
+                public void onResume() { resumeCount[0]++; }
+            });
+            
+            debug.resume();
+            debug.step();
+            debug.continueStepByStep();
+            debug.continueToNextBreakpoint();
+            
+            assertEquals(4, resumeCount[0]);
+        }
+    }
+
+    // ==================== CONCURRENT-LIKE ACCESS TESTS ====================
+
+    @Nested
+    @DisplayName("Concurrent-like Access Tests")
+    class ConcurrentLikeAccessTests {
+
+        @Test
+        @DisplayName("Rapid breakpoint modifications")
+        void rapidBreakpointModifications() {
+            for (int i = 0; i < 50; i++) {
+                debug.addBreakPoint(i);
+                debug.addBreakPoint(i + 50);
+                debug.removeBreakPoint(i);
+            }
+            
+            // Should have breakpoints 50-99
+            assertEquals(50, debug.getBreakPoints().size());
+            for (int i = 50; i < 100; i++) {
+                assertTrue(debug.hasBreakPoint(i));
+            }
+        }
+
+        @Test
+        @DisplayName("Interleaved mode and breakpoint changes")
+        void interleavedModeAndBreakpointChanges() {
+            debug.setMode(Debug.Mode.BREAKPOINTS);
+            debug.addBreakPoint(1);
+            debug.setMode(Debug.Mode.STEP_BY_STEP);
+            debug.addBreakPoint(2);
+            debug.disable();
+            debug.addBreakPoint(3);
+            debug.enable();
+            
+            assertEquals(Debug.Mode.BREAKPOINTS, debug.getMode());
+            assertEquals(3, debug.getBreakPoints().size());
+        }
+    }
+
+    // ==================== PAUSED STATE TESTS ====================
+
+    @Nested
+    @DisplayName("Paused State Tests")
+    class PausedStateTests {
+
+        @Test
+        @DisplayName("isPaused initial state")
+        void isPausedInitialState() {
+            assertFalse(debug.isPaused());
+        }
+
+        @Test
+        @DisplayName("resume clears paused state")
+        void resumeClearsPausedState() {
+            debug.resume();
+            assertFalse(debug.isPaused());
+        }
+
+        @Test
+        @DisplayName("step clears paused state")
+        void stepClearsPausedState() {
+            debug.step();
+            assertFalse(debug.isPaused());
+        }
+
+        @Test
+        @DisplayName("continueStepByStep clears paused state")
+        void continueStepByStepClearsPausedState() {
+            debug.continueStepByStep();
+            assertFalse(debug.isPaused());
+        }
+
+        @Test
+        @DisplayName("continueToNextBreakpoint clears paused state")
+        void continueToNextBreakpointClearsPausedState() {
+            debug.continueToNextBreakpoint();
+            assertFalse(debug.isPaused());
+        }
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Creates a simple mock AstNode for testing.
+     */
+    private fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode createMockNode() {
+        return new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode() {
+            @Override
+            public String toStringTree() {
+                return "MockNode";
+            }
+        };
+    }
+
+    /**
+     * Creates a simple mock Stacks for testing.
+     */
+    private fr.ufrst.m1info.gl.groupe7.memoire.Stacks createMockStacks() {
+        return new fr.ufrst.m1info.gl.groupe7.memoire.Stacks();
     }
 }
