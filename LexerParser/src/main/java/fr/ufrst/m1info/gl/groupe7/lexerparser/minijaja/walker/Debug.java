@@ -2,6 +2,10 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Scanner;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
@@ -25,6 +29,7 @@ public class Debug {
     private boolean paused = false;
     private boolean stepNext = false;
     private final Scanner scanner;
+    private static final Logger logger = LoggerFactory.getLogger(Debug.class);
     
     // Listener for debug events (optional, for GUI integration)
     private DebugListener listener;
@@ -109,7 +114,7 @@ public class Debug {
             shouldStop = true;
         } else if (mode == Mode.BREAKPOINTS && hasBreakPoint(line)) {
             shouldStop = true;
-            System.err.println("\n🔴 BREAKPOINT HIT at line " + line);
+            logger.info("\n BREAKPOINT HIT at line " + line);
         }
         
         if (stepNext) {
@@ -137,10 +142,10 @@ public class Debug {
         printDebugState(line, node, stacks);
         
         while (paused) {
-            System.err.print("\n[DEBUG] (s)tep | (c)ontinue | (n)ext breakpoint | (p)rint stack | (v)ars | (q)uit > ");
+            logger.debug("\n (s)tep | (c)ontinue | (n)ext breakpoint | (p)rint stack | (v)ars | (q)uit > ");
             String input = scanner.nextLine().trim().toLowerCase();
             
-            switch (input) {
+            switch (input) {    
                 case "s", "step" -> {
                     step();
                     return true;
@@ -155,48 +160,46 @@ public class Debug {
                 }
                 case "p", "print", "stack" -> {
                     // Print stack
-                    System.err.println("\n📚 STACK STATE:");
+                    logger.debug("\n STACK STATE:");
                     stacks.printStack();
                 }
                 case "v", "vars", "symbols" -> {
                     // Print symbol table
-                    System.err.println("\n📋 SYMBOL TABLE:");
+                    logger.debug("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();
                 }
                 case "b", "breakpoints" -> {
                     // List breakpoints
-                    System.err.println("\n🔴 BREAKPOINTS: " + breakPoints);
+                    logger.debug("\n BREAKPOINTS: " + breakPoints);
                 }
                 case "q", "quit", "exit" -> {
                     // Quit debugging
-                    System.err.println("⏹️ Debug session ended.");
+                    logger.debug(" Debug session ended.");
                     mode = Mode.DISABLED;
                     paused = false;
                     return false; // Signal to stop execution
                 }
-                case "h", "help" -> {
-                    printHelp();
-                }
+                
                 default -> {
                     // Try to parse as breakpoint command: "b 10" or "+10" or "-10"
                     if (input.startsWith("b ") || input.startsWith("+ ")) {
                         try {
                             int bp = Integer.parseInt(input.substring(2).trim());
                             addBreakPoint(bp);
-                            System.err.println("✅ Breakpoint added at line " + bp);
+                            logger.debug("Breakpoint added at line " + bp);
                         } catch (NumberFormatException e) {
-                            System.err.println("❌ Invalid line number");
+                            logger.debug(" Invalid line number");
                         }
                     } else if (input.startsWith("-")) {
                         try {
                             int bp = Integer.parseInt(input.substring(1).trim());
                             removeBreakPoint(bp);
-                            System.err.println("✅ Breakpoint removed from line " + bp);
+                            logger.debug(" Breakpoint removed from line " + bp);
                         } catch (NumberFormatException e) {
-                            System.err.println("❌ Invalid line number");
+                            logger.debug(" Invalid line number");
                         }
                     } else {
-                        System.err.println("❓ Unknown command. Type 'h' for help.");
+                        logger.debug(" Unknown command. Type 'h' for help.");
                     }
                 }
             }
@@ -206,34 +209,16 @@ public class Debug {
     }
     
     private void printDebugState(int line, AstNode node, Stacks stacks) {
-        System.err.println("\n" + "═".repeat(60));
-        System.err.println("🐛 DEBUG PAUSE at line " + line);
-        System.err.println("═".repeat(60));
-        System.err.println("📍 Node: " + node.getClass().getSimpleName());
-        System.err.println("📝 AST:  " + truncate(node.toStringTree(), 80));
-        System.err.println("🔄 Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
-        System.err.println("═".repeat(60));
+        logger.debug("\n" + "═".repeat(60));
+        logger.debug(" DEBUG PAUSE at line " + line);
+        logger.debug("═".repeat(60));
+        logger.debug(" Node: " + node.getClass().getSimpleName());
+        logger.debug(" AST:  " + truncate(node.toStringTree(), 80));
+        logger.debug(" Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
+        logger.debug("═".repeat(60));
     }
     
-    private void printHelp() {
-        System.err.println("""
-            
-            ╔══════════════════════════════════════════════════════════╗
-            ║                    DEBUG COMMANDS                        ║
-            ╠══════════════════════════════════════════════════════════╣
-            ║  s, step      - Execute next node (step into)            ║
-            ║  c, continue  - Continue step-by-step                    ║
-            ║  n, next      - Run until next breakpoint                ║
-            ║  p, print     - Print current stack                      ║
-            ║  v, vars      - Print symbol table                       ║
-            ║  b, breakpoints - List all breakpoints                   ║
-            ║  b <line>     - Add breakpoint at line                   ║
-            ║  -<line>      - Remove breakpoint at line                ║
-            ║  q, quit      - Stop execution                           ║
-            ║  h, help      - Show this help                           ║
-            ╚══════════════════════════════════════════════════════════╝
-            """);
-    }
+   
     
     private String truncate(String str, int maxLen) {
         if (str.length() <= maxLen) return str;

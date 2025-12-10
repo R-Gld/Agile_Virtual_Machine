@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
@@ -27,6 +29,8 @@ public class Walker {
     private int lineCounter = 0;
     // flag to stop execution
     private boolean stopped = false;
+    
+    private static final Logger logger = LoggerFactory.getLogger(Walker.class);
 
     /**
      * Create a new Walker for the given AST root and runtime stacks with debugging support.
@@ -62,15 +66,15 @@ public class Walker {
         stopped = false;
         
         if (debug.isEnabled()) {
-            System.err.println("🐛 Debug mode: " + debug.getMode());
-            System.err.println("🔴 Breakpoints: " + debug.getBreakPoints());
-            System.err.println("▶️ Starting execution...\n");
+            logger.debug(" Debug mode: " + debug.getMode());
+            logger.debug("Breakpoints: " + debug.getBreakPoints());
+            logger.debug("Starting execution...\n");
         }
         
         visitNode(root);
         
         if (debug.isEnabled() && !stopped) {
-            System.err.println("\n✅ Execution completed.");
+            logger.debug("\n Execution completed.");
         }
     }
 
@@ -103,10 +107,13 @@ public class Walker {
         // Execute the node
         node.interpret(stack);
 
-        // Visit children
-        for (AstNode child : node.getChildren()) {
-            if (stopped) break;
-            visitNode(child);
+        // Visit children (null-safe)
+        Iterable<AstNode> children = node.getChildren();
+        if (children != null) {
+            for (AstNode child : children) {
+                if (stopped) break;
+                visitNode(child);
+            }
         }
     }
     
