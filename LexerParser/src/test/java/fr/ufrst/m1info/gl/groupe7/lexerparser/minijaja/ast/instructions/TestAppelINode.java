@@ -30,6 +30,9 @@ public class TestAppelINode {
 
         MethodeNode methodeNode = Mockito.mock(MethodeNode.class);
         Mockito.when(ident.evaluate(stacks)).thenReturn(methodeNode);
+        IdentNode methodeIdent = Mockito.mock(IdentNode.class);
+        Mockito.when(methodeIdent.getNom()).thenReturn("f");
+        Mockito.when(methodeNode.getIdent()).thenReturn(methodeIdent);
 
         // Defined entete to return with different size so it trigger RuntimeException
         List<EnteteNode> entsToReturn = new ArrayList<>();
@@ -39,7 +42,8 @@ public class TestAppelINode {
         Mockito.when(methodeNode.getEntetes()).thenReturn(entetesNode);
 
         AppelINode node = new AppelINode(ident, listExp);
-        Assertions.assertThrows(RuntimeException.class, () -> node.interpret(stacks));
+        Assertions.assertThrowsExactly(RuntimeException.class, () -> node.interpret(stacks));
+        //Assertions.assertThrows(RuntimeException.class, () -> node.interpret(stacks));
 
     }
 }
