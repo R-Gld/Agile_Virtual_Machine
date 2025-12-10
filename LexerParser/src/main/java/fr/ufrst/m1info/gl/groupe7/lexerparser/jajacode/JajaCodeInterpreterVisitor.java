@@ -19,7 +19,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
     private final MachineContext context;
 
     // Le registre des commandes (Pattern Command)
-    private final Map<String, JajaAxiome> axiomes = new HashMap<>();
+    private final Map<JajaCodeInstr, JajaAxiome> axiomes = new HashMap<>();
 
     // Le programme (Map adresse -> instruction)
     private final Map<Integer, JajaCodeParser.InstrContext> programme = new HashMap<>();
@@ -34,46 +34,46 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     private void initAxiomes() {
         // --- Instructions de base ---
-        axiomes.put("init", new InitAxiome());
-        axiomes.put("jcstop", new JCStopAxiome());
+        axiomes.put(JajaCodeInstr.INIT, new InitAxiome());
+        axiomes.put(JajaCodeInstr.JCSTOP, new JCStopAxiome());
 
         // --- Mémoire et Pile ---
-        axiomes.put("push", new PushAxiome());
-        axiomes.put("pop", new PopAxiome());
-        axiomes.put("swap", new SwapAxiome());
-        axiomes.put("new", new NewAxiome());
-        axiomes.put("store", new StoreAxiome());
-        axiomes.put("load", new LoadAxiome());
-        axiomes.put("invoke", new InvokeAxiome());
-        axiomes.put("return", new ReturnAxiome());
+        axiomes.put(JajaCodeInstr.PUSH, new PushAxiome());
+        axiomes.put(JajaCodeInstr.POP, new PopAxiome());
+        axiomes.put(JajaCodeInstr.SWAP, new SwapAxiome());
+        axiomes.put(JajaCodeInstr.NEW, new NewAxiome());
+        axiomes.put(JajaCodeInstr.STORE, new StoreAxiome());
+        axiomes.put(JajaCodeInstr.LOAD, new LoadAxiome());
+        axiomes.put(JajaCodeInstr.INVOKE, new InvokeAxiome());
+        axiomes.put(JajaCodeInstr.RETURN, new ReturnAxiome());
 
         // --- Contrôle de flux ---
-        axiomes.put("if", new IfAxiome());
-        axiomes.put("goto", new GotoAxiome());
+        axiomes.put(JajaCodeInstr.IF, new IfAxiome());
+        axiomes.put(JajaCodeInstr.GOTO, new GotoAxiome());
 
         // --- Arithmétique et Logique ---
-        axiomes.put("add", new AddAxiome());
-        axiomes.put("sub", new SubAxiome());
-        axiomes.put("mul", new MulAxiome());
-        axiomes.put("div", new DivAxiome());
-        axiomes.put("inc", new IncAxiome());
-        axiomes.put("sup", new SupAxiome());
-        axiomes.put("cmp", new CmpAxiome());
-        axiomes.put("neg", new NegAxiome());
-        axiomes.put("not", new NotAxiome());
-        axiomes.put("or", new OrAxiome());
-        axiomes.put("and", new AndAxiome());
+        axiomes.put(JajaCodeInstr.ADD, new AddAxiome());
+        axiomes.put(JajaCodeInstr.SUB, new SubAxiome());
+        axiomes.put(JajaCodeInstr.MUL, new MulAxiome());
+        axiomes.put(JajaCodeInstr.DIV, new DivAxiome());
+        axiomes.put(JajaCodeInstr.INC, new IncAxiome());
+        axiomes.put(JajaCodeInstr.SUP, new SupAxiome());
+        axiomes.put(JajaCodeInstr.CMP, new CmpAxiome());
+        axiomes.put(JajaCodeInstr.NEG, new NegAxiome());
+        axiomes.put(JajaCodeInstr.NOT, new NotAxiome());
+        axiomes.put(JajaCodeInstr.OR, new OrAxiome());
+        axiomes.put(JajaCodeInstr.AND, new AndAxiome());
 
         // --- Entrées / Sorties ---
-        axiomes.put("write", new WriteAxiome());
-        axiomes.put("writeln", new WriteLnAxiome());
+        axiomes.put(JajaCodeInstr.WRITE, new WriteAxiome());
+        axiomes.put(JajaCodeInstr.WRITELN, new WriteLnAxiome());
 
         // --- Opérations sur Tableaux ---
-        axiomes.put("newarray", new NewarrayAxiome());
-        axiomes.put("aload", new AloadAxiome());
-        axiomes.put("astore", new AstoreAxiome());
-        axiomes.put("ainc", new AincAxiome());
-        axiomes.put("length", new LengthAxiome());
+        axiomes.put(JajaCodeInstr.NEWARRAY, new NewarrayAxiome());
+        axiomes.put(JajaCodeInstr.ALOAD, new AloadAxiome());
+        axiomes.put(JajaCodeInstr.ASTORE, new AstoreAxiome());
+        axiomes.put(JajaCodeInstr.AINC, new AincAxiome());
+        axiomes.put(JajaCodeInstr.LENGTH, new LengthAxiome());
     }
 
     public void load(JajaCodeParser.ClasseContext arbre) {
@@ -120,17 +120,16 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     @Override
     public Object visitInstr(JajaCodeParser.InstrContext ctx) {
-
         // 1. Instructions sans arguments
-        if (ctx.INIT() != null) dispatch("init", null);
-        else if (ctx.SWAP() != null) dispatch("swap", null);
-        else if (ctx.POP() != null) dispatch("pop", null);
-        else if (ctx.JCSTOP() != null) dispatch("jcstop", null);
-        else if (ctx.WRITE() != null) dispatch("write", null);
-        else if (ctx.WRITELN() != null) dispatch("writeln", null);
-        else if (ctx.RETURN() != null) dispatch("return", null);
+        if (ctx.INIT() != null) dispatch(JajaCodeInstr.INIT);
+        else if (ctx.SWAP() != null) dispatch(JajaCodeInstr.SWAP);
+        else if (ctx.POP() != null) dispatch(JajaCodeInstr.POP);
+        else if (ctx.JCSTOP() != null) dispatch(JajaCodeInstr.JCSTOP);
+        else if (ctx.WRITE() != null) dispatch(JajaCodeInstr.WRITE);
+        else if (ctx.WRITELN() != null) dispatch(JajaCodeInstr.WRITELN);
+        else if (ctx.RETURN() != null) dispatch(JajaCodeInstr.RETURN);
 
-            // 2. Instructions avec VALEUR
+        // 2. Instructions avec VALEUR
         else if (ctx.PUSH() != null) {
             // On extrait le texte brut ("5", "true", "x")
             String valText = ctx.valeur().getText();
@@ -138,23 +137,23 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             if (ctx.valeur().STRING() != null) {
                 valText = ctx.valeur().STRING().getText().replace("\"", "");
             }
-            dispatch("push", valText);
+            dispatch(JajaCodeInstr.PUSH, valText);
         }
 
         // 3. Instructions avec IDENTIFIANT
         else if (ctx.ident() != null) {
             String ident = ctx.ident().getText();
-            if (ctx.STORE() != null) dispatch("store", ident);
-            else if (ctx.LOAD() != null) dispatch("load", ident);
-            else if (ctx.INC() != null) dispatch("inc", ident);
-            else if (ctx.INVOKE() != null) dispatch("invoke", ident);
+            if (ctx.STORE() != null) dispatch(JajaCodeInstr.STORE, ident);
+            else if (ctx.LOAD() != null) dispatch(JajaCodeInstr.LOAD, ident);
+            else if (ctx.INC() != null) dispatch(JajaCodeInstr.INC, ident);
+            else if (ctx.INVOKE() != null) dispatch(JajaCodeInstr.INVOKE, ident);
                 // NEW est spécial (4 args)
             else if (ctx.NEW() != null) handleNew(ctx);
                 // Opérations sur tableaux
-            else if (ctx.ALOAD() != null) dispatch("aload", ident);
-            else if (ctx.ASTORE() != null) dispatch("astore", ident);
-            else if (ctx.AINC() != null) dispatch("ainc", ident);
-            else if (ctx.LENGTH() != null) dispatch("length", ident);
+            else if (ctx.ALOAD() != null) dispatch(JajaCodeInstr.ALOAD, ident);
+            else if (ctx.ASTORE() != null) dispatch(JajaCodeInstr.ASTORE, ident);
+            else if (ctx.AINC() != null) dispatch(JajaCodeInstr.AINC, ident);
+            else if (ctx.LENGTH() != null) dispatch(JajaCodeInstr.LENGTH, ident);
                 // NEWARRAY est spécial (2 args: ident, type)
             else if (ctx.NEWARRAY() != null) handleNewarray(ctx);
         }
@@ -162,8 +161,8 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         // 4. Instructions avec ADRESSE
         else if (ctx.adresse() != null) {
             String addr = ctx.adresse().getText();
-            if (ctx.IF() != null) dispatch("if", addr);
-            else if (ctx.GOTO() != null) dispatch("goto", addr);
+            if (ctx.IF() != null) dispatch(JajaCodeInstr.IF, addr);
+            else if (ctx.GOTO() != null) dispatch(JajaCodeInstr.GOTO, addr);
         }
 
         // 5. Opérations (Déléguées aux sous-visiteurs)
@@ -174,8 +173,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
+    private void dispatch(JajaCodeInstr command) {
+        dispatch(command, null);
+    }
+
     // Helper pour exécuter un axiome
-    private void dispatch(String command, String arg) {
+    private void dispatch(JajaCodeInstr command, String arg) {
         JajaAxiome axiome = axiomes.get(command);
         if (axiome != null) {
             try {
@@ -206,7 +209,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         // On pack les arguments pour l'interface générique (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
-        dispatch("new", packedArgs);
+        dispatch(JajaCodeInstr.NEW, packedArgs);
     }
 
     // Gestion spécifique pour NEWARRAY (concaténation des args: ident,type)
@@ -218,26 +221,26 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         // On pack les arguments pour l'interface générique (ident,type)
         String packedArgs = ident + "," + type;
-        dispatch("newarray", packedArgs);
+        dispatch(JajaCodeInstr.NEWARRAY, packedArgs);
     }
 
     @Override
     public Object visitOper2(JajaCodeParser.Oper2Context ctx) {
-        if (ctx.ADD() != null) dispatch("add", null);
-        else if (ctx.SUB() != null) dispatch("sub", null);
-        else if (ctx.MUL() != null) dispatch("mul", null);
-        else if (ctx.DIV() != null) dispatch("div", null);
-        else if (ctx.AND() != null) dispatch("and", null);
-        else if (ctx.OR() != null) dispatch("or", null);
-        else if (ctx.SUP() != null) dispatch("sup", null);
-        else if (ctx.CMP() != null) dispatch("cmp", null);
+        if (ctx.ADD() != null) dispatch(JajaCodeInstr.ADD, null);
+        else if (ctx.SUB() != null) dispatch(JajaCodeInstr.SUB, null);
+        else if (ctx.MUL() != null) dispatch(JajaCodeInstr.MUL, null);
+        else if (ctx.DIV() != null) dispatch(JajaCodeInstr.DIV, null);
+        else if (ctx.AND() != null) dispatch(JajaCodeInstr.AND, null);
+        else if (ctx.OR() != null) dispatch(JajaCodeInstr.OR, null);
+        else if (ctx.SUP() != null) dispatch(JajaCodeInstr.SUP, null);
+        else if (ctx.CMP() != null) dispatch(JajaCodeInstr.CMP, null);
         return null;
     }
 
     @Override
     public Object visitOper1(JajaCodeParser.Oper1Context ctx) {
-        if (ctx.NEG() != null) dispatch("neg", null);
-        else if (ctx.NOT() != null) dispatch("not", null);
+        if (ctx.NEG() != null) dispatch(JajaCodeInstr.NEG, null);
+        else if (ctx.NOT() != null) dispatch(JajaCodeInstr.NOT, null);
         return null;
     }
 }
