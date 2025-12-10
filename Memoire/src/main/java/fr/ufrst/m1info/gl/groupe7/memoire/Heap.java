@@ -67,7 +67,6 @@ public class Heap {
         if(block.entry.isFree()){
             freeCount++;
         }
-
     }
 
     private void remove(int size) {
