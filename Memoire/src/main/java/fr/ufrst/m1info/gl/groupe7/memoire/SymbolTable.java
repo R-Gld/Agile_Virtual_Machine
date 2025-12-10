@@ -127,9 +127,14 @@ public class SymbolTable {
 
     /** make symbol */
     public boolean creationSymbol(String name, int positionStack, Type type) {
+        return creationSymbol(name, positionStack, type, false);
+    }
+
+    /** make symbol with array flag */
+    public boolean creationSymbol(String name, int positionStack, Type type, boolean isArray) {
         if (name == null || type == null) return false;
         if(!this.contains(name)){
-            put(new Symbol(name, type, positionStack));
+            put(new Symbol(name, type, positionStack, isArray));
             return true;
         }else{
             return false;
