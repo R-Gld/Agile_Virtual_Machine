@@ -275,7 +275,7 @@ public class Heap {
         // 1. Supprimer l'entrée de la liste des allocations actives
         boolean removed = this.removeAllocatedEntry(entry);
         if (!removed) {
-            logger.debug("⚠️ Entry not found in allocated blocks: " + entry.getId());
+            logger.debug("⚠️ Entry not found in allocated blocks: {}", entry.getId());
             return;
         }
 
