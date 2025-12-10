@@ -444,7 +444,7 @@ public class Stacks {
         pushNewTab(q);
 
         int pos = getStackPosition(ident);
-        symbolTable.creationSymbol(ident, pos, type);
+        symbolTable.creationSymbol(ident, pos, type, true); // true = isArray
 
         logger.debug("-> Array " + ident +
                 " allocated: base=" + baseAddress +

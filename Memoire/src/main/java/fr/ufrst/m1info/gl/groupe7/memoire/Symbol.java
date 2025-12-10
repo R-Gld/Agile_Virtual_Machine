@@ -12,22 +12,29 @@ public class Symbol {
     private final String name;
     private final Type type;
     private int addressStack;//position in the stack
+    private final boolean isArray; // true if this symbol represents an array
 
 
     public Symbol(String name, Type type, int addressStack) {
+        this(name, type, addressStack, false);
+    }
+
+    public Symbol(String name, Type type, int addressStack, boolean isArray) {
         this.name = name;
         this.type = type;
         this.addressStack = addressStack;
-
+        this.isArray = isArray;
     }
 
     public String getName() { return name; }
     public Type getType() { return type; }
     public int getAddressStack() { return addressStack; }
     public void setAddressStack(int addressStack) { this.addressStack = addressStack; }
+    public boolean isArray() { return isArray; }
 
     @Override
     public String toString() {
-        return name + " : " + type + " (" + addressStack + ")" ;
+        String arrayMarker = isArray ? "[]" : "";
+        return name + " : " + type + arrayMarker + " (" + addressStack + ")" ;
     }
 }
