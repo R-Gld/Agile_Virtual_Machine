@@ -284,7 +284,6 @@ public class MyCodeArea extends AnchorPane {
         this.language = language;
         this.setId(id);
 
-        this.getStylesheets().add(getClass().getResource("/code_area.css").toExternalForm());
 
         codeArea = new CodeArea(defaultValue);
         codeArea.setId(id + "_code_area"); // for testfx
@@ -396,6 +395,29 @@ public class MyCodeArea extends AnchorPane {
                 }
                 event.consume();
             } else if (event.getCode() == KeyCode.TAB) {
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+                String prefix = text.substring(start, caretPosition);
+
+                if (!prefix.isEmpty()) {
+                    List<String> suggestions = getSuggestions(prefix);
+                    if (!suggestions.isEmpty()) {
+                        String completion = suggestions.get(0);
+                        codeArea.replaceText(start, caretPosition, completion);
+                        if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
+                            autoCompletionPopup.hide();
+                        }
+                        event.consume();
+                        return;
+                    }
+                }
+
+                // If no completion, insert spaces.
                 int tabSize = EditorPreferences.getInstance().getTabSize();
                 String spaces = " ".repeat(tabSize);
                 codeArea.replaceSelection(spaces);
@@ -409,6 +431,18 @@ public class MyCodeArea extends AnchorPane {
         codeArea.addEventFilter(KeyEvent.KEY_TYPED, event -> {
             if (EditorPreferences.getInstance().isAutoClosePairs()) {
                 handleAutoClose(event);
+            }
+        });
+
+        // Auto-show completion popup
+        codeArea.textProperty().addListener((obs, oldText, newText) -> {
+            // A simple heuristic to avoid showing popup on deletion.
+            if (newText.length() > oldText.length()) {
+                showAutoCompletion();
+            } else {
+                 if (autoCompletionPopup != null) {
+                    autoCompletionPopup.hide();
+                }
             }
         });
     }
@@ -492,10 +526,6 @@ public class MyCodeArea extends AnchorPane {
      * courant. CTRL+Espace pour basculer.
      */
     private void showAutoCompletion() {
-        if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
-            autoCompletionPopup.hide();
-        }
-
         String text = codeArea.getText();
         int caretPosition = codeArea.getCaretPosition();
 
@@ -506,31 +536,62 @@ public class MyCodeArea extends AnchorPane {
         }
         String prefix = text.substring(start, caretPosition);
 
+        if (prefix.isEmpty()) {
+            if (autoCompletionPopup != null) {
+                autoCompletionPopup.hide();
+            }
+            return;
+        }
+
         List<String> suggestions = getSuggestions(prefix);
 
-        if (suggestions.isEmpty()) {
+        if (suggestions.isEmpty() || (suggestions.size() == 1 && suggestions.get(0).equals(prefix))) {
+            if (autoCompletionPopup != null) {
+                autoCompletionPopup.hide();
+            }
             return;
         }
 
         final int finalStart = start;
-        autoCompletionPopup = new ContextMenu();
-        autoCompletionPopup.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
-                autoCompletionPopup.hide();
-                event.consume();
-            }
-        });
+        List<MenuItem> menuItems = new ArrayList<>();
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
                 codeArea.replaceText(finalStart, caretPosition, suggestion);
             });
-            autoCompletionPopup.getItems().add(item);
+            menuItems.add(item);
         }
 
-        Optional<Bounds> bounds = codeArea.getCaretBounds();
-        if (bounds.isPresent()) {
-            autoCompletionPopup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
+        if (autoCompletionPopup == null) {
+            autoCompletionPopup = new ContextMenu();
+            autoCompletionPopup.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+                    autoCompletionPopup.hide();
+                    event.consume();
+                } else if (event.getCode() == KeyCode.TAB) {
+                    if (!autoCompletionPopup.getItems().isEmpty()) {
+                        // We need to find the prefix to replace, using the most current text
+                        int currentCaret = codeArea.getCaretPosition();
+                        int currentStart = currentCaret;
+                        String currentText = codeArea.getText();
+                        while (currentStart > 0 && Character.isJavaIdentifierPart(currentText.charAt(currentStart - 1))) {
+                            currentStart--;
+                        }
+                        // Use the text from the first item
+                        String suggestion = autoCompletionPopup.getItems().get(0).getText();
+                        codeArea.replaceText(currentStart, currentCaret, suggestion);
+                    }
+                    autoCompletionPopup.hide();
+                    event.consume();
+                }
+            });
+        }
+        
+        autoCompletionPopup.getItems().setAll(menuItems);
+
+        if (!autoCompletionPopup.isShowing()) {
+            Optional<Bounds> bounds = codeArea.getCaretBounds();
+            bounds.ifPresent(b -> autoCompletionPopup.show(codeArea, b.getMaxX(), b.getMaxY()));
         }
     }
 
@@ -556,6 +617,7 @@ public class MyCodeArea extends AnchorPane {
         }
     }
 
+
     /**
      * Retourne les suggestions filtrées par préfixe pour le langage actif.
      *
@@ -569,8 +631,6 @@ public class MyCodeArea extends AnchorPane {
             Collections.addAll(allSuggestions, TYPES);
             Collections.addAll(allSuggestions, FUNCTIONS);
             Collections.addAll(allSuggestions, BOOLEANS);
-            // Snippets
-            allSuggestions.add("main"); // We will handle expansion in the action
         }
 
         return allSuggestions.stream()

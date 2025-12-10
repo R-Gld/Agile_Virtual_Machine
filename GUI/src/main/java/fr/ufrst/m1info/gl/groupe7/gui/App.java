@@ -180,8 +180,9 @@ public class App extends Application {
         // Scene + styles
         Scene scene = new Scene(root, 1150, 720);
 
-        String lightCss = getClass().getResource("/light.css").toExternalForm();
-        scene.getStylesheets().add(lightCss);
+        String themeCss = getClass().getResource("/theme.css").toExternalForm();
+        scene.getStylesheets().add(themeCss);
+        root.getStyleClass().add("theme-light");
 
         stage.setScene(scene);
         stage.show();
@@ -295,22 +296,15 @@ public class App extends Application {
 
         darkMode.setOnAction(e -> {
             if (appStage != null && appStage.getScene() != null) {
-                Scene scene = appStage.getScene();
-
-                String darkCss = getClass().getResource("/dark.css").toExternalForm();
-                String lightCss = getClass().getResource("/light.css").toExternalForm();
-
+                // The root pane is a BorderPane, as defined in the start() method.
+                Pane rootPane = (Pane) appStage.getScene().getRoot();
                 if (darkMode.isSelected()) {
-                    scene.getStylesheets().remove(lightCss);
-                    if (!scene.getStylesheets().contains(darkCss)) {
-                        scene.getStylesheets().add(darkCss);
-                    }
+                    rootPane.getStyleClass().remove("theme-light");
+                    rootPane.getStyleClass().add("theme-dark");
                     darkMode.setGraphic(sunIcon);
                 } else {
-                    scene.getStylesheets().remove(darkCss);
-                    if (!scene.getStylesheets().contains(lightCss)) {
-                        scene.getStylesheets().add(lightCss);
-                    }
+                    rootPane.getStyleClass().remove("theme-dark");
+                    rootPane.getStyleClass().add("theme-light");
                     darkMode.setGraphic(moonIcon);
                 }
             }
