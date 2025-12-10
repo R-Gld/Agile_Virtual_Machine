@@ -229,7 +229,7 @@ public class Heap {
             }
         }
         // nothing found
-        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr=" + entry.getAddress() + " size=" + entry.getSize() + " id=" + entry.getId());
+        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr={} size={} id={}", entry.getAddress(), entry.getSize(), entry.getId());
         return false;
     }
     /**
@@ -259,7 +259,7 @@ public class Heap {
             current = current.next;
         }
 
-        logger.debug("⚠\uFE0F removeEntry (by identity) did not find: {}", entry);
+        logger.debug("⚠️ removeEntry (by identity) did not find: {}", entry);
         return false;
     }
 
@@ -288,7 +288,7 @@ public class Heap {
                 true    // indique que c'est libre
         );
 
-        logger.debug("← Freed block [" + entry.getId() + "] addr=" + entry.getAddress() + " size=" + entry.getSize());
+        logger.debug("← Freed block [{}] addr={} size={}", entry.getId(), entry.getAddress(), entry.getSize());
 
         // 3. Ajouter ce bloc libre dans la liste des blocs libres
         Node newFreeNode = new Node(freeEntry);
@@ -361,8 +361,6 @@ public class Heap {
         return freeCount;
     }
 
-
-
     public Object read(int address) {
         if (address < 0 || address >= HEAP_SIZE) {
             throw new IndexOutOfBoundsException("Heap.read: address out of bounds: " + address);
@@ -385,6 +383,7 @@ public class Heap {
                 value,
                 (value != null ? value.getClass().getSimpleName() : "null"));
     }
+
     public void releaseReference(HeapEntry entry) {
         if (entry == null) return;
 
@@ -393,6 +392,7 @@ public class Heap {
             free(entry);
         }
     }
+
     public HeapEntry getEntryNotFree(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -409,6 +409,7 @@ public class Heap {
         }
         return null;
     }
+
     public HeapEntry getEntry(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -425,11 +426,9 @@ public class Heap {
         }
         return null;
     }
+
     public Object[] getMemory() {
         return memory;
     }
-
-
-
 
 }
