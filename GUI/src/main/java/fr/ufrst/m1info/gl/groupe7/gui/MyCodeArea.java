@@ -391,7 +391,7 @@ public class MyCodeArea extends AnchorPane {
                 if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
                     autoCompletionPopup.hide();
                 } else {
-                    showAutoCompletion();
+                    showManualCompletion();
                 }
                 event.consume();
             } else if (event.getCode() == KeyCode.TAB) {
@@ -445,6 +445,29 @@ public class MyCodeArea extends AnchorPane {
                 }
             }
         });
+    }
+
+    private void showManualCompletion() {
+        String text = codeArea.getText();
+        int caretPosition = codeArea.getCaretPosition();
+
+        // Find the word before the caret
+        int start = caretPosition;
+        while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+            start--;
+        }
+        String prefix = text.substring(start, caretPosition);
+
+        List<String> suggestions = getSuggestions(prefix);
+
+        if (suggestions.isEmpty()) {
+            if (autoCompletionPopup != null) {
+                autoCompletionPopup.hide();
+            }
+            return;
+        }
+
+        displaySuggestions(suggestions, start, caretPosition);
     }
 
     /**
@@ -536,6 +559,7 @@ public class MyCodeArea extends AnchorPane {
         }
         String prefix = text.substring(start, caretPosition);
 
+        // For automatic completion, only trigger if there is a prefix.
         if (prefix.isEmpty()) {
             if (autoCompletionPopup != null) {
                 autoCompletionPopup.hide();
@@ -552,6 +576,10 @@ public class MyCodeArea extends AnchorPane {
             return;
         }
 
+        displaySuggestions(suggestions, start, caretPosition);
+    }
+
+    private void displaySuggestions(List<String> suggestions, int start, int caretPosition) {
         final int finalStart = start;
         List<MenuItem> menuItems = new ArrayList<>();
         for (String suggestion : suggestions) {
@@ -586,7 +614,7 @@ public class MyCodeArea extends AnchorPane {
                 }
             });
         }
-        
+
         autoCompletionPopup.getItems().setAll(menuItems);
 
         if (!autoCompletionPopup.isShowing()) {

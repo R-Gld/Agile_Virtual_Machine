@@ -757,8 +757,8 @@
 }
 
 .theme-dark .code-area .function {
-    -fx-fill: #DCDCAA; 
-    -fx-font-style: italic;
+    -fx-fill: #DCDCAA;
+    -fx-font-weight: bold;
 }
 
 .theme-dark .code-area .boolean {
