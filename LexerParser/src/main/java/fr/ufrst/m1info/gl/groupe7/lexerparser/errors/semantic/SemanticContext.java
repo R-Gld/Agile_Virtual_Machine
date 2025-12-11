@@ -31,6 +31,7 @@ public class SemanticContext {
     private final Set<String> mainLocalVariables = new HashSet<>();
     private final Set<String> currentScopeVariables = new HashSet<>();
     private final Set<String> globalConstants = new HashSet<>(); // Pour détecter les réassignations de constantes
+    private final Set<String> initializedConstants = new HashSet<>(); // Pour tracker les constantes déjà initialisées
 
     /**
      * Constructor.
@@ -188,5 +189,22 @@ public class SemanticContext {
      */
     public void addConstant(String varName) {
         globalConstants.add(varName);
+    }
+
+    /**
+     * Check if a constant has been initialized.
+     * @param varName the variable name (without scope qualifier)
+     * @return true if the constant has already been initialized
+     */
+    public boolean isConstantInitialized(String varName) {
+        return initializedConstants.contains(varName);
+    }
+
+    /**
+     * Mark a constant as initialized.
+     * @param varName the variable name (without scope qualifier)
+     */
+    public void markConstantAsInitialized(String varName) {
+        initializedConstants.add(varName);
     }
 }
