@@ -164,13 +164,8 @@ public class App extends Application {
 
         // Console
         this.console = new ConsoleOutput("console");
-        root.setBottom(this.console);
-
-        // Register the console with the logging system
-        GuiAppender.setGuiConsole(this.console);
-        logger.info("GUI application started successfully");
-        // === End ===
         this.console.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 0 0;");
+        root.setBottom(this.console);
 
         GuiAppender.setGuiConsole(this.console);
         logger.info("GUI application started successfully");
