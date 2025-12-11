@@ -674,10 +674,6 @@ class MiniJajaSemanticAnalyzerTest {
                 "Error message should mention type mismatch in initialization");
     }
 
-    // ============================================================
-    //  Tests for constants (final)
-    // ============================================================
-
     @Test
     void uninitializedFinalConstant_canBeInitializedOnce() {
         String code = """
