@@ -261,16 +261,22 @@ public class TypeChecker {
             String varName = ident.getNom();
             String qualifiedName = scopeResolver.resolveAndQualifyName(varName);
 
-            // Check if trying to reassign a constant
-            if (context.isConstant(varName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
-                return;
-            }
-
             // Check if variable is declared
             if (!context.getSymbolTable().contains(qualifiedName)) {
                 context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Undeclared variable: '%s' has not been declared. " + "Make sure to declare the variable before using it (ex: , 'int %s;').", varName, varName));
                 return;
+            }
+
+            // Check if trying to reassign a constant that is already initialized
+            if (context.isConstant(varName)) {
+                if (context.isConstantInitialized(varName)) {
+                    // Constant already initialized, this is a reassignment - not allowed
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
+                    return;
+                } else {
+                    // First assignment to uninitialized constant - this is allowed (initialization)
+                    context.markConstantAsInitialized(varName);
+                }
             }
 
             // Get symbol to check if it's an array
