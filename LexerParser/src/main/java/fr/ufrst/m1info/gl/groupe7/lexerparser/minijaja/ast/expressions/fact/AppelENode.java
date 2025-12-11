@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
@@ -8,6 +11,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.AppelINo
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 public class AppelENode extends Expression {
+
+    private static final Logger logger = LoggerFactory.getLogger(AppelENode.class);
 
     private final IdentNode ident;
     private final ListExpNode listexp;
@@ -31,7 +36,7 @@ public class AppelENode extends Expression {
         AppelINode appelI = new AppelINode(ident, listexp);
         appelI.InterpretChildren(stack);
         String varClasse = stack.getVariableClasse();
-        System.err.println("[DEBUG] AppelENode evaluate: varClasse = " + varClasse);
+        logger.error("[DEBUG] AppelENode evaluate: varClasse = {}", varClasse);
         if (varClasse == null) {
             throw new RuntimeException("Erreur: appelE hors d'une classe");
         }

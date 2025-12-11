@@ -27,7 +27,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ class MiniJajaCompilerVisitorTest {
      */
     @BeforeEach
     void setUp() {
-        visitor = new MiniJajaCompilerVisitor(new Stacks(), new DiagnosticCollector());
+        visitor = new MiniJajaCompilerVisitor(new DiagnosticCollector());
         builderSpy = spy(visitor.getJajaCodeBuilder());
         try {
             // Access the private field `jjcBuilder` via reflection to inject the spy
@@ -1481,7 +1480,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_withNbreNode_deducesTypeAsInt() {
-        // Test: int x = 42; → le type doit être déduit comme INT
+        // Test: int x = 42; -> le type doit être déduit comme INT
         IdentNode ident = new IdentNode("count");
         NbreNode nbreValue = new NbreNode(42);
 
@@ -1509,7 +1508,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_withComplexExpression_callsVisitExpression() {
-        // Test: int x = 2 + 3; → doit appeler visitExpression
+        // Test: int x = 2 + 3; -> doit appeler visitExpression
         IdentNode ident = new IdentNode("sum");
         PlusNode plusExpr = new PlusNode(new NbreNode(2), new NbreNode(3));
 
@@ -1526,7 +1525,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_withIdentExpression_usesNormalizeType() {
-        // Test: int x = y; → le type doit être normalisé car ce n'est ni BoolValueNode ni NbreNode
+        // Test: int x = y; -> le type doit être normalisé car ce n'est ni BoolValueNode ni NbreNode
         IdentNode ident = new IdentNode("x");
         IdentNode yIdent = new IdentNode("y");
 
@@ -1568,7 +1567,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_withUppercaseType_normalizesCorrectly() {
-        // Test: BOOLEAN x; → doit être normalisé en BOOLEAN
+        // Test: BOOLEAN x; -> doit être normalisé en BOOLEAN
         IdentNode ident = new IdentNode("uppercaseType");
         VarNode varNode = new VarNode(Type.BOOLEEN, ident, null);
 
@@ -1580,7 +1579,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitVarNode_withMixedCaseType_normalizesCorrectly() {
-        // Test: Boolean x; → doit être normalisé en BOOLEAN
+        // Test: Boolean x; -> doit être normalisé en BOOLEAN
         IdentNode ident = new IdentNode("mixedCase");
         VarNode varNode = new VarNode(Type.BOOLEEN, ident, null);
 
@@ -1625,7 +1624,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_simpleIntMethod_generatesCorrectStructure() {
-        // Test: int f() { } → push, new, goto, swap, return
+        // Test: int f() { } -> push, new, goto, swap, return
         MethodeNode methode = createSimpleMethod("f", Type.ENTIER);
 
         visitor.visit(methode);
@@ -1641,7 +1640,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_voidMethod_generatesPush0BeforeSwapReturn() {
-        // Test: void f() { } → push, new, goto, push(0), swap, return
+        // Test: void f() { } -> push, new, goto, push(0), swap, return
         MethodeNode methode = createSimpleMethod("f", Type.VOID);
 
         visitor.visit(methode);
@@ -1657,7 +1656,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_withOneParameter_generatesNewForParam() {
-        // Test: int f(int p) { } → new(p@f@int, int, var, 1)
+        // Test: int f(int p) { } -> new(p@f@int, int, var, 1)
         IdentNode ident = new IdentNode("f");
         EntetesNode entetes = createSingleEntetes("p", Type.ENTIER);
         MethodeNode methode = new MethodeNode(Type.ENTIER, ident, entetes, null, null);
@@ -1687,7 +1686,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_withLocalVariable_generatesNewAndRetrait() {
-        // Test: int f() { int x; } → new pour x, puis swap/pop pour retirer x
+        // Test: int f() { int x; } -> new pour x, puis swap/pop pour retirer x
         IdentNode ident = new IdentNode("f");
         VarsNode vars = mock(VarsNode.class);
         VarNode localVar = var("x", Type.ENTIER);
@@ -1773,7 +1772,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_calculatesCorrectGotoAddress_noBody() {
-        // Test: int f() { } → goto pointe vers l'instruction après return
+        // Test: int f() { } -> goto pointe vers l'instruction après return
         MethodeNode methode = createSimpleMethod("f", Type.ENTIER);
 
         visitor.visit(methode);
@@ -1790,7 +1789,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_voidWithLocalVar_generatesPush0AndRetrait() {
-        // Test: void f() { int x; } → push(0) pour void, swap/pop pour x
+        // Test: void f() { int x; } -> push(0) pour void, swap/pop pour x
         IdentNode ident = new IdentNode("f");
         VarsNode vars = mock(VarsNode.class);
         VarNode localVar = var("x", Type.ENTIER);
@@ -1813,7 +1812,7 @@ class MiniJajaCompilerVisitorTest {
 
     @Test
     void visitMethodeNode_withMultipleLocalVars_generatesMultipleRetraits() {
-        // Test: int f() { int x; int y; } → swap/pop pour y, swap/pop pour x
+        // Test: int f() { int x; int y; } -> swap/pop pour y, swap/pop pour x
         IdentNode ident = new IdentNode("f");
 
         VarsNode vars1 = mock(VarsNode.class);
@@ -1902,7 +1901,7 @@ class MiniJajaCompilerVisitorTest {
         // La première valeur capturée devrait être l'adresse de début
         List<Integer> pushValues = pushCaptor.getAllValues();
         assertFalse(pushValues.isEmpty(), "Should have at least one PUSH");
-        int methodStartAddr = pushValues.get(0);
+        int methodStartAddr = pushValues.getFirst();
         assertTrue(methodStartAddr >= 4, "Method start address should be at least 4 (after push, new, goto)");
     }
 
@@ -2683,6 +2682,125 @@ class MiniJajaCompilerVisitorTest {
         String output = visitor.getJajaCodeBuilder().toString();
         assertTrue(output.contains("new(voidMethod, void, meth, 0)"),
             "VOID should map to 'void'. Output: " + output);
+    }
+
+    // ===== Tests pour la compilation des tableaux =====
+
+    @Test
+    void visitTableauNode_withFixedSize_generatesNewArrayInstruction() {
+        // Test de la règle [ctableau]: int arr[10]; -> push(10), newarray(arr@global, int)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode tableauNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode(
+                Type.ENTIER,
+                ident("arr"),
+                new NbreNode(10)
+            );
+
+        visitor.visit(tableauNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 10);
+        inOrder.verify(builderSpy).addInstruction(NEWARRAY, "arr@global", "int");
+    }
+
+    @Test
+    void visitTabNode_inExpression_generatesAloadInstruction() {
+        // Test de la règle [ctab]: x = arr[5]; -> push(5), aload(arr@global), store(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(5)
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+        when(affectation.getExpression()).thenReturn(tabNode);
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);
+        inOrder.verify(builderSpy).addInstruction(ALOAD, "arr@global");
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitAffectationNode_withTabNode_generatesAstoreInstruction() {
+        // Test de la règle [caffecteT]: arr[3] = 42; -> push(3), push(42), astore(arr@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(3)
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(tabNode);
+        when(affectation.getExpression()).thenReturn(new NbreNode(42));
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 3);  // index
+        inOrder.verify(builderSpy).addInstruction(PUSH, 42); // valeur
+        inOrder.verify(builderSpy).addInstruction(ASTORE, "arr@global");
+    }
+
+    @Test
+    void visitLengthNode_generatesLengthInstruction() {
+        // Test de la règle [clongueur]: x = length(arr); -> length(arr@global), store(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode lengthNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.LengthNode(
+                ident("arr")
+            );
+
+        AffectationNode affectation = mock(AffectationNode.class);
+        when(affectation.getIdent1Node()).thenReturn(ident("x"));
+        when(affectation.getExpression()).thenReturn(lengthNode);
+
+        visitor.visit(affectation);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(LENGTH, "arr@global");
+        inOrder.verify(builderSpy).addInstruction(STORE, "x@global");
+    }
+
+    @Test
+    void visitIncrementNode_withVariable_generatesIncInstruction() {
+        // Test de la règle [cincrément]: x++; -> push(1), inc(x@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode incrementNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode(
+                ident("x")
+            );
+
+        InstructionNode instrNode = incrementNode;
+        visitor.visit(instrNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 1);
+        inOrder.verify(builderSpy).addInstruction(INC, "x@global");
+    }
+
+    @Test
+    void visitIncrementNode_withTabNode_generatesAincInstruction() {
+        // Test de la règle [cincrémentT]: arr[5]++; -> push(5), push(1), ainc(arr@global)
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode tabNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode(
+                ident("arr"),
+                new NbreNode(5)
+            );
+
+        fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode incrementNode =
+            new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.IncrementNode(
+                tabNode
+            );
+
+        InstructionNode instrNode = incrementNode;
+        visitor.visit(instrNode);
+
+        InOrder inOrder = inOrder(builderSpy);
+        inOrder.verify(builderSpy).addInstruction(PUSH, 5);  // index
+        inOrder.verify(builderSpy).addInstruction(PUSH, 1);  // valeur d'incrémentation
+        inOrder.verify(builderSpy).addInstruction(AINC, "arr@global");
     }
 
 

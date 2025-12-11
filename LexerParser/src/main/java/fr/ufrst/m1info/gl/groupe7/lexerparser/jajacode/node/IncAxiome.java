@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.AssignmentException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflowException;
@@ -33,6 +36,8 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  */
 public class IncAxiome implements JajaAxiome {
 
+    private static final Logger logger = LoggerFactory.getLogger(IncAxiome.class);
+
     /**
      * Exécute l'instruction {@code inc(i)}.
      *
@@ -65,11 +70,7 @@ public class IncAxiome implements JajaAxiome {
 
         // 4. Vérification des types (doivent être des entiers)
         if (!(currentValue instanceof Integer) || !(incrementQuad.value instanceof Integer)) {
-            throw new TypeMismatchException(
-                "Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")",
-                "INC",
-                ctx.getInstructionCounter()
-            );
+            throw new TypeMismatchException("Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")", "INC", ctx.getInstructionCounter());
         }
 
         // 5. Calcul de la nouvelle valeur
@@ -83,7 +84,7 @@ public class IncAxiome implements JajaAxiome {
         }
 
         // 7. Succès
-        System.out.println("\t\tAxiome INC exécuté: " + scopedIdent + " += " + incrementQuad.value + " -> " + newValue);
+        logger.debug("\t\tAxiome INC exécuté: {} += {} -> {}", scopedIdent, incrementQuad.value, newValue);
         ctx.incrementPC();
     }
 

@@ -1,5 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.compiler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,6 +23,8 @@ import org.apache.commons.cli.help.HelpFormatter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompilerVisitor;
 
 public class MainCompiler {
+
+    private static final Logger logger = LoggerFactory.getLogger(MainCompiler.class);
 
     /**
      * Main of the compiler.
@@ -59,8 +64,7 @@ public class MainCompiler {
         if (outputFilepath != null) { // -o option is given.
             boolean doesOutputFileExist = Files.exists(Path.of(outputFilepath));
             if (doesOutputFileExist && !cmd.hasOption("f")) {
-                System.err.println(
-                        "Output file already exists: '" + outputFilepath + "'. \nUse -f option to override it.");
+                logger.error("Output file already exists: '{}'. \nUse -f option to override it.", outputFilepath);
                 System.exit(1);
             }
         }
@@ -71,7 +75,7 @@ public class MainCompiler {
             MiniJajaCompilerVisitor compiler = MiniJajaCompiler.getMiniJajaCompilerVisitorFromStream(inStream);
             outStream.write(compiler.getJajaCodeBuilder().toString().getBytes());
         } catch (IOException e) {
-            System.err.println("File error: " + e.getMessage());
+            logger.error("File error: {}", e.getMessage());
             System.exit(1);
         }
     }
@@ -98,8 +102,8 @@ public class MainCompiler {
 
     private void printHelp(Options options, String errMessage, int exitCode) {
         if (errMessage != null) {
-            System.err.println("Error: " + errMessage);
-            System.err.println();
+            logger.error("Error: {}", errMessage);
+            logger.error("");
         }
 
         String jarPath = MainCompiler.class.getProtectionDomain().getCodeSource().getLocation().getPath();

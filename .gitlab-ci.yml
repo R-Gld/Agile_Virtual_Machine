@@ -32,7 +32,6 @@ cache:
     - .m2/repository
   when: on_success
 
-
 check-envvars:
   stage: .pre
   rules:
@@ -67,17 +66,17 @@ test:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI' jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
-      junit: '**/target/surefire-reports/TEST-*.xml'
+      junit: "**/target/surefire-reports/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: '**/target/site/jacoco/jacoco.xml'
+        path: "**/target/site/jacoco/jacoco.xml"
     paths:
-      - '**/target/surefire-reports/TEST-*.xml'
-      - '**/target/site/jacoco/jacoco.xml'
-      - '**/target/classes/'
+      - "**/target/surefire-reports/TEST-*.xml"
+      - "**/target/site/jacoco/jacoco.xml"
+      - "**/target/classes/"
     expire_in: 1 week
 
 testIHM:
@@ -97,14 +96,14 @@ testIHM:
     - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
-      junit: '**/target/surefire-reports/TEST-*.xml'
+      junit: "**/target/surefire-reports/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: '**/target/site/jacoco/jacoco.xml'
+        path: "**/target/site/jacoco/jacoco.xml"
     paths:
-      - '**/target/surefire-reports/TEST-*.xml'
-      - '**/target/site/jacoco/jacoco.xml'
-      - '**/target/classes/'
+      - "**/target/surefire-reports/TEST-*.xml"
+      - "**/target/site/jacoco/jacoco.xml"
+      - "**/target/classes/"
     expire_in: 1 week
 
 package:
@@ -118,7 +117,7 @@ package:
     - mvn ${MAVEN_CLI_OPTS} -DskipTests package
   artifacts:
     paths:
-      - '**/target/*.jar'
+      - "**/target/*.jar"
     expire_in: 1 week
   needs:
     - test
@@ -127,8 +126,8 @@ package:
 sonarqube-check:
   stage: sonarqube-check
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+    GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
   cache:
     key: "sonar-cache"
     policy: pull-push
@@ -139,7 +138,7 @@ sonarqube-check:
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
     - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
-#  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
+  #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
     - build
     - test

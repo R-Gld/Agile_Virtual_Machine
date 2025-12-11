@@ -22,7 +22,6 @@
 
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
-            GUI/**,
             LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/jajacode/JajaCodeInterpreter.java,
             LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/minijaja/MiniJajaCompiler.java,
         </sonar.exclusions>
@@ -66,6 +65,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>2.0.17</version>
+        </dependency>
+        <!-- Logback implementation for SLF4J -->
+        <!-- CVE-2025-11226 inexploitable, Spring and Janino not present here. -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.17</version>
         </dependency>
     </dependencies>
 

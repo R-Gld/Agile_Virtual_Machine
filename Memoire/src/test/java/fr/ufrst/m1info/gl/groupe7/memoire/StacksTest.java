@@ -588,7 +588,7 @@ public class StacksTest {
         //assertNull(stacks.getArrayValue(null, 1));
         // 5) Out-of-bounds should return null
         //assertNull(stacks.getArrayValue(ident, -1));
-        //assertNull(stacks.getArrayValue(ident, 5));   // size = 5 → last index = 4
+        //assertNull(stacks.getArrayValue(ident, 5));   // size = 5 -> last index = 4
         assertEquals(99, stacks.getArrayValue(ident, 1));
         assertEquals(-12, stacks.getArrayValue(ident, 4));
 
@@ -1487,7 +1487,7 @@ public class StacksTest {
         assertTrue(s.AffecterVal("c", 5)); // première affectation OK
 
         RuntimeException e = assertThrows(RuntimeException.class, () ->
-                s.AffecterVal("c", 10) // deuxième → interdit
+                s.AffecterVal("c", 10) // deuxième -> interdit
         );
 
         assertTrue(e.getMessage().contains("ne peut pas être modifiée"));

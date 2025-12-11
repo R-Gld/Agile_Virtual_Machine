@@ -38,6 +38,8 @@ instr
 // ident ::= IDENTIFIER
 ident
     : IDENTIFIER
+    | NEG | NOT
+    | ADD | SUB | MUL | DIV | CMP | SUP | OR | AND // pour le cas où un opérateur est utilisé comme identifiant
     ;
 
 valeur

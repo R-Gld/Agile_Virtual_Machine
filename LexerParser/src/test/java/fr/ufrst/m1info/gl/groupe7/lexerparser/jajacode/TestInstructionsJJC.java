@@ -233,9 +233,7 @@ class TestInstructionsJJC {
 
     /**
      * Test de récursivité simple.
-     *
      * countdown(n): retourne n directement (version simplifiée sans récursion pour tester)
-     *
      * D'abord testons une version simple sans récursion.
      */
     @Test
