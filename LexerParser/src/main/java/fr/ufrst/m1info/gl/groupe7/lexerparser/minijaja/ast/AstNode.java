@@ -3,6 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast;
 import java.util.Collections;
 
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SourcePosition;
 
 /**
  * Base class for all nodes in the abstract syntax tree (AST).
@@ -12,6 +13,28 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
  * when they have runtime behaviour.</p>
  */
 public abstract class AstNode {
+
+    /**
+     * Source position of this node in the original source code.
+     * May be null for synthetic/generated nodes.
+     */
+    private SourcePosition sourcePosition;
+
+    /**
+     * Get the source position of this node.
+     * @return the source position, or null if not available
+     */
+    public SourcePosition getSourcePosition() {
+        return sourcePosition;
+    }
+
+    /**
+     * Set the source position of this node.
+     * @param position the source position
+     */
+    public void setSourcePosition(SourcePosition position) {
+        this.sourcePosition = position;
+    }
 
     /**
      * Render this node (and typically its subtree) as a compact tree string.
