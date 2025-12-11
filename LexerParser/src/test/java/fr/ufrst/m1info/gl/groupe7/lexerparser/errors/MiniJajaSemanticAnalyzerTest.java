@@ -675,6 +675,115 @@ class MiniJajaSemanticAnalyzerTest {
     }
 
     // ============================================================
+    //  Tests for constants (final)
+    // ============================================================
+
+    @Test
+    void uninitializedFinalConstant_canBeInitializedOnce() {
+        String code = """
+                class Test {
+                    final int longueur;
+                    main {
+                        longueur = 10;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("ConstantInit.mjj");
+
+        analyser.analyse(classe);
+
+        assertFalse(collector.hasErrors(), "First initialization of uninitialized final constant should be allowed");
+    }
+
+    @Test
+    void initializedFinalConstant_cannotBeReassigned() {
+        String code = """
+                class Test {
+                    final int x = 5;
+                    main {
+                        x = 10;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("ConstantReassignment.mjj");
+
+        analyser.analyse(classe);
+
+        assertTrue(collector.hasErrors(), "Reassigning initialized final constant should report error");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Cannot reassign constant") || diag.message().contains("final"),
+                "Error message should mention constant reassignment");
+    }
+
+    @Test
+    void uninitializedFinalConstant_cannotBeReassignedAfterFirstInit() {
+        String code = """
+                class Test {
+                    final int longueur;
+                    main {
+                        longueur = 10;
+                        longueur = 20;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("ConstantDoubleInit.mjj");
+
+        analyser.analyse(classe);
+
+        assertTrue(collector.hasErrors(), "Second assignment to constant should report error");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Cannot reassign constant") || diag.message().contains("final"),
+                "Error message should mention constant reassignment");
+    }
+
+    @Test
+    void complexQuicksortExample_withUninitializedFinalConstant_shouldWork() {
+        String code = """
+                class quicksort{
+                    final int longueur;
+                    int tableau[longueur];
+
+                    main {
+                        longueur = length(tableau);
+                        tableau[0]=5;
+                        tableau[1]=2;
+                    }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("Quicksort.mjj");
+
+        analyser.analyse(classe);
+
+        assertFalse(collector.hasErrors(), "Quicksort example should not produce semantic errors");
+    }
+
+    // ============================================================
     //  Helpers communs
     // ============================================================
 
