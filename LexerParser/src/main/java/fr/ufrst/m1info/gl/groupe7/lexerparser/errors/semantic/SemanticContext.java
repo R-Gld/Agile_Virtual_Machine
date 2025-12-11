@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.errors.semantic;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SourcePosition;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.SymbolTable;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
@@ -84,9 +85,26 @@ public class SemanticContext {
     }
 
     /**
-     * Create a source position for error reporting
-     * @return a SourcePosition with current file name
+     * Create a source position from an AST node for error reporting.
+     * Uses the node's position if available, otherwise falls back to (0,0).
+     * @param node the AST node (may be null)
+     * @return a SourcePosition with the node's position or (0,0) as fallback
      */
+    public SourcePosition createPosition(AstNode node) {
+        if (node != null && node.getSourcePosition() != null) {
+            SourcePosition nodePos = node.getSourcePosition();
+            String file = currentFileName != null ? currentFileName : nodePos.fileName();
+            return new SourcePosition(file, nodePos.line(), nodePos.column());
+        }
+        return new SourcePosition(currentFileName, 0, 0);
+    }
+
+    /**
+     * Create a source position for error reporting (deprecated).
+     * @deprecated Use createPosition(AstNode) instead to get accurate positions
+     * @return a SourcePosition with current file name and (0,0) position
+     */
+    @Deprecated
     public SourcePosition createPosition() {
         return new SourcePosition(currentFileName, 0, 0);
     }

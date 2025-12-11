@@ -180,7 +180,7 @@ public class TypeInferenceEngine {
                 // Validate the method call and return its type
                 // Note: methodCallValidator is injected after construction
                 if (methodCallValidator != null) {
-                    return methodCallValidator.validateMethodCall(methodName, args);
+                    return methodCallValidator.validateMethodCall(appelE);
                 }
                 // If validator not set yet, return null
                 return null;
