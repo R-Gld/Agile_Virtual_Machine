@@ -20,7 +20,11 @@ import org.testfx.framework.junit5.Start;
 import org.testfx.util.WaitForAsyncUtils;
 
 import java.util.concurrent.CountDownLatch;
+import java.io.File;
 import java.util.concurrent.TimeUnit;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -1024,5 +1028,69 @@ class TestApp {
         } catch (NoSuchMethodException e) {
             fail("Main method should exist");
         }
+    }
+
+    @Test
+    void testDragAndDropLoadsMjjFile() throws Exception {
+        java.nio.file.Path tmp = Files.createTempFile("test-mjj-", ".mjj");
+        String content = "class DragTest { main { int a = 42; } }";
+        Files.writeString(tmp, content);
+
+        Method loadMethod = App.class.getDeclaredMethod("loadFileContent", File.class);
+        loadMethod.setAccessible(true);
+
+        runOnFxThread(() -> {
+            try {
+                loadMethod.invoke(app, tmp.toFile());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        WaitForAsyncUtils.waitForFxEvents();
+
+        Field mjjField = App.class.getDeclaredField("mjjCodeArea");
+        mjjField.setAccessible(true);
+        MyCodeArea mjjArea = (MyCodeArea) mjjField.get(app);
+
+        Field fileToRunField = App.class.getDeclaredField("fileToRun");
+        fileToRunField.setAccessible(true);
+        ChoiceBox<String> fileToRun = (ChoiceBox<String>) fileToRunField.get(app);
+
+        assertTrue(mjjArea.getText().contains("DragTest"), "mjj editor should contain file content");
+        assertEquals("MiniJaja", fileToRun.getValue(), "fileToRun should be MiniJaja for .mjj files");
+
+        Files.deleteIfExists(tmp);
+    }
+
+    @Test
+    void testDragAndDropLoadsJjcFile() throws Exception {
+        java.nio.file.Path tmp = Files.createTempFile("test-jjc-", ".jjc");
+        String content = "line1\nline2\n";
+        Files.writeString(tmp, content);
+
+        Method loadMethod = App.class.getDeclaredMethod("loadFileContent", File.class);
+        loadMethod.setAccessible(true);
+
+        runOnFxThread(() -> {
+            try {
+                loadMethod.invoke(app, tmp.toFile());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        WaitForAsyncUtils.waitForFxEvents();
+
+        Field jjcField = App.class.getDeclaredField("jjcCodeArea");
+        jjcField.setAccessible(true);
+        MyCodeArea jjcArea = (MyCodeArea) jjcField.get(app);
+
+        Field fileToRunField = App.class.getDeclaredField("fileToRun");
+        fileToRunField.setAccessible(true);
+        ChoiceBox<String> fileToRun = (ChoiceBox<String>) fileToRunField.get(app);
+
+        assertTrue(jjcArea.getText().contains("line1"), "jjc editor should contain file content");
+        assertEquals("Jajacode", fileToRun.getValue(), "fileToRun should be Jajacode for .jjc files");
+
+        Files.deleteIfExists(tmp);
     }
 }
