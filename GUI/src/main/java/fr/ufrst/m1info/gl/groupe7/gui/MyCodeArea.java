@@ -198,7 +198,9 @@ public class MyCodeArea extends AnchorPane {
             }
             lastEnd = range.getEnd();
         }
-        if (lastEnd < textLength) {
+        // Always add a final span (even if zero-length) to ensure the
+        // StyleSpansBuilder has at least one entry before calling create().
+        if (lastEnd < textLength || textLength == 0) {
             spansBuilder.add(Collections.emptyList(), textLength - lastEnd);
         }
 
@@ -693,9 +695,7 @@ public class MyCodeArea extends AnchorPane {
         List<MenuItem> menuItems = new ArrayList<>();
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
-            item.setOnAction(e -> {
-                codeArea.replaceText(finalStart, caretPosition, suggestion);
-            });
+            item.setOnAction(e -> codeArea.replaceText(finalStart, caretPosition, suggestion));
             menuItems.add(item);
         }
 
