@@ -403,6 +403,10 @@
     -fx-font-weight: bold;
 }
 
+.theme-light .code-area .unused-variable {
+    -fx-fill: #808080; /* Gray color for unused variables */
+}
+
 .theme-light .label {
     -fx-text-background-color: white;
 }
@@ -798,6 +802,10 @@
 .theme-dark .code-area .error {
     -fx-fill: #F44747;
     -fx-underline: true;
+}
+
+.theme-dark .code-area .unused-variable {
+    -fx-fill: #808080; /* Gray color for unused variables */
 }
 
 .theme-dark .current-caret-line {
