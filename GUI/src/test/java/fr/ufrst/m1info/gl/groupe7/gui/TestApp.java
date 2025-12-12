@@ -478,9 +478,9 @@ class TestApp {
     void testSceneHasStylesheets() {
         assertFalse(stage.getScene().getStylesheets().isEmpty(), "Scene should have stylesheets");
 
-        boolean hasLightOrDark = stage.getScene().getStylesheets().stream()
-                .anyMatch(css -> css.contains("light.css") || css.contains("dark.css"));
-        assertTrue(hasLightOrDark, "Scene should have light or dark theme CSS");
+        boolean hasCSS = stage.getScene().getStylesheets().stream()
+                .anyMatch(css -> css.contains("theme.css"));
+        assertTrue(hasCSS, "Scene should have global CSS");
     }
 
     /**
@@ -671,10 +671,11 @@ class TestApp {
 
         assertTrue(darkModeBtn.isSelected(), "Dark mode should be on after toggle");
 
-        // Verify dark CSS is loaded
-        boolean hasDarkCss = stage.getScene().getStylesheets().stream()
-                .anyMatch(s -> s.contains("dark.css"));
-        assertTrue(hasDarkCss, "Dark mode CSS should be loaded");
+
+        // Vérifier que la racine principale possède la classe CSS 'theme-dark'
+        boolean hasThemeDarkClass = root.getStyleClass().stream()
+                .anyMatch(c -> c.equals("theme-dark"));
+        assertTrue(hasThemeDarkClass, "Main root should have 'theme-dark' style class when dark mode is toggled");
     }
 
     /**
