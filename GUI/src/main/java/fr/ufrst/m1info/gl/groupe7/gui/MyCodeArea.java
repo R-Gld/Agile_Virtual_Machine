@@ -159,10 +159,9 @@ public class MyCodeArea extends AnchorPane {
             org.antlr.v4.runtime.tree.ParseTree tree = parser.classe();
             semanticListener = new MiniJajaSymbolListener();
             org.antlr.v4.runtime.tree.ParseTreeWalker walker = new org.antlr.v4.runtime.tree.ParseTreeWalker();
-                walker.walk(semanticListener, tree);
-            
-                }
-            }
+            walker.walk(semanticListener, tree);
+        }
+    }
 
 
     /**
