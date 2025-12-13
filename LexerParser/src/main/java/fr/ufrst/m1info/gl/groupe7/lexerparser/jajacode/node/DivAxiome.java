@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +62,7 @@ public class DivAxiome implements JajaAxiome {
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
             throw new TypeMismatchException(
                 "Opérandes non entiers (" + op1.value + " / " + op2.value + ")",
-                "DIV",
+                JajaCodeInstr.DIV.toString(),
                 ctx.getInstructionCounter()
             );
         }

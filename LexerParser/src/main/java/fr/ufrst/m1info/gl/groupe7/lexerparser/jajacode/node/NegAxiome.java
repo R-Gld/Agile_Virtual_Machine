@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +46,11 @@ public class NegAxiome implements JajaAxiome {
         Stacks.Quad op = ctx.getStacks().pop();
 
         if (op == null) {
-            throw new StackUnderflowException("NEG", ctx.getInstructionCounter());
+            throw new StackUnderflowException(JajaCodeInstr.NEG.toString(), ctx.getInstructionCounter());
         }
 
         if (!(op.value instanceof Integer)) {
-            throw new TypeMismatchException("Type invalide pour l'opération NEG: " + op.value, "NEG", ctx.getInstructionCounter());
+            throw new TypeMismatchException("Type invalide pour l'opération NEG: " + op.value, JajaCodeInstr.NEG.toString(), ctx.getInstructionCounter());
         }
 
         int result = -(Integer) op.value;
