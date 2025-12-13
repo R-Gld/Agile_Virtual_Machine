@@ -675,6 +675,15 @@ class TestApp {
 
         assertTrue(darkModeBtn.isSelected(), "Dark mode should be on after toggle");
 
+<<<<<<< HEAD
+=======
+
+        // Vérifier que la racine principale possède la classe CSS 'theme-dark'
+        boolean hasThemeDarkClass = root.getStyleClass().stream()
+                .anyMatch(c -> c.equals("theme-dark"));
+        assertTrue(hasThemeDarkClass, "Main root should have 'theme-dark' style class when dark mode is toggled");
+    }
+>>>>>>> origin/improve-code-area
 
         // Vérifier que la racine principale possède la classe CSS 'theme-dark'
         boolean hasThemeDarkClass = root.getStyleClass().stream()

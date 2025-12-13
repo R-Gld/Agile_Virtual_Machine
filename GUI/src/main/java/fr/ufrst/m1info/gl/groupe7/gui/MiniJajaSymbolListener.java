@@ -30,6 +30,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         final Map<String, Variable> variables = new HashMap<>();
         int start = -1;
         int end = -1;
+        boolean sawInstruction = false;
 
         Scope(int start) {
             this.start = start;
@@ -51,6 +52,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final List<IndexRange> unusedVariableRanges = new ArrayList<>();
     private final List<PersistedScope> persistedScopes = new ArrayList<>();
+    private final List<IndexRange> declAfterInstrRanges = new ArrayList<>();
 
 
     public List<IndexRange> getFunctionStyleRanges() {
@@ -59,6 +61,13 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     public List<IndexRange> getUnusedVariableRanges() {
         return unusedVariableRanges;
+    }
+
+    /**
+     * Returns a list of ranges where variables were declared after instructions (invalid).
+     */
+    public List<IndexRange> getDeclAfterInstrRanges() {
+        return declAfterInstrRanges;
     }
 
 
@@ -151,6 +160,13 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         }
     }
 
+    private void markInstructionSeen() {
+        if (!scopes.isEmpty()) {
+            scopes.peek().sawInstruction = true;
+        }
+    }
+
+
 
     /**
      * Called when the walker enters a method declaration rule.
@@ -201,6 +217,14 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
     @Override
     public void enterVar(MiniJajaParser.VarContext ctx) {
         if (ctx.IDENT() != null) {
+            // If this var is declared after an instruction in the current scope,
+            // record the type token range as a semantic error.
+            if (!scopes.isEmpty() && scopes.peek().sawInstruction && ctx.TYPE() != null) {
+                org.antlr.v4.runtime.Token typeToken = ctx.TYPE().getSymbol();
+                int start = typeToken.getStartIndex();
+                int stop = typeToken.getStopIndex() + 1;
+                declAfterInstrRanges.add(new IndexRange(start, stop));
+            }
             addVariable(ctx.IDENT().getText(), ctx.IDENT().getSymbol());
         }
     }
@@ -214,6 +238,9 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     @Override
     public void enterInstr(MiniJajaParser.InstrContext ctx) {
+        // Mark that we've seen an instruction in the current scope
+        markInstructionSeen();
+
         // Handle assignment as usage
         if (ctx.ident1() != null && ctx.EQ() != null) {
              markVariableAsUsed(ctx.ident1().IDENT().getText());

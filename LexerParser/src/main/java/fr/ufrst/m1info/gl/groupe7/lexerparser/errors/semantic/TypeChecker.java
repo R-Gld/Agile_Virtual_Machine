@@ -52,15 +52,17 @@ public class TypeChecker {
      * @param ast the ClasseNode to check
      */
     public void checkTypes(ClasseNode ast) {
-        // Check declared methods
-        checkMethodsInDeclarations(ast.getDeclarations());
-
-        // Check main method, enter main scope
+        // Check main method FIRST to track constant initialization in execution order
+        // This ensures that if a global constant is initialized in main, methods analyzed
+        // afterward will correctly detect reassignment attempts
         context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         // Variables already collected in declaration phase, just verify instructions
         checkInstructions(mainNode.getInstrs());
         context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
+
+        // Check declared methods AFTER main
+        checkMethodsInDeclarations(ast.getDeclarations());
     }
 
     /**
@@ -76,7 +78,7 @@ public class TypeChecker {
             String methodName = methodeNode.getIdent().getNom();
             Type returnType = methodeNode.getTypeMeth();
 
-            // Create method signature (ex: , "f@int" for method f returning int)
+            // Create method signature (ex: "f@int" for method f returning int)
             String methodSignature = methodName + "@" + returnType.toString();
 
             // Save and enter method scope
@@ -261,16 +263,39 @@ public class TypeChecker {
             String varName = ident.getNom();
             String qualifiedName = scopeResolver.resolveAndQualifyName(varName);
 
-            // Check if trying to reassign a constant
-            if (context.isConstant(varName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
+            // Check if variable is declared
+            if (!context.getSymbolTable().contains(qualifiedName)) {
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Undeclared variable: '%s' has not been declared. Make sure to declare the variable before using it (ex: 'int %s;').", varName, varName));
                 return;
             }
 
-            // Check if variable is declared
-            if (!context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Undeclared variable: '%s' has not been declared. " + "Make sure to declare the variable before using it (ex: , 'int %s;').", varName, varName));
-                return;
+            // Check if trying to assign to a constant
+            if (context.isConstant(varName)) {
+                // Determine the scope of the constant and current execution context
+                String constantScope = scopeResolver.resolveVariableScope(varName);
+                String currentScope = context.getCurrentScope();
+                boolean isGlobalConstant = ScopeResolver.GLOBAL_SCOPE.equals(constantScope);
+                boolean isInMain = ScopeResolver.MAIN_SCOPE.equals(currentScope);
+                boolean isInMethod = !isInMain && !ScopeResolver.GLOBAL_SCOPE.equals(currentScope);
+
+                // STRICT RULE: Global constants can NEVER be assigned in methods
+                // They can only be initialized at declaration or in main
+                if (isGlobalConstant && isInMethod) {
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation),
+                        String.format("Cannot assign to global constant '%s' inside a method. " +
+                                     "Global constants must be initialized at declaration or in the 'main' block.", varName));
+                    return;
+                }
+
+                // Check if constant is already initialized (reassignment)
+                if (context.isConstantInitialized(varName)) {
+                    // Constant already initialized, this is a reassignment - not allowed
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
+                    return;
+                } else {
+                    // First assignment to uninitialized constant - this is allowed (initialization)
+                    context.markConstantAsInitialized(varName);
+                }
             }
 
             // Get symbol to check if it's an array
