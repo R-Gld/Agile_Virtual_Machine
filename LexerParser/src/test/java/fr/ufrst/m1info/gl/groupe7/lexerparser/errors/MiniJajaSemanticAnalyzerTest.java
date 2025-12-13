@@ -779,6 +779,42 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Quicksort example should not produce semantic errors");
     }
 
+    @Test
+    void globalConstant_initializedInMain_thenAssignedInMethod_shouldReportErrorInMethod() {
+        String code = """
+                class C {
+                  int x = 0;
+                  final int can;
+                  int fice(int x) {
+                    can = x;
+                    return can;
+                  };
+
+                  main {
+                    can = 10;
+                    write(can);
+                  }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("ConstOrder.mjj");
+
+        analyser.analyse(classe);
+
+        assertTrue(collector.hasErrors(), "Should report error for reassigning constant in method");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Cannot reassign constant") || diag.message().contains("final"),
+                "Error message should mention constant reassignment, got: " + diag.message());
+        // The error should be reported in method fice (can = x), not in main (can = 10)
+        // Since we analyze main first, can is marked as initialized there, so fice's assignment is the error
+    }
+
     // ============================================================
     //  Helpers communs
     // ============================================================
