@@ -50,7 +50,7 @@ public class ScopeResolver {
     /**
      * Qualify a variable name with its scope suffix (name mangling)
      * @param varName the variable name
-     * @return the qualified name (ex: , "x@global", "local@main", "param@f@int")
+     * @return the qualified name (ex: "x@global", "local@main", "param@f@int")
      */
     public String qualifyName(String varName) {
         return varName + "@" + context.getCurrentScope();
@@ -68,10 +68,10 @@ public class ScopeResolver {
 
     /**
      * Find a method's full signature by searching for methodName@*
-     * Methods are stored as "methodName@returnType" (ex: , "f@integer")
+     * Methods are stored as "methodName@returnType" (ex: "f@integer")
      *
      * @param methodName the unqualified method name
-     * @return the full method signature (ex: , "f@integer"), or null if not found
+     * @return the full method signature (ex: "f@integer"), or null if not found
      */
     public String findMethodSignature(String methodName) {
         String prefix = methodName + "@";

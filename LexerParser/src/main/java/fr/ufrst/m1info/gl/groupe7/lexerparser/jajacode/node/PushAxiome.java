@@ -66,7 +66,6 @@ public class PushAxiome implements JajaAxiome {
         }
 
         // 2. Création du Quad et Push
-        // Note: pour un push de valeur immédiate, utilise le constructeur avec ident="_" (anonyme)
         ctx.getStacks().push(new Stacks.Quad(valeur, type));
 
         logger.debug("\t\tAxiome PUSH exécuté: {} ({}) poussé sur la pile.", valeur, type);

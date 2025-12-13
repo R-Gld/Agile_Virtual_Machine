@@ -496,7 +496,6 @@ public class Stacks {
             HeapEntry entry = heap.getEntryNotFree(base);
 
             if (entry != null) {
-
                 freeTab(q.ident);
 
                 logger.debug("[GC] Increment refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
