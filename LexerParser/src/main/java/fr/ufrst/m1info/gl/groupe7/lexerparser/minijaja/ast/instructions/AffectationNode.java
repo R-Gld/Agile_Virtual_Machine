@@ -95,53 +95,62 @@ public class AffectationNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (ident1Node instanceof IdentNode identNode) {
             String varName = identNode.getNom();
-            if (expression instanceof IdentNode TableIdentNode && stacks.getObjectType(TableIdentNode.getNom()).equals("tab"))
-            {
-                String tableName1 = ((IdentNode) identNode).getNom();
-                String tableName2 = TableIdentNode.getNom();
+            
+            // Check if this is an array-to-array assignment (tab1 = tab2)
+            if (isArrayAssignment(stacks, expression)) {
+                String tableName1 = varName;
+                String tableName2 = ((IdentNode) expression).getNom();
+                // affecterTab handles scope resolution internally
                 stacks.affecterTab(tableName1, tableName2);
-
+            } else {
+                // Standard variable assignment
+                Object value = expression.evaluate(stacks);
+                String actualVarName = stacks.resolveVariableName(varName);
                 
-            }else{
-            Object value = expression.evaluate(stacks);
-            
-            // Try scoped name first if in method context
-            String actualVarName = varName;
-            if (stacks.isInMethodContext()) {
-                String scopedName = stacks.getScopedName(varName);
-                if (stacks.getObjectType(scopedName) != null) {
-                    actualVarName = scopedName;
+                // Check type compatibility
+                String varType = stacks.getDataType(actualVarName).toString();
+                String valueType = getValueType(value);
+                
+                if (!varType.equals(valueType)) {
+                    throw new RuntimeException(String.format(
+                            "Type error: cannot assign value of type %s to variable %s of type %s",
+                            valueType, varName, varType));
                 }
+                stacks.AffecterVal(actualVarName, value);
             }
+        } else if (ident1Node instanceof TabNode tabNode) {
+            // Array element assignment (tab[i] = value)
+            String varName = tabNode.getIdent().getNom();
+            String actualVarName = stacks.resolveVariableName(varName);
             
-            // Check type compatibility
-            String varType = stacks.getDataType(actualVarName).toString();
-            String valueType = value instanceof Integer ? "integer"
-                    : value instanceof Boolean ? "boolean"
-                    : "unknown";
-            if (!varType.equals(valueType)) {
-                throw new RuntimeException(String.format(
-                        "Type error: cannot assign value of type %s to variable %s of type %s",
-                        valueType, varName, varType));
-            }
-            stacks.AffecterVal(actualVarName, value);
-            }
-        }else if (ident1Node instanceof TabNode tabNode)
-        {
-         String varName = tabNode.getIdent().getNom();
-         
-         // Try scoped name first if in method context
-         if (stacks.isInMethodContext()) {
-             String scopedName = stacks.getScopedName(varName);
-             if (stacks.getObjectType(scopedName) != null) {
-                 varName = scopedName;
-             }
-         }
-         
-         int index = (int) tabNode.getIndex().evaluate(stacks);
-         Object value = expression.evaluate(stacks);
-         stacks.setArrayValue(varName, index, value);
-
+            int index = (int) tabNode.getIndex().evaluate(stacks);
+            Object value = expression.evaluate(stacks);
+            stacks.setArrayValue(actualVarName, index, value);
         }
+    }
+    
+    /**
+     * Check if the expression represents an array variable (for array reference assignment).
+     */
+    private boolean isArrayAssignment(Stacks stacks, Expression expr) {
+        if (!(expr instanceof IdentNode tableIdentNode)) {
+            return false;
+        }
+        String tableName = tableIdentNode.getNom();
+        String resolvedName = stacks.resolveVariableName(tableName);
+        String objectType = stacks.getObjectType(resolvedName);
+        return "tab".equals(objectType);
+    }
+    
+    /**
+     * Get the type name of a value for type checking.
+     */
+    private String getValueType(Object value) {
+        if (value instanceof Integer) {
+            return "integer";
+        } else if (value instanceof Boolean) {
+            return "boolean";
+        }
+        return "unknown";
     }
 }
