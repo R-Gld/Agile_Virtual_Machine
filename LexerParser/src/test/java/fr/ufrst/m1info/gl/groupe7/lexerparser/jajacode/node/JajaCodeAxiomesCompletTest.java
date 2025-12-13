@@ -86,12 +86,12 @@ class JajaCodeAxiomesCompletTest {
     void testPushNil() {
         String code = """
                 1 init
-                2 push(waza)
+                2 push(w)
                 3 new(x@global, int, var, 0)
                 4 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
-        assertNull(stacks.getValue("x@global"));
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x@global"));
     }
 
     @Test
@@ -249,12 +249,12 @@ class JajaCodeAxiomesCompletTest {
                 1 init
                 2 push(50)
                 3 new(x@global, int, var, 0)
-                4 push(waza)
+                4 push(w)
                 5 store(x@global)
                 6 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
-        assertNull(stacks.getValue("x@global"));
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x@global"));
     }
 
     @Test
