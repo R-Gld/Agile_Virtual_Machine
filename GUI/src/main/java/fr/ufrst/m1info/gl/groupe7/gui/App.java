@@ -240,20 +240,7 @@ public class App extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button minButton = new Button("-");
-        minButton.getStyleClass().addAll("window-button", "window-button-min");
-
-        Button maxButton = new Button("□");
-        maxButton.getStyleClass().addAll("window-button", "window-button-max");
-
-        Button closeButton = new Button("X");
-        closeButton.getStyleClass().addAll("window-button", "window-button-close");
-
-        minButton.setOnAction(e -> appStage.setIconified(true));
-        maxButton.setOnAction(e -> appStage.setMaximized(!appStage.isMaximized()));
-        closeButton.setOnAction(e -> appStage.close());
-
-        titleBar.getChildren().addAll(titleLabel, spacer, minButton, maxButton, closeButton);
+        titleBar.getChildren().addAll(titleLabel);
 
         final double[] dragDelta = new double[2];
         titleBar.setOnMousePressed(e -> {
