@@ -24,7 +24,7 @@ NOP: 'nop' ;
 JCSTOP: 'jcstop' ;
 TRUE: 'true' ;
 FALSE: 'false' ;
-VIDE: 'vide' ;
+OMEGA: 'w' ;
 
 // oper1
 NEG: 'neg' ;
