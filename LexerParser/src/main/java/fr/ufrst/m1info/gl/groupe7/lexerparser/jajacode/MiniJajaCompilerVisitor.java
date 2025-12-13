@@ -645,9 +645,12 @@ public class MiniJajaCompilerVisitor {
         if (vexp != null) {
             visitExpression(vexp);
         } else {
-            // Si pas d'expression d'initialisation, push w (omega) pour toutes les variables/constantes
-            // Omega représente une valeur non initialisée, acceptée par le système de types
-            jjcBuilder.addInstruction(PUSH, "w");
+            // Si pas d'expression d'initialisation, on push une valeur par défaut selon le type
+            if ("BOOLEEN".equals(type.name())) {
+                jjcBuilder.addInstruction(PUSH, false);
+            } else if ("ENTIER".equals(type.name())) {
+                jjcBuilder.addInstruction(PUSH, 0);
+            }
         }
 
         String scopeAddress = currentScope;
