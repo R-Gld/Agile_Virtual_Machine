@@ -1,6 +1,5 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;

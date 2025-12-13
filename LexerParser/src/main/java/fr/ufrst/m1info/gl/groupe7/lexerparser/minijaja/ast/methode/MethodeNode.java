@@ -55,7 +55,7 @@ public class MethodeNode extends AstNode {
 
     @Override
     public void interpret(Stacks stacks) {
-        // TODO Auto-generated method stub
+    
         stacks.declareMeth(ident.getNom(), this, typeMeth);
 
     }

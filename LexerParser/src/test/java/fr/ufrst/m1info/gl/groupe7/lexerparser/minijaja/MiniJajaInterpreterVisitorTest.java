@@ -26,7 +26,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.entetes.EntetesNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.and.AndNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.exp.not.NotNode;
@@ -45,7 +44,6 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.Instruct
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.SommeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.main.MainNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 
 @ExtendWith(MockitoExtension.class)
