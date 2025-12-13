@@ -91,7 +91,10 @@ class JajaCodeAxiomesCompletTest {
                 4 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
-        assertNull(stacks.getValue("x@global"));
+        // After pushing omega (nil/waza), the variable is uninitialized
+        // getValue should throw an exception for uninitialized variables
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x@global"),
+                "Should throw exception for uninitialized variable");
     }
 
     @Test
@@ -254,7 +257,10 @@ class JajaCodeAxiomesCompletTest {
                 6 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
-        assertNull(stacks.getValue("x@global"));
+        // After storing omega (nil/waza), the variable becomes uninitialized
+        // getValue should throw an exception for uninitialized variables
+        assertThrows(RuntimeException.class, () -> stacks.getValue("x@global"),
+                "Should throw exception for uninitialized variable");
     }
 
     @Test
