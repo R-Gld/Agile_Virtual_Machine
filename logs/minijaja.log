@@ -1,0 +1,21 @@
+2025-12-12 23:42:36.390 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 00:15:35.507 [app-worker] INFO  f.u.m.g.g.l.m.MiniJajaInterpreter - Debut de l'interprétation du minijaja
+2025-12-13 00:15:35.511 [app-worker] INFO  f.u.m.g.g.l.m.MiniJajaInterpreter - 
+=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====
+2025-12-13 00:15:35.514 [app-worker] INFO  f.u.m.g.g.l.m.MiniJajaInterpreter - Classe(Ident(C),decls (var (integer , Ident(x) , nbre(0)),decls (var (integer , Ident(y) , nbre(2)),decls (methode (void,Ident(toto),enil,vnil,Instrs(ecrire (toto),Inil)),vnil))),Main(vnil, Instrs(affectation(Ident(x),nbre(12)),Instrs(Retour(nbre(3)),Inil))))
+2025-12-13 00:15:35.514 [app-worker] INFO  f.u.m.g.g.l.m.MiniJajaInterpreter - 
+=====  ANALYSE SÉMANTIQUE  =====
+2025-12-13 12:00:22.493 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:01:51.574 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:04:56.735 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:30:29.377 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:34:29.848 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:40:24.684 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:44:15.572 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:47:39.221 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:48:18.581 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:51:21.198 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:56:28.050 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 12:57:38.981 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 13:01:10.200 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully
+2025-12-13 13:08:10.033 [JavaFX Application Thread] INFO  fr.ufrst.m1info.gl.groupe7.gui.App - GUI application started successfully

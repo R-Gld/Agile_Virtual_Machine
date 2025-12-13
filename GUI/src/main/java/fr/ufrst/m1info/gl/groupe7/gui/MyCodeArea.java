@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 
 import javafx.event.Event;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -761,24 +761,67 @@ public class MyCodeArea extends AnchorPane {
      * @return liste de suggestions correspondantes
      */
     private List<String> getSuggestions(String prefix) {
-        java.util.Set<String> allSuggestions = new java.util.LinkedHashSet<>();
+        // We'll build ordered suggestions: methods first, then scoped variables, then base keywords/types/functions
+        java.util.List<String> result = new java.util.ArrayList<>();
         if (language == Language.MINIJAJA) {
-            Collections.addAll(allSuggestions, KEYWORDS);
-            Collections.addAll(allSuggestions, TYPES);
-            Collections.addAll(allSuggestions, FUNCTIONS);
-            Collections.addAll(allSuggestions, BOOLEANS);
-
+            // 1) methods
             if (semanticListener != null) {
-                allSuggestions.addAll(semanticListener.getDeclaredMethods());
-                if (prefix != null && prefix.length() >= 2) {
-                    allSuggestions.addAll(semanticListener.getDeclaredVariables());
+                for (String mth : semanticListener.getDeclaredMethods()) {
+                    if (prefix == null || mth.startsWith(prefix)) {
+                        result.add(mth);
+                    }
+                }
+            }
+
+            // 2) variables (scope-aware, ordered)
+            boolean addVariables = false;
+            if (semanticListener != null && prefix != null) {
+                // Determine whether we are in a declaration context (after a type)
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+
+                // Find the previous token (word) before the prefix
+                int idx = start - 1;
+                while (idx >= 0 && Character.isWhitespace(text.charAt(idx))) idx--;
+                int endPrev = idx;
+                while (idx >= 0 && Character.isJavaIdentifierPart(text.charAt(idx))) idx--;
+                int startPrev = idx + 1;
+                String prevToken = (endPrev >= startPrev && startPrev >= 0) ? text.substring(startPrev, endPrev + 1) : "";
+
+                boolean isTypeKeyword = false;
+                for (String t : TYPES) {
+                    if (t.equals(prevToken)) { isTypeKeyword = true; break; }
+                }
+                addVariables = !isTypeKeyword;
+
+                if (addVariables) {
+                    for (String var : semanticListener.getVisibleVariablesOrdered(codeArea.getCaretPosition())) {
+                        if (var.startsWith(prefix) && !result.contains(var)) {
+                            result.add(var);
+                        }
+                    }
+                }
+            }
+
+            // 3) base suggestions (keywords, types, functions, booleans)
+            List<String> base = new ArrayList<>();
+            Collections.addAll(base, KEYWORDS);
+            Collections.addAll(base, TYPES);
+            Collections.addAll(base, FUNCTIONS);
+            Collections.addAll(base, BOOLEANS);
+
+            for (String b : base) {
+                if ((prefix == null || b.startsWith(prefix)) && !result.contains(b)) {
+                    result.add(b);
                 }
             }
         }
 
-        return allSuggestions.stream()
-                .filter(s -> s.startsWith(prefix))
-                .collect(Collectors.toList());
+        return result;
     }
 
     /**
