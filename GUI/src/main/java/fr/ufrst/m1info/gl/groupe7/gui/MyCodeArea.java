@@ -761,12 +761,19 @@ public class MyCodeArea extends AnchorPane {
      * @return liste de suggestions correspondantes
      */
     private List<String> getSuggestions(String prefix) {
-        List<String> allSuggestions = new ArrayList<>();
+        java.util.Set<String> allSuggestions = new java.util.LinkedHashSet<>();
         if (language == Language.MINIJAJA) {
             Collections.addAll(allSuggestions, KEYWORDS);
             Collections.addAll(allSuggestions, TYPES);
             Collections.addAll(allSuggestions, FUNCTIONS);
             Collections.addAll(allSuggestions, BOOLEANS);
+
+            if (semanticListener != null) {
+                allSuggestions.addAll(semanticListener.getDeclaredMethods());
+                if (prefix != null && prefix.length() >= 2) {
+                    allSuggestions.addAll(semanticListener.getDeclaredVariables());
+                }
+            }
         }
 
         return allSuggestions.stream()
