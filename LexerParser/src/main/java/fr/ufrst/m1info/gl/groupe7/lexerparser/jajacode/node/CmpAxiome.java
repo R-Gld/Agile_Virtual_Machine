@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,7 @@ public class CmpAxiome implements JajaAxiome {
 
         // 2. Vérification pile vide
         if (op1 == null || op2 == null) {
-            throw new StackUnderflowException("Besoin de 2 opérandes", "CMP", ctx.getInstructionCounter());
+            throw new StackUnderflowException("Besoin de 2 opérandes", JajaCodeInstr.CMP.toString(), ctx.getInstructionCounter());
         }
 
         // 3. Calcul de l'égalité
@@ -59,7 +60,7 @@ public class CmpAxiome implements JajaAxiome {
         ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
 
         // 5. Log et incrément PC
-        logger.debug("\t\tAxiome CMP exécuté: {} == {} = {}", op1.value, op2.value, result);
+        logger.debug("\t\tAxiome {} exécuté: {} == {} = {}", JajaCodeInstr.CMP, op1.value, op2.value, result);
         ctx.incrementPC();
     }
 }

@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,21 +38,21 @@ public class AstoreAxiome implements JajaAxiome {
         Stacks.Quad valueQuad = ctx.getStacks().pop();
         if (valueQuad == null) {
             throw new StackUnderflowException("Manque la valeur pour astore",
-                                               "ASTORE", ctx.getInstructionCounter());
+                    JajaCodeInstr.ASTORE.toString(), ctx.getInstructionCounter());
         }
 
         // 2. Dépiler l'INDICE (second élément)
         Stacks.Quad indexQuad = ctx.getStacks().pop();
         if (indexQuad == null) {
             throw new StackUnderflowException("Manque l'indice pour astore",
-                                               "ASTORE", ctx.getInstructionCounter());
+                    JajaCodeInstr.ASTORE.toString(), ctx.getInstructionCounter());
         }
 
         // 3. Vérifier que l'indice est un entier
         if (!(indexQuad.value instanceof Integer index)) {
             throw new TypeMismatchException("Indice de tableau invalide (attendu entier, reçu " +
                                              indexQuad.value.getClass().getSimpleName() + ")",
-                                             "ASTORE", ctx.getInstructionCounter());
+                    JajaCodeInstr.ASTORE.toString(), ctx.getInstructionCounter());
         }
 
         Object valeur = valueQuad.value;
@@ -64,7 +65,7 @@ public class AstoreAxiome implements JajaAxiome {
 
         // 5. Vérifier que le tableau existe
         if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
-            throw new UndefinedSymbolException(scopedIdent, "ASTORE", ctx.getInstructionCounter());
+            throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.ASTORE.toString(), ctx.getInstructionCounter());
         }
 
         // 6. Affecter la valeur au tableau (gère bornes et types en interne)

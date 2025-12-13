@@ -10,7 +10,7 @@ class DiagnosticTest {
     void testConstructor() {
         Severity severity = Severity.ERROR;
         Phase phase = Phase.LEXICAL;
-        SourcePosition pos = new SourcePosition("TestFile.java", 10, 5);
+        SourcePosition pos = new SourcePosition(null, 10, 5);
         String message = "This is a test error message.";
 
         Diagnostic diag = new Diagnostic(severity, phase, pos, message);

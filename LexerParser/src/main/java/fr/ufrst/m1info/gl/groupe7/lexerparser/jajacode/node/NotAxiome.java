@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +48,14 @@ public class NotAxiome implements JajaAxiome {
 
         // 2. Vérification pile vide
         if (op == null) {
-            throw new StackUnderflowException("NOT", ctx.getInstructionCounter());
+            throw new StackUnderflowException(JajaCodeInstr.NOT.toString(), ctx.getInstructionCounter());
         }
 
         // 3. Vérification de type (Booléen uniquement)
         if (!(op.value instanceof Boolean)) {
             throw new TypeMismatchException(
                 "L'opérande doit être booléen (trouvé: " + op.value + ")",
-                "NOT",
+                JajaCodeInstr.NOT.toString(),
                 ctx.getInstructionCounter()
             );
         }

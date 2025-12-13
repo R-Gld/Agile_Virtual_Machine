@@ -84,7 +84,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(ident),
                             String.format("Undeclared variable: '%s' is used before being declared. " +
                                             "Declare it first (ex: 'int %s;' or 'boolean %s;').",
                                     varName, varName, varName)
@@ -100,25 +100,25 @@ public class TypeInferenceEngine {
             case PlusNode plus -> {
                 Type leftType = inferType(plus.getExp2());
                 Type rightType = inferType(plus.getTerme());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, "+");
+                boolean valid = checkBinaryOperation(plus, leftType, rightType, Type.ENTIER, "+");
                 return valid ? Type.ENTIER : null;
             }
             case MinusNode minus -> {
                 Type leftType = inferType(minus.getExp2());
                 Type rightType = inferType(minus.getTerme());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, "-");
+                boolean valid = checkBinaryOperation(minus, leftType, rightType, Type.ENTIER, "-");
                 return valid ? Type.ENTIER : null;
             }
             case MultiplicationNode mult -> {
                 Type leftType = inferType(mult.getTerme());
                 Type rightType = inferType(mult.getFact());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, "*");
+                boolean valid = checkBinaryOperation(mult, leftType, rightType, Type.ENTIER, "*");
                 return valid ? Type.ENTIER : null;
             }
             case DivisionNode div -> {
                 Type leftType = inferType(div.getTerme());
                 Type rightType = inferType(div.getFact());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, "/");
+                boolean valid = checkBinaryOperation(div, leftType, rightType, Type.ENTIER, "/");
                 return valid ? Type.ENTIER : null;
             }
             case UnaryMinusNode unary -> {
@@ -127,7 +127,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(unary),
                             String.format("Type error: unary minus operator '-' requires an integer operand, but got '%s'. " +
                                             "You cannot negate boolean values.",
                                     operandType)
@@ -141,13 +141,13 @@ public class TypeInferenceEngine {
             case AndNode and -> {
                 Type leftType = inferType(and.getExp());
                 Type rightType = inferType(and.getExp1());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.BOOLEEN, "and");
+                boolean valid = checkBinaryOperation(and, leftType, rightType, Type.BOOLEEN, "and");
                 return valid ? Type.BOOLEEN : null;
             }
             case OrNode or -> {
                 Type leftType = inferType(or.getExp());
                 Type rightType = inferType(or.getExp1());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.BOOLEEN, "or");
+                boolean valid = checkBinaryOperation(or, leftType, rightType, Type.BOOLEEN, "or");
                 return valid ? Type.BOOLEEN : null;
             }
             case NotNode not -> {
@@ -156,7 +156,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(not),
                             String.format("Type error: logical NOT operator 'non' requires a boolean operand, but got '%s'. " +
                                             "Use comparison operators (==, >) to convert integers to booleans first.",
                                     operandType)
@@ -195,7 +195,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(equals),
                             String.format("Type error in equality comparison: cannot compare '%s' with '%s'. " +
                                             "Both operands of '==' must have the same type.",
                                     leftType, rightType)
@@ -206,7 +206,7 @@ public class TypeInferenceEngine {
             case GreaterThanNode greater -> {
                 Type leftType = inferType(greater.getExp1());
                 Type rightType = inferType(greater.getExp2());
-                boolean valid = checkBinaryOperation(leftType, rightType, Type.ENTIER, ">");
+                boolean valid = checkBinaryOperation(greater, leftType, rightType, Type.ENTIER, ">");
                 return valid ? Type.BOOLEEN : null;
             }
 
@@ -222,7 +222,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(tabNode),
                             String.format("Undeclared array: '%s' is used before being declared. " +
                                             "Declare it first (ex: 'int %s[10];').",
                                     arrayName, arrayName)
@@ -236,7 +236,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(tabNode),
                             String.format("Array index must be an integer: array '%s' accessed with index type '%s'. " +
                                             "Array indices must be integer expressions.",
                                     arrayName, indexType)
@@ -257,7 +257,7 @@ public class TypeInferenceEngine {
                     context.getCollector().report(
                             Severity.ERROR,
                             Phase.SEMANTIC,
-                            context.createPosition(),
+                            context.createPosition(lengthNode),
                             String.format("Undeclared array: '%s' is used before being declared. " +
                                             "Declare it first (ex: 'int %s[10];').",
                                     arrayName, arrayName)
@@ -278,13 +278,14 @@ public class TypeInferenceEngine {
 
     /**
      * Check binary operation type compatibility
+     * @param node the AST node representing the operation
      * @param leftType the type of the left operand
      * @param rightType the type of the right operand
      * @param expectedType the expected type for both operands
      * @param operation the operation symbol (ex: "+", "and", ">")
      * @return true if types are valid, false otherwise
      */
-    private boolean checkBinaryOperation(Type leftType, Type rightType, Type expectedType, String operation) {
+    private boolean checkBinaryOperation(AstNode node, Type leftType, Type rightType, Type expectedType, String operation) {
         String operationName = getOperationName(operation);
         boolean valid = true;
 
@@ -292,7 +293,7 @@ public class TypeInferenceEngine {
             context.getCollector().report(
                 Severity.ERROR,
                 Phase.SEMANTIC,
-                context.createPosition(),
+                context.createPosition(node),
                 String.format("Type error in %s: left operand of '%s' must be '%s', but got '%s'. " +
                               "Make sure both operands are of type '%s'.",
                               operationName, operation, expectedType, leftType, expectedType)
@@ -303,7 +304,7 @@ public class TypeInferenceEngine {
             context.getCollector().report(
                 Severity.ERROR,
                 Phase.SEMANTIC,
-                context.createPosition(),
+                context.createPosition(node),
                 String.format("Type error in %s: right operand of '%s' must be '%s', but got '%s'. " +
                               "Make sure both operands are of type '%s'.",
                               operationName, operation, expectedType, rightType, expectedType)

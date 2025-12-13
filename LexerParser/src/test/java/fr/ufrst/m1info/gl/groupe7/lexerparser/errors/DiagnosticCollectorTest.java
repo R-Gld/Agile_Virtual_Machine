@@ -18,7 +18,7 @@ class DiagnosticCollectorTest {
 
     @Test
     void testReport_AddsDiagnosticToList() {
-        SourcePosition pos = new SourcePosition("test.txt", 1, 1);
+        SourcePosition pos = new SourcePosition(null, 1, 1);
         collector.report(Severity.WARNING, Phase.LEXICAL, pos, "Test warning");
 
         List<Diagnostic> diagnostics = collector.getDiagnostics();
@@ -33,13 +33,13 @@ class DiagnosticCollectorTest {
 
     @Test
     void testHasErrors_WhenNoError_ReturnsFalse() {
-        collector.report(Severity.WARNING, Phase.SYNTAX, new SourcePosition("file", 1, 1), "Just a warning");
+        collector.report(Severity.WARNING, Phase.SYNTAX, new SourcePosition(null, 1, 1), "Just a warning");
         assertFalse(collector.hasErrors());
     }
 
     @Test
     void testHasErrors_WhenErrorExists_ReturnsTrue() {
-        collector.report(Severity.ERROR, Phase.SEMANTIC, new SourcePosition("file", 2, 3), "Critical error");
+        collector.report(Severity.ERROR, Phase.SEMANTIC, new SourcePosition(null, 2, 3), "Critical error");
         assertTrue(collector.hasErrors());
     }
 
@@ -50,8 +50,8 @@ class DiagnosticCollectorTest {
 
     @Test
     void testMultipleDiagnostics_AllStoredCorrectly() {
-        SourcePosition pos1 = new SourcePosition("a.txt", 1, 2);
-        SourcePosition pos2 = new SourcePosition("b.txt", 3, 4);
+        SourcePosition pos1 = new SourcePosition(null, 1, 2);
+        SourcePosition pos2 = new SourcePosition(null, 3, 4);
 
         collector.report(Severity.WARNING, Phase.LEXICAL, pos1, "warn");
         collector.report(Severity.ERROR, Phase.RUNTIME, pos2, "err");

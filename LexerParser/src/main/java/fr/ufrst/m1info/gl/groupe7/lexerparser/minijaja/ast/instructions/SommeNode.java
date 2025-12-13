@@ -12,7 +12,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tab.TabNode;
  *
  * <p>This node models an operation that reads the current integer value of a
  * variable, evaluates an expression, adds the evaluated integer value to the
- * variable and writes back the result via {@link Stacks#AffecterVal(String, Object)}.</p>
+ * variable and writes back the result via {@link Stacks#affecterVal(String, Object)}.</p>
  *
  * <p>Behavior and assumptions:
  * <ul>
@@ -69,7 +69,7 @@ public class SommeNode extends InstructionNode {
      *   <li>If {@code ident1Node} is an {@link IdentNode}, obtain the variable name.</li>
      *   <li>Read the current value from {@link Stacks#getValue(String)} (expected int).</li>
      *   <li>Evaluate {@code expressionNode.evaluate(stacks)} (expected int).</li>
-     *   <li>Compute the sum and assign it back with {@link Stacks#AffecterVal(String, Object)}.</li>
+     *   <li>Compute the sum and assign it back with {@link Stacks#affecterVal(String, Object)}.</li>
      * </ol>
      * </p>
      *
@@ -95,7 +95,7 @@ public class SommeNode extends InstructionNode {
             int currentValue = (int) stacks.getValue(actualVarName);
             Object valueToAdd = expressionNode.evaluate(stacks);
             int newValue = currentValue + (int) valueToAdd;
-            stacks.AffecterVal(actualVarName, newValue);
+            stacks.affecterVal(actualVarName, newValue);
         }else if(ident1Node instanceof  TabNode tabNode){
             String varName = tabNode.getIdent().getNom();
             

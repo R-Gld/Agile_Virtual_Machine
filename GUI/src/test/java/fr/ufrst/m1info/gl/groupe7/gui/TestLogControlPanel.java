@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests unitaires pour LogControlPanel.
- * Couverture cible: 100%
  */
 @ExtendWith(ApplicationExtension.class)
 class TestLogControlPanel {
