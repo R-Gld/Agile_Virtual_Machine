@@ -623,7 +623,7 @@ public class Stacks {
 
             // Check type compatibility
             if (!isTypeCompatible(q.type, newValue)) {
-                throw new RuntimeException("Type de variable " + ident +
+                throw new RuntimeException("Type error - Type de variable " + ident +
                         ": attendu " + q.type + " mais reçu " + newValue.getClass().getSimpleName());
             }
 
