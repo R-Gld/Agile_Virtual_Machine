@@ -615,7 +615,7 @@ public class Stacks {
 
             // Prevent assigning to constants
             if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
-                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
+                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée. (value = " + q.value + ")");
             }
             if ("tab".equals(q.object)) {
                 throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");
@@ -652,6 +652,11 @@ public class Stacks {
     private boolean isTypeCompatible(Type type, Object value) {
         if (value == null)
             return true; // null accepté pour tous types
+
+        // Omega (uninitialized value) is accepted for all types
+        if (value instanceof Omega)
+            return true;
+
         if (type == Type.ANY) {
 
             return value instanceof Integer || value instanceof Boolean; // pour la variable de classe
