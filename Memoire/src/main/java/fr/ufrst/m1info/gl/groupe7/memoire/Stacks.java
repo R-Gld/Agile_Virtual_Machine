@@ -36,6 +36,17 @@ public class Stacks {
             this.type = type;
         }
 
+        /**
+         * Constructor for temporary values
+         * Sets ident and object to "_" to indicate anonymous/temporary values.
+         *
+         * @param value the computed value
+         * @param type the type of the value
+         */
+        public Quad(Object value, Type type) {
+            this("_", value, "_", type);
+        }
+
         @Override
         public String toString() {
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
