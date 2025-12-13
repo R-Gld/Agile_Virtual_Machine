@@ -78,7 +78,7 @@ public class TypeChecker {
             String methodName = methodeNode.getIdent().getNom();
             Type returnType = methodeNode.getTypeMeth();
 
-            // Create method signature (ex: , "f@int" for method f returning int)
+            // Create method signature (ex: "f@int" for method f returning int)
             String methodSignature = methodName + "@" + returnType.toString();
 
             // Save and enter method scope
@@ -265,7 +265,7 @@ public class TypeChecker {
 
             // Check if variable is declared
             if (!context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Undeclared variable: '%s' has not been declared. " + "Make sure to declare the variable before using it (ex: , 'int %s;').", varName, varName));
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Undeclared variable: '%s' has not been declared. Make sure to declare the variable before using it (ex: 'int %s;').", varName, varName));
                 return;
             }
 
