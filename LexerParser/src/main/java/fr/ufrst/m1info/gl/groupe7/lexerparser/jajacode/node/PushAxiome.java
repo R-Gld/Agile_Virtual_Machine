@@ -10,7 +10,7 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
  * Axiome représentant l'instruction JajaCode {@code push(v)}.
- * 
+ *
  * <p><b>Sémantique formelle :</b></p>
  * <pre>
  * [push] : &lt;m,a&gt; ⊢ push(v) –» &lt;&lt;w, v, cst,*&gt;.m, a+1&gt;
