@@ -815,7 +815,43 @@ class MiniJajaSemanticAnalyzerTest {
                    diag.message().contains("final"),
                 "Error message should mention global constant or reassignment, got: " + diag.message());
         // The error should be reported in method fice (can = x), not in main (can = 10)
-        // Since we analyze main first, can is marked as initialized there, so fice's assignment is the error
+    }
+
+    @Test
+    void globalConstant_cannotBeAssignedInMethod() {
+        String code = """
+                class C {
+                  int x = 0;
+                  final int can;
+                  int fice(int x) {
+                    can = x;
+                    return can;
+                  };
+
+                  main {
+                    fice(10);
+                    write(can);
+                  }
+                }
+                """;
+
+        DiagnosticCollector collector = new DiagnosticCollector();
+        ClasseNode classe = parseClasse(code, collector);
+        assertFalse(collector.hasErrors(), "Parsing should not produce errors");
+
+        MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
+        analyser.setFileName("ConstInMethod.mjj");
+
+        analyser.analyse(classe);
+
+        // STRICT RULE: Global constants cannot be assigned in methods, even on first initialization
+        // This prevents issues with multiple calls and ensures constants are truly constant
+        assertTrue(collector.hasErrors(), "Should report error for assigning global constant in method");
+        Diagnostic diag = firstSemanticError(collector);
+        assertNotNull(diag);
+        assertTrue(diag.message().contains("Cannot assign to global constant") ||
+                   diag.message().contains("inside a method"),
+                "Error message should mention global constant assignment in method, got: " + diag.message());
     }
 
     // ============================================================
