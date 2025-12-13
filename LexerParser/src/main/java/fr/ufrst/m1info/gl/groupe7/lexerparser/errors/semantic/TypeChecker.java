@@ -52,15 +52,17 @@ public class TypeChecker {
      * @param ast the ClasseNode to check
      */
     public void checkTypes(ClasseNode ast) {
-        // Check declared methods
-        checkMethodsInDeclarations(ast.getDeclarations());
-
-        // Check main method, enter main scope
+        // Check main method FIRST to track constant initialization in execution order
+        // This ensures that if a global constant is initialized in main, methods analyzed
+        // afterward will correctly detect reassignment attempts
         context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         // Variables already collected in declaration phase, just verify instructions
         checkInstructions(mainNode.getInstrs());
         context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
+
+        // Check declared methods AFTER main
+        checkMethodsInDeclarations(ast.getDeclarations());
     }
 
     /**
@@ -76,7 +78,7 @@ public class TypeChecker {
             String methodName = methodeNode.getIdent().getNom();
             Type returnType = methodeNode.getTypeMeth();
 
-            // Create method signature (ex: , "f@int" for method f returning int)
+            // Create method signature (ex: "f@int" for method f returning int)
             String methodSignature = methodName + "@" + returnType.toString();
 
             // Save and enter method scope
@@ -97,7 +99,7 @@ public class TypeChecker {
             // Check that non-void methods contain at least one return statement
             if (context.getCurrentMethodReturnType() != Type.VOID) {
                 if (!hasReturnStatement(methodeNode.getInstrs())) {
-                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Missing return statement: method '%s' must return a value of type '%s'. " + "Add a return statement with an expression of the correct type.", methodName, context.getCurrentMethodReturnType()));
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(methodeNode), String.format("Missing return statement: method '%s' must return a value of type '%s'. " + "Add a return statement with an expression of the correct type.", methodName, context.getCurrentMethodReturnType()));
                 }
             }
 
@@ -209,7 +211,7 @@ public class TypeChecker {
 
         // If we're not in a method, return shouldn't be used
         if (context.getCurrentMethodReturnType() == null) {
-            context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), "Return statement error: 'return' can only be used inside a method, not in 'main'. " + "Remove the return statement or move this code to a method.");
+            context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(retour), "Return statement error: 'return' can only be used inside a method, not in 'main'. " + "Remove the return statement or move this code to a method.");
             return;
         }
 
@@ -217,7 +219,7 @@ public class TypeChecker {
         if (exp instanceof Expression expression) {
             Type returnedType = typeInferenceEngine.inferType(expression);
             if (returnedType != null && returnedType != context.getCurrentMethodReturnType()) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Return type mismatch: method expects return type '%s', but got '%s'. " + "The returned expression must have the same type as the method's declared return type.", context.getCurrentMethodReturnType(), returnedType));
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(retour), String.format("Return type mismatch: method expects return type '%s', but got '%s'. " + "The returned expression must have the same type as the method's declared return type.", context.getCurrentMethodReturnType(), returnedType));
             }
         }
     }
@@ -243,9 +245,9 @@ public class TypeChecker {
      * @param appelI the AppelINode to check
      */
     private void checkAppelI(AppelINode appelI) {
-        String methodName = appelI.getIdent().getNom();
         // Validate the method call (checks declaration, parameter count, and types)
-        methodCallValidator.validateMethodCall(methodName, appelI.getListExp());
+        // The validator extracts methodName and arguments from the node
+        methodCallValidator.validateMethodCall(appelI);
     }
 
     /**
@@ -261,16 +263,39 @@ public class TypeChecker {
             String varName = ident.getNom();
             String qualifiedName = scopeResolver.resolveAndQualifyName(varName);
 
-            // Check if trying to reassign a constant
-            if (context.isConstant(varName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
+            // Check if variable is declared
+            if (!context.getSymbolTable().contains(qualifiedName)) {
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Undeclared variable: '%s' has not been declared. Make sure to declare the variable before using it (ex: 'int %s;').", varName, varName));
                 return;
             }
 
-            // Check if variable is declared
-            if (!context.getSymbolTable().contains(qualifiedName)) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Undeclared variable: '%s' has not been declared. " + "Make sure to declare the variable before using it (ex: , 'int %s;').", varName, varName));
-                return;
+            // Check if trying to assign to a constant
+            if (context.isConstant(varName)) {
+                // Determine the scope of the constant and current execution context
+                String constantScope = scopeResolver.resolveVariableScope(varName);
+                String currentScope = context.getCurrentScope();
+                boolean isGlobalConstant = ScopeResolver.GLOBAL_SCOPE.equals(constantScope);
+                boolean isInMain = ScopeResolver.MAIN_SCOPE.equals(currentScope);
+                boolean isInMethod = !isInMain && !ScopeResolver.GLOBAL_SCOPE.equals(currentScope);
+
+                // STRICT RULE: Global constants can NEVER be assigned in methods
+                // They can only be initialized at declaration or in main
+                if (isGlobalConstant && isInMethod) {
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation),
+                        String.format("Cannot assign to global constant '%s' inside a method. " +
+                                     "Global constants must be initialized at declaration or in the 'main' block.", varName));
+                    return;
+                }
+
+                // Check if constant is already initialized (reassignment)
+                if (context.isConstantInitialized(varName)) {
+                    // Constant already initialized, this is a reassignment - not allowed
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
+                    return;
+                } else {
+                    // First assignment to uninitialized constant - this is allowed (initialization)
+                    context.markConstantAsInitialized(varName);
+                }
             }
 
             // Get symbol to check if it's an array
@@ -281,9 +306,9 @@ public class TypeChecker {
             // Check array compatibility
             if (varIsArray != exprIsArray) {
                 if (varIsArray) {
-                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign a scalar value to array variable '%s'. " + "Use array syntax (e.g., '%s[index] = value') to assign to array elements.", varName, varName));
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Type mismatch in assignment: cannot assign a scalar value to array variable '%s'. " + "Use array syntax (e.g., '%s[index] = value') to assign to array elements.", varName, varName));
                 } else {
-                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign an array to scalar variable '%s'. " + "Arrays must be assigned to array variables of the same type.", varName));
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Type mismatch in assignment: cannot assign an array to scalar variable '%s'. " + "Arrays must be assigned to array variables of the same type.", varName));
                 }
                 return;
             }
@@ -293,7 +318,7 @@ public class TypeChecker {
             Type exprType = typeInferenceEngine.inferType(expression);
 
             if (varType != null && exprType != null && varType != exprType) {
-                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format("Type mismatch in assignment: cannot assign value of type '%s' to variable '%s' of type '%s'. " + "The assigned expression must have the same type as the variable.", exprType, varName, varType));
+                context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Type mismatch in assignment: cannot assign value of type '%s' to variable '%s' of type '%s'. " + "The assigned expression must have the same type as the variable.", exprType, varName, varType));
             }
         }
     }

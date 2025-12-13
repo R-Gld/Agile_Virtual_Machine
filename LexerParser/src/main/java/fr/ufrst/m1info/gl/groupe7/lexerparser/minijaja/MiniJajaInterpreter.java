@@ -23,17 +23,24 @@ public class MiniJajaInterpreter implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(MiniJajaInterpreter.class);
     private final DiagnosticCollector collector;
     private final String input;
+    private final String fileName;
 
-    public MiniJajaInterpreter(String input, DiagnosticCollector collector) {
+    public MiniJajaInterpreter(String input, DiagnosticCollector collector, String fileName) {
         this.input = input;
         this.collector = collector;
+        this.fileName = fileName;
+    }
+
+    // Keep old constructor for backward compatibility
+    public MiniJajaInterpreter(String input, DiagnosticCollector collector) {
+        this(input, collector, null);
     }
 
     @Override
     public void run() {
         Stacks stacks = new Stacks();
 
-        SyntaxErrorListener sel = new SyntaxErrorListener(collector, null);
+        SyntaxErrorListener sel = new SyntaxErrorListener(collector, fileName);
 
         CharStream cs = CharStreams.fromString(input);
         MiniJajaLexer lexer = new MiniJajaLexer(cs);
@@ -43,7 +50,7 @@ public class MiniJajaInterpreter implements Runnable {
         sel.register(lexer);
         sel.register(parser);
 
-        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
+        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor(fileName);
 
         ParseTree tree = parser.classe();
 
