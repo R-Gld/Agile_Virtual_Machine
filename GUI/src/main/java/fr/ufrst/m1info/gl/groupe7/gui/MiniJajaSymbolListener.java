@@ -148,6 +148,16 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         if (ctx.ident1() != null && ctx.SOMME() != null) {
             markVariableAsUsed(ctx.ident1().IDENT().getText());
         }
+
+        if (ctx.IDENT() != null && ctx.LPAREN() != null) {
+            String methodName = ctx.IDENT().getText();
+            if (declaredMethodNames.contains(methodName)) {
+                org.antlr.v4.runtime.Token token = ctx.IDENT().getSymbol();
+                int start = token.getStartIndex();
+                int stop = token.getStopIndex() + 1;
+                functionRanges.add(new IndexRange(start, stop));
+            }
+        }
     }
 
     /**
