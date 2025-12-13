@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
+import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
@@ -59,7 +60,7 @@ public class PushAxiome implements JajaAxiome {
             } catch (NumberFormatException e) {
                 // Si ce n'est ni un booléen ni un entier, c'est 'vide' (omega/nil)
                 // Use Omega singleton instance instead of null for proper constant initialization
-                valeur = fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega.getInstance();
+                valeur = Omega.getInstance();
                 type = Type.VOID;
             }
         }
