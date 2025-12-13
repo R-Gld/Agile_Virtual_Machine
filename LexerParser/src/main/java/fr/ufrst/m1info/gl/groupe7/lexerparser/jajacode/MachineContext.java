@@ -6,7 +6,6 @@ public class MachineContext {
     private Stacks stacks;
     private int instructionCounter;
     private boolean running;
-    private static final String TEMP_VALUE = "%TEMP%";
 
     public MachineContext(Stacks stacks) {
         this.stacks = stacks;
@@ -40,9 +39,5 @@ public class MachineContext {
 
     public boolean isRunning() {
         return running;
-    }
-
-    public String getTEMP_VALUE() {
-        return TEMP_VALUE;
     }
 }

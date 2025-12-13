@@ -148,7 +148,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("pop retire l'élément du sommet de la pile")
         void pop_removesTopElement() {
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             PopAxiome axiome = new PopAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -177,8 +177,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("swap échange les deux éléments du sommet")
         void swap_exchangesTopTwoElements() {
-            stacks.push(new Stacks.Quad("%TEMP%", 1, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(1, Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
             SwapAxiome axiome = new SwapAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -200,7 +200,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("new(x,int,var) déclare une variable entière")
         void new_variable_declaresInSymbolTable() {
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             NewAxiome axiome = new NewAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -213,7 +213,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("new(b,boolean,var) déclare une variable booléenne")
         void new_booleanVariable_declaresInSymbolTable() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             NewAxiome axiome = new NewAxiome();
 
             axiome.execute(context, "b,boolean,var");
@@ -224,7 +224,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("new(f,int,meth) déclare une méthode")
         void new_method_declaresInSymbolTable() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER)); // Adresse de la méthode
+            stacks.push(new Stacks.Quad(10, Type.ENTIER)); // Adresse de la méthode
             NewAxiome axiome = new NewAxiome();
 
             axiome.execute(context, "f,int,meth");
@@ -243,7 +243,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("new avec arguments manquants lance JajaCodeRuntimeException")
         void new_missingArgs_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             NewAxiome axiome = new NewAxiome();
 
             assertThrows(JajaCodeRuntimeException.class, () -> axiome.execute(context, "x,int"));
@@ -261,12 +261,12 @@ class JajaAxiomeTest {
         @DisplayName("store(x) affecte la valeur du sommet à x")
         void store_assignsValueToVariable() {
             // Déclarer d'abord la variable
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             new NewAxiome().execute(context, "x,int,var");
             context.setInstructionCounter(1); // Reset PC
 
             // Empiler la nouvelle valeur et faire store
-            stacks.push(new Stacks.Quad("%TEMP%", 99, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(99, Type.ENTIER));
             StoreAxiome axiome = new StoreAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -279,7 +279,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("store sur pile vide lance une exception")
         void store_emptyStack_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             new NewAxiome().execute(context, "x,int,var");
 
             StoreAxiome axiome = new StoreAxiome();
@@ -290,7 +290,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("store sur variable inexistante lance une exception")
         void store_undefinedVariable_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             StoreAxiome axiome = new StoreAxiome();
 
             assertThrows(RuntimeException.class, () -> axiome.execute(context, "undefined"));
@@ -308,7 +308,7 @@ class JajaAxiomeTest {
         @DisplayName("load(x) empile la valeur de x")
         void load_pushesVariableValue() {
             // Déclarer la variable
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             new NewAxiome().execute(context, "x,int,var");
             context.setInstructionCounter(1);
 
@@ -368,7 +368,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("if(10) avec true saute à l'adresse 10")
         void if_true_jumpsToAddress() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             IfAxiome axiome = new IfAxiome();
 
             axiome.execute(context, "10");
@@ -379,7 +379,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("if(10) avec false continue séquentiellement")
         void if_false_continuesSequentially() {
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             IfAxiome axiome = new IfAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -399,7 +399,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("if avec entier non-zéro saute")
         void if_nonZeroInteger_jumps() {
-            stacks.push(new Stacks.Quad("%TEMP%", 1, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(1, Type.ENTIER));
             IfAxiome axiome = new IfAxiome();
 
             axiome.execute(context, "10");
@@ -410,7 +410,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("if avec entier zéro continue")
         void if_zeroInteger_continues() {
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             IfAxiome axiome = new IfAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -431,7 +431,7 @@ class JajaAxiomeTest {
         @DisplayName("invoke(f) empile l'adresse de retour et saute")
         void invoke_pushesReturnAddressAndJumps() {
             // Déclarer la méthode f à l'adresse 20
-            stacks.push(new Stacks.Quad("%TEMP%", 20, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(20, Type.ENTIER));
             new NewAxiome().execute(context, "f,int,meth");
             context.setInstructionCounter(5);
 
@@ -459,7 +459,7 @@ class JajaAxiomeTest {
         @DisplayName("return restaure le PC à l'adresse de retour")
         void return_restoresPC() {
             // Simuler un quad de retour sur la pile
-            stacks.push(new Stacks.Quad("%TEMP%", 15, "cst", Type.ENTIER));
+            stacks.push(new Stacks.Quad("_", 15, "cst", Type.ENTIER));
             ReturnAxiome axiome = new ReturnAxiome();
 
             axiome.execute(context, null);
@@ -478,8 +478,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("add: 3 + 5 = 8")
         void add_twoIntegers_pushesSum() {
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             AddAxiome axiome = new AddAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -494,7 +494,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("add sur pile insuffisante lance StackUnderflowException")
         void add_insufficientStack_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
             AddAxiome axiome = new AddAxiome();
 
             assertThrows(StackUnderflowException.class, () -> axiome.execute(context, null));
@@ -503,8 +503,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("add avec types non entiers lance TypeMismatchException")
         void add_nonIntegerTypes_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             AddAxiome axiome = new AddAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, null));
@@ -520,8 +520,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("sub: 10 - 3 = 7")
         void sub_twoIntegers_pushesDifference() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
             SubAxiome axiome = new SubAxiome();
 
             axiome.execute(context, null);
@@ -533,8 +533,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("sub: 5 - 10 = -5 (résultat négatif)")
         void sub_negativeResult() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             SubAxiome axiome = new SubAxiome();
 
             axiome.execute(context, null);
@@ -553,8 +553,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("mul: 4 * 7 = 28")
         void mul_twoIntegers_pushesProduct() {
-            stacks.push(new Stacks.Quad("%TEMP%", 4, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 7, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(4, Type.ENTIER));
+            stacks.push(new Stacks.Quad(7, Type.ENTIER));
             MulAxiome axiome = new MulAxiome();
 
             axiome.execute(context, null);
@@ -566,8 +566,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("mul: 5 * 0 = 0")
         void mul_byZero_pushesZero() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             MulAxiome axiome = new MulAxiome();
 
             axiome.execute(context, null);
@@ -586,8 +586,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("div: 20 / 4 = 5")
         void div_twoIntegers_pushesQuotient() {
-            stacks.push(new Stacks.Quad("%TEMP%", 20, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 4, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(20, Type.ENTIER));
+            stacks.push(new Stacks.Quad(4, Type.ENTIER));
             DivAxiome axiome = new DivAxiome();
 
             axiome.execute(context, null);
@@ -599,8 +599,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("div: 7 / 2 = 3 (division entière)")
         void div_integerDivision() {
-            stacks.push(new Stacks.Quad("%TEMP%", 7, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(7, Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
             DivAxiome axiome = new DivAxiome();
 
             axiome.execute(context, null);
@@ -612,8 +612,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("div par zéro lance DivisionByZeroException")
         void div_byZero_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             DivAxiome axiome = new DivAxiome();
 
             assertThrows(DivisionByZeroException.class, () -> axiome.execute(context, null));
@@ -631,12 +631,12 @@ class JajaAxiomeTest {
         @DisplayName("inc(x) avec 5 sur la pile: x = x + 5")
         void inc_addsValueToVariable() {
             // Déclarer x = 10
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             new NewAxiome().execute(context, "x,int,var");
             context.setInstructionCounter(1);
 
             // Empiler l'incrément et exécuter inc
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             IncAxiome axiome = new IncAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -649,7 +649,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("inc sur variable inexistante lance UndefinedSymbolException")
         void inc_undefinedVariable_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             IncAxiome axiome = new IncAxiome();
 
             assertThrows(UndefinedSymbolException.class, () -> axiome.execute(context, "undefined"));
@@ -665,8 +665,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("sup: 10 > 5 = true")
         void sup_greaterThan_pushesTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             SupAxiome axiome = new SupAxiome();
 
             axiome.execute(context, null);
@@ -679,8 +679,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("sup: 5 > 10 = false")
         void sup_lessThan_pushesFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             SupAxiome axiome = new SupAxiome();
 
             axiome.execute(context, null);
@@ -692,8 +692,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("sup: 5 > 5 = false")
         void sup_equal_pushesFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             SupAxiome axiome = new SupAxiome();
 
             axiome.execute(context, null);
@@ -712,8 +712,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("cmp: 5 == 5 = true")
         void cmp_equal_pushesTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             CmpAxiome axiome = new CmpAxiome();
 
             axiome.execute(context, null);
@@ -726,8 +726,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("cmp: 5 == 10 = false")
         void cmp_notEqual_pushesFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             CmpAxiome axiome = new CmpAxiome();
 
             axiome.execute(context, null);
@@ -739,8 +739,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("cmp: true == true = true")
         void cmp_booleans_equal() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             CmpAxiome axiome = new CmpAxiome();
 
             axiome.execute(context, null);
@@ -760,7 +760,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("neg: -5 = -5")
         void neg_negatesPositive() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             NegAxiome axiome = new NegAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -774,7 +774,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("neg: -(-3) = 3")
         void neg_negatesNegative() {
-            stacks.push(new Stacks.Quad("%TEMP%", -3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(-3, Type.ENTIER));
             NegAxiome axiome = new NegAxiome();
 
             axiome.execute(context, null);
@@ -786,7 +786,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("neg avec type non entier lance TypeMismatchException")
         void neg_nonInteger_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             NegAxiome axiome = new NegAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, null));
@@ -802,7 +802,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("not: !true = false")
         void not_true_returnsFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             NotAxiome axiome = new NotAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -816,7 +816,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("not: !false = true")
         void not_false_returnsTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             NotAxiome axiome = new NotAxiome();
 
             axiome.execute(context, null);
@@ -828,7 +828,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("not avec type non booléen lance TypeMismatchException")
         void not_nonBoolean_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             NotAxiome axiome = new NotAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, null));
@@ -844,8 +844,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("and: true && true = true")
         void and_trueAndTrue_returnsTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             AndAxiome axiome = new AndAxiome();
 
             axiome.execute(context, null);
@@ -857,8 +857,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("and: true && false = false")
         void and_trueAndFalse_returnsFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             AndAxiome axiome = new AndAxiome();
 
             axiome.execute(context, null);
@@ -870,8 +870,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("and: false && false = false")
         void and_falseAndFalse_returnsFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             AndAxiome axiome = new AndAxiome();
 
             axiome.execute(context, null);
@@ -883,8 +883,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("and avec types non booléens lance TypeMismatchException")
         void and_nonBooleans_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 1, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(1, Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             AndAxiome axiome = new AndAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, null));
@@ -900,8 +900,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("or: true || false = true")
         void or_trueOrFalse_returnsTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             OrAxiome axiome = new OrAxiome();
 
             axiome.execute(context, null);
@@ -913,8 +913,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("or: false || false = false")
         void or_falseOrFalse_returnsFalse() {
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", false, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(false, Type.BOOLEEN));
             OrAxiome axiome = new OrAxiome();
 
             axiome.execute(context, null);
@@ -926,8 +926,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("or: true || true = true")
         void or_trueOrTrue_returnsTrue() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             OrAxiome axiome = new OrAxiome();
 
             axiome.execute(context, null);
@@ -947,7 +947,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("write dépile et incrémente le PC")
         void write_popsAndIncrementsPC() {
-            stacks.push(new Stacks.Quad("%TEMP%", "Hello", "%TEMP%", Type.VOID));
+            stacks.push(new Stacks.Quad("Hello", Type.VOID));
             WriteAxiome axiome = new WriteAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -976,7 +976,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("writeln dépile et incrémente le PC")
         void writeln_popsAndIncrementsPC() {
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             WriteLnAxiome axiome = new WriteLnAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -1005,7 +1005,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("newarray(arr,int) avec taille 10 crée un tableau")
         void newarray_validSize_createsArray() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             NewarrayAxiome axiome = new NewarrayAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -1019,7 +1019,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("newarray(arr,boolean) avec taille 5 crée un tableau booléen")
         void newarray_booleanArray_createsArray() {
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             NewarrayAxiome axiome = new NewarrayAxiome();
 
             axiome.execute(context, "arr,boolean");
@@ -1039,7 +1039,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("newarray avec taille non entière lance TypeMismatchException")
         void newarray_nonIntegerSize_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             NewarrayAxiome axiome = new NewarrayAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, "arr,int"));
@@ -1048,7 +1048,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("newarray avec arguments manquants lance JajaCodeRuntimeException")
         void newarray_missingArgs_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             NewarrayAxiome axiome = new NewarrayAxiome();
 
             assertThrows(JajaCodeRuntimeException.class, () -> axiome.execute(context, "arr"));
@@ -1066,18 +1066,18 @@ class JajaAxiomeTest {
         @DisplayName("aload(arr) charge la valeur à l'indice")
         void aload_validIndex_loadsValue() {
             // Créer tableau [0, 0, 42, 0, 0]
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
             context.setInstructionCounter(1);
 
             // Stocker 42 à l'indice 2
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             new AstoreAxiome().execute(context, "arr");
             context.setInstructionCounter(1);
 
             // Charger arr[2]
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
             AloadAxiome axiome = new AloadAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -1093,7 +1093,7 @@ class JajaAxiomeTest {
         @DisplayName("aload sur pile vide lance StackUnderflowException")
         void aload_emptyStack_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Vider la pile (newarray laisse une référence sur la pile)
@@ -1108,11 +1108,11 @@ class JajaAxiomeTest {
         @DisplayName("aload avec indice non entier lance TypeMismatchException")
         void aload_nonIntegerIndex_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Pousser indice invalide
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             AloadAxiome axiome = new AloadAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, "arr"));
@@ -1121,7 +1121,7 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("aload sur tableau inexistant lance UndefinedSymbolException")
         void aload_undefinedArray_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
             AloadAxiome axiome = new AloadAxiome();
 
             assertThrows(UndefinedSymbolException.class, () -> axiome.execute(context, "undefined"));
@@ -1131,11 +1131,11 @@ class JajaAxiomeTest {
         @DisplayName("aload avec indice hors bornes lance RuntimeException")
         void aload_outOfBounds_throwsException() {
             // Créer tableau de taille 5
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Tenter de charger arr[10]
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             AloadAxiome axiome = new AloadAxiome();
 
             assertThrows(RuntimeException.class, () -> axiome.execute(context, "arr"));
@@ -1153,13 +1153,13 @@ class JajaAxiomeTest {
         @DisplayName("astore(arr) stocke la valeur à l'indice")
         void astore_validIndexAndValue_storesValue() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
             context.setInstructionCounter(1);
 
             // Stocker 99 à l'indice 3
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 99, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
+            stacks.push(new Stacks.Quad(99, Type.ENTIER));
             AstoreAxiome axiome = new AstoreAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -1174,12 +1174,12 @@ class JajaAxiomeTest {
         @DisplayName("astore avec tableau booléen stocke un booléen")
         void astore_booleanArray_storesBoolean() {
             // Créer tableau booléen
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,boolean");
 
             // Stocker true à l'indice 1
-            stacks.push(new Stacks.Quad("%TEMP%", 1, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(1, Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             AstoreAxiome axiome = new AstoreAxiome();
 
             axiome.execute(context, "arr");
@@ -1191,7 +1191,7 @@ class JajaAxiomeTest {
         @DisplayName("astore sur pile vide lance StackUnderflowException")
         void astore_emptyStack_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Vider la pile (newarray laisse une référence sur la pile)
@@ -1206,14 +1206,14 @@ class JajaAxiomeTest {
         @DisplayName("astore avec pile insuffisante (< 2 éléments) lance StackUnderflowException")
         void astore_insufficientStack_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Vider la pile (newarray laisse une référence sur la pile)
             stacks.pop();
 
             // Pousser seulement 1 élément (il en faut 2: index et value)
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             AstoreAxiome axiome = new AstoreAxiome();
 
             assertThrows(StackUnderflowException.class, () -> axiome.execute(context, "arr"));
@@ -1223,12 +1223,12 @@ class JajaAxiomeTest {
         @DisplayName("astore avec indice non entier lance TypeMismatchException")
         void astore_nonIntegerIndex_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Pousser indice invalide et valeur
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             AstoreAxiome axiome = new AstoreAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, "arr"));
@@ -1237,8 +1237,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("astore sur tableau inexistant lance UndefinedSymbolException")
         void astore_undefinedArray_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             AstoreAxiome axiome = new AstoreAxiome();
 
             assertThrows(UndefinedSymbolException.class, () -> axiome.execute(context, "undefined"));
@@ -1256,18 +1256,18 @@ class JajaAxiomeTest {
         @DisplayName("ainc(arr) incrémente la valeur du tableau")
         void ainc_validIndexAndIncrement_incrementsValue() {
             // Créer tableau et stocker 10 à l'indice 2
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
             context.setInstructionCounter(1);
 
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             new AstoreAxiome().execute(context, "arr");
             context.setInstructionCounter(1);
 
             // Incrémenter arr[2] de 5
-            stacks.push(new Stacks.Quad("%TEMP%", 2, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(2, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             AincAxiome axiome = new AincAxiome();
             int initialPC = context.getInstructionCounter();
 
@@ -1281,16 +1281,16 @@ class JajaAxiomeTest {
         @DisplayName("ainc avec incrément négatif décrémente")
         void ainc_negativeIncrement_decrementsValue() {
             // Créer tableau et stocker 20 à l'indice 0
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 20, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(20, Type.ENTIER));
             new AstoreAxiome().execute(context, "arr");
 
             // Décrémenter arr[0] de 7
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", -7, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(-7, Type.ENTIER));
             AincAxiome axiome = new AincAxiome();
 
             axiome.execute(context, "arr");
@@ -1302,7 +1302,7 @@ class JajaAxiomeTest {
         @DisplayName("ainc sur pile vide lance StackUnderflowException")
         void ainc_emptyStack_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Vider la pile (newarray laisse une référence sur la pile)
@@ -1317,14 +1317,14 @@ class JajaAxiomeTest {
         @DisplayName("ainc avec pile insuffisante lance StackUnderflowException")
         void ainc_insufficientStack_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Vider la pile (newarray laisse une référence sur la pile)
             stacks.pop();
 
             // Pousser seulement 1 élément (il en faut 2: index et increment)
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             AincAxiome axiome = new AincAxiome();
 
             assertThrows(StackUnderflowException.class, () -> axiome.execute(context, "arr"));
@@ -1334,12 +1334,12 @@ class JajaAxiomeTest {
         @DisplayName("ainc avec incrément non entier lance TypeMismatchException")
         void ainc_nonIntegerIncrement_throwsException() {
             // Créer tableau
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
 
             // Pousser indice et incrément invalide
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             AincAxiome axiome = new AincAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, "arr"));
@@ -1349,16 +1349,16 @@ class JajaAxiomeTest {
         @DisplayName("ainc avec valeur non entière dans tableau lance TypeMismatchException")
         void ainc_nonIntegerValueInArray_throwsException() {
             // Créer tableau booléen
-            stacks.push(new Stacks.Quad("%TEMP%", 3, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(3, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,boolean");
 
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", true, "%TEMP%", Type.BOOLEEN));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(true, Type.BOOLEEN));
             new AstoreAxiome().execute(context, "arr");
 
             // Tenter d'incrémenter un booléen
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 1, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(1, Type.ENTIER));
             AincAxiome axiome = new AincAxiome();
 
             assertThrows(TypeMismatchException.class, () -> axiome.execute(context, "arr"));
@@ -1367,8 +1367,8 @@ class JajaAxiomeTest {
         @Test
         @DisplayName("ainc sur tableau inexistant lance UndefinedSymbolException")
         void ainc_undefinedArray_throwsException() {
-            stacks.push(new Stacks.Quad("%TEMP%", 0, "%TEMP%", Type.ENTIER));
-            stacks.push(new Stacks.Quad("%TEMP%", 5, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(0, Type.ENTIER));
+            stacks.push(new Stacks.Quad(5, Type.ENTIER));
             AincAxiome axiome = new AincAxiome();
 
             assertThrows(UndefinedSymbolException.class, () -> axiome.execute(context, "undefined"));
@@ -1386,7 +1386,7 @@ class JajaAxiomeTest {
         @DisplayName("length(arr) empile la taille du tableau")
         void length_validArray_pushesLength() {
             // Créer tableau de taille 10
-            stacks.push(new Stacks.Quad("%TEMP%", 10, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(10, Type.ENTIER));
             new NewarrayAxiome().execute(context, "arr,int");
             context.setInstructionCounter(1);
 
@@ -1413,7 +1413,7 @@ class JajaAxiomeTest {
         @DisplayName("length sur variable non-tableau lance RuntimeException")
         void length_nonArrayVariable_throwsException() {
             // Déclarer une variable normale
-            stacks.push(new Stacks.Quad("%TEMP%", 42, "%TEMP%", Type.ENTIER));
+            stacks.push(new Stacks.Quad(42, Type.ENTIER));
             new NewAxiome().execute(context, "x,int,var");
 
             LengthAxiome axiome = new LengthAxiome();

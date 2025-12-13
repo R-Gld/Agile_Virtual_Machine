@@ -1,10 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.slf4j.Logger;
@@ -36,8 +33,22 @@ public class Stacks {
             this.type = type;
         }
 
+        /**
+         * Constructor for temporary values
+         * Sets ident and object to "_" to indicate anonymous/temporary values.
+         *
+         * @param value the computed value
+         * @param type the type of the value
+         */
+        public Quad(Object value, Type type) {
+            this("_", value, "_", type);
+        }
+
         @Override
         public String toString() {
+            if (Objects.equals(ident, "_") && Objects.equals(object, "_")) {
+                return "<" + value + ", " + type + ">";
+            }
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
         }
 
