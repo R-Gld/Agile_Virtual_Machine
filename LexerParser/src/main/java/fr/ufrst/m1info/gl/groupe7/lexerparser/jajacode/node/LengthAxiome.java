@@ -43,7 +43,8 @@ public class LengthAxiome implements JajaAxiome {
         int length = ctx.getStacks().getArrayLength(scopedIdent);
 
         // 4. Empiler la longueur (type ENTIER)
-        ctx.getStacks().push(new Stacks.Quad(length, Type.ENTIER));
+        ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), length,
+                                              ctx.getTEMP_VALUE(), Type.ENTIER));
 
         logger.debug("\t\tAxiome LENGTH exécuté: length({}) = {} empilé sur la pile.", scopedIdent, length);
 

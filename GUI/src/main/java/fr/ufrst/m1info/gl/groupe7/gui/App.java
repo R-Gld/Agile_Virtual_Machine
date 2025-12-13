@@ -35,6 +35,9 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+
 // Breakpoint support
 import java.util.HashSet;
 import java.util.Set;
@@ -161,13 +164,8 @@ public class App extends Application {
 
         // Console
         this.console = new ConsoleOutput("console");
-        root.setBottom(this.console);
-
-        // Register the console with the logging system
-        GuiAppender.setGuiConsole(this.console);
-        logger.info("GUI application started successfully");
-        // === End ===
         this.console.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 0 0;");
+        root.setBottom(this.console);
 
         GuiAppender.setGuiConsole(this.console);
         logger.info("GUI application started successfully");
@@ -177,11 +175,44 @@ public class App extends Application {
 
         root.setCenter(mainSplitPane);
 
+        // --- Drag and Drop ---
+        root.setOnDragOver(event -> {
+            if (event.getGestureSource() != root && event.getDragboard().hasFiles()) {
+                // Accept the drop only if one of the files is a .mjj or .jjc file
+                boolean canAccept = event.getDragboard().getFiles().stream()
+                        .anyMatch(file -> {
+                            String name = file.getName().toLowerCase();
+                            return name.endsWith(".mjj") || name.endsWith(".jjc");
+                        });
+                if (canAccept) {
+                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                }
+            }
+            event.consume();
+        });
+
+        root.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                // Find the first valid file and load it.
+                db.getFiles().stream()
+                        .filter(file -> file.getName().toLowerCase().endsWith(".mjj") ||
+                                       file.getName().toLowerCase().endsWith(".jjc"))
+                        .findFirst()
+                        .ifPresent(this::loadFileContent);
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+
         // Scene + styles
         Scene scene = new Scene(root, 1150, 720);
 
-        String lightCss = getClass().getResource("/light.css").toExternalForm();
-        scene.getStylesheets().add(lightCss);
+        String themeCss = Objects.requireNonNull(getClass().getResource("/theme.css")).toExternalForm();
+        scene.getStylesheets().add(themeCss);
+        root.getStyleClass().add("theme-light");
 
         stage.setScene(scene);
         stage.show();
@@ -209,20 +240,7 @@ public class App extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button minButton = new Button("-");
-        minButton.getStyleClass().addAll("window-button", "window-button-min");
-
-        Button maxButton = new Button("□");
-        maxButton.getStyleClass().addAll("window-button", "window-button-max");
-
-        Button closeButton = new Button("X");
-        closeButton.getStyleClass().addAll("window-button", "window-button-close");
-
-        minButton.setOnAction(e -> appStage.setIconified(true));
-        maxButton.setOnAction(e -> appStage.setMaximized(!appStage.isMaximized()));
-        closeButton.setOnAction(e -> appStage.close());
-
-        titleBar.getChildren().addAll(titleLabel, spacer, minButton, maxButton, closeButton);
+        titleBar.getChildren().addAll(titleLabel);
 
         final double[] dragDelta = new double[2];
         titleBar.setOnMousePressed(e -> {
@@ -295,22 +313,15 @@ public class App extends Application {
 
         darkMode.setOnAction(e -> {
             if (appStage != null && appStage.getScene() != null) {
-                Scene scene = appStage.getScene();
-
-                String darkCss = getClass().getResource("/dark.css").toExternalForm();
-                String lightCss = getClass().getResource("/light.css").toExternalForm();
-
+                // The root pane is a BorderPane, as defined in the start() method.
+                Pane rootPane = (Pane) appStage.getScene().getRoot();
                 if (darkMode.isSelected()) {
-                    scene.getStylesheets().remove(lightCss);
-                    if (!scene.getStylesheets().contains(darkCss)) {
-                        scene.getStylesheets().add(darkCss);
-                    }
+                    rootPane.getStyleClass().remove("theme-light");
+                    rootPane.getStyleClass().add("theme-dark");
                     darkMode.setGraphic(sunIcon);
                 } else {
-                    scene.getStylesheets().remove(darkCss);
-                    if (!scene.getStylesheets().contains(lightCss)) {
-                        scene.getStylesheets().add(lightCss);
-                    }
+                    rootPane.getStyleClass().remove("theme-dark");
+                    rootPane.getStyleClass().add("theme-light");
                     darkMode.setGraphic(moonIcon);
                 }
             }
@@ -398,18 +409,26 @@ public class App extends Application {
      * Fonction pour gerer l'ouverture d'un fichier
      */
     private void loadFile() {
-
-        /* Selection du ficher à ouvrir */
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
                 new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showOpenDialog(appStage);
-        if (file == null)
-            return;
+        loadFileContent(file);
+    }
 
-        /* Lecture du fichier selectionner depuis l'explorateur de fichier */
+    /**
+     * Reads the content of a given file and loads it into the appropriate editor.
+     *
+     * @param file The file to load.
+     */
+    private void loadFileContent(File file) {
+        if (file == null) {
+            return;
+        }
+
+        /* Lecture du fichier selectionner */
         StringBuilder fileContent = new StringBuilder();
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {

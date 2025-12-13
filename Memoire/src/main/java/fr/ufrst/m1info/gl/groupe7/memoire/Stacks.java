@@ -610,7 +610,7 @@ public class Stacks {
 
             // Prevent assigning to constants
             if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
-                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée. (value = " + q.value + ")");
+                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
             if ("tab".equals(q.object)) {
                 throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");

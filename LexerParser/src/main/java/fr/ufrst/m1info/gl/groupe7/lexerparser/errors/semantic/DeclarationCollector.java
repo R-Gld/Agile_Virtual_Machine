@@ -106,11 +106,6 @@ public class DeclarationCollector {
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
         checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT, cstNode);
-
-        // If constant has initialization expression at declaration, mark it as initialized
-        if (initExpr != null) {
-            context.markConstantAsInitialized(cstName);
-        }
     }
 
     private void collectArray(TableauNode tableauNode) {
@@ -277,11 +272,6 @@ public class DeclarationCollector {
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
         checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT, cstNode);
-
-        // If constant has initialization expression, mark it as initialized
-        if (initExpr != null) {
-            context.markConstantAsInitialized(cstName);
-        }
     }
 
     private void collectLocalArray(TableauNode tableauNode) {
