@@ -67,7 +67,12 @@ public class SupAxiome implements JajaAxiome {
         boolean result = (Integer) op1.value > (Integer) op2.value;
 
         // 5. Empiler le résultat (Type BOOLEEN)
-        ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
+        ctx.getStacks().push(new Stacks.Quad(
+                ctx.getTEMP_VALUE(), // Identifiant temporaire (oméga)
+                result,              // La valeur calculée (true/false)
+                ctx.getTEMP_VALUE(), // Sorte temporaire
+                Type.BOOLEEN         // Type explicite
+        ));
 
         // 6. Log et incrément du PC
         logger.debug("\t\tAxiome SUP exécuté: {} > {} = {}", op1.value, op2.value, result);

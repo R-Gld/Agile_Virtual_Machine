@@ -65,7 +65,8 @@ public class AloadAxiome implements JajaAxiome {
         Type type = ctx.getStacks().getDataType(scopedIdent);
 
         // 7. Empiler la valeur chargée
-        ctx.getStacks().push(new Stacks.Quad(valeur, type));
+        ctx.getStacks().push(new Stacks.Quad(ctx.getTEMP_VALUE(), valeur,
+                                              ctx.getTEMP_VALUE(), type));
 
         logger.debug("\t\tAxiome ALOAD exécuté: {}[{}] = {} chargé sur la pile.", scopedIdent, index, valeur);
 

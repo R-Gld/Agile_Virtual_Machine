@@ -48,7 +48,7 @@ valeur
     | FALSE
     | STRING
     | IDENTIFIER
-    | OMEGA
+    | VIDE
     ;
 
 adresse

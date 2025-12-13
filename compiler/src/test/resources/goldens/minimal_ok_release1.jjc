@@ -1,5 +1,5 @@
 init
-push(w)
+push(0)
 new(x@global, int, var, 0)
 push(5)
 store(x@global)
