@@ -63,7 +63,7 @@ public class MethodCallValidator {
         }
 
         // Perform validation
-        // Search for method declaration, stored as "methodName@returnType" (ex: , "f@integer")
+        // Search for method declaration, stored as "methodName@returnType" (ex: "f@integer")
         String methodSignature = scopeResolver.findMethodSignature(methodName);
 
         if (methodSignature == null) {
