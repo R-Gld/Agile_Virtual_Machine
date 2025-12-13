@@ -65,12 +65,7 @@ public class AndAxiome implements JajaAxiome {
         boolean result = (Boolean) op1.value && (Boolean) op2.value;
 
         // 5. Empilement du résultat
-        ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTEMP_VALUE(), // Identifiant temporaire
-                result,              // Résultat
-                ctx.getTEMP_VALUE(), // Sorte temporaire
-                Type.BOOLEEN         // Type explicite
-        ));
+        ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
 
         // 6. Log et passage à l'instruction suivante
         logger.debug("\t\tAxiome AND exécuté: {} && {} = {}", op1.value, op2.value, result);
