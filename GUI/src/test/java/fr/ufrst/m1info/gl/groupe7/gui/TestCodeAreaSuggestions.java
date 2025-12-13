@@ -63,11 +63,43 @@ public class TestCodeAreaSuggestions {
 
                 @SuppressWarnings("unchecked")
                 List<String> suggestionsMy = (List<String>) m.invoke(area, "my");
-                assertTrue(suggestionsMy.contains("myVar"), "Suggestions should contain declared variable 'myVar' when using prefix length >= 2");
+                assertTrue(suggestionsMy.contains("myVar"), "Suggestions should contain declared variable 'myVar'");
+
+                // Check ordering: methods should appear before generic keywords for matching prefixes
+                @SuppressWarnings("unchecked")
+                List<String> suggestionsF2 = (List<String>) m.invoke(area, "f");
+                int idxFoo = suggestionsF2.indexOf("foo");
+                int idxFinal = suggestionsF2.indexOf("final");
+                assertTrue(idxFoo >= 0 && idxFinal >= 0 && idxFoo < idxFinal, "Method 'foo' should be suggested before keyword 'final'");
+
+                // For variables: variables from closest scope should be before generic keywords like 'main'
+                @SuppressWarnings("unchecked")
+                List<String> suggestionsM2 = (List<String>) m.invoke(area, "m");
+                int idxMyVar = suggestionsM2.indexOf("myVar");
+                int idxMain = suggestionsM2.indexOf("main");
+                assertTrue(idxMyVar >= 0 && idxMain >= 0 && idxMyVar < idxMain, "Variable 'myVar' should be suggested before keyword 'main'");
 
                 @SuppressWarnings("unchecked")
-                List<String> suggestionsM = (List<String>) m.invoke(area, "m");
-                assertTrue(!suggestionsM.contains("myVar"), "Single-letter prefix should not suggest declared variable 'myVar'");
+                List<String> suggestionsM3 = (List<String>) m.invoke(area, "m");
+                assertTrue(suggestionsM3.contains("myVar"), "Single-letter prefix should suggest declared variable 'myVar' when not declaring");
+
+                // Now simulate typing a new variable after a type keyword; suggestions should NOT propose existing variable names
+                runOnFxThread(() -> {
+                    try {
+                        var field = MyCodeArea.class.getDeclaredField("codeArea");
+                        field.setAccessible(true);
+                        org.fxmisc.richtext.CodeArea inner = (org.fxmisc.richtext.CodeArea) field.get(area);
+                        inner.replaceText("class C {\n  int myVar = 0;\n  main {\n    int my\n  }\n}\n");
+                        // move caret to after 'my' in the declaration
+                        inner.moveTo(inner.getText().indexOf("int my") + "int my".length());
+
+                        @SuppressWarnings("unchecked")
+                        List<String> declSuggestions = (List<String>) m.invoke(area, "my");
+                        assertTrue(!declSuggestions.contains("myVar"), "While declaring a variable (after 'int'), existing variable 'myVar' should not be suggested");
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

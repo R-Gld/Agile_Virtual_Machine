@@ -28,10 +28,29 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     private static class Scope {
         final Map<String, Variable> variables = new HashMap<>();
+        int start = -1;
+        int end = -1;
+
+        Scope(int start) {
+            this.start = start;
+        }
+    }
+
+    private static class PersistedScope {
+        final int start;
+        final int end;
+        final Set<String> variables;
+
+        PersistedScope(int start, int end, Set<String> variables) {
+            this.start = start;
+            this.end = end;
+            this.variables = variables;
+        }
     }
 
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final List<IndexRange> unusedVariableRanges = new ArrayList<>();
+    private final List<PersistedScope> persistedScopes = new ArrayList<>();
 
 
     public List<IndexRange> getFunctionStyleRanges() {
@@ -43,18 +62,21 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
     }
 
 
-    private void enterScope() {
-        scopes.push(new Scope());
+    private void enterScope(int start) {
+        scopes.push(new Scope(start));
     }
 
-    private void exitScope() {
+    private void exitScope(int end) {
         if (scopes.isEmpty()) return;
         Scope scope = scopes.pop();
+        scope.end = end;
         for (Variable var : scope.variables.values()) {
             if (!var.used) {
                 unusedVariableRanges.add(var.declarationRange);
             }
         }
+        Set<String> vars = new HashSet<>(scope.variables.keySet());
+        persistedScopes.add(new PersistedScope(scope.start, scope.end, vars));
     }
 
     private void addVariable(String name, org.antlr.v4.runtime.Token token) {
@@ -78,6 +100,45 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
      */
     public List<String> getDeclaredVariables() {
         return new ArrayList<>(declaredVariableNames);
+    }
+
+    /**
+     * Returns the variables visible at a given text offset (caret position).
+     * This respects scope: only variables declared in scopes that include the
+     * offset are returned.
+     */
+    public List<String> getVisibleVariables(int offset) {
+        Set<String> visible = new HashSet<>();
+        for (PersistedScope ps : persistedScopes) {
+            if (ps.start <= offset && offset < ps.end) {
+                visible.addAll(ps.variables);
+            }
+        }
+        return new ArrayList<>(visible);
+    }
+
+    /**
+     * Returns variables visible at the given offset ordered by scope proximity
+     * (inner scopes first). Removes duplicates while preserving ordering.
+     */
+    public List<String> getVisibleVariablesOrdered(int offset) {
+        // collect scopes that include offset
+        List<PersistedScope> enclosing = new ArrayList<>();
+        for (PersistedScope ps : persistedScopes) {
+            if (ps.start <= offset && offset < ps.end) {
+                enclosing.add(ps);
+            }
+        }
+        // sort by scope size ascending (smaller = inner)
+        enclosing.sort(Comparator.comparingInt(ps -> (ps.end - ps.start)));
+
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        for (PersistedScope ps : enclosing) {
+            for (String v : ps.variables) {
+                ordered.add(v);
+            }
+        }
+        return new ArrayList<>(ordered);
     }
 
     private void markVariableAsUsed(String name) {
@@ -109,32 +170,32 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
             int stop = token.getStopIndex() + 1;
             functionRanges.add(new IndexRange(start, stop));
         }
-        enterScope();
+        enterScope(ctx.getStart().getStartIndex());
     }
 
     @Override
     public void exitMethode(MiniJajaParser.MethodeContext ctx) {
-        exitScope();
+        exitScope(ctx.getStop().getStopIndex() + 1);
     }
 
     @Override
     public void enterClasse(MiniJajaParser.ClasseContext ctx) {
-        enterScope();
+        enterScope(ctx.getStart().getStartIndex());
     }
 
     @Override
     public void exitClasse(MiniJajaParser.ClasseContext ctx) {
-        exitScope();
+        exitScope(ctx.getStop().getStopIndex() + 1);
     }
 
     @Override
     public void enterMethmain(MiniJajaParser.MethmainContext ctx) {
-        enterScope();
+        enterScope(ctx.getStart().getStartIndex());
     }
 
     @Override
     public void exitMethmain(MiniJajaParser.MethmainContext ctx) {
-        exitScope();
+        exitScope(ctx.getStop().getStopIndex() + 1);
     }
 
     @Override
