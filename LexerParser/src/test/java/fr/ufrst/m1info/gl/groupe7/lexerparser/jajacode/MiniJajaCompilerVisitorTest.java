@@ -117,7 +117,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(node);
 
-        verify(builderSpy).addInstruction(PUSH, "vide");
+        verify(builderSpy).addInstruction(PUSH, "w");
         verify(builderSpy).addInstruction(eq(NEW), eq("x@global"), eq("int"), eq("var"), eq(0));
     }
 
@@ -257,9 +257,9 @@ class MiniJajaCompilerVisitorTest {
 
         InOrder inOrder = inOrder(builderSpy);
         inOrder.verify(builderSpy).addInstruction(INIT);
-        inOrder.verify(builderSpy).addInstruction(PUSH, "vide");
+        inOrder.verify(builderSpy).addInstruction(PUSH, "w");
         inOrder.verify(builderSpy).addInstruction(NEW, "a@global", "int", "var", 0);
-        inOrder.verify(builderSpy).addInstruction(PUSH, "vide");
+        inOrder.verify(builderSpy).addInstruction(PUSH, "w");
         inOrder.verify(builderSpy).addInstruction(NEW, "b@global", "boolean", "var", 0);
         inOrder.verify(builderSpy).addInstruction(SWAP);
         inOrder.verify(builderSpy).addInstruction(POP);
@@ -1324,7 +1324,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(varsNode);
 
-        verify(builderSpy).addInstruction(PUSH, "vide");
+        verify(builderSpy).addInstruction(PUSH, "w");
         verify(builderSpy).addInstruction(eq(NEW), contains("localVar"), eq("int"), eq("var"), eq(0));
     }
 
@@ -1573,7 +1573,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(varNode);
 
-        verify(builderSpy).addInstruction(PUSH, "vide");
+        verify(builderSpy).addInstruction(PUSH, "w");
         verify(builderSpy).addInstruction(NEW, "uppercaseType@global", "boolean", "var", 0);
     }
 
@@ -1585,7 +1585,7 @@ class MiniJajaCompilerVisitorTest {
 
         visitor.visit(varNode);
 
-        verify(builderSpy).addInstruction(PUSH, "vide");
+        verify(builderSpy).addInstruction(PUSH, "w");
         verify(builderSpy).addInstruction(NEW, "mixedCase@global", "boolean", "var", 0);
     }
 
@@ -1803,8 +1803,8 @@ class MiniJajaCompilerVisitorTest {
         // Vérifier la sortie contient les éléments attendus
         String output = visitor.getJajaCodeBuilder().toString();
         assertTrue(output.contains("new(f, void, meth, 0)"), "Should contain void method declaration. Output: " + output);
-        // Vérifier push(vide) pour l'init de la variable locale
-        assertTrue(output.contains("push(vide)"), "Should contain push(vide) for variable init. Output: " + output);
+        // Vérifier push(w) pour l'init de la variable locale
+        assertTrue(output.contains("push(w)"), "Should contain push(w) for variable init. Output: " + output);
         // Vérifier push(0) pour le retour de la méthode void
         assertTrue(output.contains("push(0)"), "Should contain push(0) for void return. Output: " + output);
         assertTrue(output.contains("swap"), "Should contain swap. Output: " + output);

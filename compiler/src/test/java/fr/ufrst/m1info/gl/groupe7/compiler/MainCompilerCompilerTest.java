@@ -127,7 +127,7 @@ public class MainCompilerCompilerTest {
         String program = "class C { int x; main { x=5; } }";
         String expectedOutput = """
                                 init
-                                push(vide)
+                                push(w)
                                 new(x@global, int, var, 0)
                                 push(5)
                                 store(x@global)
