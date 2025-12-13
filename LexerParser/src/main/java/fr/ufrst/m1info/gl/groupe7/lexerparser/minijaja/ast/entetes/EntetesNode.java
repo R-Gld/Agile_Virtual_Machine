@@ -15,7 +15,7 @@ public class EntetesNode extends AstEntetes {
         this.entete = entete;
         this.entetes = entetes;
     }
-    // TODO ajouter les constructeurs vides inill vnil .etc
+    
 
     public EntetesNode() {
         this.entete = null;

@@ -934,14 +934,19 @@ public class Stacks {
      * Assigns a reference from one array variable to another.
      * Handles reference counting: the destination loses its old reference,
      * and gains a reference to the source's block.
+     * Supports scoped variable resolution for method contexts.
      */
     public void affecterTab(String identDest, String identSource) {
 
-        Quad qDest = findQuad(identDest);
-        Quad qSource = findQuad(identSource);
+        // Resolve scoped names for method context support
+        String resolvedDest = resolveVariableName(identDest);
+        String resolvedSource = resolveVariableName(identSource);
+
+        Quad qDest = findQuad(resolvedDest);
+        Quad qSource = findQuad(resolvedSource);
 
         if (qDest == null || qSource == null)
-            throw new RuntimeException("Unknown array identifier: " + identDest + " or " + identSource);
+            throw new RuntimeException("Unknown array identifier: " + resolvedDest + " or " + resolvedSource);
 
         // Ensure both symbols are arrays
         if (!(qDest.value instanceof ArrayInfo oldDestInfo) || !(qSource.value instanceof ArrayInfo newSourceInfo))
@@ -958,7 +963,7 @@ public class Stacks {
         // 3. Update the Quad's value to point to the new array reference
         for (int i = stack.size() - 1; i >= 0; i--) {
             Quad q = stack.get(i);
-            if (q.ident.equals(identDest)) {
+            if (q.ident.equals(resolvedDest)) {
                 // create a new Quad with the same ident and object type, but updated value
                 Quad newQuad = new Quad(q.ident, newSourceInfo, q.object,q.type);
                 stack.set(i, newQuad); // replace old Quad
@@ -966,7 +971,7 @@ public class Stacks {
             }
         }
 
-        logger.debug("[REF COPY] " + identDest + " = " + identSource +
+        logger.debug("[REF COPY] " + resolvedDest + " = " + resolvedSource +
                 "  (base=" + newSourceInfo.getBaseAddress() +
                 ", refCount=" + heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount() + ")");
     }

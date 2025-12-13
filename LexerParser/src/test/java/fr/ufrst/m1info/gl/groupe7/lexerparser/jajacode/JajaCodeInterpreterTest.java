@@ -2,7 +2,6 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

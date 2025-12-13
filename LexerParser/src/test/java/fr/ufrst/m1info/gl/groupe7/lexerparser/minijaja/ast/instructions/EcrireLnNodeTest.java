@@ -4,7 +4,6 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.Expression;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.expressions.fact.NbreNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.AfterEach;
