@@ -252,12 +252,12 @@ class JajaCodeAxiomesCompletTest {
                 1 init
                 2 push(50)
                 3 new(x@global, int, var, 0)
-                4 push(waza)
+                4 push(w)
                 5 store(x@global)
                 6 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
-        // After storing omega (nil/waza), the variable becomes uninitialized
+        // After storing omega, the variable becomes uninitialized
         // getValue should throw an exception for uninitialized variables
         assertThrows(RuntimeException.class, () -> stacks.getValue("x@global"),
                 "Should throw exception for uninitialized variable");
@@ -689,8 +689,8 @@ class JajaCodeAxiomesCompletTest {
     void testCmp_Nil() {
         String code = """
                 1 init
-                2 push(waza)
-                3 push(waza)
+                2 push(w)
+                3 push(w)
                 4 cmp
                 5 new(result@global, boolean, var, 0)
                 6 jcstop
@@ -1241,7 +1241,7 @@ class JajaCodeAxiomesCompletTest {
     void testIfConditionInvalide() {
         String code = """
                 1 init
-                2 push(waza)
+                2 push(w)
                 3 if(6)
                 4 push(100)
                 5 new(x@global, int, var, 0)
