@@ -269,8 +269,25 @@ public class TypeChecker {
                 return;
             }
 
-            // Check if trying to reassign a constant that is already initialized
+            // Check if trying to assign to a constant
             if (context.isConstant(varName)) {
+                // Determine the scope of the constant and current execution context
+                String constantScope = scopeResolver.resolveVariableScope(varName);
+                String currentScope = context.getCurrentScope();
+                boolean isGlobalConstant = ScopeResolver.GLOBAL_SCOPE.equals(constantScope);
+                boolean isInMain = ScopeResolver.MAIN_SCOPE.equals(currentScope);
+                boolean isInMethod = !isInMain && !ScopeResolver.GLOBAL_SCOPE.equals(currentScope);
+
+                // STRICT RULE: Global constants can NEVER be assigned in methods
+                // They can only be initialized at declaration or in main
+                if (isGlobalConstant && isInMethod) {
+                    context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation),
+                        String.format("Cannot assign to global constant '%s' inside a method. " +
+                                     "Global constants must be initialized at declaration or in the 'main' block.", varName));
+                    return;
+                }
+
+                // Check if constant is already initialized (reassignment)
                 if (context.isConstantInitialized(varName)) {
                     // Constant already initialized, this is a reassignment - not allowed
                     context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(affectation), String.format("Cannot reassign constant: '%s' is declared as final and cannot be modified.", varName));
