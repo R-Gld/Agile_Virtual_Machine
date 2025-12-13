@@ -32,6 +32,8 @@ class TestConsoleOutput {
         consoleOutput = new ConsoleOutput("test-console");
         stage.setScene(new Scene(new StackPane(consoleOutput), 400, 200));
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
     }
 
     private void runOnFxThread(Runnable action) {

@@ -16,6 +16,13 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.shape.Circle;
+import javafx.scene.control.ContextMenu;
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.util.List;
 
 @ExtendWith(ApplicationExtension.class)
 public class TestCodeArea {
@@ -29,6 +36,8 @@ public class TestCodeArea {
         codeAreaWithDefault = new MyCodeArea("testcodeareaWithDefault", "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}");
         stage.setScene(new Scene(new StackPane(codeArea, codeAreaWithDefault), 100, 100));
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
     }
 
     @Test
@@ -211,6 +220,184 @@ public class TestCodeArea {
                 boolean hasError = spans.stream().anyMatch(span -> span.getStyle().contains("error"));
 
                 Assertions.assertTrue(hasError, "Should have error highlighting");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testHandleAutoClosePairsAndSkip() {
+        runOnFxThread(() -> {
+            EditorPreferences.getInstance().setAutoClosePairs(true);
+            codeArea.loadText("");
+            var inner = getInnerCodeArea();
+            inner.replaceText("");
+            inner.moveTo(0);
+            try {
+                Method m = MyCodeArea.class.getDeclaredMethod("handleAutoClose", KeyEvent.class);
+                m.setAccessible(true);
+                KeyEvent open = new KeyEvent(KeyEvent.KEY_TYPED, "(", "(", KeyCode.UNDEFINED, false, false, false, false);
+                m.invoke(codeArea, open);
+                Assertions.assertEquals("()", codeArea.getText());
+
+                // Now ensure typing a closing bracket when one exists just moves caret
+                inner.moveTo(1); // caret between ( and )
+                KeyEvent close = new KeyEvent(KeyEvent.KEY_TYPED, ")", ")", KeyCode.UNDEFINED, false, false, false, false);
+                m.invoke(codeArea, close);
+                // After moving caret, text remains the same and caret goes past closing char
+                Assertions.assertEquals("()", codeArea.getText());
+                Assertions.assertEquals(2, inner.getCaretPosition());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testHandleSmartIndentationBetweenBraces() {
+        runOnFxThread(() -> {
+            EditorPreferences.getInstance().setSmartIndentation(true);
+            EditorPreferences.getInstance().setTabSize(4);
+            codeArea.loadText("{}");
+            var inner = getInnerCodeArea();
+            inner.moveTo(1); // between { and }
+            try {
+                Method m = MyCodeArea.class.getDeclaredMethod("handleSmartIndentation", javafx.scene.input.KeyEvent.class);
+                m.setAccessible(true);
+                KeyEvent enter = new KeyEvent(KeyEvent.KEY_PRESSED, "\r", "\r", KeyCode.ENTER, false, false, false, false);
+                m.invoke(codeArea, enter);
+                // After smart indent, text should contain a line between braces with spaces
+                Assertions.assertTrue(codeArea.getText().contains("{\n    \n}"));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testShowManualCompletionAndDisplaySuggestionsViaReflection() {
+        runOnFxThread(() -> {
+            // Put a prefix 'voi' which should match 'void'
+            var inner = getInnerCodeArea();
+            inner.replaceText("voi");
+            inner.moveTo(3);
+            try {
+                Method showManual = MyCodeArea.class.getDeclaredMethod("showManualCompletion");
+                showManual.setAccessible(true);
+                showManual.invoke(codeArea);
+
+                Field popupField = MyCodeArea.class.getDeclaredField("autoCompletionPopup");
+                popupField.setAccessible(true);
+                ContextMenu cm = (ContextMenu) popupField.get(codeArea);
+                Assertions.assertNotNull(cm);
+                // If suggestions available, menu items should not be empty
+                Assertions.assertFalse(cm.getItems().isEmpty());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testToggleBreakpointReflectively() {
+        runOnFxThread(() -> {
+            try {
+                Field bpField = MyCodeArea.class.getDeclaredField("breakpoints");
+                bpField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                var set = (java.util.Set<Integer>) bpField.get(codeArea);
+                Assertions.assertTrue(set.isEmpty());
+
+                Method m = MyCodeArea.class.getDeclaredMethod("toggleBreakpoint", int.class, javafx.scene.shape.Circle.class);
+                m.setAccessible(true);
+                Circle c = new Circle(5);
+                m.invoke(codeArea, 3, c);
+                Assertions.assertTrue(set.contains(3));
+                Assertions.assertTrue(c.isVisible());
+                m.invoke(codeArea, 3, c);
+                Assertions.assertFalse(set.contains(3));
+                Assertions.assertFalse(c.isVisible());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testAutoCloseOtherPairs() {
+        runOnFxThread(() -> {
+            EditorPreferences.getInstance().setAutoClosePairs(true);
+            codeArea.loadText("");
+            var inner = getInnerCodeArea();
+            inner.replaceText("");
+            inner.moveTo(0);
+            try {
+                Method m = MyCodeArea.class.getDeclaredMethod("handleAutoClose", KeyEvent.class);
+                m.setAccessible(true);
+                // Brace
+                KeyEvent brace = new KeyEvent(KeyEvent.KEY_TYPED, "{", "{", KeyCode.UNDEFINED, false, false, false, false);
+                m.invoke(codeArea, brace);
+                Assertions.assertEquals("{}", codeArea.getText());
+                // Bracket
+                inner.replaceText("");
+                inner.moveTo(0);
+                KeyEvent bracket = new KeyEvent(KeyEvent.KEY_TYPED, "[", "[", KeyCode.UNDEFINED, false, false, false, false);
+                m.invoke(codeArea, bracket);
+                Assertions.assertEquals("[]", codeArea.getText());
+                // Quote
+                inner.replaceText("");
+                inner.moveTo(0);
+                KeyEvent quote = new KeyEvent(KeyEvent.KEY_TYPED, "\"", "\"", KeyCode.UNDEFINED, false, false, false, false);
+                m.invoke(codeArea, quote);
+                Assertions.assertEquals("\"\"", codeArea.getText());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testShowAutoCompletionDisplaysPopup() {
+        runOnFxThread(() -> {
+            // Setup a prefix and ensure caret bounds exist
+            var inner = getInnerCodeArea();
+            inner.replaceText("voi");
+            inner.moveTo(3);
+            inner.requestFocus();
+            try {
+                Method disp = MyCodeArea.class.getDeclaredMethod("displaySuggestions", java.util.List.class, int.class, int.class);
+                disp.setAccessible(true);
+                List<String> suggestions = java.util.List.of("void", "main");
+                disp.invoke(codeArea, suggestions, 0, 3);
+                Field popupField = MyCodeArea.class.getDeclaredField("autoCompletionPopup");
+                popupField.setAccessible(true);
+                ContextMenu cm = (ContextMenu) popupField.get(codeArea);
+                // If bounds were available, show() would set showing to true; otherwise the items are set
+                Assertions.assertNotNull(cm);
+                Assertions.assertFalse(cm.getItems().isEmpty());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    void testSmartIndentationWhenLineEndsWithBrace() {
+        runOnFxThread(() -> {
+            EditorPreferences.getInstance().setSmartIndentation(true);
+            EditorPreferences.getInstance().setTabSize(2);
+            codeArea.loadText("line {");
+            var inner = getInnerCodeArea();
+            // Put caret at end of line (after '{') so trimmedLine.endsWith("{") is true
+            inner.moveTo(inner.getLength());
+            try {
+                Method m = MyCodeArea.class.getDeclaredMethod("handleSmartIndentation", javafx.scene.input.KeyEvent.class);
+                m.setAccessible(true);
+                KeyEvent enter = new KeyEvent(KeyEvent.KEY_PRESSED, "\r", "\r", KeyCode.ENTER, false, false, false, false);
+                m.invoke(codeArea, enter);
+                // After smart indent insertion, we expect a newline with additional indentation
+                Assertions.assertTrue(codeArea.getText().contains("{\n  "));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

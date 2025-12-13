@@ -2,6 +2,7 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +37,22 @@ public class Stacks {
             this.type = type;
         }
 
+        /**
+         * Constructor for temporary values
+         * Sets ident and object to "_" to indicate anonymous/temporary values.
+         *
+         * @param value the computed value
+         * @param type the type of the value
+         */
+        public Quad(Object value, Type type) {
+            this("_", value, "_", type);
+        }
+
         @Override
         public String toString() {
+            if (Objects.equals(ident, "_") && Objects.equals(object, "_")) {
+                return "<" + value + ", " + type + ">";
+            }
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
         }
 
@@ -652,6 +667,11 @@ public class Stacks {
     private boolean isTypeCompatible(Type type, Object value) {
         if (value == null)
             return true; // null accepté pour tous types
+
+        // Omega (uninitialized value) is accepted for all types
+        if (value instanceof Omega)
+            return true;
+
         if (type == Type.ANY) {
 
             return value instanceof Integer || value instanceof Boolean; // pour la variable de classe
