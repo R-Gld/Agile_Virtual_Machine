@@ -85,9 +85,14 @@ testIHM:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add xvfb libx11-dev xvfb-run gtk+3.0
+    - export DISPLAY=:99
+    - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
     - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
-    - mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: "**/target/surefire-reports/TEST-*.xml"
