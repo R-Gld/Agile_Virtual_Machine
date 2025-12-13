@@ -63,11 +63,7 @@ public class NotAxiome implements JajaAxiome {
         boolean result = !(Boolean) op.value;
 
         // 5. Empilement du résultat
-        ctx.getStacks().push(new Stacks.Quad(ctx.getTempValue(), // Identifiant temporaire
-                result,              // Valeur inversée
-                ctx.getTempValue(), // Sorte temporaire
-                Type.BOOLEEN         // Type explicite
-        ));
+        ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
 
         // 6. Log et suite
         logger.debug("\t\tAxiome NOT exécuté: !{} = {}", op.value, result);

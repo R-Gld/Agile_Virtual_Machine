@@ -155,7 +155,7 @@ class TestConsoleOutput {
         runOnFxThread(() -> {
             Button clearButton = getClearButton();
             assertNotNull(clearButton, "Le bouton clear doit exister");
-            assertEquals("clear", clearButton.getText(), "Le texte du bouton doit être 'clear'");
+            assertEquals("Clear", clearButton.getText(), "Le texte du bouton doit être 'Clear'");
         });
     }
 
@@ -164,7 +164,8 @@ class TestConsoleOutput {
         runOnFxThread(() -> consoleOutput.printMessage("Test message"));
         WaitForAsyncUtils.waitForFxEvents();
 
-        // Simuler le clic sur le bouton clear via appel direct (plus fiable en headless)
+        // Simuler le clic sur le bouton clear via appel direct (plus fiable en
+        // headless)
         runOnFxThread(() -> {
             Button clearButton = getClearButton();
             clearButton.fire();
@@ -195,14 +196,16 @@ class TestConsoleOutput {
 
         runOnFxThread(() -> {
             TextArea textArea = getTextArea();
-            assertTrue(textArea.getText().contains("Spécial: éàü €$£"), "Les caractères spéciaux doivent être affichés");
+            assertTrue(textArea.getText().contains("Spécial: éàü €$£"),
+                    "Les caractères spéciaux doivent être affichés");
         });
     }
 
     @Test
     void testConsoleHasChildren() {
         runOnFxThread(() -> {
-            assertFalse(consoleOutput.getChildren().isEmpty(), "La console doit avoir des enfants (TextArea et Button)");
+            assertFalse(consoleOutput.getChildren().isEmpty(),
+                    "La console doit avoir des enfants (TextArea et Button)");
             assertEquals(2, consoleOutput.getChildren().size(), "La console doit avoir 2 enfants");
         });
     }
@@ -252,4 +255,5 @@ class TestConsoleOutput {
                 .findFirst()
                 .orElse(null);
     }
+
 }

@@ -3,7 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.jajacode.JajaCodeParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.JajaCodeRuntimeException;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node.*; // Importez vos axiomes
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node.*;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -224,21 +224,48 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     @Override
     public Object visitOper2(JajaCodeParser.Oper2Context ctx) {
-        if (ctx.ADD() != null) dispatch(JajaCodeInstr.ADD, null);
-        else if (ctx.SUB() != null) dispatch(JajaCodeInstr.SUB, null);
-        else if (ctx.MUL() != null) dispatch(JajaCodeInstr.MUL, null);
-        else if (ctx.DIV() != null) dispatch(JajaCodeInstr.DIV, null);
-        else if (ctx.AND() != null) dispatch(JajaCodeInstr.AND, null);
-        else if (ctx.OR() != null) dispatch(JajaCodeInstr.OR, null);
-        else if (ctx.SUP() != null) dispatch(JajaCodeInstr.SUP, null);
-        else if (ctx.CMP() != null) dispatch(JajaCodeInstr.CMP, null);
+        if (ctx.ADD() != null) dispatch(JajaCodeInstr.ADD);
+        else if (ctx.SUB() != null) dispatch(JajaCodeInstr.SUB);
+        else if (ctx.MUL() != null) dispatch(JajaCodeInstr.MUL);
+        else if (ctx.DIV() != null) dispatch(JajaCodeInstr.DIV);
+        else if (ctx.AND() != null) dispatch(JajaCodeInstr.AND);
+        else if (ctx.OR() != null) dispatch(JajaCodeInstr.OR);
+        else if (ctx.SUP() != null) dispatch(JajaCodeInstr.SUP);
+        else if (ctx.CMP() != null) dispatch(JajaCodeInstr.CMP);
         return null;
     }
 
     @Override
     public Object visitOper1(JajaCodeParser.Oper1Context ctx) {
-        if (ctx.NEG() != null) dispatch(JajaCodeInstr.NEG, null);
-        else if (ctx.NOT() != null) dispatch(JajaCodeInstr.NOT, null);
+        if (ctx.NEG() != null) dispatch(JajaCodeInstr.NEG);
+        else if (ctx.NOT() != null) dispatch(JajaCodeInstr.NOT);
         return null;
     }
+
+    // for test
+
+    public boolean step() {
+        int pc = context.getInstructionCounter();
+        JajaCodeParser.InstrContext instruction = programme.get(pc);
+
+        if (instruction == null) {
+            logger.error("Erreur : @{} introuvable !", pc);
+            context.stop();
+            return false; // Program finished (error case)
+        }
+
+        visit(instruction);
+
+        // Return true if there are more instructions, false if finished
+        return context.isRunning();
+    }
+
+    public boolean isFinished() {
+        return !context.isRunning();
+    }
+
+    public int getCurrentInstructionIndex() {
+        return context.getInstructionCounter();
+    }
+
 }

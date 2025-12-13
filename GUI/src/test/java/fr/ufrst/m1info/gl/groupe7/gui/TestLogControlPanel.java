@@ -36,6 +36,8 @@ class TestLogControlPanel {
         logControlPanel = new LogControlPanel();
         stage.setScene(new Scene(new StackPane(logControlPanel), 400, 100));
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
     }
 
     private void runOnFxThread(Runnable action) {

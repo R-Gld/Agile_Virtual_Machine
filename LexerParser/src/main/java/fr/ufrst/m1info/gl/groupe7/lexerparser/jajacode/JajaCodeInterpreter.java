@@ -14,6 +14,13 @@ public class JajaCodeInterpreter implements Runnable {
     private final String jajaCode;
     private final DiagnosticCollector collector;
 
+    // === Added fields for step-by-step debugging ===
+    private Stacks stacks;
+    private JajaCodeParser.ClasseContext arbreJajaCode;
+    private JajaCodeInterpreterVisitor interpreteur;
+    private boolean initialized = false;
+    // === End added fields ===
+
     public JajaCodeInterpreter(String jajaCode, DiagnosticCollector collector) {
         this.jajaCode = jajaCode;
         this.collector = collector;
@@ -41,7 +48,24 @@ public class JajaCodeInterpreter implements Runnable {
      */
     @Override
     public void run() {
-        Stacks stacks = new Stacks();
+        // Use the same initialization logic as for step-by-step,
+        // but execute the whole program at once.
+        ensureInitialized();
+        interpreteur.run();
+    }
+
+    // === Added methods for level 2 (step-by-step execution) ===
+
+    /**
+     * Ensures that the JajaCode program is parsed, loaded and ready to run/step.
+     * This method is idempotent and can be safely called multiple times.
+     */
+    private void ensureInitialized() {
+        if (initialized) {
+            return;
+        }
+
+        stacks = new Stacks();
         CharStream stream = CharStreams.fromString(jajaCode);
         JajaCodeLexer lexer = new JajaCodeLexer(stream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -51,16 +75,74 @@ public class JajaCodeInterpreter implements Runnable {
         sel.register(lexer);
         sel.register(parser);
 
-        JajaCodeParser.ClasseContext arbreJajaCode = parser.classe();
+        arbreJajaCode = parser.classe();
 
         if (collector.hasErrors()) {
             throw new SyntaxException(collector);
         }
 
-        JajaCodeInterpreterVisitor interpreteur = new JajaCodeInterpreterVisitor(stacks);
+        interpreteur = new JajaCodeInterpreterVisitor(stacks);
 
+        // Loads the JajaCode program into the interpreter internal structures
         interpreteur.load(arbreJajaCode);
-        interpreteur.run();
-    }
-}
 
+        initialized = true;
+    }
+
+    /**
+     * Resets the interpreter state so that execution can start again from the beginning.
+     * This does not change the original JajaCode string.
+     */
+    public void reset() {
+        initialized = false;
+        stacks = null;
+        arbreJajaCode = null;
+        interpreteur = null;
+    }
+
+    /**
+     * Execute exactly one JajaCode instruction.
+     *
+     * @return true if there are still instructions to execute after this step,
+     *         false if the program has finished (reached halt/jcstop).
+     *
+     * Note: This method expects that JajaCodeInterpreterVisitor implements
+     * a step() method that executes a single instruction and returns whether
+     * the program has finished or not.
+     */
+    public boolean step() {
+        ensureInitialized();
+        // You must implement step() inside JajaCodeInterpreterVisitor
+        return interpreteur.step();
+    }
+
+    /**
+     * Indicates whether the current debug session has finished.
+     * This is a convenience wrapper around the visitor state.
+     */
+    public boolean isFinished() {
+        if (!initialized) {
+            return false;
+        }
+        // You must implement isFinished() inside JajaCodeInterpreterVisitor
+        return interpreteur.isFinished();
+    }
+
+    /**
+     * Returns the index of the current instruction (0-based) in the
+     * internal JajaCode program representation.
+     *
+     * This can be used by the GUI to highlight the current JajaCode line.
+     *
+     * Note: You must implement getCurrentInstructionIndex() in
+     * JajaCodeInterpreterVisitor.
+     */
+    public int getCurrentInstructionIndex() {
+        if (!initialized) {
+            return -1;
+        }
+        return interpreteur.getCurrentInstructionIndex();
+    }
+
+    // === End of added methods ===
+}

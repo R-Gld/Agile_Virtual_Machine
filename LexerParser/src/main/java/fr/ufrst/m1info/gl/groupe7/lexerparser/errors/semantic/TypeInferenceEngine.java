@@ -86,7 +86,7 @@ public class TypeInferenceEngine {
                             Phase.SEMANTIC,
                             context.createPosition(),
                             String.format("Undeclared variable: '%s' is used before being declared. " +
-                                            "Declare it first (ex: , 'int %s;' or 'boolean %s;').",
+                                            "Declare it first (ex: 'int %s;' or 'boolean %s;').",
                                     varName, varName, varName)
                     );
                     return null;
@@ -180,7 +180,7 @@ public class TypeInferenceEngine {
                 // Validate the method call and return its type
                 // Note: methodCallValidator is injected after construction
                 if (methodCallValidator != null) {
-                    return methodCallValidator.validateMethodCall(methodName, args);
+                    return methodCallValidator.validateMethodCall(appelE);
                 }
                 // If validator not set yet, return null
                 return null;
@@ -315,7 +315,7 @@ public class TypeInferenceEngine {
 
     /**
      * Get a human-readable name for an operation
-     * @param operation the operation symbol (ex: , "+", "and", ">")
+     * @param operation the operation symbol (ex: "+", "and", ">")
      * @return a human-readable description of the operation type
      */
     private String getOperationName(String operation) {

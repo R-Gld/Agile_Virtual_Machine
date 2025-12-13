@@ -87,11 +87,11 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(varName);
         Type varType = varNode.getType();
 
-        if (checkDuplicateAndRegister(qualifiedName, varType, KIND_VARIABLE, varName)) {
+        if (checkDuplicateAndRegister(qualifiedName, varType, KIND_VARIABLE, varName, varNode)) {
             trackVariableInScope(varName);
         }
 
-        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE);
+        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE, varNode);
     }
 
     private void collectConstant(CstNode cstNode) {
@@ -99,13 +99,18 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(cstName);
         Type cstType = cstNode.getType();
 
-        if (checkDuplicateAndRegister(qualifiedName, cstType, KIND_CONSTANT, cstName)) {
+        if (checkDuplicateAndRegister(qualifiedName, cstType, KIND_CONSTANT, cstName, cstNode)) {
             context.addConstant(cstName);
             trackVariableInScope(cstName);
         }
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
-        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT, cstNode);
+
+        // If constant has initialization expression at declaration, mark it as initialized
+        if (initExpr != null) {
+            context.markConstantAsInitialized(cstName);
+        }
     }
 
     private void collectArray(TableauNode tableauNode) {
@@ -113,7 +118,7 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(arrayName);
         Type arrayType = tableauNode.getType();
 
-        if (checkDuplicateAndRegisterArray(qualifiedName, arrayType, "array", arrayName)) {
+        if (checkDuplicateAndRegisterArray(qualifiedName, arrayType, "array", arrayName, tableauNode)) {
             trackVariableInScope(arrayName);
         }
 
@@ -122,7 +127,7 @@ public class DeclarationCollector {
         if (sizeExpr != null) {
             Type sizeType = typeInferenceEngine.inferType(sizeExpr);
             if (sizeType != null && sizeType != Type.ENTIER) {
-                reportError("Array size must be an integer: array '%s' declared with size type '%s'. " +
+                reportError(tableauNode, "Array size must be an integer: array '%s' declared with size type '%s'. " +
                         "Array dimensions must be integer expressions.", arrayName, sizeType);
             }
         }
@@ -134,7 +139,7 @@ public class DeclarationCollector {
         String methodSignature = methodName + "@" + returnType.toString();
 
         if (context.getSymbolTable().contains(methodSignature)) {
-            reportError("Duplicate method declaration: method '%s' has already been declared. " + "Each method can only be declared once.", methodName);
+            reportError(methodeNode, "Duplicate method declaration: method '%s' has already been declared. " + "Each method can only be declared once.", methodName);
         } else {
             context.getStacks().declareMeth(methodSignature, methodeNode, returnType);
         }
@@ -145,9 +150,9 @@ public class DeclarationCollector {
      *
      * @return true if registered successfully, false if duplicate
      */
-    private boolean checkDuplicateAndRegister(String qualifiedName, Type type, String kind, String name) {
+    private boolean checkDuplicateAndRegister(String qualifiedName, Type type, String kind, String name, AstNode node) {
         if (context.getSymbolTable().contains(qualifiedName)) {
-            reportError("Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
+            reportError(node, "Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
             return false;
         }
         context.getSymbolTable().creationSymbol(qualifiedName, 0, type);
@@ -159,21 +164,21 @@ public class DeclarationCollector {
      *
      * @return true if registered successfully, false if duplicate
      */
-    private boolean checkDuplicateAndRegisterArray(String qualifiedName, Type type, String kind, String name) {
+    private boolean checkDuplicateAndRegisterArray(String qualifiedName, Type type, String kind, String name, AstNode node) {
         if (context.getSymbolTable().contains(qualifiedName)) {
-            reportError("Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
+            reportError(node, "Duplicate %s declaration: '%s' has already been declared. " + "Each %s can only be declared once in the same scope.", kind, name, kind);
             return false;
         }
         context.getSymbolTable().creationSymbol(qualifiedName, 0, type, true); // true = isArray
         return true;
     }
 
-    private void checkInitializationType(Expression initExpr, Type declaredType, String name, String kind) {
+    private void checkInitializationType(Expression initExpr, Type declaredType, String name, String kind, AstNode node) {
         if (initExpr == null) return;
 
         Type initType = typeInferenceEngine.inferType(initExpr);
         if (initType != null && declaredType != initType) {
-            reportError("Type mismatch in %s initialization: %s '%s' declared as '%s' but initialized with '%s'. %s", kind, kind, name, declaredType, initType, TYPE_MISMATCH_MSG);
+            reportError(node, "Type mismatch in %s initialization: %s '%s' declared as '%s' but initialized with '%s'. %s", kind, kind, name, declaredType, initType, TYPE_MISMATCH_MSG);
         }
     }
 
@@ -186,8 +191,8 @@ public class DeclarationCollector {
         }
     }
 
-    private void reportError(String format, Object... args) {
-        context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(), String.format(format, args));
+    private void reportError(AstNode node, String format, Object... args) {
+        context.getCollector().report(Severity.ERROR, Phase.SEMANTIC, context.createPosition(node), String.format(format, args));
     }
 
     /**
@@ -219,7 +224,7 @@ public class DeclarationCollector {
             Type paramType = entete.getType();
 
             if (context.getSymbolTable().contains(qualifiedName)) {
-                reportError("Duplicate parameter name: '%s' has already been declared. " + "Parameter names must be unique.", paramName);
+                reportError(entete, "Duplicate parameter name: '%s' has already been declared. " + "Parameter names must be unique.", paramName);
             } else {
                 context.getSymbolTable().creationSymbol(qualifiedName, 0, paramType);
                 context.getCurrentScopeVariables().add(paramName);
@@ -251,12 +256,12 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(varName);
         Type varType = varNode.getType();
 
-        if (checkDuplicateLocal(qualifiedName, varName, KIND_VARIABLE)) {
+        if (checkDuplicateLocal(qualifiedName, varName, KIND_VARIABLE, varNode)) {
             context.getSymbolTable().creationSymbol(qualifiedName, 0, varType);
             trackVariableInScope(varName);
         }
 
-        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE);
+        checkInitializationType(varNode.getExp().getVexp(), varType, varName, KIND_VARIABLE, varNode);
     }
 
     private void collectLocalConstant(CstNode cstNode) {
@@ -264,14 +269,19 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(cstName);
         Type cstType = cstNode.getType();
 
-        if (checkDuplicateLocal(qualifiedName, cstName, KIND_CONSTANT)) {
+        if (checkDuplicateLocal(qualifiedName, cstName, KIND_CONSTANT, cstNode)) {
             context.getSymbolTable().creationSymbol(qualifiedName, 0, cstType);
             context.addConstant(cstName);
             trackVariableInScope(cstName);
         }
 
         Expression initExpr = cstNode.getExp() != null ? cstNode.getExp().getVexp() : null;
-        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT);
+        checkInitializationType(initExpr, cstType, cstName, KIND_CONSTANT, cstNode);
+
+        // If constant has initialization expression, mark it as initialized
+        if (initExpr != null) {
+            context.markConstantAsInitialized(cstName);
+        }
     }
 
     private void collectLocalArray(TableauNode tableauNode) {
@@ -279,7 +289,7 @@ public class DeclarationCollector {
         String qualifiedName = scopeResolver.qualifyName(arrayName);
         Type arrayType = tableauNode.getType();
 
-        if (checkDuplicateLocal(qualifiedName, arrayName, "array")) {
+        if (checkDuplicateLocal(qualifiedName, arrayName, "array", tableauNode)) {
             context.getSymbolTable().creationSymbol(qualifiedName, 0, arrayType, true); // true = isArray
             trackVariableInScope(arrayName);
         }
@@ -289,15 +299,15 @@ public class DeclarationCollector {
         if (sizeExpr != null) {
             Type sizeType = typeInferenceEngine.inferType(sizeExpr);
             if (sizeType != null && sizeType != Type.ENTIER) {
-                reportError("Array size must be an integer: array '%s' declared with size type '%s'. " +
+                reportError(tableauNode, "Array size must be an integer: array '%s' declared with size type '%s'. " +
                         "Array dimensions must be integer expressions.", arrayName, sizeType);
             }
         }
     }
 
-    private boolean checkDuplicateLocal(String qualifiedName, String name, String kind) {
+    private boolean checkDuplicateLocal(String qualifiedName, String name, String kind, AstNode node) {
         if (context.getSymbolTable().contains(qualifiedName)) {
-            reportError("Duplicate local %s: '%s' has already been declared. " + "Please use a different %s name.", kind, name, kind);
+            reportError(node, "Duplicate local %s: '%s' has already been declared. " + "Please use a different %s name.", kind, name, kind);
             return false;
         }
         return true;

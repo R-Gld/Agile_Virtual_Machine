@@ -3,6 +3,9 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParserBaseVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SourcePosition;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.*;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
@@ -48,6 +51,53 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	private static final Logger logger = LoggerFactory.getLogger(MiniJajaInterpreterVisitor.class);
 
+	private final String fileName;
+
+	/**
+	 * Constructor with file name for source position tracking.
+	 * @param fileName the source file name (may be null)
+	 */
+	public MiniJajaInterpreterVisitor(String fileName) {
+		this.fileName = fileName;
+	}
+
+	/**
+	 * Default constructor (for backward compatibility).
+	 */
+	public MiniJajaInterpreterVisitor() {
+		this(null);
+	}
+
+	/**
+	 * Extract source position from ANTLR parser rule context.
+	 * @param ctx the parser rule context
+	 * @return the source position
+	 */
+	private SourcePosition extractPosition(ParserRuleContext ctx) {
+		if (ctx == null || ctx.getStart() == null) {
+			return new SourcePosition(fileName, 0, 0);
+		}
+		Token startToken = ctx.getStart();
+		return new SourcePosition(
+			fileName,
+			startToken.getLine(),
+			startToken.getCharPositionInLine()
+		);
+	}
+
+	/**
+	 * Attach source position to an AST node.
+	 * @param node the AST node
+	 * @param ctx the parser rule context
+	 * @return the node with position attached
+	 */
+	private <T extends AstNode> T withPosition(T node, ParserRuleContext ctx) {
+		if (node != null) {
+			node.setSourcePosition(extractPosition(ctx));
+		}
+		return node;
+	}
+
 	// ======== CLASS ========
 
 	@Override
@@ -61,7 +111,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		MainNode main = (MainNode) visit(ctx.methmain());
 
 		logger.debug("exit visitClasse: built ClasseNode for '{}'", className);
-		return new ClasseNode(ident, decls, main);
+		return withPosition(new ClasseNode(ident, decls, main), ctx);
 	}
 
 	// ======== DECLARATIONS ========
@@ -72,13 +122,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		// Base case: no more declarations
 		if (ctx.decl() == null) {
 			logger.debug("visitDecls: no declarations (vnil)");
-			return new DeclsNode(); // empty declaration list
+			return withPosition(new DeclsNode(), ctx); // empty declaration list
 		}
 
 		AstNode firstDecl = visit(ctx.decl());
 		DeclsNode nextDecls = (DeclsNode) visit(ctx.decls());
 		logger.debug("exit visitDecls: created DeclsNode");
-		return new DeclsNode(firstDecl, nextDecls);
+		return withPosition(new DeclsNode(firstDecl, nextDecls), ctx);
 	}
 
 	@Override
@@ -113,7 +163,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		VarsNode vars = (VarsNode) visit(ctx.vars());
 		InstructionsNode instructions = (InstructionsNode) visit(ctx.instrs());
 		logger.debug("exit visitMethmain: built MainNode");
-		return new MainNode(vars, instructions);
+		return withPosition(new MainNode(vars, instructions), ctx);
 	}
 
 	// ======== VARIABLES ========
@@ -150,9 +200,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 		// Cas 1 : constante finale
 		if (ctx.FINAL() != null) {
-				return (vexp != null)
+				return withPosition((vexp != null)
 				? new CstNode(type, ident, vexp)
-				: new CstNode(type, ident);
+				: new CstNode(type, ident), ctx);
 		}
 
 		// Cas 2 : tableau (déclaré avec une taille exp)
@@ -162,14 +212,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 				case "boolean" -> Type.BOOLEEN;
 				default -> null;
 			};
-			return new TableauNode(tableauType, ident, (Expression) visit(ctx.exp()));
+			return withPosition(new TableauNode(tableauType, ident, (Expression) visit(ctx.exp())), ctx);
 		}
 
 		// Cas 3 : variable simple
         logger.debug("exit visitVar: created variable node for '{}', type='{}'", ident.getNom(), type);
-		return (vexp != null)
+		return withPosition((vexp != null)
 				? new VarNode(type, ident , vexp)
-				: new VarNode(type, ident);
+				: new VarNode(type, ident), ctx);
 	}
 
 
@@ -177,11 +227,11 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	public AstNode visitVars(MiniJajaParser.VarsContext ctx) {
         logger.debug("enter visitVars: text='{}'", ctx.getText());
 		if (ctx.children == null)
-			return new VarsNode();
+			return withPosition(new VarsNode(), ctx);
 		AstNode firstVar =  visit(ctx.var());
 		VarsNode nextVars = (VarsNode) visit(ctx.vars());
 		logger.debug("exit visitVars: created VarsNode");
-		return new VarsNode(firstVar, nextVars);
+		return withPosition(new VarsNode(firstVar, nextVars), ctx);
 	}
 
 	@Override
@@ -207,7 +257,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		VarsNode vars = (VarsNode) visit(ctx.vars());
 		InstructionsNode instrs = (InstructionsNode) visit(ctx.instrs());
         logger.debug("exit visitMethode: methode='{}' type='{}'", ident.getNom(), typeText);
-		return new MethodeNode(typeMeth, ident, entetes, vars, instrs);
+		return withPosition(new MethodeNode(typeMeth, ident, entetes, vars, instrs), ctx);
 	}
 
 	@Override
@@ -216,13 +266,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		// Base case: no more parameters
 		if (ctx.entete() == null) {
 			logger.debug("visitEntetes: empty entetes");
-			return new EntetesNode(); // empty parameter list
+			return withPosition(new EntetesNode(), ctx); // empty parameter list
 		}
 
 		EnteteNode firstEntete = ctx.entete() != null ? (EnteteNode) visit(ctx.entete()) : null;
 		EntetesNode nextEntetes = ctx.entetes() != null ? (EntetesNode) visit(ctx.entetes()) : new EntetesNode();
 		logger.debug("exit visitEntetes: created EntetesNode");
-		return new EntetesNode(firstEntete, nextEntetes);
+		return withPosition(new EntetesNode(firstEntete, nextEntetes), ctx);
 	}
 	@Override
 	public AstNode visitEntete(MiniJajaParser.EnteteContext ctx) {
@@ -242,7 +292,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		}
 
         logger.debug("exit visitEntete: ident='{}' type='{}'", ident.getNom(), type);
-		return new EnteteNode(ident, type);
+		return withPosition(new EnteteNode(ident, type), ctx);
 	}
 
 
@@ -258,14 +308,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
         logger.debug("enter visitInstrs: text='{}'", ctx.getText());
 
 		if (ctx.instr() == null) {
-			return new InstructionsNode(); // Empty list (Inil)
+			return withPosition(new InstructionsNode(), ctx); // Empty list (Inil)
 		}
 
 		InstructionNode firstInstr = (InstructionNode) visit(ctx.instr());
 
 		InstructionsNode next = (InstructionsNode) visit(ctx.instrs());
 
-		return new InstructionsNode(firstInstr, next);
+		return withPosition(new InstructionsNode(firstInstr, next), ctx);
 	}
 
 	@Override
@@ -280,7 +330,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 					? (InstructionsNode) visit(ctx.instrs(1))
 					: null;
 			logger.debug("visitInstr: IF -> SiNode");
-			return new SiNode(condition, thenBlock, elseBlock);
+			return withPosition(new SiNode(condition, thenBlock, elseBlock), ctx);
 		}
 
 		// WHILE loop
@@ -288,14 +338,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			Expression condition = (Expression) visit(ctx.exp());
 			InstructionsNode loopBody = (InstructionsNode) visit(ctx.instrs(0));
 			logger.debug("visitInstr: WHILE -> TantqueNode");
-			return new TantqueNode(condition, loopBody);
+			return withPosition(new TantqueNode(condition, loopBody), ctx);
 		}
 
 		// RETURN statement
 		if (ctx.RETURN() != null) {
 			Expression returned = (Expression) visit(ctx.exp());
 			logger.debug("visitInstr: RETURN -> RetourNode");
-			return new RetourNode(returned);
+			return withPosition(new RetourNode(returned), ctx);
 		}
 
 
@@ -306,7 +356,7 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
             IdentNode ident =  new IdentNode(ctx.IDENT().getText());
             logger.debug("visitInstr: IDENT -> AppelINode");
 
-            return new AppelINode(ident, listExp);
+            return withPosition(new AppelINode(ident, listExp), ctx);
 
         }
 
@@ -318,14 +368,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
             // Cas 1 : ident1
             if (ctx.ident1() != null) {
                 Expression expr = (Expression) visit(ctx.ident1());
-                return writeln ? new EcrireLnNode(expr) : new EcrireNode(expr);
+                return withPosition(writeln ? new EcrireLnNode(expr) : new EcrireNode(expr), ctx);
             }
 
             // Cas 2 : string literal
             if (ctx.STRING() != null) {
                 String raw = ctx.STRING().getText();
                 String content = raw.substring(1, raw.length() - 1);
-                return writeln ? new EcrireLnNode(content) : new EcrireNode(content);
+                return withPosition(writeln ? new EcrireLnNode(content) : new EcrireNode(content), ctx);
             }
 
             throw new RuntimeException("WRITE sans ident1 ni STRING");
@@ -336,15 +386,15 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			AstNode ident1 = visit(ctx.ident1());
 			if (ctx.EQ() != null) {
 				logger.debug("visitInstr: IDENT + EQ -> AffectationNode");
-				return new AffectationNode(ident1, (Expression) visit(ctx.exp()));
+				return withPosition(new AffectationNode(ident1, (Expression) visit(ctx.exp())), ctx);
 			}
 			if (ctx.SOMME() != null) {
 				logger.debug("visitInstr: IDENT + SOMME -> SommeNode");
-				return new SommeNode(ident1, (Expression) visit(ctx.exp()));
+				return withPosition(new SommeNode(ident1, (Expression) visit(ctx.exp())), ctx);
 			}
 			if (ctx.INCREMENT() != null) {
 				logger.debug("visitInstr: IDENT + INCREMENT -> IncrementNode");
-				return new IncrementNode(ident1);
+				return withPosition(new IncrementNode(ident1), ctx);
 			}
 
 		}
@@ -365,12 +415,12 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			Expression exp1 = (Expression) visit(ctx.exp1());
 			Expression exp = (Expression) visit(ctx.exp());
 			if (ctx.AND() != null)
-				return new AndNode(exp1, exp);
+				return withPosition(new AndNode(exp1, exp), ctx);
 			if (ctx.OR() != null)
-				return new OrNode(exp1, exp);
+				return withPosition(new OrNode(exp1, exp), ctx);
 		}
 		if (ctx.exp1() != null && ctx.NOT() != null)
-			return new NotNode((Expression) visit(ctx.exp1()));
+			return withPosition(new NotNode((Expression) visit(ctx.exp1())), ctx);
 		if (ctx.exp1() != null)
 			return visit(ctx.exp1());
 
@@ -385,9 +435,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			Expression exp1 = (Expression) visit(ctx.exp1());
 			Expression exp2 = (Expression) visit(ctx.exp2());
 			if (ctx.EQQ() != null)
-				return new EqualsNode(exp1, exp2);
+				return withPosition(new EqualsNode(exp1, exp2), ctx);
 			if (ctx.SUP() != null)
-				return new GreaterThanNode(exp1, exp2);
+				return withPosition(new GreaterThanNode(exp1, exp2), ctx);
 		}
 		if (ctx.exp2() != null)
 			return visit(ctx.exp2());
@@ -402,12 +452,12 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			Expression exp2 = (Expression) visit(ctx.exp2());
 			Expression terme = (Expression) visit(ctx.terme());
 			if (ctx.PLUS() != null)
-				return new PlusNode(exp2, terme);
+				return withPosition(new PlusNode(exp2, terme), ctx);
 			if (ctx.MINUS() != null)
-				return new MinusNode(exp2, terme);
+				return withPosition(new MinusNode(exp2, terme), ctx);
 		}
 		if (ctx.terme() != null && ctx.MINUS() != null)
-			return new UnaryMinusNode((Expression) visit(ctx.terme()));
+			return withPosition(new UnaryMinusNode((Expression) visit(ctx.terme())), ctx);
 		if (ctx.terme() != null)
 			return visit(ctx.terme());
         logger.warn("[visitExp2] Unexpected expression: {}", ctx.getText());
@@ -421,9 +471,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			Expression fact = (Expression) visit(ctx.fact());
 			Expression terme = (Expression) visit(ctx.terme());
 			if (ctx.MULT() != null)
-				return new MultiplicationNode(terme, fact);
+				return withPosition(new MultiplicationNode(terme, fact), ctx);
 			if (ctx.DIV() != null)
-				return new DivisionNode(terme, fact);
+				return withPosition(new DivisionNode(terme, fact), ctx);
 		}
 		if (ctx.fact() != null)
 			return visit(ctx.fact());
@@ -442,17 +492,17 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		if (ctx.IDENT() != null) {
 			IdentNode ident = new IdentNode(ctx.IDENT().getText());
 			if (ctx.LENGTH() != null)
-				return new LengthNode(ident);
+				return withPosition(new LengthNode(ident), ctx);
 			if (ctx.listexp() != null)
-				return new AppelENode(ident, (ListExpNode) visit(ctx.listexp()));
+				return withPosition(new AppelENode(ident, (ListExpNode) visit(ctx.listexp())), ctx);
 		}
 
 		if (ctx.exp() != null)
 			return visit(ctx.exp());
 		if (ctx.NBRE() != null)
-			return new NbreNode(Integer.parseInt(ctx.NBRE().getText()));
+			return withPosition(new NbreNode(Integer.parseInt(ctx.NBRE().getText())), ctx);
 		if (ctx.BOOLEAN() != null)
-			return new BoolValueNode(Boolean.parseBoolean(ctx.BOOLEAN().getText()));
+			return withPosition(new BoolValueNode(Boolean.parseBoolean(ctx.BOOLEAN().getText())), ctx);
 
         logger.warn("[visitFact] Unexpected fact node: {}", ctx.getText());
 		return null;
@@ -464,9 +514,9 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		if (ctx.exp() != null) {
 			Expression index = (Expression) visit(ctx.exp());
-			return new TabNode(ident, index);
+			return withPosition(new TabNode(ident, index), ctx);
 		}
-		return ident;
+		return withPosition(ident, ctx);
 	}
 
 	@Override
@@ -474,16 +524,16 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
         logger.debug("enter visitListexp: text='{}'", ctx.getText());
 
 		if (ctx.exp() == null) {
-			return new ListExpNode(null, null); // Nœud "exnil"
+			return withPosition(new ListExpNode(null, null), ctx); // Nœud "exnil"
 		}
 
 		Expression exp = (Expression) visit(ctx.exp());
 
 		if (ctx.listexp() != null) {
 			ListExpNode next = (ListExpNode) visit(ctx.listexp());
-			return new ListExpNode(exp, next);
+			return withPosition(new ListExpNode(exp, next), ctx);
 		}
-		return new ListExpNode(exp, null);
+		return withPosition(new ListExpNode(exp, null), ctx);
 
 	}
 

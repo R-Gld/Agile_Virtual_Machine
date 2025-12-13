@@ -56,12 +56,7 @@ public class CmpAxiome implements JajaAxiome {
         boolean result = Objects.equals(op1.value, op2.value);
 
         // 4. Empilement du résultat
-        ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTempValue(), // Identifiant temporaire
-                result,              // Valeur calculée (true/false)
-                ctx.getTempValue(), // Sorte temporaire
-                Type.BOOLEEN         // Type explicite
-        ));
+        ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
 
         // 5. Log et incrément PC
         logger.debug("\t\tAxiome CMP exécuté: {} == {} = {}", op1.value, op2.value, result);
