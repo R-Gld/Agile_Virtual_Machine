@@ -384,6 +384,7 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setRightAnchor(scroll, 0d);
         this.getChildren().add(scroll);
         initCaretLineHighlight();
+        
 
         // Auto-completion
         codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
