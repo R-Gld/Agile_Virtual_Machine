@@ -1,10 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.slf4j.Logger;
@@ -49,6 +46,9 @@ public class Stacks {
 
         @Override
         public String toString() {
+            if (Objects.equals(ident, "_") && Objects.equals(object, "_")) {
+                return "<" + value + ", " + type + ">";
+            }
             return "<" + ident + ", " + value + ", " + object + ", " + type + ">";
         }
 
