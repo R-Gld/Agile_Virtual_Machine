@@ -66,13 +66,8 @@ public class PushAxiome implements JajaAxiome {
         }
 
         // 2. Création du Quad et Push
-        // Note: pour un push de valeur immédiate, l'ID est souvent une valeur temporaire (oméga)
-        ctx.getStacks().push(new Stacks.Quad(
-                ctx.getTEMP_VALUE(), // Identifiant (souvent vide pour une constante)
-                valeur,              // La valeur parsée
-                ctx.getTEMP_VALUE(), // Sorte (souvent vide)
-                type                 // Le type déduit
-        ));
+        // Note: pour un push de valeur immédiate, utilise le constructeur avec ident="_" (anonyme)
+        ctx.getStacks().push(new Stacks.Quad(valeur, type));
 
         logger.debug("\t\tAxiome PUSH exécuté: {} ({}) poussé sur la pile.", valeur, type);
         ctx.incrementPC();
