@@ -9,10 +9,4 @@ import java.nio.file.Path;
  * @param line the line number
  * @param column the column number
  */
-public record SourcePosition(String fileName, int line, int column) {
-    public SourcePosition {
-        if (fileName != null && !Files.exists(Path.of(fileName))) {
-            throw new IllegalArgumentException("File does not exist: " + fileName);
-        }
-    }
-}
+public record SourcePosition(String fileName, int line, int column) {}
