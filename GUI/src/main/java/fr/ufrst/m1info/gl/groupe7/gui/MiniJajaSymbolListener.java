@@ -14,6 +14,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     private final List<IndexRange> functionRanges = new ArrayList<>();
     private final Set<String> declaredMethodNames = new HashSet<>();
+    private final Set<String> declaredVariableNames = new HashSet<>();
 
     // Inner classes for tracking variables and scopes
     private static class Variable {
@@ -61,6 +62,22 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         int start = token.getStartIndex();
         int stop = token.getStopIndex() + 1;
         scopes.peek().variables.put(name, new Variable(new IndexRange(start, stop)));
+        // record declared variable for autocomplete suggestions
+        declaredVariableNames.add(name);
+    }
+
+    /**
+     * Returns a list of method names declared in the parsed source.
+     */
+    public List<String> getDeclaredMethods() {
+        return new ArrayList<>(declaredMethodNames);
+    }
+
+    /**
+     * Returns a list of variable names declared in the parsed source.
+     */
+    public List<String> getDeclaredVariables() {
+        return new ArrayList<>(declaredVariableNames);
     }
 
     private void markVariableAsUsed(String name) {
@@ -197,4 +214,5 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
             markVariableAsUsed(ctx.IDENT().getText());
         }
     }
+
 }

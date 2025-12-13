@@ -74,4 +74,26 @@ public class TestMiniJajaSymbolListener {
         assertTrue(unusedVars.contains("z"), "Local 'z' should be reported as unused");
         assertTrue(!unusedVars.contains("y"), "Local 'y' should not be reported as unused");
     }
+
+    @Test
+    void testVoidMethodesCallAreReported() {
+        String code = "class C {\n" +
+            "  void foo() {\n" +
+            "    write(\"42\");\n" +
+            "  };\n" +
+            "  main {\n" +
+            "    foo();\n" +
+            "  }\n" +
+            "}";
+
+        MiniJajaSymbolListener listener = walkSource(code);
+
+        List<String> functions = listener.getFunctionStyleRanges().stream()
+            .map(r -> code.substring(r.getStart(), r.getEnd()))
+            .collect(Collectors.toList());
+
+        // 'foo' should be present for declaration and call
+        long fooCount = functions.stream().filter(s -> s.equals("foo")).count();
+        assertEquals(2, fooCount, "Expected two occurrences of 'foo' to be marked (declaration and call)");
+    }
 }
