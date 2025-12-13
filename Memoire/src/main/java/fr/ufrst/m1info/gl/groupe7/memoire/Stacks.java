@@ -654,7 +654,7 @@ public class Stacks {
             return true; // null accepté pour tous types
 
         // Omega (uninitialized value) is accepted for all types
-        if (value == Omega.getInstance())
+        if (value instanceof Omega)
             return true;
 
         if (type == Type.ANY) {
