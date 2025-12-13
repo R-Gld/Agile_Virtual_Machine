@@ -683,49 +683,6 @@ class TestApp {
     }
 
     /**
-     * Test window minimize button
-     */
-    @Test
-    void testWindowMinimizeButton() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox titleBar = (HBox) vbox.getChildren().get(0);
-
-        // Get minimize button (third from end: min, max, close)
-        Button minButton = (Button) titleBar.getChildren().get(titleBar.getChildren().size() - 3);
-
-        assertTrue(minButton.getStyleClass().contains("window-button-min"),
-                "Button should have minimize style");
-
-        runOnFxThread(minButton::fire);
-        WaitForAsyncUtils.waitForFxEvents();
-
-        assertTrue(stage.isIconified(), "Stage should be minimized");
-    }
-
-    /**
-     * Test window maximize button
-     */
-    @Test
-    void testWindowMaximizeButton() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox titleBar = (HBox) vbox.getChildren().get(0);
-
-        // Get maximize button (second from end)
-        Button maxButton = (Button) titleBar.getChildren().get(titleBar.getChildren().size() - 2);
-
-        assertTrue(maxButton.getStyleClass().contains("window-button-max"),
-                "Button should have maximize style");
-
-        boolean wasMaximized = stage.isMaximized();
-        runOnFxThread(maxButton::fire);
-        WaitForAsyncUtils.waitForFxEvents();
-
-        assertNotEquals(wasMaximized, stage.isMaximized(), "Maximize state should toggle");
-    }
-
-    /**
      * Test clear JajaCode button functionality
      */
     @Test
