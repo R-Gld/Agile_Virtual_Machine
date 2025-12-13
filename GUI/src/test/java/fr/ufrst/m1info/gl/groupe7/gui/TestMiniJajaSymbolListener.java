@@ -96,4 +96,7 @@ public class TestMiniJajaSymbolListener {
         long fooCount = functions.stream().filter(s -> s.equals("foo")).count();
         assertEquals(2, fooCount, "Expected two occurrences of 'foo' to be marked (declaration and call)");
     }
+
+            // A 'declaration after instruction' should be caught by the GUI error highlighter
+            // since the grammar does not allow a var declaration after instructions inside a method/main.
 }

@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 
 import javafx.event.Event;
+import javafx.scene.control.Tooltip;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -129,12 +130,16 @@ public class MyCodeArea extends AnchorPane {
         StyleSpans<Collection<String>> errorHighlighting = computeErrorHighlighting(text);
         StyleSpans<Collection<String>> functionHighlighting = computeFunctionHighlighting();
         StyleSpans<Collection<String>> unusedVarHighlighting = computeUnusedVariableHighlighting();
+        StyleSpans<Collection<String>> declAfterInstrHighlighting = computeDeclarationAfterInstructionHighlighting();
+        StyleSpans<Collection<String>> declAfterErrorHighlighting = buildStyleSpansFromRanges(errorDeclaredAfterInstructionRanges, "error", codeArea.getLength());
 
 
         return syntaxHighlighting
                 .overlay(errorHighlighting, this::mergeStyles)
                 .overlay(functionHighlighting, this::mergeStyles)
-                 .overlay(unusedVarHighlighting, this::mergeStyles);
+                 .overlay(unusedVarHighlighting, this::mergeStyles)
+                 .overlay(declAfterInstrHighlighting, this::mergeStyles)
+                 .overlay(declAfterErrorHighlighting, this::mergeStyles);
     }
 
     private Collection<String> mergeStyles(Collection<String> style1, Collection<String> style2) {
@@ -154,9 +159,10 @@ public class MyCodeArea extends AnchorPane {
             org.antlr.v4.runtime.tree.ParseTree tree = parser.classe();
             semanticListener = new MiniJajaSymbolListener();
             org.antlr.v4.runtime.tree.ParseTreeWalker walker = new org.antlr.v4.runtime.tree.ParseTreeWalker();
-            walker.walk(semanticListener, tree);
-        }
-    }
+                walker.walk(semanticListener, tree);
+            
+                }
+            }
 
 
     /**
@@ -179,6 +185,13 @@ public class MyCodeArea extends AnchorPane {
     private StyleSpans<Collection<String>> computeUnusedVariableHighlighting() {
         if (language == Language.MINIJAJA && semanticListener != null) {
             return buildStyleSpansFromRanges(semanticListener.getUnusedVariableRanges(), "unused-variable", codeArea.getLength());
+        }
+        return new StyleSpansBuilder<Collection<String>>().add(Collections.emptyList(), codeArea.getLength()).create();
+    }
+
+    private StyleSpans<Collection<String>> computeDeclarationAfterInstructionHighlighting() {
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            return buildStyleSpansFromRanges(semanticListener.getDeclarationAfterInstructionRanges(), "error", codeArea.getLength());
         }
         return new StyleSpansBuilder<Collection<String>>().add(Collections.emptyList(), codeArea.getLength()).create();
     }
@@ -266,6 +279,7 @@ public class MyCodeArea extends AnchorPane {
     private StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         List<javafx.scene.control.IndexRange> errors = new ArrayList<>();
+        final List<javafx.scene.control.IndexRange> declarationAfterInstructionErrorRanges = new ArrayList<>();
 
         if (language == Language.MINIJAJA) {
             MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
@@ -311,6 +325,20 @@ public class MyCodeArea extends AnchorPane {
             spansBuilder.add(Collections.emptyList(), text.length() - lastEnd);
         }
 
+        // classify some syntax errors as 'declaration after instruction' when they match a TYPE token
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            for (javafx.scene.control.IndexRange e : errors) {
+                String tokenText = text.substring(e.getStart(), Math.min(e.getEnd(), text.length()));
+                boolean isTypeToken = false;
+                for (String t : TYPES) { if (t.equals(tokenText)) { isTypeToken = true; break; } }
+                if ("void".equals(tokenText)) isTypeToken = true;
+                if (isTypeToken && semanticListener.isOffsetInScopeWithInstruction(e.getStart())) {
+                    declarationAfterInstructionErrorRanges.add(e);
+                }
+            }
+            this.errorDeclaredAfterInstructionRanges = declarationAfterInstructionErrorRanges;
+        }
+
         return spansBuilder.create();
     }
 
@@ -321,6 +349,9 @@ public class MyCodeArea extends AnchorPane {
 
     /* Stores all active breakpoints by line index */
     private final Set<Integer> breakpoints = new HashSet<>();
+
+    // Tracks declaration-after-instruction ranges reported by syntax analysis
+    private List<javafx.scene.control.IndexRange> errorDeclaredAfterInstructionRanges = new ArrayList<>();
 
     /**
      * Crée une zone de code MiniJaja avec identifiant donné.
@@ -384,6 +415,49 @@ public class MyCodeArea extends AnchorPane {
         AnchorPane.setRightAnchor(scroll, 0d);
         this.getChildren().add(scroll);
         initCaretLineHighlight();
+
+        Tooltip declTooltip = new Tooltip("Erreur : déclaration après instructions.");
+        declTooltip.getStyleClass().add("decl-tooltip");
+        final javafx.beans.property.ObjectProperty<javafx.scene.control.IndexRange> current = new javafx.beans.property.SimpleObjectProperty<>(null);
+
+        // Show tooltip when hovering over the problematic type token
+        codeArea.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_MOVED, e -> {
+            if (semanticListener == null) {
+                declTooltip.hide();
+                current.set(null);
+                return;
+            }
+            try {
+                int pos = codeArea.hit(e.getX(), e.getY()).getInsertionIndex();
+                javafx.scene.control.IndexRange found = null;
+                // check semantic listener ranges
+                for (javafx.scene.control.IndexRange r : semanticListener.getDeclarationAfterInstructionRanges()) {
+                    if (r.getStart() <= pos && pos < r.getEnd()) {
+                        found = r;
+                        break;
+                    }
+                }
+                // check syntax-derived ranges
+                if (found == null) {
+                    for (javafx.scene.control.IndexRange r : errorDeclaredAfterInstructionRanges) {
+                        if (r.getStart() <= pos && pos < r.getEnd()) {
+                            found = r;
+                            break;
+                        }
+                    }
+                }
+                if (found != null) {
+                    if (current.get() == null || !current.get().equals(found)) {
+                        declTooltip.show(codeArea, e.getScreenX() + 10, e.getScreenY() + 10);
+                        current.set(found);
+                    }
+                } else {
+                    declTooltip.hide();
+                    current.set(null);
+                }
+            } catch (Exception ignored) {
+            }
+        });
 
         // Auto-completion
         codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {

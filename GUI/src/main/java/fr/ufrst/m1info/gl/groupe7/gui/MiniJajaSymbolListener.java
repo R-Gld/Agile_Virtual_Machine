@@ -30,6 +30,8 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         final Map<String, Variable> variables = new HashMap<>();
         int start = -1;
         int end = -1;
+        boolean seenInstruction = false;
+        boolean isMethodOrMainScope = false;
 
         Scope(int start) {
             this.start = start;
@@ -40,16 +42,19 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         final int start;
         final int end;
         final Set<String> variables;
+        final boolean hadInstruction;
 
-        PersistedScope(int start, int end, Set<String> variables) {
+        PersistedScope(int start, int end, Set<String> variables, boolean hadInstruction) {
             this.start = start;
             this.end = end;
             this.variables = variables;
+            this.hadInstruction = hadInstruction;
         }
     }
 
     private final Deque<Scope> scopes = new ArrayDeque<>();
     private final List<IndexRange> unusedVariableRanges = new ArrayList<>();
+    private final List<IndexRange> declarationAfterInstructionRanges = new ArrayList<>();
     private final List<PersistedScope> persistedScopes = new ArrayList<>();
 
 
@@ -61,9 +66,15 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         return unusedVariableRanges;
     }
 
+    public List<IndexRange> getDeclarationAfterInstructionRanges() {
+        return declarationAfterInstructionRanges;
+    }
 
-    private void enterScope(int start) {
-        scopes.push(new Scope(start));
+
+    private void enterScope(int start, boolean isMethodOrMain) {
+        Scope scope = new Scope(start);
+        scope.isMethodOrMainScope = isMethodOrMain;
+        scopes.push(scope);
     }
 
     private void exitScope(int end) {
@@ -76,7 +87,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
             }
         }
         Set<String> vars = new HashSet<>(scope.variables.keySet());
-        persistedScopes.add(new PersistedScope(scope.start, scope.end, vars));
+        persistedScopes.add(new PersistedScope(scope.start, scope.end, vars, scope.seenInstruction));
     }
 
     private void addVariable(String name, org.antlr.v4.runtime.Token token) {
@@ -100,6 +111,15 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
      */
     public List<String> getDeclaredVariables() {
         return new ArrayList<>(declaredVariableNames);
+    }
+
+    public boolean isOffsetInScopeWithInstruction(int offset) {
+        for (PersistedScope ps : persistedScopes) {
+            if (ps.start <= offset && offset < ps.end) {
+                if (ps.hadInstruction) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -170,7 +190,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
             int stop = token.getStopIndex() + 1;
             functionRanges.add(new IndexRange(start, stop));
         }
-        enterScope(ctx.getStart().getStartIndex());
+        enterScope(ctx.getStart().getStartIndex(), true);
     }
 
     @Override
@@ -180,7 +200,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     @Override
     public void enterClasse(MiniJajaParser.ClasseContext ctx) {
-        enterScope(ctx.getStart().getStartIndex());
+        enterScope(ctx.getStart().getStartIndex(), false);
     }
 
     @Override
@@ -190,7 +210,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     @Override
     public void enterMethmain(MiniJajaParser.MethmainContext ctx) {
-        enterScope(ctx.getStart().getStartIndex());
+        enterScope(ctx.getStart().getStartIndex(), true);
     }
 
     @Override
@@ -201,6 +221,17 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
     @Override
     public void enterVar(MiniJajaParser.VarContext ctx) {
         if (ctx.IDENT() != null) {
+            if (!scopes.isEmpty()) {
+                Scope current = scopes.peek();
+                if (current.isMethodOrMainScope && current.seenInstruction) {
+                    if (ctx.TYPE() != null && ctx.TYPE().getSymbol() != null) {
+                        org.antlr.v4.runtime.Token typeToken = ctx.TYPE().getSymbol();
+                        int startType = typeToken.getStartIndex();
+                        int stopType = typeToken.getStopIndex() + 1;
+                        declarationAfterInstructionRanges.add(new IndexRange(startType, stopType));
+                    }
+                }
+            }
             addVariable(ctx.IDENT().getText(), ctx.IDENT().getSymbol());
         }
     }
@@ -214,7 +245,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     @Override
     public void enterInstr(MiniJajaParser.InstrContext ctx) {
-        // Handle assignment as usage
+           // Handle assignment as usage
         if (ctx.ident1() != null && ctx.EQ() != null) {
              markVariableAsUsed(ctx.ident1().IDENT().getText());
         }
@@ -235,6 +266,9 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
                 int stop = token.getStopIndex() + 1;
                 functionRanges.add(new IndexRange(start, stop));
             }
+        }
+        if (!scopes.isEmpty()) {
+            scopes.peek().seenInstruction = true;
         }
     }
 
