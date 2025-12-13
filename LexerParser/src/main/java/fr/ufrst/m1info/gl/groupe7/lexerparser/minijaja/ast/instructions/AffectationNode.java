@@ -95,6 +95,14 @@ public class AffectationNode extends InstructionNode {
     public void interpret(Stacks stacks) {
         if (ident1Node instanceof IdentNode identNode) {
             String varName = identNode.getNom();
+            if (expression instanceof IdentNode TableIdentNode && stacks.getObjectType(TableIdentNode.getNom()).equals("tab"))
+            {
+                String tableName1 = ((IdentNode) identNode).getNom();
+                String tableName2 = TableIdentNode.getNom();
+                stacks.affecterTab(tableName1, tableName2);
+
+                
+            }else{
             Object value = expression.evaluate(stacks);
             
             // Try scoped name first if in method context
@@ -117,6 +125,7 @@ public class AffectationNode extends InstructionNode {
                         valueType, varName, varType));
             }
             stacks.AffecterVal(actualVarName, value);
+            }
         }else if (ident1Node instanceof TabNode tabNode)
         {
          String varName = tabNode.getIdent().getNom();
@@ -135,5 +144,4 @@ public class AffectationNode extends InstructionNode {
 
         }
     }
-
 }
