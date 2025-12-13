@@ -58,7 +58,8 @@ public class PushAxiome implements JajaAxiome {
                 type = Type.ENTIER;
             } catch (NumberFormatException e) {
                 // Si ce n'est ni un booléen ni un entier, c'est 'vide' (omega/nil)
-                valeur = null;
+                // Use Omega singleton instance instead of null for proper constant initialization
+                valeur = fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega.getInstance();
                 type = Type.VOID;
             }
         }
