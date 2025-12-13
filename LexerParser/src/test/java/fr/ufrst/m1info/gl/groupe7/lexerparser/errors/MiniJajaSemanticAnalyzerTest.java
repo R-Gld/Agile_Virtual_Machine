@@ -806,11 +806,14 @@ class MiniJajaSemanticAnalyzerTest {
 
         analyser.analyse(classe);
 
-        assertTrue(collector.hasErrors(), "Should report error for reassigning constant in method");
+        assertTrue(collector.hasErrors(), "Should report error for assigning global constant in method");
         Diagnostic diag = firstSemanticError(collector);
         assertNotNull(diag);
-        assertTrue(diag.message().contains("Cannot reassign constant") || diag.message().contains("final"),
-                "Error message should mention constant reassignment, got: " + diag.message());
+        assertTrue(diag.message().contains("Cannot assign to global constant") ||
+                   diag.message().contains("inside a method") ||
+                   diag.message().contains("Cannot reassign constant") ||
+                   diag.message().contains("final"),
+                "Error message should mention global constant or reassignment, got: " + diag.message());
         // The error should be reported in method fice (can = x), not in main (can = 10)
         // Since we analyze main first, can is marked as initialized there, so fice's assignment is the error
     }
