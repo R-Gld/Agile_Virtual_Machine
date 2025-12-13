@@ -36,6 +36,8 @@ public class TestCodeArea {
         codeAreaWithDefault = new MyCodeArea("testcodeareaWithDefault", "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}");
         stage.setScene(new Scene(new StackPane(codeArea, codeAreaWithDefault), 100, 100));
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
     }
 
     @Test
