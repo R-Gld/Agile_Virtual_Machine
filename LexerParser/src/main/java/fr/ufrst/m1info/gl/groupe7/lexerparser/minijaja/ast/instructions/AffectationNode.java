@@ -112,9 +112,8 @@ public class AffectationNode extends InstructionNode {
                 String valueType = getValueType(value);
                 
                 if (!varType.equals(valueType)) {
-                    throw new RuntimeException(String.format(
-                            "Type error: cannot assign value of type %s to variable %s of type %s",
-                            valueType, varName, varType));
+                    throw new RuntimeException(String.format("Type error:cannot assign value of type %s to variable %s of type %s",
+                        valueType, varName, varType));
                 }
                 stacks.AffecterVal(actualVarName, value);
             }
