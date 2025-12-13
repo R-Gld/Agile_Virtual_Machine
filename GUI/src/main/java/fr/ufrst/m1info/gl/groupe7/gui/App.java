@@ -180,8 +180,10 @@ public class App extends Application {
             if (event.getGestureSource() != root && event.getDragboard().hasFiles()) {
                 // Accept the drop only if one of the files is a .mjj or .jjc file
                 boolean canAccept = event.getDragboard().getFiles().stream()
-                        .anyMatch(file -> file.getName().toLowerCase().endsWith(".mjj") ||
-                                          file.getName().toLowerCase().endsWith(".jjc"));
+                        .anyMatch(file -> {
+                            String name = file.getName().toLowerCase();
+                            return name.endsWith(".mjj") || name.endsWith(".jjc");
+                        });
                 if (canAccept) {
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
                 }
