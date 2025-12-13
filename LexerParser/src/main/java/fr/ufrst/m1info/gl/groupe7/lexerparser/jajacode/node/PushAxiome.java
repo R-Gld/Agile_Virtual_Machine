@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
-import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import fr.ufrst.m1info.gl.groupe7.memoire.omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
