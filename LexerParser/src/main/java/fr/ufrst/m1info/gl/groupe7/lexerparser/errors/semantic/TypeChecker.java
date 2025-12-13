@@ -52,15 +52,17 @@ public class TypeChecker {
      * @param ast the ClasseNode to check
      */
     public void checkTypes(ClasseNode ast) {
-        // Check declared methods
-        checkMethodsInDeclarations(ast.getDeclarations());
-
-        // Check main method, enter main scope
+        // Check main method FIRST to track constant initialization in execution order
+        // This ensures that if a global constant is initialized in main, methods analyzed
+        // afterward will correctly detect reassignment attempts
         context.setCurrentScope(ScopeResolver.MAIN_SCOPE);
         MainNode mainNode = (MainNode) ast.getMethodeMain();
         // Variables already collected in declaration phase, just verify instructions
         checkInstructions(mainNode.getInstrs());
         context.setCurrentScope(ScopeResolver.GLOBAL_SCOPE);  // Return to global scope
+
+        // Check declared methods AFTER main
+        checkMethodsInDeclarations(ast.getDeclarations());
     }
 
     /**
