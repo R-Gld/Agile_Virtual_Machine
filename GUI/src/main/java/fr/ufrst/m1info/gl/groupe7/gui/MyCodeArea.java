@@ -694,7 +694,15 @@ public class MyCodeArea extends AnchorPane {
         List<MenuItem> menuItems = new ArrayList<>();
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
-            item.setOnAction(e -> codeArea.replaceText(finalStart, caretPosition, suggestion));
+            item.setOnAction(e -> {
+                codeArea.replaceText(finalStart, caretPosition, suggestion);
+                int parenIndex = suggestion.indexOf('(');
+                if (parenIndex >= 0) {
+                    codeArea.moveTo(finalStart + parenIndex + 1);
+                } else {
+                    codeArea.moveTo(finalStart + suggestion.length());
+                }
+            });
             menuItems.add(item);
         }
 
@@ -716,6 +724,12 @@ public class MyCodeArea extends AnchorPane {
                         // Use the text from the first item
                         String suggestion = autoCompletionPopup.getItems().get(0).getText();
                         codeArea.replaceText(currentStart, currentCaret, suggestion);
+                        int parenIndex = suggestion.indexOf('(');
+                        if (parenIndex >= 0) {
+                            codeArea.moveTo(currentStart + parenIndex + 1);
+                        } else {
+                            codeArea.moveTo(currentStart + suggestion.length());
+                        }
                     }
                     autoCompletionPopup.hide();
                     event.consume();
@@ -764,11 +778,39 @@ public class MyCodeArea extends AnchorPane {
         // We'll build ordered suggestions: methods first, then scoped variables, then base keywords/types/functions
         java.util.List<String> result = new java.util.ArrayList<>();
         if (language == Language.MINIJAJA) {
+            if (prefix != null) {
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+
+                int idx = start - 1;
+                while (idx >= 0 && Character.isWhitespace(text.charAt(idx))) idx--;
+                int endPrev = idx;
+                while (idx >= 0 && Character.isJavaIdentifierPart(text.charAt(idx))) idx--;
+                int startPrev = idx + 1;
+                String prevToken = (endPrev >= startPrev && startPrev >= 0) ? text.substring(startPrev, endPrev + 1) : "";
+
+                boolean isTypeKeyword = false;
+                for (String t : TYPES) {
+                    if (t.equals(prevToken)) { isTypeKeyword = true; break; }
+                }
+
+                if ("void".equals(prevToken)) isTypeKeyword = true;
+
+                if (isTypeKeyword) {
+                    return result;
+                }
+            }
+
             // 1) methods
             if (semanticListener != null) {
                 for (String mth : semanticListener.getDeclaredMethods()) {
+                    String suggestion = mth + "()";
                     if (prefix == null || mth.startsWith(prefix)) {
-                        result.add(mth);
+                        result.add(suggestion);
                     }
                 }
             }
@@ -815,8 +857,16 @@ public class MyCodeArea extends AnchorPane {
             Collections.addAll(base, BOOLEANS);
 
             for (String b : base) {
-                if ((prefix == null || b.startsWith(prefix)) && !result.contains(b)) {
-                    result.add(b);
+                String suggestion = b;
+                boolean isFunc = false;
+                for (String func : FUNCTIONS) {
+                    if (func.equals(b)) { isFunc = true; break; }
+                }
+                if ("while".equals(b)) isFunc = true;
+                if (isFunc) suggestion = b + "()";
+
+                if ((prefix == null || b.startsWith(prefix)) && !result.contains(suggestion)) {
+                    result.add(suggestion);
                 }
             }
         }

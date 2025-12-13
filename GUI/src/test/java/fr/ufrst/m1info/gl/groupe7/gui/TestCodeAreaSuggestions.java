@@ -59,7 +59,7 @@ public class TestCodeAreaSuggestions {
             try {
                 @SuppressWarnings("unchecked")
                 List<String> suggestionsF = (List<String>) m.invoke(area, "f");
-                assertTrue(suggestionsF.contains("foo"), "Suggestions should contain declared method 'foo'");
+                assertTrue(suggestionsF.contains("foo()"), "Suggestions should contain declared method 'foo()'");
 
                 @SuppressWarnings("unchecked")
                 List<String> suggestionsMy = (List<String>) m.invoke(area, "my");
@@ -68,9 +68,9 @@ public class TestCodeAreaSuggestions {
                 // Check ordering: methods should appear before generic keywords for matching prefixes
                 @SuppressWarnings("unchecked")
                 List<String> suggestionsF2 = (List<String>) m.invoke(area, "f");
-                int idxFoo = suggestionsF2.indexOf("foo");
+                int idxFoo = suggestionsF2.indexOf("foo()");
                 int idxFinal = suggestionsF2.indexOf("final");
-                assertTrue(idxFoo >= 0 && idxFinal >= 0 && idxFoo < idxFinal, "Method 'foo' should be suggested before keyword 'final'");
+                assertTrue(idxFoo >= 0 && idxFinal >= 0 && idxFoo < idxFinal, "Method 'foo()' should be suggested before keyword 'final'");
 
                 // For variables: variables from closest scope should be before generic keywords like 'main'
                 @SuppressWarnings("unchecked")
@@ -96,6 +96,22 @@ public class TestCodeAreaSuggestions {
                         @SuppressWarnings("unchecked")
                         List<String> declSuggestions = (List<String>) m.invoke(area, "my");
                         assertTrue(!declSuggestions.contains("myVar"), "While declaring a variable (after 'int'), existing variable 'myVar' should not be suggested");
+
+                        runOnFxThread(() -> {
+                            try {
+                                var field2 = MyCodeArea.class.getDeclaredField("codeArea");
+                                field2.setAccessible(true);
+                                org.fxmisc.richtext.CodeArea inner2 = (org.fxmisc.richtext.CodeArea) field2.get(area);
+                                inner2.replaceText("class C {\n  int myVar = 0;\n  void foo() { }\n  void ba\n  main { myVar = 1; foo(); }\n}\n");
+                                inner2.moveTo(inner2.getText().indexOf("void ba") + "void ba".length());
+
+                                @SuppressWarnings("unchecked")
+                                List<String> methodDeclSuggestions = (List<String>) m.invoke(area, "ba");
+                                assertTrue(methodDeclSuggestions.isEmpty(), "While declaring a method (after 'void'), there should be no suggestions");
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
