@@ -145,12 +145,12 @@ public class JajaCodeInterpreter implements Runnable {
 
     // === Debug methods for GUI ===
 
-    /**
-     * Capture l'état mémoire complet (pile et tas) pour l'IHM.
-     * À utiliser pendant l'exécution pas à pas.
-     *
-     * @return Un snapshot complet de l'état mémoire, ou null si non initialisé
-     */
+   /**
+    * Capture the full memory state (stack and heap) for the UI.
+    * To be used during step-by-step execution.
+    *
+    * @return A complete snapshot of the memory state, or null if not initialized
+    */
     public JajaCodeDebug.MemorySnapshot captureMemoryState() {
         if (!initialized || stacks == null) {
             return null;
@@ -161,10 +161,10 @@ public class JajaCodeInterpreter implements Runnable {
     }
 
     /**
-     * Récupère les informations d'une variable spécifique.
+     * Returns information about a specific variable.
      *
-     * @param identifier L'identifiant de la variable (ex: "x@global")
-     * @return VariableInfo ou null si non trouvée
+     * @param identifier The variable identifier (e.g., "x@global")
+     * @return VariableInfo or null if not found
      */
     public JajaCodeDebug.VariableInfo getVariableInfo(String identifier) {
         if (!initialized || stacks == null) {
@@ -174,11 +174,11 @@ public class JajaCodeInterpreter implements Runnable {
     }
 
     /**
-     * Récupère la valeur d'une variable.
-     *
-     * @param identifier L'identifiant de la variable
-     * @return La valeur ou null
-     */
+         * Retrieves the value of a variable.
+         *
+         * @param identifier The variable identifier (e.g., "x@global")
+         * @return The value or null if not found
+         */
     public Object getVariableValue(String identifier) {
         if (!initialized || stacks == null) {
             return null;
@@ -186,12 +186,12 @@ public class JajaCodeInterpreter implements Runnable {
         return JajaCodeDebug.getVariableValue(stacks, identifier);
     }
 
-    /**
-     * Récupère les informations d'un tableau, incluant ses éléments.
-     *
-     * @param arrayIdentifier L'identifiant du tableau
-     * @return HeapInfo ou null si non trouvé
-     */
+   /**
+    * Retrieves information about an array, including its elements.
+    *
+    * @param arrayIdentifier The identifier of the array
+    * @return HeapInfo or null if not found
+    */
     public JajaCodeDebug.HeapInfo getArrayInfo(String arrayIdentifier) {
         if (!initialized || stacks == null) {
             return null;
@@ -207,6 +207,4 @@ public class JajaCodeInterpreter implements Runnable {
     public Stacks getStacks() {
         return stacks;
     }
-
-    // === End of added methods ===
 }

@@ -46,14 +46,14 @@ public class JajaCodeDebug {
         }
 
     /**
-     * Représente une entrée du tas (heap) pour les tableaux.
+     * Represents a heap entry for arrays.
      *
      * @param identifier    Array name
-     * @param baseAddress   Adresse de base dans le tas
-     * @param size          Taille logique du tableau
-     * @param allocatedSize Taille allouée (peut être plus grande - buddy system)
-     * @param elementType   Type des éléments
-     * @param elements      Valeurs des éléments
+     * @param baseAddress   Base address in the heap
+     * @param size          Logical size of the array
+     * @param allocatedSize Allocated size (may be larger - buddy system)
+     * @param elementType   Type of elements
+     * @param elements      Values of the elements
      */
         public record HeapInfo(String identifier, int baseAddress, int size, int allocatedSize, Type elementType,
                                List<Object> elements) {
@@ -65,14 +65,14 @@ public class JajaCodeDebug {
         }
 
     /**
-     * Snapshot complet de l'état mémoire à un instant donné.
+     * Complete snapshot of the memory state at a given moment.
      *
-     * @param programCounter     Adresse de l'instruction courante
-     * @param currentInstruction Texte de l'instruction courante
-     * @param stackState         État de la pile
-     * @param heapState          État du tas
-     * @param currentContext     Contexte d'exécution (méthode ou null)
-     * @param recursionDepth     Profondeur de récursion
+     * @param programCounter     Address of the current instruction
+     * @param currentInstruction Text of the current instruction
+     * @param stackState         State of the stack
+     * @param heapState          State of the heap
+     * @param currentContext     Execution context (method name or null)
+     * @param recursionDepth     Recursion depth
      */
         public record MemorySnapshot(int programCounter, String currentInstruction, List<VariableInfo> stackState,
                                      List<HeapInfo> heapState, String currentContext, int recursionDepth) {
@@ -128,12 +128,12 @@ public class JajaCodeDebug {
     // ========================================================================
 
     /**
-     * Capture l'état mémoire complet à l'adresse courante.
+     * Capture the complete memory state at the current address.
      *
-     * @param stacks             L'instance Stacks de l'interpréteur
-     * @param programCounter     L'adresse de l'instruction courante (PC)
-     * @param currentInstruction Le texte de l'instruction courante
-     * @return Un snapshot complet de l'état mémoire
+     * @param stacks             The interpreter's Stacks instance
+     * @param programCounter     Address of the current instruction (PC)
+     * @param currentInstruction Text of the current instruction
+     * @return A complete snapshot of the memory state
      */
     public static MemorySnapshot captureMemoryState(Stacks stacks, int programCounter, String currentInstruction) {
         List<VariableInfo> stackState = captureStackState(stacks);
@@ -144,12 +144,12 @@ public class JajaCodeDebug {
         return new MemorySnapshot(programCounter, currentInstruction, stackState, heapState, context, recursionDepth);
     }
 
-    /**
-     * Capture l'état de la pile uniquement.
-     *
-     * @param stacks L'instance Stacks
-     * @return Liste des VariableInfo du sommet vers le bas
-     */
+   /**
+    * Capture only the stack state.
+    *
+    * @param stacks The Stacks instance
+    * @return List of VariableInfo from top to bottom of the stack
+    */
     public static List<VariableInfo> captureStackState(Stacks stacks) {
         List<VariableInfo> result = new ArrayList<>();
         List<Stacks.Quad> quads = stacks.getStackFromTopToBottom();
@@ -205,11 +205,11 @@ public class JajaCodeDebug {
     }
 
     /**
-     * Récupère les informations d'une variable spécifique par son identifiant.
+     * Retrieves information about a specific variable by its identifier.
      *
-     * @param stacks     L'instance Stacks
-     * @param identifier L'identifiant de la variable (ex: "x@global")
-     * @return VariableInfo ou null si non trouvée
+     * @param stacks     The Stacks instance
+     * @param identifier The variable identifier (e.g., "x@global")
+     * @return VariableInfo or null if not found
      */
     public static VariableInfo getVariableInfo(Stacks stacks, String identifier) {
         Stacks.Quad q = stacks.findQuad(identifier);
@@ -224,23 +224,23 @@ public class JajaCodeDebug {
     }
 
     /**
-     * Récupère la valeur d'une variable par son identifiant.
+     * Retrieves the value of a variable by its identifier.
      *
-     * @param stacks     L'instance Stacks
-     * @param identifier L'identifiant de la variable
-     * @return La valeur ou null si non trouvée
+     * @param stacks     The Stacks instance
+     * @param identifier The variable identifier
+     * @return The value or null if not found
      */
     public static Object getVariableValue(Stacks stacks, String identifier) {
         return stacks.getValue(identifier);
     }
 
-    /**
-     * Récupère toutes les variables d'un scope spécifique.
-     *
-     * @param stacks L'instance Stacks
-     * @param scope  Le scope à filtrer (ex: "global", "fact@int")
-     * @return Liste des variables dans ce scope
-     */
+   /**
+    * Retrieves all variables from a specific scope.
+    *
+    * @param stacks The Stacks instance
+    * @param scope  The scope to filter (e.g., "global", "fact@int")
+    * @return List of variables in that scope
+    */
     public static List<VariableInfo> getVariablesInScope(Stacks stacks, String scope) {
         List<VariableInfo> result = new ArrayList<>();
         List<Stacks.Quad> quads = stacks.getStackFromTopToBottom();
