@@ -6,7 +6,8 @@ import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.MiniJajaSemanticAnalyzer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SemanticException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
@@ -75,7 +76,11 @@ public class MiniJajaInterpreter implements Runnable {
             semanticAnalyser.analyse(classNode);
 
             if (collector.hasErrors()) {
-                throw new SyntaxException(collector);
+                if (collector.hasSemanticErrors()) {
+                    throw new SemanticException(collector);
+                } else {
+                    throw new SyntaxException(collector);
+                }
             }
             logger.info("Analyse sémantique réussie - aucune erreur détectée");
         }

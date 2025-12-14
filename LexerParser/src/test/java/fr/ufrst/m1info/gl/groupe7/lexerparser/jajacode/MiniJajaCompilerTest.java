@@ -1,6 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode;
 
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
