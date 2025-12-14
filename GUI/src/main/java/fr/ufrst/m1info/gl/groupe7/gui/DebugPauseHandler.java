@@ -3,17 +3,22 @@ package fr.ufrst.m1info.gl.groupe7.gui;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import javafx.collections.ObservableList;
 
 public class DebugPauseHandler {
     private Status status;
-    private Debug debugWalker;
+    private final Debug debugWalker;
+    private ObservableList<StackModel> memoryList;
 
-    public DebugPauseHandler(Debug debugWalker){
+    public DebugPauseHandler(Debug debugWalker,  ObservableList<StackModel> memoryList) {
         this.status = Status.WAITING;
         this.debugWalker = debugWalker;
+        this.memoryList = memoryList;
     }
 
     public boolean handlePause(int line, AstNode node, Stacks stacks) {
+        updateStack(stacks);
+        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         while (debugWalker.isPaused()) {
             switch (status) {
                 case WAITING:
@@ -30,6 +35,10 @@ public class DebugPauseHandler {
             }
         }
         return true;
+    }
+
+    public void updateStack(Stacks stacks) {
+        stacks.printStack();
     }
 
     public void updateStatus(Status status) {

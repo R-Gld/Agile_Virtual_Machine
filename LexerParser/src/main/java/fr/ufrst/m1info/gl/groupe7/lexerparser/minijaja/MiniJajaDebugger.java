@@ -26,10 +26,11 @@ public class MiniJajaDebugger implements Runnable {
     private DiagnosticCollector collector;
     private final HandlePauseCallback callback;
 
-    public MiniJajaDebugger(String input, DiagnosticCollector collector, HandlePauseCallback callback) {
+    public MiniJajaDebugger(String input, DiagnosticCollector collector, HandlePauseCallback callback, Debug debug) {
         this.stacks = new Stacks();
-        this.debug = new Debug();
+        this.debug = debug;
         this.callback = callback;
+        this.input = input;
     }
     
     @Override

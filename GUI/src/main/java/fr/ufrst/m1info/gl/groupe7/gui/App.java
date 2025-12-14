@@ -68,6 +68,9 @@ public class App extends Application {
     Debug mjjDebugWalker;
     MiniJajaDebugger mjjDebugger;
 
+    // List of element in memory to show to gui
+    ObservableList<StackModel> memoryList;
+
     /**
      * Console used to display messages (debug, info, errors)
      */
@@ -107,7 +110,7 @@ public class App extends Application {
     public void start(Stage stage) {
         appStage = stage;
         mjjDebugWalker = new Debug();
-        mjjPauseHandler = new DebugPauseHandler(mjjDebugWalker);
+        mjjPauseHandler = new DebugPauseHandler(mjjDebugWalker, memoryList);
 
         // Structure de l'interface :
         BorderPane root = new BorderPane();
@@ -182,9 +185,9 @@ public class App extends Application {
         // Setup memory table view
         ScrollPane  scrollPane = new ScrollPane();
         TableView<StackModel> tableView = new TableView<StackModel>();
-        ObservableList<StackModel> list = FXCollections.observableArrayList();
+        memoryList = FXCollections.observableArrayList();
 
-        tableView.setItems(list);
+        tableView.setItems(memoryList);
 
         // Setup memory table column
         TableColumn<StackModel, Integer> address = new TableColumn<>("address");
@@ -715,9 +718,7 @@ public class App extends Application {
         continueButton.setDisable(false);
 
         MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        if (debugSource == DebugSource.MINIJAJA) {
-            mjjDebugger = new MiniJajaDebugger(currentArea.getText(), new DiagnosticCollector(), mjjPauseHandler::handlePause);
-        }
+
         debugBreakpoints.clear();
         debugBreakpoints.addAll(currentArea.getBreakpoints());
 
@@ -763,6 +764,45 @@ public class App extends Application {
             }
             currentArea.highlightLine(debugCurrentLine);
         }
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                try {
+                    if (debugSource == DebugSource.MINIJAJA) {
+                        mjjDebugWalker.enable();
+                        mjjDebugger = new MiniJajaDebugger(text, new DiagnosticCollector(), mjjPauseHandler::handlePause, mjjDebugWalker);
+                        mjjDebugger.run();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
+            if (console != null) {
+                if (debugSource == DebugSource.MINIJAJA) {
+                    console.printMessage("MiniJaja debug ended.");
+                } else {
+                    console.printMessage("JajaCode debug ended.");
+                }
+            }
+        });
+
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
+            if (console != null) {
+                console.printMessage("Execution failed: " + ex.getMessage());
+            }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur d'exécution");
+            alert.setHeaderText("Une erreur est survenue pendant l'exécution");
+            alert.setContentText(ex.toString());
+            alert.showAndWait();
+        });
+
+        executor.submit(task);
     }
 
     /**
