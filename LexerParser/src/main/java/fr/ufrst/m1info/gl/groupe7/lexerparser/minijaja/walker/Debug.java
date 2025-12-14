@@ -178,9 +178,7 @@ public class Debug {
                 }
                 case "q", "quit", "exit" -> {
                     // Quit debugging
-                    logger.debug(" Debug session ended.");
-                    mode = Mode.DISABLED;
-                    paused = false;
+                    stop();
                     scanner.close();
                     return false; // Signal to stop execution
                 }
@@ -223,11 +221,15 @@ public class Debug {
         logger.debug("═".repeat(60));
     }
     
-   
-    
     private String truncate(String str, int maxLen) {
         if (str.length() <= maxLen) return str;
         return str.substring(0, maxLen - 3) + "...";
+    }
+
+    public void stop() {
+        logger.debug(" Debug session ended.");
+        mode = Mode.DISABLED;
+        paused = false;
     }
 
     // ==================== LISTENER ====================
