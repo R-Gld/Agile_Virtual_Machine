@@ -6,6 +6,7 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.decls.DeclsNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.ident.IdentNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rDeclrs;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rClass;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
@@ -16,6 +17,7 @@ public class ClasseNode extends AstNode {
     private final DeclsNode declarations;
     private final AstNode methodeMain;
     private final rDeclrs rdeclrs;
+    private final rClass rclass;
 
     public ClasseNode(IdentNode ident, DeclsNode declarations, AstNode methodeMain) {
         this.varClasse = ident.getNom();
@@ -23,6 +25,8 @@ public class ClasseNode extends AstNode {
         this.declarations = declarations;
         this.methodeMain = methodeMain;
         this.rdeclrs = new rDeclrs(declarations);
+        this.rclass = new rClass(varClasse);
+
     }
 
     public String getVarClasse() {
@@ -51,9 +55,9 @@ public class ClasseNode extends AstNode {
     @Override
     public Iterable<AstNode> getChildren() {
         if (declarations != null) {
-            return List.of(ident, declarations, methodeMain, rdeclrs);
+            return List.of(ident, declarations, methodeMain, rdeclrs, rclass);
         } else {
-            return List.of(ident, methodeMain);
+            return List.of(ident, methodeMain, rclass);
         }
     }
 
