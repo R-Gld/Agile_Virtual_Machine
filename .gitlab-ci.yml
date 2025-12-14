@@ -59,6 +59,7 @@ build:
 
 build-rapport:
   stage: build
+  image: ghcr.io/r-gld/maven-with-texlive:latest
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_TAG
@@ -66,12 +67,12 @@ build-rapport:
     - if: $CI_COMMIT_BRANCH == 'dev'
   before_script:
     - chmod +x settings.sh && ./settings.sh
-    - apk add --no-cache texlive-full
   script:
     - mvn -pl 'Rapport' clean compile
+    - cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
   artifacts:
     paths:
-      - Rapport/target/latex/rapport_principal.pdf
+      - rapport_principal.pdf
     name: "rapport-${CI_COMMIT_SHORT_SHA}"
     expire_in: 1 week
   allow_failure: true

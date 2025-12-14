@@ -1,0 +1,46 @@
+\section{Sujet}
+
+Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, intégrant les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
+
+Le système articule un langage source impératif et typé (MiniJaja) avec un langage cible orienté pile (JajaCode).\\
+
+Le projet ne se limite pas seulement à de la traduction syntaxique, l'enjeu était de pouvoir concevoir un langage, le compiler et observer les états mémoires de ce dernier en l'interprétant. Conformément au cahier des charges, l'objectif est de garantir la commutativité du diagramme de concordance : l'interprétation directe du code source doit produire un état mémoire final strictement identique à celui obtenu après sa compilation et son exécution.\\
+
+Le projet intègre donc une gestion de la mémoire, orchestrant l'allocation dynamique dans le Tas (Heap) et l'empilement des contextes dans la Pile (Stack).\\
+
+Mémoire qui peut être visualisé au sein d'une interface graphique via le mode `debug`, en consultant ainsi pas à pas un programme Minijaja ou Jajacode.\\
+
+Pour répondre à ce projet, l'architecture logicielle repose sur l'outil ANTLR et le design pattern visiteur. La fiabilité de l'ensemble est assurée par une stratégie de tests unitaires et d'intégration, menée dans le cadre d'une méthodologie Agile.
+
+\subsection{ANTLR vs JavaCC}
+
+Le choix technique de l'outil d'analyse syntaxique s'est porté sur ANTLR, en alternative à JavaCC suggéré par le sujet. Ce choix a été motivé par le simple fait du confort de l'outil qui nous paressait plus abordable que JavaCC niveau implémentation au sein de l'architecture.
+
+\subsection{Architecture}
+
+Le projet se découpe en plusieurs modules, nous en parleront plus en détail dans une autre partie, mais les voici :
+
+\subsubsection{LexerParser}
+
+Contient les grammaires Minijaja et Jajacode, ce module est le module central du projet, c'est ici que nous visitons notre arbre généré par ANTLR et que nous découlons :
+
+\begin{itemize}
+    \item L'interprétation Minijaja
+    \item La compilation Minijaja en Jajacode
+    \item L'interprétation jajacode
+\end{itemize}
+
+C'est au sein de ce module où l'on réalise aussi la gestion des erreurs, le `TypeChecking`.
+Concernant la gestion des erreurs, ce module implémente une stratégie de collecte centralisée (via un DiagnosticCollector). Plutôt que d'arrêter la compilation à la première faute, le système tente de récupérer le contexte pour rapporter un maximum d'erreurs syntaxiques et sémantiques à l'utilisateur en une seule passe
+
+\subsubsection{Mémoire}
+
+Ce module, comme son nom l'indique gère les états mémoires des programmes à savoir la pile (`Stack`), qui gère les contextes d'exécution (`Scopes`) et les variables nous avons aussi le tas (`Heap`) qui gère l'allocation dynamique des tableaux. Ainsi que la table des symboles qui assure le lien entre les identifiants et leurs adresses ou valeurs.
+
+\subsubsection{GUI}
+
+L'interface graphique, réalisée en JavaFX, joue le rôle de contrôleur. Elle orchestre les appels aux différents modules.
+
+C'est ici que l'on peut donc coder en Minijaja et l'exploiter.
+
+Au-delà de son rôle d'orchestrateur technique, cette interface constitue le point de validation du projet. Nous allons à présent démontrer comment elle permet de répondre point par point aux contraintes fonctionnelles imposées par le sujet.

@@ -1,0 +1,40 @@
+\section{Rétrospective de conduite de projet}
+
+\subsection{Gestion de la dette technique}
+
+La nécessité de tenir les délais de la livraison intermédiaire nous a conduits à adopter une approche pragmatique, privilégiant parfois la fonctionnalité immédiate du code au détriment de sa structure interne. Cette stratégie a inévitablement généré une dette technique, se manifestant initialement par une délimitation parfois imprécise des responsabilités entre les différents modules.\\
+
+En conséquence, une part significative de l'effort de développement, particulièrement lors des derniers sprints, a dû être réorientée vers le \textit{refactoring} et la consolidation de l'existant. Des opérations de maintenance structurelle, telles que la transition de chaînes de caractères vers des énumérations pour la gestion des types ou la réorganisation continue des fichiers sources JajaCode, se sont révélées plus coûteuses que prévu.\\
+
+Ce travail de nettoyage, bien qu'indispensable pour garantir la pérennité du projet, a ponctuellement engendré des instabilités et des régressions sur des fonctionnalités auparavant opérationnelles. Avec du recul, une vigilance accrue sur l'analyse statique du code et une communication technique plus dense en amont de l'implémentation auraient permis de limiter ces itérations correctives et de stabiliser l'architecture plus tôt dans le cycle de vie du projet
+
+\subsubsection{Critique de l'adaptation Agile}
+
+L'application du cadre méthodologique Scrum s'est heurtée à la réalité opérationnelle de l'équipe, nécessitant des ajustements notables par rapport à la théorie. Nous avons constaté, particulièrement durant la première moitié du développement, une dérive vers une fréquence de réunions excessive sur Discord. Ces points de synchronisation, initialement prévus pour fluidifier l'information, se sont révélés chronophages et ont parfois manqué d'efficacité décisionnelle, confirmant l'adage selon lequel l'abus de réunions nuit à la productivité réelle.\\
+
+Parallèlement, le suivi formel des tâches a souffert d'un manque de rigueur dans l'utilisation des outils de gestion. La définition des tickets sous Jira et, plus spécifiquement, l'estimation de leur complexité via l'attribution de points d'effort, sont restées approximatives. Cette lacune a rendu difficile l'évaluation précise de la vélocité de l'équipe au fil des sprints. Toutefois, malgré ces imperfections dans l'application des rituels et du formalisme, la structure itérative imposée par la méthode a joué son rôle de garde-fou. Elle a permis de maintenir une dynamique de travail constante et de livrer un produit fonctionnel, démontrant que la réussite du projet a reposé davantage sur l'engagement de l'équipe que sur le respect scrupuleux des processus administratifs.\newline
+
+De plus, nos estimations n'ont pas suffisamment intégré la courbe d'apprentissage  inhérente aux technologies imposées. La maîtrise d'ANTLR et du patron Visiteur a nécessité un temps d'appropriation qui n'était pas reflété dans les tickets initiaux. L'intégration de tâches d'exploration technique en début de projet aurait permis de rendre le planning plus réaliste.
+
+\subsubsection{Leçons apprise : Si c'était à refaire}
+
+L'analyse post-mortem du projet, structurée selon la matrice \textit{Keep/Drop/Start}, permet de dégager des axes de consolidation et d'amélioration pour de futurs développements.\\
+
+Au chapitre des acquis à conserver \textit{Keep}, l'infrastructure d'intégration continue (\textit{CI/CD}) mise en place sur GitLab s'est révélée être la pierre angulaire de la qualité technique du projet. L'automatisation des tests et l'imposition d'un seuil de couverture de code minimal de 80\% avant toute fusion de branche (\textit{Merge Request}) ont considérablement sécurisé le code et limité les régressions.\\
+
+De même, nous conserverions notre stratégie de gestion de branches (\textit{Task/Feature Branching}). Cette rigueur dans le découpage des développements a permis d'isoler les fonctionnalités et de limiter les conflits de fusion à des cas marginaux, fluidifiant ainsi le travail parallèle.\\
+
+À l'inverse, certaines pratiques de communication demanderaient à être abandonnées (\textit{Drop}). La multiplication des réunions synchrones sur Discord, souvent organisées sans ordre du jour strict, s'est avérée contre-productive. Cette surabondance d'échanges informels a eu tendance à diluer l'information et à consommer du temps de développement, là où une communication asynchrone structurée aurait été plus efficace.\\
+
+Pour l'avenir, de nouvelles pratiques devraient être initiées (\textit{Start}). D'un point de vue technique, il serait crucial d'étendre la couverture de test au-delà des seuls tests unitaires vers des tests de plus haut niveau (intégration et système) et de renforcer la rigueur des analyses statiques lors des revues de code.\\
+
+Au-delà de l'analyse statique automatique, nous devrions élever le niveau d'exigence des revues de code humaines (\textit{Peer Review}). Trop souvent, les \textit{Merge Requests} ont été validées "sur la forme" (syntaxe, compilation réussie) plutôt que "sur le fond" (logique métier, impact architectural), laissant passer des erreurs de conception que l'intégration continue ne pouvait pas détecter.\\
+
+D'un point de vue humain et organisationnel, une vigilance accrue sur la répartition de la charge de travail est nécessaire. Le projet a souffert de disparités d'investissement au sein du groupe qui, malgré l'accompagnement proposé, ont ralenti la progression globale ; une identification et un traitement plus précoces de ces situations auraient été bénéfiques. De même, la systématisation des rétrospectives de sprint, parfois négligées, est indispensable pour ne pas "avancer à l'aveugle" et adapter le processus en temps réel.\\
+
+De plus, il est impératif de briser les silos de connaissances pour résoudre le "problème de l'expert". Le manque de temps pour la formation croisée a fait que certains modules n'étaient maîtrisés que par un nombre restreint de membres (parfois un seul), créant une dépendance critique (dette de connaissance).
+\newline
+
+Nous adopterions une approche \textit{Contract-First} plus systématique. Plutôt que d'attendre l'implémentation effective des modules dépendants (par exemple, attendre que le Contrôle de Type soit terminé pour avancer sur la Compilation), nous aurions dû définir les interfaces Java en amont et utiliser des bouchons (\textit{Mocks}). Cela aurait permis de paralléliser le développement des différentes briques sans blocage séquentiel.\\
+
+Enfin, il convient de souligner que la rigidité des sprints de deux semaines s'est parfois heurtée aux réalités du rythme académique (examens, autres rendus). Une adaptation plus souple du cadre Scrum aurait permis de mieux lisser la charge. En conclusion, bien que le projet ait rencontré des frictions, majoritairement liées au facteur humain inhérent à tout travail d'équipe, le bilan global demeure positif. L'équipe a su livrer un produit fonctionnel en surmontant ces aléas, transformant les difficultés rencontrées en expérience formatrice de gestion de projet.\\

@@ -207,6 +207,13 @@
     -fx-font-size: 11px;
 }
 
+.theme-light .tooltip.decl-tooltip {
+    -fx-background-color: #fff4e6; /* light peach */
+    -fx-text-fill: #111111;
+    -fx-background-radius: 4;
+    -fx-border-color: #ffd2a8;
+}
+
 
 .theme-light #console {
     -fx-background-color: #f7f8fb;
@@ -644,6 +651,13 @@
     -fx-padding: 4 8 4 8;
     -fx-background-radius: 3;
     -fx-font-size: 11px;
+}
+
+.theme-dark .tooltip.decl-tooltip {
+    -fx-background-color: #2b2b36; /* dark gray */
+    -fx-text-fill: #f8f8f8;
+    -fx-background-radius: 4;
+    -fx-border-color: #444452;
 }
 
 
