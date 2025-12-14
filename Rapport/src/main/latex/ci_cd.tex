@@ -63,6 +63,7 @@ Le script \texttt{settings.sh} génère automatiquement le fichier \texttt{.sett
 
 \paragraph{Variables d'environnement}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Variables Maven]
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
@@ -139,6 +140,7 @@ Variables vérifiées :
 
 \paragraph{Job build}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job de build]
 build:
   stage: build
@@ -161,6 +163,7 @@ Ce job :
 
 \paragraph{Job test}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job de test]
 test:
   stage: test
@@ -218,6 +221,7 @@ Ce job :
 
 \paragraph{Job package}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job de package]
 package:
   stage: package
@@ -242,6 +246,7 @@ Ce job :
 
 \paragraph{Job sonarqube-check}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job d'analyse SonarQube]
 sonarqube-check:
   stage: sonarqube-check
@@ -273,6 +278,7 @@ Ce job :
 
 \paragraph{Job deploy}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job de deploiement Nexus]
 deploy:
   stage: deploy
@@ -433,6 +439,7 @@ Caractéristiques :
 
 \paragraph{Repository des snapshots}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Configuration du repository snapshots]
 <snapshotRepository>
     <id>nexus-deptinfo-snapshots</id>
@@ -484,6 +491,7 @@ Les credentials sont stockés en tant que variables d'environnement sécurisées
 
 \paragraph{Configuration maven-release-plugin}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Configuration du plugin release]
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
@@ -562,6 +570,7 @@ Options importantes :
 
 \paragraph{Plugin sonar-maven-plugin}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Plugin SonarQube Maven]
 <plugin>
     <groupId>org.sonarsource.scanner.maven</groupId>
