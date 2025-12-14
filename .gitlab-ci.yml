@@ -22,7 +22,7 @@ default:
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp -s .settings.xml --fail-at-end"
-  MAVEN_CLI_OPTS: "${MAVEN_CLI_OPTS_SINGLE_THREAD} -T 1C"
+  MAVEN_CLI_OPTS: "${MAVEN_CLI_OPTS_SINGLE_THREAD} -T 1C -pl '!Rapport'"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -55,7 +55,26 @@ build:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} clean compile
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+
+build-rapport:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add --no-cache texlive
+  script:
+    - mvn -pl 'Rapport' clean compile
+  artifacts:
+    paths:
+      - Rapport/target/latex/rapport_principal.pdf
+    name: "rapport-${CI_COMMIT_SHORT_SHA}"
+    expire_in: 1 week
+
 
 test:
   stage: test
