@@ -129,7 +129,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         else if (ctx.WRITELN() != null) dispatch(JajaCodeInstr.WRITELN);
         else if (ctx.RETURN() != null) dispatch(JajaCodeInstr.RETURN);
 
-        // 2. Instructions avec VALEUR
+            // 2. Instructions avec VALEUR
         else if (ctx.PUSH() != null) {
             // On extrait le texte brut ("5", "true", "x")
             String valText = ctx.valeur().getText();
@@ -173,16 +173,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
-    private void dispatch(JajaCodeInstr command) { dispatch(command, null); }
+    private void dispatch(JajaCodeInstr command) {
+        dispatch(command, null);
+    }
 
-    // Helper pour exécuter un axiome
+    // Helper to execute an axiom
     private void dispatch(JajaCodeInstr command, String arg) {
         JajaAxiome axiome = axiomes.get(command);
         if (axiome != null) {
             try {
                 axiome.execute(context, arg);
             } catch (JajaCodeRuntimeException e) {
-                logger.error("\nERREUR D'EXÉCUTION JAJACODE:");
+                logger.error("\nJAJACODE EXECUTION ERROR:");
                 logger.error(e.getMessage());
                 logger.error("");
 
@@ -191,12 +193,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 throw e;
             }
         } else {
-            logger.error("Axiome non implémenté : {}", command);
-            context.incrementPC(); // Pour éviter boucle infinie
+            logger.error("Axiom not implemented: {}", command);
+            context.incrementPC(); // To avoid infinite loop
         }
     }
 
-    // Gestion spécifique pour NEW (concaténation des args)
+    // Specific handling for NEW (argument concatenation)
     private void handleNew(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "void";
@@ -205,19 +207,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         logger.debug("\t\t[DEBUG handleNew] ident={}, type={}, sorte={}, depth={}", ident, type, sorte, depth);
 
-        // On pack les arguments pour l'interface générique (ident,type,sorte,depth)
+        // Pack arguments for generic interface (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
         dispatch(JajaCodeInstr.NEW, packedArgs);
     }
 
-    // Gestion spécifique pour NEWARRAY (concaténation des args: ident,type)
+    // Specific handling for NEWARRAY (argument concatenation: ident,type)
     private void handleNewarray(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "int";
 
         logger.debug("\t\t[DEBUG handleNewarray] ident={}, type={}", ident, type);
 
-        // On pack les arguments pour l'interface générique (ident,type)
+        // Pack arguments for generic interface (ident,type)
         String packedArgs = ident + "," + type;
         dispatch(JajaCodeInstr.NEWARRAY, packedArgs);
     }
@@ -249,7 +251,7 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         JajaCodeParser.InstrContext instruction = programme.get(pc);
 
         if (instruction == null) {
-            logger.error("Erreur : @{} introuvable !", pc);
+            logger.error("Error: @{} not found!", pc);
             context.stop();
             return false; // Program finished (error case)
         }
@@ -266,6 +268,20 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     public int getCurrentInstructionIndex() {
         return context.getInstructionCounter();
+    }
+
+    /**
+     * Returns the text of the current instruction for debugging.
+     *
+     * @return The instruction text or "N/A" if not found
+     */
+    public String getCurrentInstructionText() {
+        int pc = context.getInstructionCounter();
+        JajaCodeParser.InstrContext instruction = programme.get(pc);
+        if (instruction != null) {
+            return instruction.getText();
+        }
+        return "N/A";
     }
 
 }
