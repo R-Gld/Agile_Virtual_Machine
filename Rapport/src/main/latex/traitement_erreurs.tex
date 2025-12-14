@@ -58,14 +58,8 @@ Il permet de :
 \end{itemize}
 
 \subsubsection{Principes de conception}
-Les choix de conception pour le traitement des erreurs suivent plusieurs principes :
-\begin{itemize}
-    \item \textbf{Clarté} : les messages d'erreur sont explicites et compréhensibles
-    \item \textbf{Précision} : indication exacte de la position (fichier, ligne, colonne)
-    \item \textbf{Récupération} : poursuite de l'analyse pour détecter plusieurs erreurs simultanément
-    \item \textbf{Cohérence} : uniformité du format des messages via le système \texttt{Diagnostic}
-    \item \textbf{Traçabilité} : chaque erreur est associée à sa phase de détection
-\end{itemize}
+
+Le système de traitement des erreurs a été conçu autour de cinq principes fondamentaux qui garantissent une expérience de débogage efficace. La \textbf{clarté} des messages constitue le premier pilier : chaque diagnostic produit un message explicite et compréhensible qui aide immédiatement le développeur à identifier la nature du problème. La \textbf{précision} vient compléter cette clarté en fournissant systématiquement la position exacte de l'erreur avec le nom du fichier, le numéro de ligne et la colonne, permettant ainsi une localisation rapide dans le code source. Le principe de \textbf{récupération} assure que le compilateur ne s'arrête pas à la première erreur rencontrée mais poursuit l'analyse pour détecter le maximum d'erreurs en une seule passe, évitant ainsi les cycles frustrants de correction-compilation. La \textbf{cohérence} est garantie par l'utilisation du système \texttt{Diagnostic} qui uniformise le format de tous les messages quelle que soit la phase d'analyse. Enfin, la \textbf{traçabilité} permet d'associer chaque erreur à sa phase de détection (lexicale, syntaxique, sémantique ou runtime), facilitant ainsi la compréhension du contexte dans lequel l'erreur s'est produite.
 
 \subsection{Traitement des erreurs par module}\label{subsec:traitement-des-erreurs-par-module}
 
@@ -116,23 +110,9 @@ L'analyse sémantique est réalisée par le \texttt{MiniJajaSemanticAnalyzer}, q
     \item \textbf{TypeInferenceEngine} : infère les types des expressions complexes
 \end{itemize}
 
-Les erreurs sémantiques typiques incluent :
-\begin{itemize}
-    \item Variables non déclarées
-    \item Redéclaration de variables
-    \item Incompatibilités de types (ex: affectation d'un entier à un booléen)
-    \item Appels de méthodes inexistantes
-    \item Mauvais nombre d'arguments dans les appels de méthode
-    \item Accès à des tableaux avec un indice non entier
-    \item Utilisation de variables hors de leur portée
-\end{itemize}
+L'analyse sémantique détecte trois catégories majeures d'erreurs qui ne peuvent être identifiées lors des phases lexicale et syntaxique. Les \textbf{erreurs de déclaration} constituent la première catégorie : elles incluent l'utilisation de variables ou de méthodes non déclarées, ainsi que la redéclaration d'un même identifiant dans une même portée, deux situations qui violent les règles de visibilité du langage MiniJAJA. La seconde catégorie concerne les \textbf{erreurs de typage}, qui surviennent lorsqu'une opération est appliquée à des types incompatibles, comme l'affectation d'une valeur booléenne à une variable entière ou l'utilisation d'une expression non entière comme indice de tableau. Enfin, les \textbf{erreurs d'invocation} détectent les appels de méthodes avec un nombre incorrect d'arguments ou vers des méthodes inexistantes, garantissant ainsi la cohérence des interfaces de communication entre les différentes parties du programme.
 
-Chaque validateur utilise un \texttt{SemanticContext} partagé qui maintient :
-\begin{itemize}
-    \item La table des symboles (variables, méthodes, constantes)
-    \item Les informations de typage
-    \item La portée courante
-\end{itemize}
+Tous les validateurs sémantiques s'appuient sur un \texttt{SemanticContext} partagé qui centralise les informations essentielles à l'analyse. Ce contexte maintient la table des symboles recensant l'ensemble des déclarations (variables, méthodes, constantes) avec leurs attributs respectifs, les informations de typage permettant de vérifier la compatibilité des opérations, ainsi que la gestion dynamique des portées qui évolue au fur et à mesure de la traversée de l'arbre syntaxique abstrait.
 
 \subsubsection{Interpréteur JajaCode}
 
