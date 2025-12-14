@@ -299,6 +299,43 @@ Ce job :
     \item Déploie les artefacts vers Nexus
 \end{itemize}
 
+\paragraph{Job build-rapport}
+
+Ce job particulier compile le rapport LaTeX du projet en PDF. Il s'exécute en parallèle des autres jobs du stage build pour ne pas ralentir le pipeline principal :
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de compilation du rapport PDF]
+build-rapport:
+  stage: build
+  image: ghcr.io/r-gld/maven-texlive:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+  script:
+    - mvn -pl 'Rapport' clean compile
+  artifacts:
+    paths:
+      - Rapport/target/latex/rapport_principal.pdf
+    name: "rapport-${CI_COMMIT_SHORT_SHA}"
+    expire_in: 1 week
+  allow_failure: true
+\end{lstlisting}
+
+Spécificités de ce job :
+\begin{itemize}
+    \item \textbf{Image Docker personnalisée} : utilise \texttt{ghcr.io/r-gld/maven-texlive:latest}, une image hébergée sur GitHub Container Registry contenant Maven et TeX Live complet
+    \item \textbf{Exécution parallèle} : placé dans le stage \texttt{build} mais avec \texttt{allow\_failure: true}, il s'exécute en parallèle sans bloquer les tests
+    \item \textbf{Indépendance} : les autres jobs (test, package, etc.) utilisent \texttt{needs: [build]} pour démarrer dès que le build principal est terminé, sans attendre la compilation du PDF
+    \item \textbf{Optimisation} : l'image Docker pré-installée évite de télécharger et installer TeX Live (environ 1.5 GB) à chaque exécution, réduisant le temps de 8-10 minutes à environ 30 secondes
+    \item \textbf{Artefact disponible} : le PDF généré reste accessible pendant 1 semaine dans les artefacts GitLab
+\end{itemize}
+
+Cette approche permet de générer automatiquement la documentation à jour sans impacter les performances du pipeline de développement.
+
 \paragraph{Jobs release}
 
 Le processus de release est divisé en deux jobs manuels :
@@ -404,14 +441,7 @@ Cette infrastructure renforcée a permis de :
 
 \subsubsection{Présentation et rôle}
 
-Nexus Repository Manager est utilisé comme gestionnaire central de dépôts Maven pour :
-\begin{itemize}
-    \item Stocker les artefacts de build (JAR, POM, sources)
-    \item Gérer les versions SNAPSHOT et RELEASE
-    \item Servir de proxy pour les dépendances externes (Maven Central)
-    \item Faciliter la distribution des livrables entre équipes
-    \item Assurer la reproductibilité des builds
-\end{itemize}
+Nexus Repository Manager joue le rôle de gestionnaire central de dépôts Maven dans l'infrastructure du projet. Il assure le stockage de l'ensemble des artefacts produits par le processus de build, incluant les fichiers JAR compilés, les fichiers POM de configuration Maven, ainsi que les archives de code source. Le système gère distinctement les versions SNAPSHOT, destinées au développement continu et modifiables, et les versions RELEASE, immuables et destinées à la production. Au-delà du simple stockage, Nexus sert également de proxy intelligent pour les dépendances externes provenant de Maven Central, permettant une mise en cache locale qui accélère les builds et garantit leur disponibilité même en cas de problème réseau. Cette centralisation facilite la distribution des livrables entre les différents membres de l'équipe et assure la reproductibilité parfaite des builds en conservant un historique complet de toutes les dépendances utilisées.
 
 URL Nexus fournis par l'université : \texttt{https://disc.univ-fcomte.fr/cr700-nexus/}
 
@@ -516,13 +546,7 @@ Options utilisées :
 
 \subsubsection{Avantages constatés}
 
-\begin{itemize}
-    \item \textbf{Centralisation} : tous les artefacts au même endroit
-    \item \textbf{Traçabilité} : historique complet des versions déployées
-    \item \textbf{Reproductibilité} : possibilité de rebuilder des versions anciennes
-    \item \textbf{Performance} : cache local des dépendances externes
-    \item \textbf{Sécurité} : contrôle d'accès aux artefacts
-\end{itemize}
+L'utilisation de Nexus Repository Manager a apporté des bénéfices concrets et mesurables au projet. La \textbf{centralisation} de tous les artefacts en un point unique simplifie considérablement la gestion des livrables et élimine les problèmes de dispersion des fichiers JAR entre différents emplacements. La \textbf{traçabilité} complète permet de consulter l'historique exhaustif de toutes les versions déployées, facilitant ainsi l'audit et le suivi des évolutions du projet au fil du temps. Cette traçabilité garantit également la \textbf{reproductibilité} des builds : il est possible de reconstruire à l'identique n'importe quelle version ancienne en récupérant exactement les mêmes dépendances qu'au moment du build initial. Les \textbf{performances} de compilation sont significativement améliorées grâce au système de cache local qui évite de télécharger répétitivement les mêmes dépendances depuis Maven Central. Enfin, la \textbf{sécurité} est renforcée par le contrôle d'accès granulaire qui permet de définir précisément qui peut consulter, télécharger ou publier des artefacts sur les différents repositories.
 
 % ============================================================================
 % SONARQUBE
@@ -531,15 +555,7 @@ Options utilisées :
 
 \subsubsection{Présentation et objectifs}
 
-SonarQube est utilisé pour l'analyse statique continue du code afin de :
-\begin{itemize}
-    \item Détecter les bugs potentiels et erreurs de code
-    \item Identifier les failles de sécurité (vulnerabilities)
-    \item Mesurer la dette technique (code smells)
-    \item Évaluer la couverture de code par les tests
-    \item Vérifier le respect des bonnes pratiques Java
-    \item Détecter la duplication de code
-\end{itemize}
+SonarQube est intégré au projet pour assurer une analyse statique continue et approfondie de la qualité du code. L'outil détecte automatiquement les bugs potentiels et erreurs de logique avant même l'exécution du code, permettant une correction précoce des défauts. Il identifie également les failles de sécurité (vulnerabilities) en analysant le code selon les standards OWASP et signale les pratiques dangereuses susceptibles d'introduire des vulnérabilités. La mesure de la dette technique constitue un aspect central de l'analyse : SonarQube quantifie les "code smells", ces problèmes de conception qui, bien que ne causant pas de bugs immédiats, complexifient la maintenance et ralentissent l'évolution du projet. L'évaluation de la couverture de code par les tests permet de s'assurer qu'une proportion suffisante du code est testée, réduisant ainsi les risques de régression. L'outil vérifie en permanence le respect des bonnes pratiques Java et des conventions de codage établies, garantissant une cohérence stylistique dans l'ensemble de la base de code. Enfin, la détection automatique de duplication de code aide à identifier les opportunités de refactoring et d'amélioration de la maintenabilité.
 
 URL SonarQube : \texttt{\$\{SONAR\_HOST\_URL\}} (configuré via variable d'environnement)
 
@@ -770,12 +786,6 @@ Statistiques actuelles :
         \item Utilisation de stages DAG (Directed Acyclic Graph) pour plus de parallélisme
         \item Split des tests longs en jobs parallèles
         \item Cache Docker layers pour l'image Maven
-    \end{itemize}
-    \item \textbf{Tests supplémentaires} :
-    \begin{itemize}
-        \item Tests end-to-end automatisés
-        \item Tests de performance (benchmarks)
-        \item Tests de sécurité (OWASP Dependency Check)
     \end{itemize}
     \item \textbf{Métriques avancées} :
     \begin{itemize}
