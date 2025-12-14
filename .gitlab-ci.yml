@@ -55,7 +55,7 @@ build:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+    - mvn ${MAVEN_CLI_OPTS} clean compile
 
 build-rapport:
   stage: build
