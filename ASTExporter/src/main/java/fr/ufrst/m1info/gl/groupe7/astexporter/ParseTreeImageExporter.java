@@ -95,7 +95,7 @@ public class ParseTreeImageExporter {
         ParseTree tree = parser.classe();
 
         if (collector.hasErrors()) {
-            logger.error("Des erreurs de syntaxe ont été détectées:{}", collector.formatDiagnostics());
+            logger.error("Des erreurs de syntaxe ont été détectées: {}", collector.formatDiagnostics());
             logger.error("Aucune image générée (arrêt sur erreurs).");
             return 4;
         }
@@ -256,8 +256,7 @@ public class ParseTreeImageExporter {
                         } else if (val instanceof AstNode[]) {
                             children.addAll(Arrays.asList((AstNode[]) val));
                         }
-                    } catch (IllegalAccessException ignored) {
-                    }
+                    } catch (IllegalAccessException ignored) {}
                 }
                 cls = cls.getSuperclass();
             }

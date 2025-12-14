@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public class GotoAxiome implements JajaAxiome {
             logger.debug("\t\tAxiome GOTO exécuté: saut à l'adresse {}.", adresse);
 
         } catch (NumberFormatException e) {
-            throw new InvalidAddressException(adresseArg, "GOTO", ctx.getInstructionCounter());
+            throw new InvalidAddressException(adresseArg, JajaCodeInstr.GOTO.toString(), ctx.getInstructionCounter());
         }
     }
 }

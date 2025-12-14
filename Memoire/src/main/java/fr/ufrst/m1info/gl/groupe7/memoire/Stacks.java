@@ -1,12 +1,8 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Stack;
-import java.util.HashMap;
-import java.util.Map;
-import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import java.util.*;
+
+import fr.ufrst.m1info.gl.groupe7.memoire.omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -285,8 +281,7 @@ public class Stacks {
                 HeapEntry entry = heap.getEntryNotFree(base);
                 if (entry != null) {
                     entry.incrementRef();
-                    logger.debug("[GC] Increment refCount of array '" + q.ident +
-                            "' ⇒ now " + entry.getRefCount());
+                    logger.debug("[GC] Increment refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
                 }
             }
         }
@@ -320,8 +315,7 @@ public class Stacks {
                         if (entry.getRefCount() == 0) {
                             freeTab(q.ident);
                         }
-                        logger.debug("[GC] Increment refCount of array '" + q.ident +
-                                "' ⇒ now " + entry.getRefCount());
+                        logger.debug("[GC] Decrement refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
                     }
                 }
             }
@@ -393,7 +387,7 @@ public class Stacks {
     public void declareVar(String ident, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("var already  declare: " + ident);
+            throw new RuntimeException("var already declared: " + ident);
         }
         declareVar(ident, Omega.getInstance(), type);
     }
@@ -402,7 +396,7 @@ public class Stacks {
     public void declareCst(String ident, Object value, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("cst already declare: " + ident);
+            throw new RuntimeException("cst already declared: " + ident);
         }
         Quad q = new Quad(ident, value, "cst", type);
         push(q);
@@ -414,7 +408,7 @@ public class Stacks {
     public void declareCst(String ident, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("cst already declare: " + ident);
+            throw new RuntimeException("cst already declared: " + ident);
         }
         declareCst(ident, Omega.getInstance(), type);
     }
@@ -431,19 +425,12 @@ public class Stacks {
     public void declareTab(String ident, int size, Type type) {
         Symbol tabSymbol = symbolTable.findSymbol(ident);
         if (tabSymbol != null) {
-            throw new RuntimeException(" array already in tab declare" + ident);
+            throw new RuntimeException("array already in tab declare" + ident);
         }
-        int cellPerElement;
-        switch (type) {
-            case ENTIER:
-                cellPerElement = 1;
-                break;
-            case BOOLEEN:
-                cellPerElement = 1;
-                break;
-            default:
-                throw new RuntimeException("Unsupported array type: " + type);
-        }
+        int cellPerElement = switch (type) {
+            case ENTIER, BOOLEEN -> 1;
+            default -> throw new RuntimeException("Unsupported array type: " + type);
+        };
         int totalSize = size * cellPerElement;
 
         HeapEntry entry = heap.allocate(ident, totalSize, null);
@@ -461,9 +448,7 @@ public class Stacks {
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type, true); // true = isArray
 
-        logger.debug("-> Array " + ident +
-                " allocated: base=" + baseAddress +
-                " cells=" + totalSize + " (size=" + size + ")");
+        logger.debug("-> Array {} allocated: base={} cells={} (size={})", ident, baseAddress, totalSize, size);
 
     }
 
@@ -471,7 +456,7 @@ public class Stacks {
     public void declareMeth(String ident, Object body, Type type) {
         Symbol existing = symbolTable.findSymbol(ident);
         if (existing != null) {
-            throw new RuntimeException("meth already declare: " + ident);
+            throw new RuntimeException("meth already declared: " + ident);
         }
         Quad q = new Quad(ident, body, "meth", type);
         push(q);
@@ -501,7 +486,7 @@ public class Stacks {
             }
         }
         if (position == -1) {
-            logger.debug("Symbol '" + ident + "' not found — cannot remove.");
+            logger.debug("Symbol '{}' not found — cannot remove.", ident);
             return;
         }
 
@@ -511,21 +496,19 @@ public class Stacks {
             HeapEntry entry = heap.getEntryNotFree(base);
 
             if (entry != null) {
+                freeTab(q.ident);
 
-                    freeTab(q.ident);
-
-                logger.debug("[GC] Increment refCount of array '" + q.ident +
-                        "' ⇒ now " + entry.getRefCount());
+                logger.debug("[GC] Increment refCount of array '{}' ⇒ now {}", q.ident, entry.getRefCount());
             }
         }
 
         // 3. Remove Quad from stack
         stack.remove(position);
-        logger.debug("-> Removed declaration '" + ident + "' from stack.");
+        logger.debug("-> Removed declaration '{}' from stack.", ident);
 
         // 4. Remove from symbol table
         symbolTable.remove(ident);
-        logger.debug("-> Symbol '" + ident + "' removed from the symbol table.");
+        logger.debug("-> Symbol '{}' removed from the symbol table.", ident);
 
         // 5. Update stack positions (if you track positions)
         updateSymbolPositions();
@@ -533,10 +516,6 @@ public class Stacks {
     // ============================================================
     // VALUE ASSIGNMENT & ACCESS METHODS
     // ============================================================
-
-    /**
-     * Assign a new value to an existing identifier return false if cst or not found
-     */
 
     /** Get the value of an identifier */
     public Object getValue(String ident) {
@@ -613,11 +592,11 @@ public class Stacks {
     // Axiome D'interpretation
     // ============================================================
     /**
-     * AffecterVal : assign a new value to an identifier.
+     * affecterVal : assign a new value to an identifier.
      * Returns true on success, throws RuntimeException on error (unknown symbol,
      * attempt to assign to constant/array/method, or type mismatch).
      */
-    public boolean AffecterVal(String ident, Object newValue) {
+    public boolean affecterVal(String ident, Object newValue) {
         // Verify symbol exists
         Symbol sym = symbolTable.findSymbol(ident);
         if (sym == null) {
@@ -644,7 +623,7 @@ public class Stacks {
 
             // Check type compatibility
             if (!isTypeCompatible(q.type, newValue)) {
-                throw new RuntimeException("Type de variable " + ident +
+                throw new RuntimeException("Type error - Type de variable " + ident +
                         ": attendu " + q.type + " mais reçu " + newValue.getClass().getSimpleName());
             }
 
@@ -673,26 +652,15 @@ public class Stacks {
             return true;
 
         if (type == Type.ANY) {
-
             return value instanceof Integer || value instanceof Boolean; // pour la variable de classe
         }
 
-        switch (type) {
-            case Type.ENTIER:
-                return value instanceof Integer;
-
-            case Type.BOOLEEN:
-                return value instanceof Boolean;
-
-            case Type.STRING:
-                return value instanceof String;
-
-            case VOID:
-                return value == null;
-
-            default:
-                return false;
-        }
+        return switch (type) {
+            case Type.ENTIER -> value instanceof Integer;
+            case Type.BOOLEEN -> value instanceof Boolean;
+            case Type.STRING -> value instanceof String;
+            default -> false;
+        };
     }
 
     // ============================================================
@@ -722,10 +690,9 @@ public class Stacks {
 
         Symbol s = symbolTable.findSymbol(name);
         if (s != null) {
-            logger.debug("🔹 " + s.getName() + " | type=" + s.getType() +
-                    " | adress=" + s.getAddressStack());
+            logger.debug("\uD83D\uDD39 {} | type={} | adress={}", s.getName(), s.getType(), s.getAddressStack());
         } else {
-            logger.debug(" Symbole non trouvé : " + name);
+            logger.debug(" Symbole non trouvé : {}", name);
         }
     }
 
@@ -894,7 +861,7 @@ public class Stacks {
         // Free the cell inside the contiguous block
         heap.write(address, null);
 
-        logger.debug("[ARRAY FREE] cleared element " + ident + "[" + index + "] at heap address=" + address);
+        logger.debug("[ARRAY FREE] cleared element {}[{}] at heap address={}", ident, index, address);
     }
 
    
@@ -971,9 +938,7 @@ public class Stacks {
             }
         }
 
-        logger.debug("[REF COPY] " + resolvedDest + " = " + resolvedSource +
-                "  (base=" + newSourceInfo.getBaseAddress() +
-                ", refCount=" + heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount() + ")");
+        logger.debug("[REF COPY] {} = {}  (base={}, refCount={})", resolvedDest, resolvedSource, newSourceInfo.getBaseAddress(), heap.getEntry(newSourceInfo.getBaseAddress()).getRefCount());
     }
     /**
      * Decrements the reference counter of a heap block.
@@ -989,9 +954,9 @@ public class Stacks {
 
         if (entry.getRefCount() == 0) {
             heap.free(entry);
-            logger.debug("   [GC] Block freed because refCount reached 0 (base=" + base + ")");
+            logger.debug("   [GC] Block freed because refCount reached 0 (base={})", base);
         } else {
-            logger.debug("   [GC] refCount-- -> " + entry.getRefCount() + " (base=" + base + ")");
+            logger.debug("   [GC] refCount-- -> {} (base={})", entry.getRefCount(), base);
         }
     }
     /**
@@ -1006,7 +971,7 @@ public class Stacks {
 
         entry.incrementRef();
 
-        logger.debug("   [GC] refCount++ -> " + entry.getRefCount() + " (base=" + base + ")");
+        logger.debug("   [GC] refCount++ -> {} (base={})", entry.getRefCount(), base);
     }
 
 }

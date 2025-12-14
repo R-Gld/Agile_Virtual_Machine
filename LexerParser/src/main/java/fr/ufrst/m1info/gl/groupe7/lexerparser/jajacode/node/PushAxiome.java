@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
-import fr.ufrst.m1info.gl.groupe7.memoire.Omega.Omega;
+import fr.ufrst.m1info.gl.groupe7.memoire.omega.Omega;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
@@ -66,7 +66,6 @@ public class PushAxiome implements JajaAxiome {
         }
 
         // 2. Création du Quad et Push
-        // Note: pour un push de valeur immédiate, utilise le constructeur avec ident="_" (anonyme)
         ctx.getStacks().push(new Stacks.Quad(valeur, type));
 
         logger.debug("\t\tAxiome PUSH exécuté: {} ({}) poussé sur la pile.", valeur, type);

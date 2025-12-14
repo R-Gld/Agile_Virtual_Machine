@@ -99,16 +99,6 @@ public class SemanticContext {
         return new SourcePosition(currentFileName, 0, 0);
     }
 
-    /**
-     * Create a source position for error reporting (deprecated).
-     * @deprecated Use createPosition(AstNode) instead to get accurate positions
-     * @return a SourcePosition with current file name and (0,0) position
-     */
-    @Deprecated
-    public SourcePosition createPosition() {
-        return new SourcePosition(currentFileName, 0, 0);
-    }
-
     // ============================================================
     // SCOPE MANAGEMENT
     // ============================================================

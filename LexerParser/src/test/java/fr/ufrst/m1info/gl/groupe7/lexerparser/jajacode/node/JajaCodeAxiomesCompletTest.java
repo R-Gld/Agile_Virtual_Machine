@@ -210,7 +210,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         UndefinedSymbolException e = assertThrows(UndefinedSymbolException.class, () -> executeJajaCode(code));
         assertEquals(2, e.getProgramCounter());
-        assertTrue(e.getMessage().contains("PC=2, Axiome=LOAD] Symbole introuvable : 'x@global'"));
+        assertTrue(e.getMessage().contains("PC=2, Axiome=load] Symbole introuvable : 'x@global'"));
     }
 
     // ==================== Tests STORE ====================

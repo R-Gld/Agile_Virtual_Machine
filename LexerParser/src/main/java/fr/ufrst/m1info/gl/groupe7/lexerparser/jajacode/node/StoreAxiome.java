@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,16 +48,16 @@ public class StoreAxiome implements JajaAxiome {
         Stacks.Quad valeur = ctx.getStacks().pop();
 
         if (valeur == null) {
-            throw new StackUnderflowException("STORE", ctx.getInstructionCounter());
+            throw new StackUnderflowException(JajaCodeInstr.STORE.toString(), ctx.getInstructionCounter());
         }
 
         // Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
 
-        boolean success = ctx.getStacks().AffecterVal(scopedIdent, valeur.value);
+        boolean success = ctx.getStacks().affecterVal(scopedIdent, valeur.value);
 
         if (!success) {
-            throw new AssignmentException(scopedIdent, "impossible d'affecter la valeur", "STORE", ctx.getInstructionCounter());
+            throw new AssignmentException(scopedIdent, "impossible d'affecter la valeur", JajaCodeInstr.STORE.toString(), ctx.getInstructionCounter());
         }
 
         logger.debug("\t\tAxiome STORE exécuté: {} mis à jour avec valeur {}.", scopedIdent, valeur.value);

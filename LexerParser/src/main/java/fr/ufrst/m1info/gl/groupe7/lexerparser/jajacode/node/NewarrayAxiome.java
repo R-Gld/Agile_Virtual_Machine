@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class NewarrayAxiome implements JajaAxiome {
         String[] parts = argsPacked.split(",");
         if (parts.length != 2) {
             throw new JajaCodeRuntimeException("Arguments manquants (attendu 'ident,type')",
-                                                "NEWARRAY", ctx.getInstructionCounter());
+                    JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
         String ident = parts[0].trim();
@@ -46,23 +47,23 @@ public class NewarrayAxiome implements JajaAxiome {
         Type type = parseType(typeStr);
         if (type == null) {
             throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'",
-                                                "NEWARRAY", ctx.getInstructionCounter());
+                    JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
-        logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident=" + ident + ", type=" + type);
+        logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident={}, type={}", ident, type);
 
         // 3. Dépiler la taille depuis la pile
         Stacks.Quad sizeQuad = ctx.getStacks().pop();
         if (sizeQuad == null) {
             throw new StackUnderflowException("Manque la taille du tableau",
-                                               "NEWARRAY", ctx.getInstructionCounter());
+                    JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
         // 4. Vérifier que la taille est un entier
         if (!(sizeQuad.value instanceof Integer size)) {
             throw new TypeMismatchException("Taille de tableau invalide (attendu entier, reçu " +
                                              sizeQuad.value.getClass().getSimpleName() + ")",
-                                             "NEWARRAY", ctx.getInstructionCounter());
+                    JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
         logger.debug("\t\t[DEBUG] Taille dépilée: {}", size);

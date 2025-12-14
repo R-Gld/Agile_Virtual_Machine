@@ -30,6 +30,6 @@ public class RetourNode extends InstructionNode {
             throw new RuntimeException("Erreur: Variable de classe non définie dans la pile"); // TODO : message
                                                                                                // d'erreur plus clair
         }
-        stacks.AffecterVal(varClasse, exp);
+        stacks.affecterVal(varClasse, exp);
     }
 }
