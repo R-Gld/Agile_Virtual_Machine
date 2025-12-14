@@ -55,7 +55,27 @@ build:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} clean compile
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+
+build-rapport:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add --no-cache texlive-full
+  script:
+    - mvn -pl 'Rapport' clean compile
+  artifacts:
+    paths:
+      - Rapport/target/latex/rapport_principal.pdf
+    name: "rapport-${CI_COMMIT_SHORT_SHA}"
+    expire_in: 1 week
+  allow_failure: true
+
 
 test:
   stage: test
@@ -64,8 +84,10 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  needs:
+    - build
   script:
-    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport' jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport,!Rapport' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
       junit: "**/target/surefire-reports/TEST-*.xml"
@@ -85,6 +107,8 @@ testIHM:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  needs:
+    - build
   before_script:
     - chmod +x settings.sh && ./settings.sh
     - apk add xvfb libx11-dev xvfb-run gtk+3.0
@@ -113,7 +137,7 @@ package:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
   artifacts:
     paths:
       - "**/target/*.jar"
@@ -136,7 +160,7 @@ sonarqube-check:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
   #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
     - build
@@ -152,7 +176,7 @@ deploy:
   needs:
     - package
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests deploy
 
 release:prepare:
   stage: release
@@ -174,7 +198,7 @@ release:prepare:
     - git checkout ${CI_COMMIT_BRANCH}
     - git pull origin ${CI_COMMIT_BRANCH}
   script:
-    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
   after_script:
     - git push --tags
   artifacts:
@@ -192,5 +216,5 @@ release:perform:
   needs:
     - release:prepare
   script:
-    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} release:perform -Darguments="-DskipTests"
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' release:perform -Darguments="-DskipTests"
   allow_failure: false
