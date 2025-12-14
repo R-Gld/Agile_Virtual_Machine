@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
+        <artifactId>MiniJAJA</artifactId>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>Rapport</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Rapport</name>
+    <description>Rapport de projet LaTeX</description>
+
+    <properties>
+        <latex.main.document>rapport_principal</latex.main.document>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- Create output directory first -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>create-latex-output-dir</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/latex"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Exec Maven Plugin to run pdflatex -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <!-- First pass of pdflatex -->
+                    <execution>
+                        <id>latex-compile-pass1</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>pdflatex</executable>
+                            <workingDirectory>${project.basedir}/src/main/latex</workingDirectory>
+                            <arguments>
+                                <argument>-interaction=nonstopmode</argument>
+                                <argument>-output-directory=${project.build.directory}/latex</argument>
+                                <argument>${latex.main.document}.tex</argument>
+                            </arguments>
+                            <successCodes>
+                                <successCode>0</successCode>
+                                <successCode>1</successCode> <!-- pdflatex returns 1 on warnings -->
+                            </successCodes>
+                        </configuration>
+                    </execution>
+                    <!-- Second pass of pdflatex to resolve references -->
+                    <execution>
+                        <id>latex-compile-pass2</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>pdflatex</executable>
+                            <workingDirectory>${project.basedir}/src/main/latex</workingDirectory>
+                            <arguments>
+                                <argument>-interaction=nonstopmode</argument>
+                                <argument>-output-directory=${project.build.directory}/latex</argument>
+                                <argument>${latex.main.document}.tex</argument>
+                            </arguments>
+                            <successCodes>
+                                <successCode>0</successCode>
+                                <successCode>1</successCode>
+                            </successCodes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copy PDF to target root directory for easier access -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-pdf</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}/latex</directory>
+                                    <includes>
+                                        <include>**/*.pdf</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

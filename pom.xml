@@ -202,6 +202,7 @@
         <module>compiler</module>
         <module>ASTExporter</module>
         <module>CoverageReport</module>
+        <module>Rapport</module>
     </modules>
 
     <scm>
