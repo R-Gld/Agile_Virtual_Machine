@@ -402,7 +402,7 @@ class DebugTest {
         @DisplayName("beforeNode returns true when DISABLED")
         void beforeNodeReturnsTrueWhenDisabled() {
             debug.setMode(Debug.Mode.DISABLED);
-            boolean result = debug.beforeNode(1, null, null);
+            boolean result = debug.beforeNode(1, null, null, null);
             assertTrue(result);
         }
 
@@ -410,12 +410,12 @@ class DebugTest {
         @DisplayName("beforeNode updates currentLine")
         void beforeNodeUpdatesCurrentLine() {
             debug.setMode(Debug.Mode.DISABLED);
-            debug.beforeNode(42, null, null);
+            debug.beforeNode(42, null, null, null);
             // currentLine should be updated even in DISABLED mode
             // but since DISABLED returns early, let's test with BREAKPOINTS
             debug.setMode(Debug.Mode.BREAKPOINTS);
             // No breakpoint at line 99, so it should return true without pausing
-            boolean result = debug.beforeNode(99, createMockNode(), createMockStacks());
+            boolean result = debug.beforeNode(99, createMockNode(), createMockStacks(), null);
             assertTrue(result);
             assertEquals(99, debug.getCurrentLine());
         }
@@ -425,7 +425,7 @@ class DebugTest {
         void beforeNodeBreakpointsModeNoBreakpoint() {
             debug.setMode(Debug.Mode.BREAKPOINTS);
             // No breakpoint at line 5
-            boolean result = debug.beforeNode(5, createMockNode(), createMockStacks());
+            boolean result = debug.beforeNode(5, createMockNode(), createMockStacks(), null);
             assertTrue(result);
         }
 

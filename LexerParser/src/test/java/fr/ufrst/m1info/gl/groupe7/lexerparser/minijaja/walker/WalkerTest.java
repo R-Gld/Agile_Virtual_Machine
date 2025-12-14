@@ -97,7 +97,7 @@ class WalkerTest {
         @DisplayName("Constructor with null debug creates default debug")
         void constructorWithNullDebug() {
             MockAstNode root = new MockAstNode("root");
-            Walker walker = new Walker(root, stacks, null);
+            Walker walker = new Walker(root, stacks, null, null);
             assertNotNull(walker.getDebug());
             assertFalse(walker.getDebug().isEnabled());
         }
@@ -107,7 +107,7 @@ class WalkerTest {
         void constructorWithDebug() {
             MockAstNode root = new MockAstNode("root");
             Debug debug = new Debug(Debug.Mode.STEP_BY_STEP);
-            Walker walker = new Walker(root, stacks, debug);
+            Walker walker = new Walker(root, stacks, debug, null);
             assertEquals(debug, walker.getDebug());
         }
 
@@ -241,7 +241,7 @@ class WalkerTest {
             root.addChild(child);
             
             Debug debug = new Debug(Debug.Mode.DISABLED);
-            Walker walker = new Walker(root, stacks, debug);
+            Walker walker = new Walker(root, stacks, debug, null);
             
             walker.walk();
             
@@ -253,7 +253,7 @@ class WalkerTest {
         @DisplayName("getDebug returns the debug controller")
         void getDebugReturnsController() {
             Debug debug = new Debug(Debug.Mode.BREAKPOINTS);
-            Walker walker = new Walker(null, stacks, debug);
+            Walker walker = new Walker(null, stacks, debug, null);
             
             assertSame(debug, walker.getDebug());
         }

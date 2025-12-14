@@ -101,7 +101,11 @@ public class Debug {
      * Called before each node is interpreted.
      * Returns true if execution should proceed, false if paused.
      */
-    public boolean beforeNode(int line, AstNode node, Stacks stacks) {
+    public boolean beforeNode(int line, AstNode node, Stacks stacks, HandlePauseCallback callback) {
+        if (callback == null) {
+            callback = this::handlePause;
+        }
+
         if (mode == Mode.DISABLED) {
             return true;
         }
@@ -129,7 +133,7 @@ public class Debug {
                 listener.onBreakpoint(line, node, stacks);
             }
             
-            return handlePause(line, node, stacks);
+            return callback.run(line, node, stacks);
         }
         
         return true;

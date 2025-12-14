@@ -29,20 +29,24 @@ public class Walker {
     private int lineCounter = 0;
     // flag to stop execution
     private boolean stopped = false;
+    // callback when debug is in pause
+    private final HandlePauseCallback callback;
     
     private static final Logger logger = LoggerFactory.getLogger(Walker.class);
 
     /**
      * Create a new Walker for the given AST root and runtime stacks with debugging support.
      *
-     * @param root  the AST root node to traverse (may be null)
-     * @param stack the runtime stacks/environment provided to node interpretation
-     * @param debug the debug controller for breakpoints and stepping
+     * @param root     the AST root node to traverse (may be null)
+     * @param stack    the runtime stacks/environment provided to node interpretation
+     * @param debug    the debug controller for breakpoints and stepping
+     * @param callback the callback methode called when debug walker is paused
      */
-    public Walker(AstNode root, Stacks stack, Debug debug) {
+    public Walker(AstNode root, Stacks stack, Debug debug, HandlePauseCallback callback) {
         this.root = root;
         this.stack = stack;
         this.debug = debug != null ? debug : new Debug();
+        this.callback = callback;
     }
 
     /**
@@ -52,7 +56,7 @@ public class Walker {
      * @param stack the runtime stacks/environment provided to node interpretation
      */
     public Walker(AstNode root, Stacks stack) {
-        this(root, stack, new Debug());
+        this(root, stack, new Debug(), null);
     }
 
     /**
@@ -70,9 +74,9 @@ public class Walker {
             logger.debug("Breakpoints: " + debug.getBreakPoints());
             logger.debug("Starting execution...\n");
         }
-        
-        visitNode(root);
-        
+
+        visitNode(root, this.callback);
+
         if (debug.isEnabled() && !stopped) {
             logger.debug("\n Execution completed.");
         }
@@ -88,7 +92,7 @@ public class Walker {
      *
      * @param node the AST node to visit (may be null)
      */
-    private void visitNode(AstNode node) {
+    private void visitNode(AstNode node, HandlePauseCallback callback) {
         if (node == null || stopped) {
             return;
         }
@@ -97,7 +101,7 @@ public class Walker {
         
         // Check debug breakpoints / step before executing
         if (debug.isEnabled()) {
-            boolean shouldContinue = debug.beforeNode(lineCounter, node, stack);
+            boolean shouldContinue = debug.beforeNode(lineCounter, node, stack, callback);
             if (!shouldContinue) {
                 stopped = true;
                 return;
@@ -112,7 +116,7 @@ public class Walker {
         if (children != null) {
             for (AstNode child : children) {
                 if (stopped) break;
-                visitNode(child);
+                visitNode(child, callback);
             }
         }
     }

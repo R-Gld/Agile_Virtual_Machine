@@ -7,11 +7,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode; // Assurez-vous d'importer AstNode
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.classe.ClasseNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Walker;
 
@@ -163,7 +161,7 @@ public class DebugeParsingETC {
     Debug debug = new Debug(Debug.Mode.DISABLED);
     debug.addBreakPoint(60); // Exemple de breakpoint
     System.out.println(astRoot.toStringTree());
-    Walker walker = new Walker(astRoot, stacks, debug);
+    Walker walker = new Walker(astRoot, stacks, debug, null);
     walker.walk();
     //stacks.printStack();
 
