@@ -69,9 +69,10 @@ build-rapport:
     - chmod +x settings.sh && ./settings.sh
   script:
     - mvn -pl 'Rapport' clean compile
+    - cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
   artifacts:
     paths:
-      - Rapport/target/latex/rapport_principal.pdf
+      - rapport_principal.pdf
     name: "rapport-${CI_COMMIT_SHORT_SHA}"
     expire_in: 1 week
   allow_failure: true
