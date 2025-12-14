@@ -28,6 +28,8 @@ Le système de gestion des erreurs repose sur une architecture modulaire compos�
 
 \paragraph{Classe Diagnostic}
 La classe \texttt{Diagnostic} est un record Java qui encapsule toutes les informations d'une erreur :
+
+\vspace{0.3cm}
 \begin{lstlisting}[language=java, caption=Structure du Diagnostic,label={lst:diagnostic-record}]
 public record Diagnostic(
     Severity severity,      // ERROR ou WARNING
@@ -138,6 +140,7 @@ L'interpréteur JajaCode utilise une hiérarchie d'exceptions spécifiques pour 
 
 \paragraph{Exception de base : JajaCodeRuntimeException}
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=java, caption=JajaCodeRuntimeException,label={lst:jjcruntimeexception}]
 public class JajaCodeRuntimeException extends RuntimeException {
     private final int programCounter;
@@ -193,6 +196,8 @@ public class DivisionByZeroException
 Les messages d'erreur suivent un format uniforme qui dépend de la phase :
 
 \paragraph{Erreurs de compilation (Lexicales, Syntaxiques, Sémantiques)}
+
+\vspace{0.3cm}
 \begin{lstlisting}[caption=Format des erreurs de compilation,label={lst:ex-err-compil}]
 [PHASE] fichier.mjj:ligne:colonne - Message descriptif
 \end{lstlisting}
@@ -203,6 +208,8 @@ Exemple :
 \end{lstlisting}
 
 \paragraph{Erreurs d'exécution (Runtime JajaCode)}
+
+\vspace{0.3cm}
 \begin{lstlisting}[caption=Format des erreurs d'execution,label={lst:ex-err-runtime}]
 [PC=<compteur>, Axiome=<nom>] Message descriptif
 \end{lstlisting}
