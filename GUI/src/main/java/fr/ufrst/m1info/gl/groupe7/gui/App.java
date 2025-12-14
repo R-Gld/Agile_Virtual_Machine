@@ -12,7 +12,9 @@ import java.util.concurrent.Executors;
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaDebugger;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
 import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -61,6 +63,10 @@ public class App extends Application {
     private Button stepButton;
     private Button stopButton;
     private Button continueButton;
+    // Debug minijaja
+    DebugPauseHandler mjjPauseHandler;
+    Debug mjjDebugWalker;
+    MiniJajaDebugger mjjDebugger;
 
     /**
      * Console used to display messages (debug, info, errors)
@@ -100,6 +106,8 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         appStage = stage;
+        mjjDebugWalker = new Debug();
+        mjjPauseHandler = new DebugPauseHandler(mjjDebugWalker);
 
         // Structure de l'interface :
         BorderPane root = new BorderPane();
@@ -640,6 +648,9 @@ public class App extends Application {
 
         if (nextBreakpoint >= 0) {
             // Jump to next breakpoint
+            if (debugSource == DebugSource.MINIJAJA) {
+                mjjDebugWalker.addBreakPoint(nextBreakpoint);
+            }
             debugCurrentLine = nextBreakpoint;
             if (console != null) {
                 String text = currentArea.getText();
@@ -655,6 +666,11 @@ public class App extends Application {
             }
             stopDebugWithReset();
         }
+
+        // Update debug status even if there is no more breakpoint so the debug can finish
+        if (debugSource == DebugSource.MINIJAJA) {
+            mjjPauseHandler.updateStatus(Status.NEXT_BREAKPOINT);
+        }
     }
 
     /**
@@ -663,6 +679,9 @@ public class App extends Application {
     private void stopDebug() {
         if (!debugMode) {
             return;
+        }
+        if (debugSource == DebugSource.MINIJAJA) {
+            mjjPauseHandler.updateStatus(Status.STOP);
         }
         debugMode = false;
         debugCurrentLine = -1;
@@ -696,6 +715,9 @@ public class App extends Application {
         continueButton.setDisable(false);
 
         MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
+        if (debugSource == DebugSource.MINIJAJA) {
+            mjjDebugger = new MiniJajaDebugger(currentArea.getText(), new DiagnosticCollector(), mjjPauseHandler::handlePause);
+        }
         debugBreakpoints.clear();
         debugBreakpoints.addAll(currentArea.getBreakpoints());
 
@@ -787,6 +809,9 @@ public class App extends Application {
             console.printMessage("[DEBUG] " +
                     (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
                     " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
+        }
+        if (debugSource ==  DebugSource.MINIJAJA) {
+            mjjPauseHandler.updateStatus(Status.NEXT_STEP);
         }
 
         currentArea.highlightLine(debugCurrentLine);
