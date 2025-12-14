@@ -244,9 +244,18 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
-    // for test
+    // for test and debug
+
+    private boolean stepInitialized = false;
 
     public boolean step() {
+        // Initialize PC to 1 on first step (same as run())
+        if (!stepInitialized) {
+            context.setInstructionCounter(1);
+            stepInitialized = true;
+            logger.debug("Step mode: Execution started at address 1.");
+        }
+
         int pc = context.getInstructionCounter();
         JajaCodeParser.InstrContext instruction = programme.get(pc);
 
@@ -260,6 +269,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         // Return true if there are more instructions, false if finished
         return context.isRunning();
+    }
+
+    /**
+     * Resets the step execution state for a new debug session.
+     */
+    public void resetStep() {
+        stepInitialized = false;
+        context.setInstructionCounter(1);
     }
 
     public boolean isFinished() {
