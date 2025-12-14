@@ -227,6 +227,29 @@ public class TestCodeArea {
     }
 
     @Test
+    void testDeclarationAfterInstructionHighlightingAndTooltip() throws Exception {
+        runOnFxThread(() -> codeArea.loadText("class C {\n  int x = 0;\n  main {\n    x = 12;\n    int my;\n  }\n}\n"));
+
+        // give some time for parsing/highlighting
+        Thread.sleep(200);
+
+        runOnFxThread(() -> {
+            try {
+                Field f = MyCodeArea.class.getDeclaredField("errorDeclaredAfterInstructionRanges");
+                f.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                List<javafx.scene.control.IndexRange> myRanges = (List<javafx.scene.control.IndexRange>) f.get(codeArea);
+                Assertions.assertFalse(myRanges.isEmpty(), "Expected declaration-after-instruction ranges to be detected");
+                String txt = codeArea.getText();
+                boolean hasInt = myRanges.stream().anyMatch(r -> txt.substring(r.getStart(), Math.min(r.getEnd(), txt.length())).equals("int"));
+                Assertions.assertTrue(hasInt, "The 'int' token should appear in the reported ranges");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
     void testHandleAutoClosePairsAndSkip() {
         runOnFxThread(() -> {
             EditorPreferences.getInstance().setAutoClosePairs(true);
