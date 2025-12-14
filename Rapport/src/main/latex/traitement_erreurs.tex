@@ -269,59 +269,6 @@ Ce pattern présente plusieurs avantages :
 
 Les exceptions sont propagées jusqu'au point d'entrée principal où elles sont capturées et transformées en messages utilisateur. Le système de \texttt{DiagnosticCollector} permet également de collecter plusieurs erreurs avant de les rapporter toutes ensemble.
 
-\subsection{Tests et validation}\label{subsec:tests-et-validation}
-
-\subsubsection{Couverture des tests}
-
-Le module LexerParser contient \textbf{38 classes de tests}, dont plusieurs dédiées spécifiquement au traitement des erreurs :
-
-\begin{itemize}
-    \item \texttt{ExceptionTypeTest} : vérifie que les bonnes exceptions sont levées selon le type d'erreur (syntaxique vs sémantique)
-    \item \texttt{SyntaxErrorListenerTest} : teste la capture des erreurs syntaxiques via le listener ANTLR
-    \item \texttt{MiniJajaSemanticAnalyzerTest} : teste l'analyse sémantique générale
-    \item \texttt{MiniJajaSemanticAnalyzerScopeTest} : teste la vérification de portée des variables
-    \item \texttt{MiniJajaSemanticAnalyzerReturnTest} : teste la validation des instructions de retour
-    \item \texttt{DiagnosticCollectorTest} : teste le collecteur de diagnostics et ses méthodes de filtrage
-    \item \texttt{DiagnosticTest} : teste la structure des diagnostics (record)
-    \item \texttt{JajaCodeExceptionsTest} : teste les exceptions d'exécution JajaCode
-    \item \texttt{ArrayAssignmentTest} : teste les erreurs d'affectation de tableaux
-    \item \texttt{TypeIncompatibilityTest} : teste les incompatibilités de types
-\end{itemize}
-
-\subsubsection{Stratégie de test}
-
-Les tests vérifient :
-\begin{itemize}
-    \item La \textbf{détection correcte} des erreurs (pas de faux négatifs)
-    \item Le \textbf{type d'exception} levé selon la phase d'erreur
-    \item Le \textbf{format des messages} d'erreur intégrés aux exceptions
-    \item La \textbf{position exacte} (ligne/colonne) des erreurs
-    \item La \textbf{phase correcte} de détection
-    \item La \textbf{récupération} après erreur (continuation de l'analyse)
-\end{itemize}
-
-Exemple de test vérifiant le type d'exception :
-\begin{lstlisting}[language=java, caption=Test de type d'exception semantique,label={lst:test-semantic-exception}]
-@Test
-@DisplayName("Semantic error should throw SemanticException")
-void semanticError_shouldThrowSemanticException() {
-    String codeWithSemanticError = """
-        class C {
-            main {
-                int x = 5;
-                int x = 10;  // Redeclaration
-            }
-        }
-    """;
-
-    assertThrows(SemanticException.class,
-        () -> MiniJajaCompiler
-            .getMiniJajaCompilerVisitorFromString(codeWithSemanticError),
-        "Semantic errors should throw SemanticException");
-}
-\end{lstlisting}
-
-Ce test vérifie que la redéclaration d'une variable lève bien une \texttt{SemanticException} et non une \texttt{SyntaxException}. D'autres tests similaires vérifient les incompatibilités de types, les variables non déclarées, et les erreurs syntaxiques.
 
 \subsection{Améliorations futures}\label{subsec:ameliorations-futures}
 
