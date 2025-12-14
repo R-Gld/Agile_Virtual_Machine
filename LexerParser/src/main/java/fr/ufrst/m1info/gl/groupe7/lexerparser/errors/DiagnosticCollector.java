@@ -29,6 +29,25 @@ public class DiagnosticCollector {
     }
 
     /**
+     * Check if there are any semantic errors.
+     * @return true if there are reports with severity ERROR and phase SEMANTIC, false otherwise
+     */
+    public boolean hasSemanticErrors() {
+        return diagnostics.stream().anyMatch(d ->
+            d.severity() == Severity.ERROR && d.phase() == Phase.SEMANTIC);
+    }
+
+    /**
+     * Check if there are any syntax or lexical errors.
+     * @return true if there are reports with severity ERROR and phase SYNTAX or LEXICAL, false otherwise
+     */
+    public boolean hasSyntaxErrors() {
+        return diagnostics.stream().anyMatch(d ->
+            d.severity() == Severity.ERROR &&
+            (d.phase() == Phase.SYNTAX || d.phase() == Phase.LEXICAL));
+    }
+
+    /**
      * Get the list of diagnostics.
      * @return the list of diagnostics
      */
