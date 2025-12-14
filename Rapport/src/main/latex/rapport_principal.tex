@@ -1,0 +1,139 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+% Geometry
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm,
+    headheight=15pt
+}
+
+% Listings configuration for code
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=4
+}
+
+% YAML language definition for listings
+\lstdefinelanguage{yaml}{
+    keywords={true,false,null,yes,no,on,off},
+    keywordstyle=\color{blue}\bfseries,
+    keywords=[2]{stage,script,image,tags,before_script,after_script,artifacts,
+                 cache,rules,needs,variables,when,retry,default,stages,
+                 include,extends,only,except,allow_failure,timeout,coverage,
+                 services,dependencies,trigger,parallel,resource_group,
+                 environment,deployment,pages,interruptible,retry,release},
+    keywordstyle=[2]\color{purple}\bfseries,
+    sensitive=true,
+    comment=[l]{\#},
+    commentstyle=\color{green!60!black}\itshape,
+    morestring=[b]',
+    morestring=[b]",
+    stringstyle=\color{orange},
+    literate=
+        {-\ }{{\textcolor{blue}{-\ }}}{2}
+        {>}{{\textcolor{red}{>}}}{1}
+        {|}{{\textcolor{red}{|}}}{1}
+        {:\ }{{\textcolor{red}{:\ }}}{2}
+        {\ -\ }{{\textcolor{blue}{\ -\ }}}{3}
+        {\$\{}{{\textcolor{teal}{\$\{}}}{2}
+        {\}}{{\textcolor{teal}{\}}}}{1}
+        {\$}{{\textcolor{teal}{\$}}}{1}
+        {||}{{\textcolor{purple}{||}}}{2}
+        {\&\&}{{\textcolor{purple}{\&\&}}}{2}
+        {==}{{\textcolor{purple}{==}}}{2}
+        {!=}{{\textcolor{purple}{!=}}}{2},
+    basicstyle=\ttfamily\small\color{black},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2
+}
+
+% Enhanced XML language definition for listings
+\lstdefinelanguage{enhancedxml}{
+    basicstyle=\ttfamily\small\color{black},
+    morestring=[b]",
+    morestring=[s]{>}{<},
+    morecomment=[s]{<?}{?>},
+    morecomment=[s]{<!--}{-->},
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{orange},
+    identifierstyle=\color{blue},
+    keywordstyle=\color{purple}\bfseries,
+    morekeywords={xmlns,version,type,encoding,id,url,name,value,phase,goal,
+                  configuration,execution,executions,plugin,plugins,build,
+                  project,dependencies,dependency,groupId,artifactId,
+                  version,scope,properties,property,repository,repositories,
+                  distributionManagement,snapshotRepository,server,servers,
+                  username,password,tagNameFormat,autoVersionSubmodules,
+                  releaseProfiles,scmCommentPrefix,goals},
+    sensitive=true,
+    alsoletter={:,-},
+    literate=
+        {<}{{\textcolor{red}{<}}}{1}
+        {>}{{\textcolor{red}{>}}}{1}
+        {</}{{\textcolor{red}{</}}}{2}
+        {/>}{{\textcolor{red}{/>}}}{2}
+        {<?}{{\textcolor{purple}{<?}}}{2}
+        {?>}{{\textcolor{purple}{?>}}}{2}
+        {\$\{env.}{{\textcolor{teal}{\$\{env.}}}{6}
+        {\$\{project.}{{\textcolor{teal}{\$\{project.}}}{10}
+        {\}}{{\textcolor{teal}{\}}}}{1},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Rapport de Projet - Groupe 7}
+\lhead{MiniJAJA}
+\rfoot{Page \thepage}
+
+% Title information
+\title{
+    \textbf{Rapport de Projet}\\
+    \large{MiniJAJA - Compilateur et Interpréteur}\\
+    \large{Groupe 7}
+}
+\author{
+    Romain \and
+    Lucas \and
+    Félix \and
+    Léo \and
+    Théo \and
+    Ahmed
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\end{document}

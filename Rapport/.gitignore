@@ -1,0 +1,22 @@
+# Maven
+target/
+
+# LaTeX temporary files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.lot
+*.lof
+*.nav
+*.snm
+*.vrb
+*.bcf
+*.run.xml
+*.pdf
+!rapport_principal.pdf
