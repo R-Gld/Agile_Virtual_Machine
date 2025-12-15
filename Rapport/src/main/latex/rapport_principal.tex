@@ -8,6 +8,8 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, trees, shapes}
 \usepackage{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
@@ -20,8 +22,7 @@
 \usepackage{longtable}
 \usepackage{colortbl}
 \usepackage{amsmath}
-\usepackage{tikz}
-\usetikzlibrary{trees,arrows,shapes}
+\usepackage{minted}
 
 % Couleurs personnalisées pour Annexe_Res_tests
 \definecolor{successgreen}{RGB}{40,167,69}
@@ -177,34 +178,34 @@
 
 \begin{document}
 
-\maketitle
-\newpage
+    \maketitle
+    \newpage
 
-\tableofcontents
-\newpage
+    \tableofcontents
+    \newpage
 
-\include{sujet}
-\newpage
+    \include{sujet}
+    \newpage
 
-\include{contraintes_fonctionnelles}
-\newpage
+    \include{contraintes_fonctionnelles}
+    \newpage
 
-\include{decomposition_logiciel}
-\newpage
+    \include{decomposition_logiciel}
+    \newpage
 
-\include{MiniJaja_Realisation}
-\newpage
+    \include{MiniJaja_Realisation}
+    \newpage
 
-\include{jeux_test}
-\newpage
+    \include{jeux_test}
+    \newpage
 
-\include{Annexe_Res_tests}
-\newpage
+    \include{Annexe_Res_tests}
+    \newpage
 
-\include{outils_suivi}
-\newpage
+    \include{outils_suivi}
+    \newpage
 
-\include{retro}
-\newpage
+    \include{retro}
+    \newpage
 
 \end{document}
