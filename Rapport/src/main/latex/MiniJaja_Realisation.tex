@@ -1,10 +1,10 @@
 %=============================================================================
-\section{Principaux choix de réalisation}
+\subsection{Principaux choix de réalisation}
 %=============================================================================
 
-Cette section présente les choix techniques et les détails d'implémentation du compilateur et interpréteur MiniJaja. Elle couvre l'ensemble du pipeline de traitement, depuis l'analyse lexicale et syntaxique via ANTLR jusqu'à l'interprétation de l'arbre syntaxique abstrait (AST).
+Ce rapport présente les choix techniques et les détails d'implémentation du compilateur et interpréteur MiniJaja développé dans le cadre du projet de Génie Logiciel. Le document couvre l'ensemble du pipeline de traitement, depuis l'analyse lexicale et syntaxique via ANTLR jusqu'à l'interprétation de l'arbre syntaxique abstrait (AST).
 
-\subsection{Architecture Générale}
+\subsubsection{Architecture Générale}
 
 L'architecture du projet suit un modèle en pipeline composé de quatre phases principales :
 
@@ -29,7 +29,7 @@ L'architecture du projet suit un modèle en pipeline composé de quatre phases p
     \node[box, below of=visitor] (semantic) {Analyseur Sémantique};
     \node[box, below of=semantic] (walker) {Walker/Interpréteur};
     \node[box, below of=walker] (result) {Résultat Exécution};
-
+    
     \draw[arrow] (source) -- (lexer);
     \draw[arrow] (lexer) -- (parser);
     \draw[arrow] (parser) -- (visitor);
@@ -45,6 +45,8 @@ L'architecture du projet suit un modèle en pipeline composé de quatre phases p
 %=============================================================================
 
 Le pipeline s'appuie sur ANTLR4 pour produire un CST (Concrete Syntax Tree) à partir du code source, puis un Visitor transforme ce CST en AST (Abstract Syntax Tree) propre au projet.
+
+\subsubsection{Rôle d'ANTLR côté analyse lexicale (Lexer)}
 
 ANTLR découpe d'abord le \textbf{flux de caractères} en \textbf{lexèmes} et les transforme en \textbf{tokens} typés (ex : mot-clé, identifiant, entier, opérateur, séparateur). Chaque token transporte des \textbf{métadonnées de localisation} (ligne/colonne) utilisées ensuite pour attacher une position source aux nœuds de l'AST.
 
@@ -87,11 +89,6 @@ La grammaire ANTLR produit un arbre de règles. Le Visitor opère une \textbf{pr
 
 Ce choix simplifie le Visitor : on construit la tête, puis on enchaîne le reste (ou \texttt{null}/noeud vide) et l'interpréteur peut traiter récursivement la structure.
 
-\subsubsection{Justification du Pattern Visitor externe}
-
-Pour la phase de compilation (traduction du MiniJaja vers le JajaCode), nous avons écarté l'idée intuitive d'intégrer une méthode \texttt{compile()} directement au sein des classes de nœuds de l'AST MiniJaja.
-
-L'utilisation stricte du Pattern Visiteur permet d'externaliser la logique de compilation. Ce choix répond au principe de responsabilité unique (\textit{Single Responsibility Principle}). Il permet de conserver des modèles de données (les nœuds) purs et légers, tout en isolant la complexité de la génération d'instructions (gestion des adresses, étiquettes) dans une classe dédiée. Cela facilite également l'évolution du compilateur sans risquer de briser la structure du langage source.
 
 \subsubsection{Erreurs de construction d'AST (Visitor)}
 
@@ -130,32 +127,32 @@ Le tableau suivant regroupe les nœuds par \textbf{familles comportementales} et
 \begin{longtable}{|p{2.8cm}|p{3.4cm}|p{6.4cm}|p{3.0cm}|}
 \caption{Groupes de nœuds AST : rôle, attributs et méthodes}\label{tab:groupes-nodes}\\
 \hline
-\textbf{Groupe} & \textbf{Exemples} & \textbf{Attributs principaux (idée)} & \textbf{Méthodes clés} \\
+    \textbf{Groupe} & \textbf{Exemples} & \textbf{Attributs principaux (idée)} & \textbf{Méthodes clés} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Groupe} & \textbf{Exemples} & \textbf{Attributs principaux (idée)} & \textbf{Méthodes clés} \\
+    \textbf{Groupe} & \textbf{Exemples} & \textbf{Attributs principaux (idée)} & \textbf{Méthodes clés} \\
 \hline
 \endhead
 Structurels & \texttt{ClasseNode}, \texttt{MainNode}, \texttt{MethodeNode}, \texttt{DeclsNode}, \texttt{VarsNode}, \texttt{EntetesNode}, \texttt{InstructionsNode} &
 Références vers listes chaînées (tête + reste), identifiants de méthodes, variables de classe, sous-arbres \emph{vars/instrs/decls/entêtes}. &
-\texttt{interpret}, \texttt{getChildren}, \texttt{toStringTree} \\
+    \texttt{interpret}, \texttt{getChildren}, \texttt{toStringTree} \\
 \hline
 Déclarations & \texttt{VarNode}, \texttt{CstNode}, \texttt{TableauNode}, \texttt{EnteteNode} &
-\textbf{Type} déclaré, \textbf{identifiant}, éventuelle \textbf{expression d'initialisation} (ou taille pour tableau). &
-\texttt{interpret} (déclare dans \texttt{Stacks}), \texttt{getChildren} \\
+    \textbf{Type} déclaré, \textbf{identifiant}, éventuelle \textbf{expression d'initialisation} (ou taille pour tableau). &
+    \texttt{interpret} (déclare dans \texttt{Stacks}), \texttt{getChildren} \\
 \hline
 Instructions & \texttt{AffectationNode}, \texttt{SiNode}, \texttt{TantqueNode}, \texttt{AppelINode}, \texttt{RetourNode}, \texttt{EcrireNode}, \texttt{IncrementNode}, \texttt{SommeNode} &
 Cibles (identifiant / accès tableau), expressions, sous-listes d'instructions (then/else, corps de boucle), informations d'appel (ident + arguments). &
-\texttt{interpret} (effets), parfois réécriture via \texttt{setChildren} / remise à zéro des enfants \\
+    \texttt{interpret} (effets), parfois réécriture via \texttt{setChildren} / remise à zéro des enfants \\
 \hline
 Expressions & \texttt{IdentNode}, \texttt{TabNode}, \texttt{NbreNode}, \texttt{BoolValueNode}, \texttt{PlusNode}, \texttt{MinusNode}, \texttt{AndNode}, \texttt{NotNode}, \texttt{AppelENode} &
 Opérandes gauche/droite, identifiants, index, littéraux, arguments d'appel. Les types sont \emph{dynamiques} à l'exécution. &
-\texttt{evaluate} (renvoie une valeur), \texttt{getChildren} \\
+    \texttt{evaluate} (renvoie une valeur), \texttt{getChildren} \\
 \hline
 Retrait (cleanup) & \texttt{rVar}, \texttt{rVars}, \texttt{rDeclrs}, \texttt{rEntetes}, \texttt{RestoreContextNode} &
 Référence vers le nœud ou la liste à nettoyer ; pour \texttt{RestoreContextNode}, le nom de la méthode/contexte. &
-\texttt{interpret} (retire dans \texttt{Stacks}, et/ou \texttt{popContext}) \\
+    \texttt{interpret} (retire dans \texttt{Stacks}, et/ou \texttt{popContext}) \\
 \hline
 \end{longtable}
 
@@ -173,33 +170,7 @@ Le projet contient une analyse sémantique (déclarations, compatibilités de ty
 \noindent Les erreurs sémantiques (doublons, portées, types statiques) sont donc volontairement peu détaillées ici.
 
 %=============================================================================
-\subsection{Interprétation JajaCode}
-%=============================================================================
-
-\subsubsection{Refactoring : du switch monolithique au Pattern Command}
-
-L'implémentation initiale de l'interpréteur JajaCode reposait sur une structure monolithique (une classe unique de plus de 1200 lignes avec un immense switch/case), ce qui rendait la maintenance et le débogage extrêmement ardus.
-
-Nous avons opéré une refonte complète de l'interpréteur en appliquant le \textit{Pattern Command}. Chaque instruction JajaCode (ex: \texttt{add}, \texttt{push}, \texttt{invoke}) est désormais encapsulée dans sa propre classe (nommée "Axiome" dans notre architecture) qui implémente une interface commune d'exécution.
-
-\textbf{Avantages constatés :}
-\begin{itemize}
-    \item \textbf{Maintenabilité :} Cela fragmente la complexité. Chaque classe est responsable d'une seule instruction, rendant le code lisible.
-    \item \textbf{Extensibilité :} L'ajout d'une nouvelle instruction ne demande pas de modifier le moteur central, mais simplement de créer une nouvelle classe.
-\end{itemize}
-
-\subsubsection{Encapsulation du contexte d'exécution}
-
-Pour orchestrer l'exécution de ces commandes, nous avons introduit une classe \texttt{MachineContext}.
-
-Plutôt que de passer des références éparses à la Pile, au Tas, à chaque instruction, l'objet \texttt{MachineContext} encapsule l'intégralité de la mémoire et de l'adressage. Les instructions interagissent uniquement avec ce contexte, assurant une forte cohésion des données.
-
-\subsubsection{Gestion des erreurs et testabilité JajaCode}
-
-Chaque "Axiome" a été conçu pour lever des exceptions spécifiques en cas d'échec (ex: \texttt{StackUnderflowException}, \texttt{TypeMismatchException}). Ce choix a été piloté par la stratégie de test. En typant fortement les exceptions, nous avons pu écrire des tests unitaires précis pour chaque instruction, validant non seulement le succès des opérations mais aussi leur robustesse face aux cas limites.
-
-%=============================================================================
-\subsection{Interprétation MiniJaja}
+\subsection{Interprétation}
 %=============================================================================
 
 \subsubsection{Le Walker : Parcours de l'AST}
@@ -242,7 +213,7 @@ La pause est interactive (lecture sur l'entrée standard) et permet d'inspecter 
     \item \textbf{Gérer les breakpoints} : ajouter/supprimer une étape.
 \end{itemize}
 
-\subsubsection{Mémoire et Interprétation:}
+\subsubsection{Memoir et Interpretation:}
 
 La classe \texttt{Stacks} implémente la mémoire d'exécution avec une structure de pile classique :
 
@@ -357,16 +328,16 @@ Les noeuds \texttt{rXxx} gèrent le nettoyage de la pile après l'exécution :
 \end{itemize}
 \newpage
 %=============================================================================
-\subsection{Synthèse des Erreurs et Exceptions}
+\subsection{Synthèse des Erreurs et Exceptions (construction AST \& interprétation)}
 %=============================================================================
 
-Le projet distingue deux familles d'erreurs principales :
+\subsubsection{Deux familles d'échecs}
 
 \begin{table}[h]
 \centering
 \begin{tabular}{|l|p{9.5cm}|}
 \hline
-\textbf{Famille} & \textbf{Intention} \\
+    \textbf{Famille} & \textbf{Intention} \\
 \hline
 Construction AST (Visitor) & Détecter un décalage grammaire/visitor (cas non géré) ou un état CST incohérent, et échouer tôt. \\
 \hline
@@ -378,21 +349,3 @@ Interprétation (runtime) & Détecter des incohérences à l'exécution : types 
 
 
 %=============================================================================
-\subsection{Bilan des choix de réalisation}
-%=============================================================================
-
-Les choix de conception et d'implémentation du compilateur/interpréteur MiniJaja incluent :
-
-\begin{enumerate}
-    \item \textbf{AST orienté exécution} : des nœuds ``structurels'' (classe/main/méthodes) et des nœuds ``action'' (instructions/expressions) dont \texttt{interpret}/\texttt{evaluate} porte la sémantique.
-
-    \item \textbf{Walker préfixe + réécriture dynamique} : certains nœuds (\texttt{SiNode}, \texttt{TantqueNode}, \texttt{AppelINode}) modifient leurs enfants pour exprimer le flot de contrôle sans implémenter un moteur de contrôle externe.
-
-    \item \textbf{Mémoire et contexte} : la pile \texttt{Stacks} supporte des identifiants scopés via un suffixe de contexte (incluant la récursivité), permettant de distinguer \texttt{x@f} et \texttt{x@f1}.
-
-    \item \textbf{Nettoyage explicite (retrait)} : les nœuds \texttt{rVar}/\texttt{rVars}/\texttt{rDeclrs}/\texttt{rEntetes} et \texttt{RestoreContextNode} rendent la durée de vie des déclarations explicite.
-
-    \item \textbf{Débogage intégré} : le mode debug s'insère proprement entre ``visite'' et ``interprétation'' (hook \texttt{beforeNode}), offrant pas à pas et breakpoints.
-\end{enumerate}
-
-L'architecture choisie permet une maintenance aisée et une extension future du langage MiniJaja, tout en garantissant une détection précoce des erreurs et des messages clairs pour l'utilisateur.

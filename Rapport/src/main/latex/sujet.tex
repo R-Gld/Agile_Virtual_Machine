@@ -1,6 +1,6 @@
 \section{Sujet}
 
-Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, intégrant les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
+Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, réalisé dans le cadre du Master 1 Informatique. Ce projet intègre les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
 
 Le système articule un langage source impératif et typé (MiniJaja) avec un langage cible orienté pile (JajaCode).\\
 
@@ -11,6 +11,15 @@ Le projet intègre donc une gestion de la mémoire, orchestrant l'allocation dyn
 Mémoire qui peut être visualisé au sein d'une interface graphique via le mode `debug`, en consultant ainsi pas à pas un programme Minijaja ou Jajacode.\\
 
 Pour répondre à ce projet, l'architecture logicielle repose sur l'outil ANTLR et le design pattern visiteur. La fiabilité de l'ensemble est assurée par une stratégie de tests unitaires et d'intégration, menée dans le cadre d'une méthodologie Agile.
+
+Pour mener à bien ce développement, nous avons utilisé un ensemble d'outils :
+\begin{itemize}
+    \item \textbf{Jira} pour la gestion de projet agile et le suivi des tâches.
+    \item \textbf{GitLab} pour le versionnement du code et la CI/CD.
+    \item \textbf{IntelliJ IDEA} comme environnement de développement principal (avec des marginaux sous VSCode).
+    \item \textbf{Nexus} pour la gestion des artefacts et des dépendances Maven.
+    \item \textbf{SonarQube} pour l'analyse de la qualité du code.
+\end{itemize}
 
 \subsection{ANTLR vs JavaCC}
 
