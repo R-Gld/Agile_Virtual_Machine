@@ -1,9 +1,8 @@
-
 % =============================================================================
-\section{Résultats par Module}
+\section{Résultats sur la batterie de tests}
 % =============================================================================
 
-\subsection{Vue d'ensemble}
+\subsection{Vue d'ensemble des résultats}
 
 \begin{center}
 \begin{tabular}{|l|r|r|r|r|r|}
@@ -25,12 +24,12 @@
 \end{tabular}
 \end{center}
 
-% =============================================================================
-\section{Détails par Module}
-% =============================================================================
+% -----------------------------------------------------------------------------
+\subsection{Détails par Module}
+% -----------------------------------------------------------------------------
 
 % -----------------------------------------------------------------------------
-\subsection{Module Memoire (Gestion de la mémoire)}
+\subsubsection{Module Memoire (Gestion de la mémoire)}
 % -----------------------------------------------------------------------------
 
 \begin{center}
@@ -74,10 +73,10 @@ TypeUtilsTest & 9 & 0 & 0 & 0.05 \\
 \end{center}
 
 % -----------------------------------------------------------------------------
-\subsection{Module LexerParser (Analyse lexicale et syntaxique)}
+\subsubsection{Module LexerParser (Analyse lexicale et syntaxique)}
 % -----------------------------------------------------------------------------
 
-\subsubsection{Analyse des erreurs et diagnostics}
+\paragraph{Analyse des erreurs et diagnostics}
 
 \begin{center}
 \small
@@ -109,7 +108,7 @@ SyntaxErrorListenerTest & 1 & 0 & 0 & 1.00 \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Tests des exceptions JajaCode}
+\paragraph{Tests des exceptions JajaCode}
 
 \begin{center}
 \small
@@ -137,7 +136,7 @@ UndefinedSymbolExceptionTests & 3 & 0 & 0 & 0.01 \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Tests du compilateur JajaCode}
+\paragraph{Tests du compilateur JajaCode}
 
 \begin{center}
 \small
@@ -170,7 +169,7 @@ MiniJajaCompilerVisitorTest & 140 & 0 & 0 & 4.00 \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Tests des axiomes JajaCode}
+\paragraph{Tests des axiomes JajaCode}
 
 \begin{center}
 \small
@@ -255,7 +254,7 @@ JajaCodeAxiomesCompletTest & 95 & 0 & 0 & 0.50 \\
 \end{longtable}
 \end{center}
 
-\subsubsection{Tests des noeuds AST MiniJaja}
+\paragraph{Tests des noeuds AST MiniJaja}
 
 \begin{center}
 \small
@@ -290,7 +289,7 @@ RetraitTest & 28 & 0 & 0 & 0.10 \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Tests de l'interpréteur MiniJaja}
+\paragraph{Tests de l'interpréteur MiniJaja}
 
 \begin{center}
 \small
@@ -335,7 +334,7 @@ TypeIncompatibilityTest & 60 & 0 & 0 & 0.50 \\
 \end{tabular}
 \end{center}
 
-\subsubsection{Tests du débogueur}
+\paragraph{Tests du débogueur}
 
 \begin{center}
 \small
@@ -380,7 +379,7 @@ WalkerTest (Walk) & 6 & 0 & 0 & 0.05 \\
 \end{center}
 
 % -----------------------------------------------------------------------------
-\subsection{Module Compiler (Compilation principale)}
+\subsubsection{Module Compiler (Compilation principale)}
 % -----------------------------------------------------------------------------
 
 \begin{center}
@@ -401,7 +400,7 @@ MainCompilerCompilerTest & 6 & 0 & 0 & 2.00 \\
 \end{center}
 
 % -----------------------------------------------------------------------------
-\subsection{Module GUI (Interface graphique)}
+\subsubsection{Module GUI (Interface graphique)}
 % -----------------------------------------------------------------------------
 
 \begin{center}
@@ -434,10 +433,10 @@ TestSystemInfo & 5 & 0 & 0 & 0 \\
 \textbf{Remarque :} Tous les tests du module GUI passent avec succès, y compris les tests d'interface JavaFX en mode headless.
 
 % =============================================================================
-\section{Analyse Statistique}
+\subsection{Analyse Statistique}
 % =============================================================================
 
-\subsection{Distribution des tests par module}
+\subsubsection{Distribution des tests par module}
 
 \begin{center}
 \begin{tikzpicture}
@@ -454,7 +453,7 @@ TestSystemInfo & 5 & 0 & 0 & 0 \\
 \end{tikzpicture}
 \end{center}
 
-\subsection{Catégories de tests}
+\subsubsection{Catégories de tests}
 
 \begin{center}
 \begin{tabular}{|l|r|l|}
@@ -486,10 +485,10 @@ Autres tests & 171 & Utilitaires, intégration \\
 \end{center}
 
 % =============================================================================
-\section{Couverture des Fonctionnalités}
+\subsection{Couverture des Fonctionnalités}
 % =============================================================================
 
-\subsection{Instructions JajaCode testées}
+\subsubsection{Instructions JajaCode testées}
 
 Toutes les instructions de la machine virtuelle JajaCode sont couvertes :
 
@@ -512,7 +511,7 @@ Toutes les instructions de la machine virtuelle JajaCode sont couvertes :
 \end{tabular}
 \end{center}
 
-\subsection{Types d'erreurs testées}
+\subsubsection{Types d'erreurs testées}
 
 \begin{itemize}
     \item \textbf{Erreurs d'exécution :} Division par zéro, dépassement de tableau, pile vide
@@ -523,7 +522,7 @@ Toutes les instructions de la machine virtuelle JajaCode sont couvertes :
 \end{itemize}
 
 % =============================================================================
-\section{Environnement de Test}
+\subsection{Environnement de Test}
 % =============================================================================
 
 \begin{center}
@@ -556,7 +555,7 @@ Date d'exécution & 14 décembre 2025, 13:54 \\
 \end{center}
 
 % =============================================================================
-\section{Conclusion}
+\subsection{Bilan des tests}
 % =============================================================================
 
 La batterie de tests du projet MiniJaja présente un \textbf{taux de réussite de 100\%} avec :
