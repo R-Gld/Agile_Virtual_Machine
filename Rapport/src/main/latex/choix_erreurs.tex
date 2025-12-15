@@ -23,3 +23,14 @@ La centralisation de l'état machine.Plutôt que de passer des références épa
 \subsubsection{Gestion des erreurs et Testabilité}
 
 Enfin, chaque "Axiome" a été conçu pour lever des exceptions spécifiques en cas d'échec (ex: StackUnderflowException, TypeException). Ce choix a été piloté par la stratégie de test. En typant fortement les exceptions, nous avons pu écrire des tests unitaires précis pour chaque instruction, validant non seulement le succès des opérations mais aussi leur robustesse face aux cas limites.
+
+\subsection{Interface}
+\subsubsection{Choix de réalisation}
+Pour l’interface, nous avons décidé de créer un IDE qui ressemble à ceux de JetBrains, avec lesquels nous sommes familiers.
+
+Nous avons choisi d’utiliser le composant CodeArea de RichTextFX, car il n’était pas disponible dans la version de JavaFX utilisée. Nous avons également choisi de ne pas monter en version de JavaFX afin de rester cohérents avec la version de Java utilisée et d’avoir la même version partout, car les versions plus récentes de JavaFX nécessitaient une version plus récente de Java.
+
+Nous avons aussi choisi de ne pas utiliser les fichiers FXML pour créer notre interface, afin d’avoir une plus grande liberté et davantage de contrôle sur la structure de l’interface. Cela nous a permis de construire l’interface petit à petit et d’ajouter de nouveaux éléments sans avoir à tout refaire.
+
+\subsubsection{Gestion des erreurs}
+Côté interface graphique, nous avons l’affichage des erreurs de compilation et d’exécution dans la console. Nous disposons également de la coloration syntaxique, qui affiche en rouge les erreurs de syntaxe.
