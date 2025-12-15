@@ -41,12 +41,10 @@ L'architecture du projet suit un modèle en pipeline composé de quatre phases p
 \end{figure}
 
 %=============================================================================
-\section{Du code source au CST (contexte)}
+\subsection{Du code source au CST (contexte)}
 %=============================================================================
 
 Le pipeline s'appuie sur ANTLR4 pour produire un CST (Concrete Syntax Tree) à partir du code source, puis un Visitor transforme ce CST en AST (Abstract Syntax Tree) propre au projet.
-
-\subsection{Rôle d'ANTLR côté analyse lexicale (Lexer)}
 
 ANTLR découpe d'abord le \textbf{flux de caractères} en \textbf{lexèmes} et les transforme en \textbf{tokens} typés (ex : mot-clé, identifiant, entier, opérateur, séparateur). Chaque token transporte des \textbf{métadonnées de localisation} (ligne/colonne) utilisées ensuite pour attacher une position source aux nœuds de l'AST.
 
@@ -62,16 +60,16 @@ ANTLR découpe d'abord le \textbf{flux de caractères} en \textbf{lexèmes} et l
 \noindent\textbf{Périmètre de ce rapport.} Les détails de la grammaire ANTLR et du diagnostic complet des erreurs syntaxiques ne sont pas le cœur du document : on se concentre ensuite sur \textbf{(1) la construction de l'AST} et \textbf{(2) l'interprétation de l'AST} (Walker + mode debug), ainsi que sur les erreurs/exceptions associées à ces deux phases.
 
 %=============================================================================
-\section{Construction de l'Arbre Syntaxique Abstrait (AST)}
+\subsection{Construction de l'Arbre Syntaxique Abstrait (AST)}
 %=============================================================================
 
-\subsection{Le Pattern Visitor pour la transformation CST→AST}
+\subsubsection{Le Pattern Visitor pour la transformation CST→AST}
 
 La transformation du CST (Concrete Syntax Tree) généré par ANTLR vers notre AST personnalisé est réalisée via le pattern Visitor implémenté dans \texttt{MiniJajaInterpreterVisitor}.
 
 Le Visitor applique une correspondance \emph{règle de grammaire} $\rightarrow$ \emph{nœud métier}. Chaque nœud créé peut recevoir une \texttt{SourcePosition} (fichier/ligne/colonne) extraite du token de début de la règle ANTLR, ce qui rend les erreurs ultérieures (construction/interprétation) \textbf{localisables}.
 
-\subsection{Stratégie de construction : règles → noeuds et listes chaînées}
+\subsubsection{Stratégie de construction : règles → noeuds et listes chaînées}
 
 La grammaire ANTLR produit un arbre de règles. Le Visitor opère une \textbf{projection} : chaque règle pertinente retourne un \texttt{AstNode} métier.
 
@@ -89,8 +87,13 @@ La grammaire ANTLR produit un arbre de règles. Le Visitor opère une \textbf{pr
 
 Ce choix simplifie le Visitor : on construit la tête, puis on enchaîne le reste (ou \texttt{null}/noeud vide) et l'interpréteur peut traiter récursivement la structure.
 
+\subsubsection{Justification du Pattern Visitor externe}
 
-\subsection{Erreurs de construction d'AST (Visitor)}
+Pour la phase de compilation (traduction du MiniJaja vers le JajaCode), nous avons écarté l'idée intuitive d'intégrer une méthode \texttt{compile()} directement au sein des classes de nœuds de l'AST MiniJaja.
+
+L'utilisation stricte du Pattern Visiteur permet d'externaliser la logique de compilation. Ce choix répond au principe de responsabilité unique (\textit{Single Responsibility Principle}). Il permet de conserver des modèles de données (les nœuds) purs et légers, tout en isolant la complexité de la génération d'instructions (gestion des adresses, étiquettes) dans une classe dédiée. Cela facilite également l'évolution du compilateur sans risquer de briser la structure du langage source.
+
+\subsubsection{Erreurs de construction d'AST (Visitor)}
 
 Le Visitor est volontairement strict : si un cas de grammaire n'est pas géré, l'exécution doit échouer tôt.
 
@@ -108,7 +111,7 @@ Le Visitor est volontairement strict : si un cas de grammaire n'est pas géré, 
     \item \texttt{RuntimeException} : états impossibles (ex: \texttt{WRITE} sans identifiant ni chaîne) — garde-fous de cohérence CST.
 \end{itemize}
 
-\subsection{Hiérarchie des Noeuds AST}
+\subsubsection{Hiérarchie des Noeuds AST}
 
 Tous les noeuds de l'AST héritent de la classe abstraite \texttt{AstNode} qui définit l'interface commune :
 
@@ -120,7 +123,7 @@ Tous les noeuds de l'AST héritent de la classe abstraite \texttt{AstNode} qui d
     \item pour les expressions, une évaluation via \texttt{evaluate(Stacks)}.
 \end{itemize}
 
-\subsection{Classification des nœuds AST (tableau récapitulatif)}
+\subsubsection{Classification des nœuds AST (tableau récapitulatif)}
 
 Le tableau suivant regroupe les nœuds par \textbf{familles comportementales} et explicite, pour chaque famille, les \textbf{attributs structurants} (références vers sous-nœuds, identifiants, types) ainsi que les \textbf{méthodes clés} utilisées à l'exécution.
 
@@ -157,7 +160,7 @@ Référence vers le nœud ou la liste à nettoyer ; pour \texttt{RestoreContextN
 \end{longtable}
 
 %=============================================================================
-\section{Note sur l'analyse sémantique (hors focus)}
+\subsection{Note sur l'analyse sémantique (hors focus)}
 %=============================================================================
 
 Le projet contient une analyse sémantique (déclarations, compatibilités de types, validation d'appels de méthodes). Elle est essentielle au pipeline global, mais le présent rapport reste centré sur :
@@ -170,10 +173,36 @@ Le projet contient une analyse sémantique (déclarations, compatibilités de ty
 \noindent Les erreurs sémantiques (doublons, portées, types statiques) sont donc volontairement peu détaillées ici.
 
 %=============================================================================
-\section{Interprétation}
+\subsection{Interprétation JajaCode}
 %=============================================================================
 
-\subsection{Le Walker : Parcours de l'AST}
+\subsubsection{Refactoring : du switch monolithique au Pattern Command}
+
+L'implémentation initiale de l'interpréteur JajaCode reposait sur une structure monolithique (une classe unique de plus de 1200 lignes avec un immense switch/case), ce qui rendait la maintenance et le débogage extrêmement ardus.
+
+Nous avons opéré une refonte complète de l'interpréteur en appliquant le \textit{Pattern Command}. Chaque instruction JajaCode (ex: \texttt{add}, \texttt{push}, \texttt{invoke}) est désormais encapsulée dans sa propre classe (nommée "Axiome" dans notre architecture) qui implémente une interface commune d'exécution.
+
+\textbf{Avantages constatés :}
+\begin{itemize}
+    \item \textbf{Maintenabilité :} Cela fragmente la complexité. Chaque classe est responsable d'une seule instruction, rendant le code lisible.
+    \item \textbf{Extensibilité :} L'ajout d'une nouvelle instruction ne demande pas de modifier le moteur central, mais simplement de créer une nouvelle classe.
+\end{itemize}
+
+\subsubsection{Encapsulation du contexte d'exécution}
+
+Pour orchestrer l'exécution de ces commandes, nous avons introduit une classe \texttt{MachineContext}.
+
+Plutôt que de passer des références éparses à la Pile, au Tas, à chaque instruction, l'objet \texttt{MachineContext} encapsule l'intégralité de la mémoire et de l'adressage. Les instructions interagissent uniquement avec ce contexte, assurant une forte cohésion des données.
+
+\subsubsection{Gestion des erreurs et testabilité JajaCode}
+
+Chaque "Axiome" a été conçu pour lever des exceptions spécifiques en cas d'échec (ex: \texttt{StackUnderflowException}, \texttt{TypeMismatchException}). Ce choix a été piloté par la stratégie de test. En typant fortement les exceptions, nous avons pu écrire des tests unitaires précis pour chaque instruction, validant non seulement le succès des opérations mais aussi leur robustesse face aux cas limites.
+
+%=============================================================================
+\subsection{Interprétation MiniJaja}
+%=============================================================================
+
+\subsubsection{Le Walker : Parcours de l'AST}
 
 L'interprétation est réalisée par un parcours préfixe (preorder) de l'AST via la classe \texttt{Walker} :
 
@@ -185,7 +214,7 @@ L'interprétation est réalisée par un parcours préfixe (preorder) de l'AST vi
     \item puis visite les enfants fournis par \texttt{getChildren()}.
 \end{itemize}
 
-\subsection{Mode Debug : pas à pas et points d'arrêt}
+\subsubsection{Mode Debug : pas à pas et points d'arrêt}
 
 Le Walker délègue le \emph{contrôle d'exécution} à une instance \texttt{Debug}. Le principe est le suivant : \textbf{avant} d'exécuter un nœud (donc avant \texttt{node.interpret(stacks)}), le Walker appelle \texttt{debug.beforeNode(...)}.
 
@@ -213,7 +242,7 @@ La pause est interactive (lecture sur l'entrée standard) et permet d'inspecter 
     \item \textbf{Gérer les breakpoints} : ajouter/supprimer une étape.
 \end{itemize}
 
-\subsection{Memoir et Interpretation:}
+\subsubsection{Mémoire et Interprétation:}
 
 La classe \texttt{Stacks} implémente la mémoire d'exécution avec une structure de pile classique :
 
@@ -234,7 +263,7 @@ Lors d'un appel, on empile un \textbf{suffixe de contexte} (nom de méthode + in
 \medskip
 \noindent\textbf{Exemple d'effet :} si \texttt{f} s'appelle récursivement, on peut obtenir \texttt{x@f}, puis \texttt{x@f1}, \texttt{x@f2}, etc. Cela permet au retrait (nettoyage) et aux accès variables de viser la bonne instance.
 
-\subsection{Interprétation des Noeuds Principaux}
+\subsubsection{Interprétation des Noeuds Principaux}
 
 \subsubsection{ClasseNode}
 
@@ -286,7 +315,7 @@ L'appel de méthode gère la création du contexte et le passage de paramètres 
 
 \noindent\textbf{Erreur Runtime - Ecrire :} \texttt{RuntimeException}: "Type error: cannot print array directly or method reference"
 
-\subsection{Évaluation des Expressions}
+\subsubsection{Évaluation des Expressions}
 
 \subsubsection{Classe Expression}
 
@@ -316,7 +345,7 @@ Toutes les expressions implémentent la méthode \texttt{evaluate()} :
 
 \noindent\textbf{Erreur Runtime - AppelE :} \texttt{RuntimeException}: "Erreur: appelE hors d'une classe"
 
-\subsection{Noeuds de Retrait (Cleanup)}
+\subsubsection{Noeuds de Retrait (Cleanup)}
 
 Les noeuds \texttt{rXxx} gèrent le nettoyage de la pile après l'exécution :
 
@@ -328,10 +357,10 @@ Les noeuds \texttt{rXxx} gèrent le nettoyage de la pile après l'exécution :
 \end{itemize}
 \newpage
 %=============================================================================
-\section{Synthèse des Erreurs et Exceptions (construction AST \& interprétation)}
+\subsection{Synthèse des Erreurs et Exceptions}
 %=============================================================================
 
-\subsection{Deux familles d'échecs}
+Le projet distingue deux familles d'erreurs principales :
 
 \begin{table}[h]
 \centering
@@ -349,10 +378,10 @@ Interprétation (runtime) & Détecter des incohérences à l'exécution : types 
 
 
 %=============================================================================
-\section{Conclusion}
+\subsection{Bilan des choix de réalisation}
 %=============================================================================
 
-Ce rapport a présenté les choix de conception et d'implémentation du compilateur/interpréteur MiniJaja. Les points clés incluent :
+Les choix de conception et d'implémentation du compilateur/interpréteur MiniJaja incluent :
 
 \begin{enumerate}
     \item \textbf{AST orienté exécution} : des nœuds ``structurels'' (classe/main/méthodes) et des nœuds ``action'' (instructions/expressions) dont \texttt{interpret}/\texttt{evaluate} porte la sémantique.
