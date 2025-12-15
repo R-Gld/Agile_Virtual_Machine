@@ -1,144 +1,824 @@
 \section{Utilisation des outils de suivi de projet}
 
-Cette section présente les outils mis en place pour assurer la qualité et la traçabilité du code tout au long du développement.
+\subsection{Introduction}
+Cette section détaille l'utilisation des outils de suivi de projet mis en place pour le développement du compilateur MiniJAJA. Nous présentons ici l'intégration et l'utilisation de GitLab CI/CD, Nexus Repository Manager et SonarQube dans notre processus de développement.
 
-\subsection{GitLab CI/CD : Intégration et déploiement continus}
+\subsection{Vue d'ensemble de la chaîne CI/CD}
 
-L'intégration continue (CI) et le déploiement continu (CD) sont au cœur de notre processus de développement. GitLab CI/CD automatise la compilation, les tests et le déploiement du projet.
+\subsubsection{Architecture globale}
 
-\subsubsection{Pipeline de CI/CD}
+Le projet MiniJAJA utilise une chaîne d'intégration continue complète basée sur GitLab CI/CD, intégrant Maven, JaCoCo, SonarQube et Nexus. Le pipeline automatise l'ensemble du processus, de la compilation jusqu'au déploiement des artefacts.
 
-Le pipeline GitLab est organisé en plusieurs stages séquentiels :
+\begin{figure}[h]
+    \centering
+    \begin{verbatim}
+    Git Push → Build → Tests → SonarQube → Package → Deploy (Nexus)
+                 ↓       ↓        ↓
+              compile  JUnit   Quality    JAR    Repository
+                      JaCoCo   Gates
+    \end{verbatim}
+    \caption{Architecture du pipeline CI/CD}
+\end{figure}
 
+\subsubsection{Objectifs et bénéfices}
+
+Les outils de CI/CD permettent de :
+\begin{itemize}
+    \item Automatiser les builds et tests à chaque commit
+    \item Garantir la qualité du code via l'analyse statique SonarQube
+    \item Centraliser les artefacts de build dans Nexus
+    \item Détecter rapidement les régressions
+    \item Faciliter les releases avec maven-release-plugin
+    \item Assurer la reproductibilité des builds
+\end{itemize}
+
+% ============================================================================
+% GITLAB CI/CD
+% ============================================================================
+\subsection{GitLab CI/CD}
+
+\subsubsection{Configuration du pipeline}
+
+\paragraph{Fichier .gitlab-ci.yml}
+
+Le fichier \texttt{.gitlab-ci.yml} définit l'ensemble du pipeline. Il utilise l'image Docker \texttt{maven:3.9.9-eclipse-temurin-21-alpine} pour garantir un environnement de build cohérent.
+
+Configuration globale :
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Configuration globale GitLab CI]
+default:
+  image: maven:3.9.9-eclipse-temurin-21-alpine
+  tags:
+    - avm_groupe7
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+  retry:
+    max: 2
+    when:
+      - api_failure
+      - script_failure
+      - unknown_failure
+\end{lstlisting}
+
+Le script \texttt{settings.sh} génère automatiquement le fichier \texttt{.settings.xml} Maven avec les credentials pour Nexus et SonarQube à partir des variables d'environnement sécurisées.
+
+\paragraph{Variables d'environnement}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Variables Maven]
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp -s .settings.xml
+                                 --fail-at-end"
+  MAVEN_CLI_OPTS: "${MAVEN_CLI_OPTS_SINGLE_THREAD} -T 1C"
+\end{lstlisting}
+
+Options utilisées :
+\begin{itemize}
+    \item \texttt{-B} : mode batch (non-interactif)
+    \item \texttt{-V} : affiche la version de Maven
+    \item \texttt{-ntp} : pas de barre de progression (logs plus propres)
+    \item \texttt{-T 1C} : compilation parallèle (1 thread par core CPU)
+    \item \texttt{--fail-at-end} : continue le build malgré les échecs de modules
+\end{itemize}
+
+\paragraph{Cache Maven}
+
+Le cache Maven améliore significativement les temps de build :
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Configuration du cache]
+cache:
+  key: "m2-${CI_COMMIT_REF_SLUG}"
+  policy: pull-push
+  paths:
+    - .m2/repository
+  when: on_success
+\end{lstlisting}
+
+Le cache est :
+\begin{itemize}
+    \item \textbf{Partagé par branche} : clé basée sur \texttt{CI\_COMMIT\_REF\_SLUG}
+    \item \textbf{Pull-push} : téléchargé au début, uploadé à la fin
+    \item \textbf{Conditionnel} : seulement si le job réussit
+\end{itemize}
+
+\paragraph{Stages du pipeline}
+
+Le pipeline est organisé en 7 stages séquentiels :
 \begin{enumerate}
-    \item \textbf{build} : Compilation du code source
-    \item \textbf{test} : Exécution des tests unitaires et d'intégration
-    \item \textbf{sonarqube-check} : Analyse statique du code
-    \item \textbf{package} : Création des artefacts JAR
-    \item \textbf{deploy} : Déploiement sur Nexus
-    \item \textbf{release} : Gestion des versions
+    \item \textbf{.pre} : vérification des variables d'environnement
+    \item \textbf{build} : compilation du projet Maven
+    \item \textbf{test} : exécution des tests unitaires et d'intégration
+    \item \textbf{sonarqube-check} : analyse de la qualité du code
+    \item \textbf{package} : création des artefacts JAR
+    \item \textbf{deploy} : déploiement vers Nexus
+    \item \textbf{release} : préparation et exécution des releases
 \end{enumerate}
 
-\subsubsection{Stratégie de tests automatisés}
+\subsubsection{Jobs et leur configuration}
 
-Chaque modification de code déclenche automatiquement :
+\paragraph{Job check-envvars (.pre)}
+
+Ce job préliminaire vérifie la présence de toutes les variables d'environnement nécessaires :
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Verification des variables d'environnement]
+check-envvars:
+  stage: .pre
+  script:
+    - >
+      if [[ -z "$MAVEN_ENT_PASSWORD" ]]
+      || [[ -z "$MAVEN_ENT_USERNAME" ]]
+      || [[ -z "$MAVEN_MASTER_PASSWORD" ]]
+      || [[ -z "$SONAR_HOST_URL" ]]
+      || [[ -z "$SONAR_TOKEN" ]];
+      then echo "Missing env vars"; exit 1; fi
+\end{lstlisting}
+
+Variables vérifiées :
 \begin{itemize}
-    \item L'exécution de tous les tests unitaires
-    \item La génération des rapports de couverture de code (JaCoCo)
-    \item La validation de la couverture minimale (80\%)
-    \item Les tests d'intégration inter-modules
+    \item \texttt{MAVEN\_ENT\_USERNAME/PASSWORD} : authentification Nexus
+    \item \texttt{MAVEN\_MASTER\_PASSWORD} : encryption Maven
+    \item \texttt{SONAR\_HOST\_URL/TOKEN} : connexion SonarQube
 \end{itemize}
 
-\subsubsection{Qualité de code et métriques}
+\paragraph{Job build}
 
-Le pipeline intègre des vérifications de qualité :
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de build]
+build:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  script:
+    - mvn ${MAVEN_CLI_OPTS} clean compile
+\end{lstlisting}
+
+Ce job :
 \begin{itemize}
-    \item Vérification du style de code
-    \item Détection des vulnérabilités
-    \item Analyse de la complexité cyclomatique
-    \item Rapport de dette technique
+    \item Compile tous les modules Maven
+    \item S'exécute sur les branches \texttt{main}, \texttt{dev}, les tags et les merge requests
+    \item Utilise la compilation parallèle pour optimiser le temps
+    \item Nettoie les artefacts précédents avec \texttt{clean}
 \end{itemize}
 
-\subsection{Nexus Repository Manager : Gestion des artefacts}
+\paragraph{Job test}
 
-Nexus est utilisé comme gestionnaire de dépôts Maven pour stocker et distribuer les artefacts du projet.
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de test]
+test:
+  stage: test
+  script:
+    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport'
+          jacoco:prepare-agent test jacoco:report
+  artifacts:
+    reports:
+      junit: "**/target/surefire-reports/TEST-*.xml"
+      coverage_report:
+        coverage_format: jacoco
+        path: "**/target/site/jacoco/jacoco.xml"
+    paths:
+      - "**/target/surefire-reports/TEST-*.xml"
+      - "**/target/site/jacoco/jacoco.xml"
+      - "**/target/classes/"
+    expire_in: 1 week
+\end{lstlisting}
 
-\subsubsection{Organisation des repositories}
-
+Ce job :
 \begin{itemize}
-    \item \textbf{snapshots} : Versions de développement (suffixe -SNAPSHOT)
-    \item \textbf{releases} : Versions stables et versionnées
-    \item \textbf{proxy} : Cache des dépendances Maven Central
+    \item Exclut les modules \texttt{GUI} et \texttt{CoverageReport}
+    \item Utilise JaCoCo pour mesurer la couverture de code
+    \item Génère des rapports JUnit pour l'intégration GitLab
+    \item Conserve les artefacts pendant 1 semaine
+    \item Publie automatiquement les métriques de couverture dans l'interface GitLab
 \end{itemize}
 
-\subsubsection{Workflow de release}
+\paragraph{Job testIHM}
 
-Le processus de release utilise le plugin Maven Release :
+Test spécifique pour l'interface graphique avec environnement X11 virtuel :
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de test IHM avec Xvfb]
+testIHM:
+  stage: test
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add xvfb libx11-dev xvfb-run gtk+3.0
+    - export DISPLAY=:99
+    - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
+  script:
+    - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install
+          -DskipTests
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI'
+          jacoco:prepare-agent test jacoco:report
+\end{lstlisting}
+
+Ce job :
+\begin{itemize}
+    \item Installe Xvfb (X Virtual FrameBuffer) pour les tests GUI headless
+    \item Configure un écran virtuel 1400x900
+    \item Compile d'abord les dépendances (\texttt{LexerParser})
+    \item Exécute les tests GUI dans l'environnement virtuel
+\end{itemize}
+
+\paragraph{Job package}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de package]
+package:
+  stage: package
+  script:
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests package
+  artifacts:
+    paths:
+      - "**/target/*.jar"
+    expire_in: 1 week
+  needs:
+    - test
+    - testIHM
+\end{lstlisting}
+
+Ce job :
+\begin{itemize}
+    \item Génère les fichiers JAR de tous les modules
+    \item Skip les tests (déjà exécutés dans le stage précédent)
+    \item Dépend explicitement de \texttt{test} et \texttt{testIHM}
+    \item Conserve les JARs pendant 1 semaine
+\end{itemize}
+
+\paragraph{Job sonarqube-check}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job d'analyse SonarQube]
+sonarqube-check:
+  stage: sonarqube-check
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "sonar-cache"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -DskipTests
+          sonar:sonar
+          -Dsonar.projectKey=avm-2025-groupe-7
+          -Dsonar.projectName='avm-2025-groupe-7'
+  needs:
+    - build
+    - test
+    - testIHM
+\end{lstlisting}
+
+Ce job :
+\begin{itemize}
+    \item Clone l'historique Git complet (\texttt{GIT\_DEPTH=0}) pour l'analyse
+    \item Utilise un cache SonarQube séparé
+    \item Exécute en single-thread pour éviter les problèmes de concurrence, car le plugin maven \texttt{sonar-maven-plugin} n'est pas thread-safe
+    \item Attend les résultats des tests pour avoir les rapports de couverture
+\end{itemize}
+
+\paragraph{Job deploy}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de deploiement Nexus]
+deploy:
+  stage: deploy
+  retry: 2
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+  needs:
+    - package
+  script:
+    - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
+\end{lstlisting}
+
+Ce job :
+\begin{itemize}
+    \item S'exécute uniquement sur \texttt{main} et les tags
+    \item Réessaye jusqu'à 2 fois en cas d'échec réseau
+    \item Déploie les artefacts vers Nexus
+\end{itemize}
+
+\paragraph{Job build-rapport}
+
+Ce job particulier compile le rapport LaTeX du projet en PDF. Il s'exécute en parallèle des autres jobs du stage build pour ne pas ralentir le pipeline principal :
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Job de compilation du rapport PDF]
+build-rapport:
+  stage: build
+  image: ghcr.io/r-gld/maven-texlive:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+  script:
+    - mvn -pl 'Rapport' clean compile
+  artifacts:
+    paths:
+      - Rapport/target/latex/rapport_principal.pdf
+    name: "rapport-${CI_COMMIT_SHORT_SHA}"
+    expire_in: 1 week
+  allow_failure: true
+\end{lstlisting}
+
+Spécificités de ce job :
+\begin{itemize}
+    \item \textbf{Image Docker personnalisée} : utilise \texttt{ghcr.io/r-gld/maven-texlive:latest}, une image hébergée sur GitHub Container Registry contenant Maven et TeX Live complet
+    \item \textbf{Exécution parallèle} : placé dans le stage \texttt{build} mais avec \texttt{allow\_failure: true}, il s'exécute en parallèle sans bloquer les tests
+    \item \textbf{Indépendance} : les autres jobs (test, package, etc.) utilisent \texttt{needs: [build]} pour démarrer dès que le build principal est terminé, sans attendre la compilation du PDF
+    \item \textbf{Optimisation} : l'image Docker pré-installée évite de télécharger et installer TeX Live (environ 1.5 GB) à chaque exécution, réduisant le temps de 8-10 minutes à environ 30 secondes
+    \item \textbf{Artefact disponible} : le PDF généré reste accessible pendant 1 semaine dans les artefacts GitLab
+\end{itemize}
+
+Cette approche permet de générer automatiquement la documentation à jour sans impacter les performances du pipeline de développement.
+
+\paragraph{Jobs release}
+
+Le processus de release est divisé en deux jobs manuels :
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=yaml, caption=Release prepare]
+release:prepare:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  before_script:
+    - apk add git openssh-client
+    - git config --global user.email "ci@groupe7.fr"
+    - git config --global user.name "CI Release Bot"
+    # Configuration SSH pour push
+  script:
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD}
+          release:clean release:prepare
+          -DpushChanges=true -Darguments="-DskipTests"
+\end{lstlisting}
+
+\begin{lstlisting}[language=yaml, caption=Release perform]
+release:perform:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  needs:
+    - release:prepare
+  script:
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD}
+          release:perform -Darguments="-DskipTests"
+\end{lstlisting}
+
+Ces jobs :
+\begin{itemize}
+    \item Sont déclenchés manuellement depuis GitLab
+    \item Créent un tag Git avec la nouvelle version
+    \item Mettent à jour les versions dans les POM
+    \item Déploient la release vers Nexus
+\end{itemize}
+
+\subsubsection{Règles de déclenchement}
+
+Les jobs utilisent des règles (\texttt{rules}) pour contrôler leur exécution :
+\begin{itemize}
+    \item \textbf{Merge Requests et branche dev} : tous les jobs sauf deploy et release
+    \item \textbf{Branche main} : tous les jobs incluant deploy
+    \item \textbf{Tags} : tous les jobs incluant deploy
+\end{itemize}
+
+\subsubsection{Infrastructure des runners GitLab}
+
+L'infrastructure d'exécution du pipeline repose sur plusieurs runners GitLab, combinant ressources universitaires et infrastructure personnelle pour garantir disponibilité et performance.
+
+\paragraph{Configuration standard}
+
+La plupart des groupes de projet disposent d'un unique runner fourni par l'université. Ce runner est partagé entre plusieurs groupes, ce qui peut entraîner des temps d'attente lors des périodes de forte activité (avant les releases, lors de multiples merge requests simultanées).
+
+\paragraph{Infrastructure renforcée du groupe}
+
+Pour pallier ces limitations et garantir une disponibilité maximale du pipeline, le groupe a mis en place une infrastructure renforcée :
+
+\begin{itemize}
+    \item \textbf{1 runner universitaire} : fourni par l'université, partagé avec d'autres groupes
+    \item \textbf{3 runners self-hosted} : hébergés sur un VPS (Virtual Private Server) personnel
+\end{itemize}
+
+Total : \textbf{4 runners} disponibles pour le projet.
+
+\paragraph{VPS personnel}
+
+Un membre du groupe loue pour ses activités personnelles un VPS chez Infomaniak. Ce serveur a été configuré pour héberger 3 runners GitLab CI/CD supplémentaires dédiés au projet. Cette infrastructure apporte plusieurs avantages :
+
+\begin{itemize}
+    \item \textbf{Disponibilité garantie} : les runners personnels prennent le relais si les runners universitaires sont indisponibles
+    \item \textbf{Pas d'attente en période de rush} : avec 4 runners, les merge requests peuvent exécuter tous les jobs sans file d'attente, même lors des périodes critiques (avant une release, multiples MR simultanées)
+    \item \textbf{Résilience} : redondance complète en cas de défaillance des infrastructures universitaires
+\end{itemize}
+
+\paragraph{Configuration des runners}
+
+Les runners sont configurés avec les tags appropriés (ex: \texttt{avm\_groupe7}) pour être utilisés uniquement par le projet du groupe. Chaque runner :
+\begin{itemize}
+    \item Utilise Docker pour l'isolation des builds
+    \item Possède un cache local Maven pour optimiser les temps de compilation
+    \item Est configuré pour exécuter les mêmes jobs que les runners universitaires
+\end{itemize}
+
+\paragraph{Bénéfices constatés}
+
+Cette infrastructure renforcée a permis de :
+\begin{itemize}
+    \item Garantir une très haute disponibilité du pipeline (continuité même en cas de maintenance ou de problème au sein du système universitaire)
+    \item Permettre aux développeurs de pusher et tester leurs branches sans impact sur les autres membres de l'équipe
+    \item Faciliter les releases avec des pipelines complets s'exécutant en moins de 5 minutes
+\end{itemize}
+
+% ============================================================================
+% NEXUS
+% ============================================================================
+\subsection{Nexus Repository Manager}
+
+\subsubsection{Présentation et rôle}
+
+Nexus Repository Manager joue le rôle de gestionnaire central de dépôts Maven dans l'infrastructure du projet. Il assure le stockage de l'ensemble des artefacts produits par le processus de build, incluant les fichiers JAR compilés, les fichiers POM de configuration Maven, ainsi que les archives de code source. Le système gère distinctement les versions SNAPSHOT, destinées au développement continu et modifiables, et les versions RELEASE, immuables et destinées à la production. Au-delà du simple stockage, Nexus sert également de proxy intelligent pour les dépendances externes provenant de Maven Central, permettant une mise en cache locale qui accélère les builds et garantit leur disponibilité même en cas de problème réseau. Cette centralisation facilite la distribution des livrables entre les différents membres de l'équipe et assure la reproductibilité parfaite des builds en conservant un historique complet de toutes les dépendances utilisées.
+
+URL Nexus fournis par l'université : \texttt{https://disc.univ-fcomte.fr/cr700-nexus/}
+
+\subsubsection{Configuration des repositories}
+
+\paragraph{Repository des releases}
+
+Configuration dans le \texttt{pom.xml} parent :
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Configuration du repository releases]
+<distributionManagement>
+    <repository>
+        <id>nexus-deptinfo</id>
+        <url>https://disc.univ-fcomte.fr/cr700-nexus/
+             repository/maven-releases/</url>
+    </repository>
+</distributionManagement>
+\end{lstlisting}
+
+Caractéristiques :
+\begin{itemize}
+    \item \textbf{Politique} : versions RELEASE uniquement (sans \texttt{-SNAPSHOT})
+    \item \textbf{Déploiement} : immuable (une fois déployée, une version ne peut être écrasée)
+    \item \textbf{Usage} : versions stables et livrables en production
+\end{itemize}
+
+\paragraph{Repository des snapshots}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Configuration du repository snapshots]
+<snapshotRepository>
+    <id>nexus-deptinfo-snapshots</id>
+    <url>https://disc.univ-fcomte.fr/cr700-nexus/
+         repository/maven-snapshots/</url>
+</snapshotRepository>
+\end{lstlisting}
+
+Caractéristiques :
+\begin{itemize}
+    \item \textbf{Politique} : versions SNAPSHOT uniquement (suffixe \texttt{-SNAPSHOT})
+    \item \textbf{Déploiement} : mutable (peut être redéployé)
+    \item \textbf{Usage} : développement continu, intégration continue
+    \item \textbf{Rétention} : configurable (généralement limité dans le temps)
+\end{itemize}
+
+\paragraph{Authentification}
+
+L'authentification vers Nexus est configurée dans le fichier \texttt{.settings.xml} généré dynamiquement par le script \texttt{settings.sh} :
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Authentification Nexus]
+<servers>
+    <server>
+        <id>nexus-deptinfo</id>
+        <username>${env.MAVEN_ENT_USERNAME}</username>
+        <password>${env.MAVEN_ENT_PASSWORD}</password>
+    </server>
+    <server>
+        <id>nexus-deptinfo-snapshots</id>
+        <username>${env.MAVEN_ENT_USERNAME}</username>
+        <password>${env.MAVEN_ENT_PASSWORD}</password>
+    </server>
+</servers>
+\end{lstlisting}
+
+Les credentials sont stockés en tant que variables d'environnement sécurisées dans GitLab CI/CD.
+
+\subsubsection{Gestion des versions}
+
+\paragraph{Workflow de versioning}
 
 \begin{enumerate}
-    \item Préparation : incrémentation de version, création du tag Git
-    \item Vérification : tests automatiques sur la version candidate
-    \item Publication : déploiement sur le repository releases
-    \item Archivage : conservation des artefacts et métadonnées
+    \item \textbf{Développement} : version SNAPSHOT (ex: \texttt{1.1-SNAPSHOT})
+    \item \textbf{Release prepare} : maven-release-plugin crée la version release (\texttt{1.1})
+    \item \textbf{Tag Git} : création automatique du tag \texttt{v1.1}
+    \item \textbf{Bump version} : passage à la prochaine version SNAPSHOT (\texttt{1.2-SNAPSHOT})
+    \item \textbf{Release perform} : déploiement de la version \texttt{1.1} vers Nexus releases
 \end{enumerate}
+
+\paragraph{Configuration maven-release-plugin}
+
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Configuration du plugin release]
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-release-plugin</artifactId>
+    <version>3.1.1</version>
+    <configuration>
+        <tagNameFormat>v@{project.version}</tagNameFormat>
+        <autoVersionSubmodules>true</autoVersionSubmodules>
+        <releaseProfiles>release</releaseProfiles>
+        <scmCommentPrefix>[Release] </scmCommentPrefix>
+        <goals>deploy</goals>
+    </configuration>
+</plugin>
+\end{lstlisting}
+
+Options utilisées :
+\begin{itemize}
+    \item \texttt{autoVersionSubmodules} : synchronise les versions de tous les modules
+    \item \texttt{tagNameFormat} : format du tag Git (\texttt{v1.1})
+    \item \texttt{scmCommentPrefix} : préfixe pour les commits de release
+\end{itemize}
 
 \subsubsection{Avantages constatés}
 
-L'utilisation de Nexus apporte plusieurs bénéfices :
+L'utilisation de Nexus Repository Manager a apporté des bénéfices concrets et mesurables au projet. La \textbf{centralisation} de tous les artefacts en un point unique simplifie considérablement la gestion des livrables et élimine les problèmes de dispersion des fichiers JAR entre différents emplacements. La \textbf{traçabilité} complète permet de consulter l'historique exhaustif de toutes les versions déployées, facilitant ainsi l'audit et le suivi des évolutions du projet au fil du temps. Cette traçabilité garantit également la \textbf{reproductibilité} des builds : il est possible de reconstruire à l'identique n'importe quelle version ancienne en récupérant exactement les mêmes dépendances qu'au moment du build initial. Les \textbf{performances} de compilation sont significativement améliorées grâce au système de cache local qui évite de télécharger répétitivement les mêmes dépendances depuis Maven Central. Enfin, la \textbf{sécurité} est renforcée par le contrôle d'accès granulaire qui permet de définir précisément qui peut consulter, télécharger ou publier des artefacts sur les différents repositories.
+
+% ============================================================================
+% SONARQUBE
+% ============================================================================
+\subsection{SonarQube}
+
+\subsubsection{Présentation et objectifs}
+
+SonarQube est intégré au projet pour assurer une analyse statique continue et approfondie de la qualité du code. L'outil détecte automatiquement les bugs potentiels et erreurs de logique avant même l'exécution du code, permettant une correction précoce des défauts. Il identifie également les failles de sécurité (vulnerabilities) en analysant le code selon les standards OWASP et signale les pratiques dangereuses susceptibles d'introduire des vulnérabilités. La mesure de la dette technique constitue un aspect central de l'analyse : SonarQube quantifie les "code smells", ces problèmes de conception qui, bien que ne causant pas de bugs immédiats, complexifient la maintenance et ralentissent l'évolution du projet. L'évaluation de la couverture de code par les tests permet de s'assurer qu'une proportion suffisante du code est testée, réduisant ainsi les risques de régression. L'outil vérifie en permanence le respect des bonnes pratiques Java et des conventions de codage établies, garantissant une cohérence stylistique dans l'ensemble de la base de code. Enfin, la détection automatique de duplication de code aide à identifier les opportunités de refactoring et d'amélioration de la maintenabilité.
+
+URL SonarQube : \texttt{\$\{SONAR\_HOST\_URL\}} (configuré via variable d'environnement)
+
+\subsubsection{Configuration du projet}
+
+\paragraph{Propriétés SonarQube dans le POM}
+
+Configuration dans le \texttt{pom.xml} parent :
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Configuration SonarQube]
+<properties>
+    <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+    <sonar.coverage.jacoco.xmlReportPaths>
+        ${project.basedir}/target/site/jacoco/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.exclusions>
+        LexerParser/src/main/java/.../JajaCodeInterpreter.java,
+        LexerParser/src/main/java/.../MiniJajaCompiler.java
+    </sonar.exclusions>
+</properties>
+\end{lstlisting}
+
+Options importantes :
 \begin{itemize}
-    \item \textbf{Traçabilité} : Historique complet des versions déployées
-    \item \textbf{Performance} : Cache des dépendances externes (réduction du temps de build)
-    \item \textbf{Fiabilité} : Isolation des builds par rapport aux pannes de Maven Central
-    \item \textbf{Gouvernance} : Contrôle des dépendances utilisées dans le projet
+    \item \texttt{qualitygate.wait=true} : le build échoue si la Quality Gate n'est pas passée
+    \item \texttt{coverage.jacoco.xmlReportPaths} : chemin vers les rapports JaCoCo
+    \item \texttt{exclusions} : fichiers principaux exclus de l'analyse (points d'entrée)
 \end{itemize}
 
-\subsection{SonarQube : Analyse statique et qualité du code}
+\paragraph{Plugin sonar-maven-plugin}
 
-SonarQube réalise une analyse approfondie du code source pour détecter les bugs, vulnérabilités et mauvaises pratiques.
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Plugin SonarQube Maven]
+<plugin>
+    <groupId>org.sonarsource.scanner.maven</groupId>
+    <artifactId>sonar-maven-plugin</artifactId>
+    <version>5.2.0.4988</version>
+</plugin>
+\end{lstlisting}
 
-\subsubsection{Métriques suivies}
+\paragraph{Intégration JaCoCo}
 
+JaCoCo génère les rapports de couverture pour SonarQube :
+\vspace{0.3cm}
+\begin{lstlisting}[language=enhancedxml, caption=Configuration JaCoCo]
+<plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.8.14</version>
+    <executions>
+        <execution>
+            <goals>
+                <goal>prepare-agent</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>report</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>report-aggregate</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>report-aggregate</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+\end{lstlisting}
+
+JaCoCo :
 \begin{itemize}
-    \item \textbf{Couverture de code} : Pourcentage de code couvert par les tests
-    \item \textbf{Duplication} : Détection du code dupliqué
-    \item \textbf{Complexité} : Mesure de la complexité cyclomatique
-    \item \textbf{Maintenabilité} : Note globale de maintenabilité (A-E)
-    \item \textbf{Fiabilité} : Nombre et sévérité des bugs détectés
-    \item \textbf{Sécurité} : Vulnérabilités et points faibles de sécurité
+    \item Instrumente le bytecode Java pour mesurer la couverture
+    \item Génère un rapport XML pour SonarQube
+    \item Agrège les rapports de tous les modules
 \end{itemize}
 
-\subsubsection{Quality Gates}
+\paragraph{Quality Gates}
 
-Des seuils de qualité sont définis :
+Les Quality Gates définissent les seuils de qualité minimum :
 \begin{itemize}
-    \item Couverture minimale : 80\%
-    \item Aucun bug de sévérité critique ou bloquante
-    \item Pas de vulnérabilités de sécurité
-    \item Taux de duplication < 3\%
-    \item Note de maintenabilité minimale : B
+    \item \textbf{Couverture} : pourcentage minimal de code testé
+    \item \textbf{Duplication} : taux maximal de code dupliqué
+    \item \textbf{Bugs} : nombre maximal de bugs tolérés
+    \item \textbf{Vulnerabilities} : aucune vulnérabilité de sévérité élevée
+    \item \textbf{Code Smells} : dette technique acceptable
 \end{itemize}
 
-\subsubsection{Intégration dans le workflow}
+Le pipeline échoue si une Quality Gate n'est pas satisfaite, empêchant le déploiement de code de mauvaise qualité.
 
-SonarQube est intégré au pipeline CI/CD :
-\begin{enumerate}
-    \item Analyse automatique à chaque merge request
-    \item Blocage du merge si les quality gates ne sont pas satisfaits
-    \item Rapport de progression visible dans GitLab
-    \item Historique de l'évolution de la qualité
-\end{enumerate}
+\subsubsection{Métriques analysées}
 
-\subsection{Outils de planification et communication}
+\paragraph{Fiabilité (Reliability)}
 
-Le suivi de projet s'appuie également sur des outils collaboratifs.
-
-\subsubsection{Jira : Planification Agile}
-
-Jira a été utilisé pour la gestion des Sprints et le suivi des tâches :
+Mesure la probabilité de défaillance du logiciel :
 \begin{itemize}
-    \item Fixation des objectifs de chaque Sprint
-    \item Décomposition des \textbf{Epics} en tâches détaillées (tickets)
-    \item Suivi de l'avancement via les burndown charts
-    \item Estimation de la complexité via les points d'effort
+    \item \textbf{Bugs} : erreurs de code susceptibles de causer des défaillances
+    \item \textbf{Rating} : de A (excellent) à E (mauvais)
+    \item Exemples détectés :
+    \begin{itemize}
+        \item NullPointerException potentielles
+        \item Ressources non fermées (fichiers, connexions)
+        \item Conditions toujours vraies/fausses
+        \item Boucles infinies potentielles
+    \end{itemize}
 \end{itemize}
 
-\subsubsection{Discord : Communication d'équipe}
+\paragraph{Sécurité (Security)}
 
-Discord a servi de support aux réunions de groupe régulières et au \textit{daily meeting} pour le suivi de l'avancement. Les canaux dédiés ont permis une communication asynchrone structurée entre les membres de l'équipe.
-
-\subsubsection{Merge Requests et Code Review}
-
-Les Merge Requests (MR) avec revue par les pairs ont été systématiquement utilisées pour garantir la qualité du code. Cela justifie l'écart constaté : les tâches terminées le dimanche sont souvent \textit{reviewées} et \textit{mergées} que le lundi, d'où leur statut inachevé le dernier jour du Sprint.
-
-\subsection{Bilan de l'utilisation des outils}
-
-L'ensemble de ces outils forme un écosystème cohérent qui garantit :
-
+Identifie les vulnérabilités et risques de sécurité :
 \begin{itemize}
-    \item \textbf{Automatisation} : Réduction des tâches manuelles répétitives
-    \item \textbf{Qualité} : Détection précoce des régressions et anomalies
-    \item \textbf{Collaboration} : Visibilité partagée sur l'état du projet
-    \item \textbf{Confiance} : Déploiements fiables et reproductibles
+    \item \textbf{Vulnerabilities} : failles de sécurité confirmées
+    \item \textbf{Security Hotspots} : code sensible nécessitant une revue manuelle
+    \item \textbf{Rating} : de A (sécurisé) à E (très vulnérable)
+    \item Exemples :
+    \begin{itemize}
+        \item Injection SQL potentielle
+        \item Désérialisation non sécurisée
+        \item Utilisation de cryptographie faible
+        \item Exposition d'informations sensibles
+    \end{itemize}
 \end{itemize}
 
-Cette infrastructure technique constitue un pilier essentiel de la méthodologie Agile du projet, permettant des itérations rapides tout en maintenant un haut niveau de qualité.
+\paragraph{Maintenabilité (Maintainability)}
+
+Évalue la facilité de maintenance du code :
+\begin{itemize}
+    \item \textbf{Code Smells} : problèmes de conception et mauvaises pratiques
+    \item \textbf{Dette technique} : temps estimé pour corriger tous les smells
+    \item \textbf{Rating} : de A (très maintenable) à E (difficilement maintenable)
+    \item \textbf{Duplication} : pourcentage de code dupliqué
+    \item Exemples de code smells :
+    \begin{itemize}
+        \item Méthodes trop longues ou trop complexes (complexité cyclomatique élevée)
+        \item Classes avec trop de responsabilités
+        \item Code mort (jamais exécuté)
+        \item Commentaires TODO non résolus
+        \item Magic numbers (constantes non nommées)
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Couverture (Coverage)}
+
+Mesure du code testé par les tests unitaires :
+\begin{itemize}
+    \item \textbf{Couverture de lignes} : pourcentage de lignes exécutées
+    \item \textbf{Couverture de branches} : pourcentage de branches conditionnelles testées
+    \item \textbf{Nouveau code} : couverture spécifique aux modifications récentes
+    \item Rapports générés par JaCoCo et agrégés par SonarQube
+\end{itemize}
+
+\subsubsection{Intégration dans le pipeline CI/CD}
+
+\paragraph{Analyse automatique}
+
+L'analyse SonarQube est déclenchée automatiquement :
+\begin{itemize}
+    \item À chaque push sur \texttt{dev}
+    \item Sur toutes les merge requests
+    \item Exécution via : \texttt{mvn sonar:sonar}
+    \item Authentification via token stocké dans \texttt{SONAR\_TOKEN}
+\end{itemize}
+
+\paragraph{Feedback et rapports}
+
+Après chaque analyse :
+\begin{itemize}
+    \item Les résultats sont consultables sur l'interface SonarQube
+    \item Le statut de la Quality Gate est affiché dans GitLab
+    \item Le pipeline échoue si la Quality Gate n'est pas passée
+    \item Les développeurs sont notifiés des problèmes détectés
+\end{itemize}
+
+\subsubsection{Retour d'expérience}
+
+\paragraph{Bénéfices constatés}
+
+\begin{itemize}
+    \item \textbf{Détection précoce} : bugs trouvés avant la mise en production
+    \item \textbf{Qualité constante} : maintien d'un niveau de qualité élevé
+    \item \textbf{Formation} : les développeurs apprennent des erreurs détectées
+    \item \textbf{Documentation} : SonarQube explique pourquoi chaque problème est important
+    \item \textbf{Réduction de la dette} : visualisation et suivi de la dette technique
+\end{itemize}
+
+\paragraph{Difficultés rencontrées}
+
+\begin{itemize}
+    \item \textbf{Faux positifs} : certaines règles nécessitent des ajustements
+    \item \textbf{Temps d'analyse} : peut ralentir le pipeline (d'où l'utilisation du cache)
+    \item \textbf{Exclusions} : nécessité d'exclure les fichiers générés (ANTLR)
+    \item \textbf{Seuils} : définition des Quality Gates adaptées au projet
+\end{itemize}
+
+% ============================================================================
+% CONCLUSION
+% ============================================================================
+\subsection{Conclusion et perspectives}
+
+\subsubsection{Bilan global}
+
+L'intégration de GitLab CI/CD, Nexus et SonarQube dans le projet MiniJAJA a apporté :
+\begin{itemize}
+    \item \textbf{Automatisation complète} : du commit au déploiement
+    \item \textbf{Qualité garantie} : Quality Gates empêchent le déploiement de code défaillant
+    \item \textbf{Traçabilité} : historique complet des builds et artefacts
+    \item \textbf{Collaboration facilitée} : feedback immédiat sur les merge requests
+    \item \textbf{Compétences acquises} : maîtrise des outils DevOps professionnels
+\end{itemize}
+
+\subsubsection{Métriques du pipeline}
+
+Statistiques actuelles :
+\begin{itemize}
+    \item \textbf{Temps moyen de build complet} : 3-4 minutes (avec cache)
+    \item \textbf{Parallélisation} : utilisation de tous les cores CPU (\texttt{-T 1C})
+    \item \textbf{Cache hit rate} : \textasciitilde90\% (réduction significative du temps)
+    \item \textbf{Retry policy} : jusqu'à 2 tentatives pour les échecs transitoires
+    \item \textbf{Modules} : 7 modules Maven + 1 module documentation
+\end{itemize}
+
+\subsubsection{Améliorations possibles}
+
+\begin{itemize}
+    \item \textbf{Pipeline optimization} :
+    \begin{itemize}
+        \item Utilisation de stages DAG (Directed Acyclic Graph) pour plus de parallélisme
+        \item Split des tests longs en jobs parallèles
+        \item Cache Docker layers pour l'image Maven
+    \end{itemize}
+    \item \textbf{Métriques avancées} :
+    \begin{itemize}
+        \item Intégration avec des outils de monitoring
+        \item Dashboards de métriques de qualité
+        \item Alertes automatiques sur dégradation
+    \end{itemize}
+    \item \textbf{Déploiement continu} :
+    \begin{itemize}
+        \item Déploiement automatique vers environnement de staging
+        \item Blue/green deployment
+        \item Rollback automatique en cas d'échec
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Recommandations}
+
+Pour de futurs projets similaires :
+\begin{itemize}
+    \item \textbf{Commencer tôt} : mettre en place la CI/CD dès le début du projet
+    \item \textbf{Quality Gates strictes} : ne pas tolérer la dégradation de qualité
+    \item \textbf{Cache agressif} : optimiser les temps de build avec du cache
+    \item \textbf{Tests en priorité} : écrire les tests avant de coder (TDD)
+    \item \textbf{Documentation} : documenter la configuration du pipeline
+    \item \textbf{Monitoring} : surveiller les temps de build et optimiser continuellement
+    \item \textbf{Sécurité} : utiliser des variables d'environnement pour les secrets
+\end{itemize}
