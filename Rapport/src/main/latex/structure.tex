@@ -14,7 +14,7 @@ Le projet est structuré autour d’un enchaînement de modules correspondant au
     \item l’interpréteur \texttt{JajaCode}, qui exécute ces instructions sur la machine virtuelle ;
     \item l’\textbf{interface graphique}, qui joue un rôle d’orchestration entre les différents modules et permet à l’utilisateur de visualiser les résultats.
 \end{itemize}
-
+\vspace{0.5cm}
 Ce découpage reprend la structure proposée dans le sujet du projet et permet de séparer clairement les responsabilités, tout en autorisant un développement parallèle des différentes parties.
 
 \subsection{Structures de communication entre modules}
@@ -23,9 +23,10 @@ Les modules communiquent principalement par le biais de structures de données c
 
 Les interpréteurs \texttt{MiniJaja} et \texttt{JajaCode} manipulent quant à eux un \textbf{état mémoire} reposant sur les mêmes concepts (\texttt{pile}, \texttt{tas}, associations \texttt{identificateur/valeur}). Ce choix facilite la comparaison des comportements entre l’exécution interprétée et l’exécution du code compilé, conformément aux objectifs de validation du projet.
 
+\vspace{0.5cm}
 L’\textbf{interface graphique} reste découplée des détails internes des modules de compilation et d’interprétation. Elle invoque leurs fonctionnalités via des points d’entrée clairement identifiés et récupère les résultats d’exécution ou les messages d’erreur à afficher à l’utilisateur.
 
-
+\vspace{0.5cm}
 La classe \texttt{App} du module \texttt{GUI} utilise \texttt{MiniJajaInterpreter} et \texttt{JajaCodeInterpreter} du module \texttt{LexerParser}, ainsi que la classe \texttt{Compiler} du module \texttt{compiler}, afin d’exécuter les programmes \texttt{MiniJaja} selon le mode choisi par l’utilisateur : interprétation directe ou compilation en \texttt{JajaCode}.
 
 Le module \texttt{compiler} s’appuie sur \texttt{MiniJajaCompilerVisitor} du module \texttt{LexerParser} pour transformer un programme \texttt{MiniJaja} en instructions \texttt{JajaCode}.
