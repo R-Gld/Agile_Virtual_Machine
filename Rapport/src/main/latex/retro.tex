@@ -1,64 +1,12 @@
 \section{Rétrospective de conduite de projet}
 
-\subsection{Méthodologie Agile/Scrum}
+\subsection{Gestion de la dette technique}
 
-Le projet de compilation MiniJaja vers JajaCode a été mené selon la méthode Agile/Scrum, articulé en six Sprints. Cette approche a permis une adaptation continue face aux difficultés et aux choix techniques complexes imposés par l'implémentation d'un compilateur.
+La nécessité de tenir les délais de la livraison intermédiaire nous a conduits à adopter une approche pragmatique, privilégiant parfois la fonctionnalité immédiate du code au détriment de sa structure interne. Cette stratégie a inévitablement généré une dette technique, se manifestant initialement par une délimitation parfois imprécise des responsabilités entre les différents modules.\\
 
-\begin{table}[h!]
-    \centering
-    \renewcommand{\arraystretch}{1.5}
-    \begin{tabular}{|l|l|p{9cm}|}
-        \hline
-        \textbf{Catégorie}     & \textbf{Outil(s) Utilisé(s)} & \textbf{Usage et Justification}                                                                                         \\
-        \hline
-        \textbf{Planification} & \textbf{Jira}                & Fixation des objectifs de chaque Sprint, décomposition des \textbf{Epics} en tâches détaillées (tickets) pour le suivi. \\
-        \hline
-        \textbf{Communication} & \textbf{Discord}             & Support aux réunions de groupe régulières et au \textit{daily meeting} pour le suivi de l'avancement.                   \\
-        \hline
-        \textbf{Code Review} & \textbf{\parbox{3cm}{Merge Requests\\(MR) / Review}} & Validation et qualité du code par les pairs. Cela justifie l'écart constaté : les tâches terminées le dimanche sont souvent \textit{reviewées} et \textit{mergées} que le lundi, d'où leur statut inachevé le dernier jour du Sprint. \\
-        \hline
-    \end{tabular}
-\end{table}
+En conséquence, une part significative de l'effort de développement, particulièrement lors des derniers sprints, a dû être réorientée vers le \textit{refactoring} et la consolidation de l'existant. Des opérations de maintenance structurelle, telles que la transition de chaînes de caractères vers des énumérations pour la gestion des types ou la réorganisation continue des fichiers sources JajaCode, se sont révélées plus coûteuses que prévu.\\
 
-\subsection{Synthèse des Sprints}
-
-Le projet a été marqué par une phase initiale d'apprentissage difficile (Sprint 2) suivie d'une refonte majeure (Sprint 3 et 5) qui a stabilisé la base technique.
-
-\subsubsection{Sprint 1 : Initialisation et Découpage}
-L'objectif principal de ce premier sprint était l'initialisation du projet, le découpage en modules et l'organisation de Jira. Concrètement, l'architecture a été découpée en blocs distincts (Lexer, Parser, Sémantique, Génération, Interprète). On note cependant un écart au niveau de la planification : l'ensemble des tickets n'a pas été créé immédiatement car l'effort s'est concentré prioritairement sur la définition de la structure globale du projet.
-
-\subsubsection{Sprint 2 : Finalisation des Tâches et Premiers Modules}
-Ce sprint visait la finalisation des tickets et leur séparation en tâches individuelles, ainsi que des avancées sur les premiers modules comme le Lexer. C'est durant cette phase que l'équipe a rencontré des difficultés majeures. Des retards ont été accumulés en raison d'absences imprévues et d'une difficulté initiale à appréhender la complexité intrinsèque du problème de compilation, ce qui a mené à une réorganisation nécessaire de l'équipe.
-
-\subsubsection{Sprint 3 : Interpréteur de Base et Refonte Mémoire}
-L'équipe s'est concentrée sur la mise en place de l'interpréteur de base et une refonte complète de la mémoire. Une première version fonctionnelle de l'interpréteur (MiniJaja et JajaCode) a été livrée. La gestion de la mémoire a été intégralement réécrite pour implémenter une table de hachage personnalisée avec listes chaînées, remplaçant les structures natives comme HashMap. Cette étape a marqué un tournant positif avec une réorganisation réussie et une stabilisation de la base de code.
-
-\subsubsection{Sprint 4 : Mémoire Avancée (Tas/Heap) et Fonctions}
-Les travaux ont porté sur l'implémentation du Tas (Heap) via la méthode des "buddies" et l'interprétation des fonctions ainsi que des opérations arithmétiques et booléennes. Ce travail a permis d'intégrer concrètement le modèle Pile/Tas et d'adopter le concept de Quadruple comme unité de stockage fondamentale.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/sprint4}
-    \caption{Burndown Chart du Sprint 4}
-\end{figure}
-
-\subsubsection{Sprint 5 : Refactorisation des Types et Structures de Contrôle}
-L'objectif central était la refactorisation globale des types via la création d'une énumération dédiée, ainsi que la gestion des portées (scopes) et des tableaux. L'interprétation des boucles while, des structures if/else et des incrémentations a été finalisée. Bien que l'ampleur de la refactorisation ait causé un retard important, cette correction a été bénéfique pour assainir le code, garantir la cohérence sémantique et faciliter le travail d'équipe.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/sprint5}
-    \caption{Burndown Chart du Sprint 5}
-\end{figure}
-
-\subsubsection{Sprint 6 : Gestion Mémoire Finale et IHM}
-Le dernier sprint a été consacré à la finalisation de la gestion mémoire, notamment l'affectation de tableaux via le comptage de références (Reference Counting), ainsi qu'aux tests d'intégration. L'équipe a également finalisé les retours de fonctions typées et implémenté l'interface utilisateur pour l'affichage des erreurs. L'effort s'est donc concentré sur la validation globale et l'amélioration de l'expérience utilisateur.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/sprint6}
-    \caption{Burndown Chart du Sprint 6}
-\end{figure}
+Ce travail de nettoyage, bien qu'indispensable pour garantir la pérennité du projet, a ponctuellement engendré des instabilités et des régressions sur des fonctionnalités auparavant opérationnelles. Avec du recul, une vigilance accrue sur l'analyse statique du code et une communication technique plus dense en amont de l'implémentation auraient permis de limiter ces itérations correctives et de stabiliser l'architecture plus tôt dans le cycle de vie du projet
 
 \subsection{Justification des Choix Techniques Majeurs}
 
