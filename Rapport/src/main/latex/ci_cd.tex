@@ -44,6 +44,7 @@ Les outils de CI/CD permettent de :
 Le fichier \texttt{.gitlab-ci.yml} définit l'ensemble du pipeline. Il utilise l'image Docker \texttt{maven:3.9.9-eclipse-temurin-21-alpine} pour garantir un environnement de build cohérent.
 
 Configuration globale :
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Configuration globale GitLab CI]
 default:
   image: maven:3.9.9-eclipse-temurin-21-alpine
@@ -84,6 +85,7 @@ Options utilisées :
 \paragraph{Cache Maven}
 
 Le cache Maven améliore significativement les temps de build :
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Configuration du cache]
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -118,6 +120,7 @@ Le pipeline est organisé en 7 stages séquentiels :
 \paragraph{Job check-envvars (.pre)}
 
 Ce job préliminaire vérifie la présence de toutes les variables d'environnement nécessaires :
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Verification des variables d'environnement]
 check-envvars:
   stage: .pre
@@ -196,6 +199,7 @@ Ce job :
 
 Test spécifique pour l'interface graphique avec environnement X11 virtuel :
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Job de test IHM avec Xvfb]
 testIHM:
   stage: test
@@ -340,6 +344,7 @@ Cette approche permet de générer automatiquement la documentation à jour sans
 
 Le processus de release est divisé en deux jobs manuels :
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=yaml, caption=Release prepare]
 release:prepare:
   stage: release
@@ -450,6 +455,7 @@ URL Nexus fournis par l'université : \texttt{https://disc.univ-fcomte.fr/cr700-
 \paragraph{Repository des releases}
 
 Configuration dans le \texttt{pom.xml} parent :
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Configuration du repository releases]
 <distributionManagement>
     <repository>
@@ -490,6 +496,7 @@ Caractéristiques :
 
 L'authentification vers Nexus est configurée dans le fichier \texttt{.settings.xml} généré dynamiquement par le script \texttt{settings.sh} :
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Authentification Nexus]
 <servers>
     <server>
@@ -564,6 +571,7 @@ URL SonarQube : \texttt{\$\{SONAR\_HOST\_URL\}} (configuré via variable d'envir
 \paragraph{Propriétés SonarQube dans le POM}
 
 Configuration dans le \texttt{pom.xml} parent :
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Configuration SonarQube]
 <properties>
     <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
@@ -598,6 +606,7 @@ Options importantes :
 \paragraph{Intégration JaCoCo}
 
 JaCoCo génère les rapports de couverture pour SonarQube :
+\vspace{0.3cm}
 \begin{lstlisting}[language=enhancedxml, caption=Configuration JaCoCo]
 <plugin>
     <groupId>org.jacoco</groupId>

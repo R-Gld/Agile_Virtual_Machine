@@ -70,6 +70,7 @@ Le système de traitement des erreurs a été conçu autour de cinq principes fo
 Le module LexerParser utilise ANTLR4 pour l'analyse lexicale et syntaxique.
 Les erreurs sont capturées via un listener personnalisé :
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=java, caption=SyntaxErrorListener,label={lst:syntaxerrorlistener}]
 public class SyntaxErrorListener extends BaseErrorListener {
     private final DiagnosticCollector diagnosticCollector;
@@ -158,6 +159,7 @@ Le projet définit plusieurs exceptions spécialisées :
 \end{itemize}
 
 Exemple d'exception spécialisée :
+\vspace{0.3cm}
 \begin{lstlisting}[language=java, caption=DivisionByZeroException,label={lst:divisionbyzero-exception}]
 public class DivisionByZeroException
     extends JajaCodeRuntimeException {
@@ -245,6 +247,7 @@ Cette hiérarchie permet :
 
 Les exceptions \texttt{SyntaxException} et \texttt{SemanticException} sont définies dans le package \texttt{fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions} et suivent un pattern unifié :
 
+\vspace{0.3cm}
 \begin{lstlisting}[language=java, caption=Pattern des exceptions de compilation,label={lst:compilation-exception-pattern}]
 public class SemanticException extends RuntimeException {
     public SemanticException(DiagnosticCollector collector) {
