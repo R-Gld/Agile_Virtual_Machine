@@ -1,6 +1,6 @@
 \section{Sujet}
 
-Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, intégrant les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
+Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, réalisé dans le cadre du Master 1 Informatique. Ce projet intègre les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
 
 Le système articule un langage source impératif et typé (MiniJaja) avec un langage cible orienté pile (JajaCode).\\
 
@@ -12,35 +12,15 @@ Mémoire qui peut être visualisé au sein d'une interface graphique via le mode
 
 Pour répondre à ce projet, l'architecture logicielle repose sur l'outil ANTLR et le design pattern visiteur. La fiabilité de l'ensemble est assurée par une stratégie de tests unitaires et d'intégration, menée dans le cadre d'une méthodologie Agile.
 
-\subsection{ANTLR vs JavaCC}
-
-Le choix technique de l'outil d'analyse syntaxique s'est porté sur ANTLR, en alternative à JavaCC suggéré par le sujet. Ce choix a été motivé par le simple fait du confort de l'outil qui nous paressait plus abordable que JavaCC niveau implémentation au sein de l'architecture.
-
-\subsection{Architecture}
-
-Le projet se découpe en plusieurs modules, nous en parleront plus en détail dans une autre partie, mais les voici :
-
-\subsubsection{LexerParser}
-
-Contient les grammaires Minijaja et Jajacode, ce module est le module central du projet, c'est ici que nous visitons notre arbre généré par ANTLR et que nous découlons :
-
+Pour mener à bien ce développement, nous avons utilisé un ensemble d'outils :
 \begin{itemize}
-    \item L'interprétation Minijaja
-    \item La compilation Minijaja en Jajacode
-    \item L'interprétation jajacode
+    \item \textbf{Jira} pour la gestion de projet agile et le suivi des tâches.
+    \item \textbf{GitLab} pour le versionnement du code et la CI/CD.
+    \item \textbf{IntelliJ IDEA} comme environnement de développement principal (avec des marginaux sous VSCode).
+    \item \textbf{Nexus} pour la gestion des artefacts et des dépendances Maven.
+    \item \textbf{SonarQube} pour l'analyse de la qualité du code.
 \end{itemize}
 
-C'est au sein de ce module où l'on réalise aussi la gestion des erreurs, le `TypeChecking`.
-Concernant la gestion des erreurs, ce module implémente une stratégie de collecte centralisée (via un DiagnosticCollector). Plutôt que d'arrêter la compilation à la première faute, le système tente de récupérer le contexte pour rapporter un maximum d'erreurs syntaxiques et sémantiques à l'utilisateur en une seule passe
+\subsection{ANTLR vs JavaCC}
 
-\subsubsection{Mémoire}
-
-Ce module, comme son nom l'indique gère les états mémoires des programmes à savoir la pile (`Stack`), qui gère les contextes d'exécution (`Scopes`) et les variables nous avons aussi le tas (`Heap`) qui gère l'allocation dynamique des tableaux. Ainsi que la table des symboles qui assure le lien entre les identifiants et leurs adresses ou valeurs.
-
-\subsubsection{GUI}
-
-L'interface graphique, réalisée en JavaFX, joue le rôle de contrôleur. Elle orchestre les appels aux différents modules.
-
-C'est ici que l'on peut donc coder en Minijaja et l'exploiter.
-
-Au-delà de son rôle d'orchestrateur technique, cette interface constitue le point de validation du projet. Nous allons à présent démontrer comment elle permet de répondre point par point aux contraintes fonctionnelles imposées par le sujet.
+Le choix technique de l'outil d'analyse syntaxique s'est porté sur ANTLR, en alternative à JavaCC suggéré par le sujet. Ce choix a été motivé par le simple fait du confort de l'outil qui nous paraissait plus abordable que JavaCC niveau implémentation au sein de l'architecture.

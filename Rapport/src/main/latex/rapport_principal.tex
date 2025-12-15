@@ -8,9 +8,36 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, trees, shapes}
 \usepackage{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
+\usepackage{subcaption}
+
+% Imports additionnels pour MiniJaja_Realisation.tex
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{colortbl}
+\usepackage{amsmath}
+\usepackage{minted}
+
+% Couleurs personnalisées pour Annexe_Res_tests
+\definecolor{successgreen}{RGB}{40,167,69}
+\definecolor{warningyellow}{RGB}{255,193,7}
+\definecolor{dangered}{RGB}{220,53,69}
+\definecolor{infoblue}{RGB}{23,162,184}
+\definecolor{headerblue}{RGB}{0,123,255}
+
+% Couleurs personnalisées pour MiniJaja_Realisation
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{errorred}{rgb}{0.8,0.1,0.1}
+\definecolor{warningorange}{rgb}{0.9,0.5,0}
 
 % Geometry
 \geometry{
@@ -33,6 +60,26 @@
     stringstyle=\color{orange},
     showstringspaces=false,
     tabsize=4
+}
+
+% Style personnalisé pour MiniJaja_Realisation
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
 }
 
 % YAML language definition for listings
@@ -119,35 +166,60 @@
     \large{Groupe 7}
 }
 \author{
-    Romain \and
-    Lucas \and
-    Félix \and
-    Léo \and
-    Théo \and
-    Ahmed
+    Romain GALLAND \and
+    Lucas LAURET \and
+    Félix RIAT \and
+    Léo MAUGERI \and
+    Théo VALFREY \and
+    Ahmed DJEMAOUI \and
+    Javad AFSHAR
 }
 \date{\today}
 
 \begin{document}
 
-\maketitle
-\newpage
+    \maketitle
+    \newpage
 
-\tableofcontents
-\newpage
-\include{sujet}
+    \tableofcontents
+    \newpage
 
-% ============================================================================
-% SECTION : Traitement des erreurs
-% ============================================================================
-\input{traitement_erreurs}
+    \include{sujet}
+    \newpage
 
-% ============================================================================
-% SECTION : Utilisation des outils de suivi de projet
-% ============================================================================
-\input{ci_cd}
+    \include{contraintes_fonctionnelles}
+    \newpage
 
+    \include{decomposition_logiciel}
+    \newpage
 
-\include{retro}
+    \newpage
+    \input{traitement_erreurs}
+
+    \include{MiniJaja_Realisation}
+    \newpage
+
+    \include{jeux_test}
+    \newpage
+
+    \include{Annexe_Res_tests}
+    \newpage
+
+    \include{structure}
+    \newpage
+
+    \include{equipe}
+    \newpage
+
+    \include{agile}
+    \newpage
+
+    \include{outils_suivi}
+    \input{ci_cd}
+    \newpage
+
+    \include{retro}
+    \newpage
+
 
 \end{document}
