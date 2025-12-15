@@ -11,6 +11,23 @@
 \usepackage{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
+\usepackage{subcaption}
+
+% Imports additionnels pour MiniJaja_Realisation.tex
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{trees,arrows,shapes}
+
+% Couleurs personnalisées pour Annexe_Res_tests
+\definecolor{successgreen}{RGB}{40,167,69}
+\definecolor{warningyellow}{RGB}{255,193,7}
+\definecolor{dangered}{RGB}{220,53,69}
+\definecolor{infoblue}{RGB}{23,162,184}
+\definecolor{headerblue}{RGB}{0,123,255}
 
 % Geometry
 \geometry{
@@ -119,12 +136,13 @@
     \large{Groupe 7}
 }
 \author{
-    Romain \and
-    Lucas \and
-    Félix \and
-    Léo \and
-    Théo \and
-    Ahmed
+    Romain GALLAND \and
+    Lucas LAURET \and
+    Félix RIAT \and
+    Léo MAUGERI \and
+    Théo VALFREY \and
+    Ahmed DJEMAOUI \and
+    Javad AFSHAR
 }
 \date{\today}
 
@@ -138,9 +156,20 @@
 
 \include{sujet}
 
-\include{jeux_test.tex}
+\include{jeux_test}
+\newpage
+
+
+\include{MiniJaja_Realisation}
+\newpage
+
+\include{contraintes_fonctionnelles}
 \newpage
 
 \include{retro}
+\newpage
+
+\include{Annexe_Res_tests}
+\newpage
 
 \end{document}
