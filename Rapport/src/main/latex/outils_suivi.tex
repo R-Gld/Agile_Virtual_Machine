@@ -1,0 +1,122 @@
+\section{Utilisation des outils de suivi de projet}
+
+Cette section présente les outils mis en place pour assurer la qualité et la traçabilité du code tout au long du développement.
+
+\subsection{GitLab CI/CD : Intégration et déploiement continus}
+
+L'intégration continue (CI) et le déploiement continu (CD) sont au cœur de notre processus de développement. GitLab CI/CD automatise la compilation, les tests et le déploiement du projet.
+
+\subsubsection{Pipeline de CI/CD}
+
+Le pipeline GitLab est organisé en plusieurs stages séquentiels :
+
+\begin{enumerate}
+    \item \textbf{build} : Compilation du code source
+    \item \textbf{test} : Exécution des tests unitaires et d'intégration
+    \item \textbf{sonarqube-check} : Analyse statique du code
+    \item \textbf{package} : Création des artefacts JAR
+    \item \textbf{deploy} : Déploiement sur Nexus
+    \item \textbf{release} : Gestion des versions
+\end{enumerate}
+
+\subsubsection{Stratégie de tests automatisés}
+
+Chaque modification de code déclenche automatiquement :
+\begin{itemize}
+    \item L'exécution de tous les tests unitaires
+    \item La génération des rapports de couverture de code (JaCoCo)
+    \item La validation de la couverture minimale (80\%)
+    \item Les tests d'intégration inter-modules
+\end{itemize}
+
+\subsubsection{Qualité de code et métriques}
+
+Le pipeline intègre des vérifications de qualité :
+\begin{itemize}
+    \item Vérification du style de code
+    \item Détection des vulnérabilités
+    \item Analyse de la complexité cyclomatique
+    \item Rapport de dette technique
+\end{itemize}
+
+\subsection{Nexus Repository Manager : Gestion des artefacts}
+
+Nexus est utilisé comme gestionnaire de dépôts Maven pour stocker et distribuer les artefacts du projet.
+
+\subsubsection{Organisation des repositories}
+
+\begin{itemize}
+    \item \textbf{snapshots} : Versions de développement (suffixe -SNAPSHOT)
+    \item \textbf{releases} : Versions stables et versionnées
+    \item \textbf{proxy} : Cache des dépendances Maven Central
+\end{itemize}
+
+\subsubsection{Workflow de release}
+
+Le processus de release utilise le plugin Maven Release :
+
+\begin{enumerate}
+    \item Préparation : incrémentation de version, création du tag Git
+    \item Vérification : tests automatiques sur la version candidate
+    \item Publication : déploiement sur le repository releases
+    \item Archivage : conservation des artefacts et métadonnées
+\end{enumerate}
+
+\subsubsection{Avantages constatés}
+
+L'utilisation de Nexus apporte plusieurs bénéfices :
+\begin{itemize}
+    \item \textbf{Traçabilité} : Historique complet des versions déployées
+    \item \textbf{Performance} : Cache des dépendances externes (réduction du temps de build)
+    \item \textbf{Fiabilité} : Isolation des builds par rapport aux pannes de Maven Central
+    \item \textbf{Gouvernance} : Contrôle des dépendances utilisées dans le projet
+\end{itemize}
+
+\subsection{SonarQube : Analyse statique et qualité du code}
+
+SonarQube réalise une analyse approfondie du code source pour détecter les bugs, vulnérabilités et mauvaises pratiques.
+
+\subsubsection{Métriques suivies}
+
+\begin{itemize}
+    \item \textbf{Couverture de code} : Pourcentage de code couvert par les tests
+    \item \textbf{Duplication} : Détection du code dupliqué
+    \item \textbf{Complexité} : Mesure de la complexité cyclomatique
+    \item \textbf{Maintenabilité} : Note globale de maintenabilité (A-E)
+    \item \textbf{Fiabilité} : Nombre et sévérité des bugs détectés
+    \item \textbf{Sécurité} : Vulnérabilités et points faibles de sécurité
+\end{itemize}
+
+\subsubsection{Quality Gates}
+
+Des seuils de qualité sont définis :
+\begin{itemize}
+    \item Couverture minimale : 80\%
+    \item Aucun bug de sévérité critique ou bloquante
+    \item Pas de vulnérabilités de sécurité
+    \item Taux de duplication < 3\%
+    \item Note de maintenabilité minimale : B
+\end{itemize}
+
+\subsubsection{Intégration dans le workflow}
+
+SonarQube est intégré au pipeline CI/CD :
+\begin{enumerate}
+    \item Analyse automatique à chaque merge request
+    \item Blocage du merge si les quality gates ne sont pas satisfaits
+    \item Rapport de progression visible dans GitLab
+    \item Historique de l'évolution de la qualité
+\end{enumerate}
+
+\subsection{Bilan de l'utilisation des outils}
+
+L'ensemble de ces outils forme un écosystème cohérent qui garantit :
+
+\begin{itemize}
+    \item \textbf{Automatisation} : Réduction des tâches manuelles répétitives
+    \item \textbf{Qualité} : Détection précoce des régressions et anomalies
+    \item \textbf{Collaboration} : Visibilité partagée sur l'état du projet
+    \item \textbf{Confiance} : Déploiements fiables et reproductibles
+\end{itemize}
+
+Cette infrastructure technique constitue un pilier essentiel de la méthodologie Agile du projet, permettant des itérations rapides tout en maintenant un haut niveau de qualité.

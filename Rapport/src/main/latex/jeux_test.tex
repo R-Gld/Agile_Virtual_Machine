@@ -7,6 +7,45 @@ La réalisation des tests pour l’interface a été plus compliquée que prévu
 Par ailleurs, en ce qui concerne les tests d’acceptation, le comportement de TestFX était encore plus aléatoire d’un test à l’autre, même en utilisant les mêmes fonctions. Suite à ces observations, nous avons décidé d’écrire les scénarios de tests d’acceptation, mais de les exécuter manuellement.
 
 \subsubsection{Choix des tests à effectuer}
-Pour la partie interface, nous avons réalisé plusieurs tests. Dans un premier temps, nous avons testé les différents composants graphiques que nous avons réalisés (par exemple la console ou encore la zone de code). Ces tests ont pour but de vérifier que les modifications apportées à ces composants n’entraînent pas de régression dans l’application produite.
+Pour la partie interface, nous avons réalisé plusieurs tests. Dans un premier temps, nous avons testé les différents composants graphiques que nous avons réalisés (par exemple la console ou encore la zone de code). Ces tests ont pour but de vérifier que les modifications apportées à ces composants n'entraînent pas de régression dans l'application produite.
 
-Nous avons également réalisé des tests d’acceptation pour chaque user story afin de valider la bonne réalisation de ces user stories et de vérifier que nous n’avons rien oublié.
+Nous avons également réalisé des tests d'acceptation pour chaque user story afin de valider la bonne réalisation de ces user stories et de vérifier que nous n'avons rien oublié.
+
+\subsection{Tests recette}
+
+Les tests recette valident que le système satisfait les exigences fonctionnelles du cahier des charges. Ces tests ont été exécutés manuellement pour vérifier l'ensemble des fonctionnalités.
+
+\subsubsection{Scénarios de tests recette}
+
+\paragraph{Scénario 1 : Compilation et interprétation basique}
+\begin{enumerate}
+    \item Ouvrir l'application
+    \item Écrire un programme MiniJaja simple (Hello World)
+    \item Compiler en JajaCode
+    \item Interpréter le code MiniJaja
+    \item Vérifier la sortie console
+\end{enumerate}
+
+\textbf{Résultat attendu :} Le programme compile et s'exécute correctement, affichant "Hello World".
+
+\paragraph{Scénario 2 : Débogage pas à pas}
+\begin{enumerate}
+    \item Écrire un programme avec variables et boucles
+    \item Placer des breakpoints
+    \item Lancer le mode debug
+    \item Avancer pas à pas
+    \item Observer l'état de la mémoire à chaque étape
+\end{enumerate}
+
+\textbf{Résultat attendu :} Le débogueur s'arrête aux breakpoints, la mémoire est visualisable et cohérente.
+
+\paragraph{Scénario 3 : Gestion des erreurs}
+\begin{enumerate}
+    \item Écrire un programme avec erreur syntaxique
+    \item Tenter la compilation
+    \item Vérifier le message d'erreur
+    \item Corriger l'erreur
+    \item Recompiler avec succès
+\end{enumerate}
+
+\textbf{Résultat attendu :} Les erreurs sont détectées et clairement reportées à l'utilisateur.
