@@ -1,0 +1,33 @@
+
+\section{Décomposition du logiciel et structures de communication}
+
+Cette section présente une vue d’ensemble de l’architecture du logiciel et des échanges entre ses différentes parties. L’objectif n’est pas de détailler le fonctionnement interne de chaque module, qui sera décrit dans les sections suivantes, mais de mettre en évidence le découpage global du projet et les structures de communication mises en place.
+
+\subsection{Découpage global du logiciel}
+
+Le projet est structuré autour d’un enchaînement de modules correspondant aux grandes étapes de traitement d’un programme \texttt{MiniJaja}, depuis sa lecture jusqu’à son exécution. On distingue notamment :
+\begin{itemize}
+    \item le module d’analyse lexicale et syntaxique, chargé de transformer le texte source \texttt{MiniJaja} en un \textbf{arbre de syntaxe abstraite (AST)} ;
+    \item le module de contrôle de type, qui parcourt l’AST afin de vérifier la cohérence statique du programme ;
+    \item l’interpréteur \texttt{MiniJaja}, qui exécute directement le programme à partir de l’AST et d’un \textbf{état mémoire} ;
+    \item le compilateur \texttt{MiniJaja} vers \texttt{JajaCode}, qui transforme l’AST en une suite d’instructions \texttt{JajaCode} ;
+    \item l’interpréteur \texttt{JajaCode}, qui exécute ces instructions sur la machine virtuelle ;
+    \item l’\textbf{interface graphique}, qui joue un rôle d’orchestration entre les différents modules et permet à l’utilisateur de visualiser les résultats.
+\end{itemize}
+
+Ce découpage reprend la structure proposée dans le sujet du projet et permet de séparer clairement les responsabilités, tout en autorisant un développement parallèle des différentes parties.
+
+\subsection{Structures de communication entre modules}
+
+Les modules communiquent principalement par le biais de structures de données communes, ce qui limite les dépendances directes entre les implémentations. L’\textbf{AST} constitue l’élément central de ces échanges : il est produit par l’analyse syntaxique, puis consommé par le contrôle de type, l’interpréteur \texttt{MiniJaja} et le compilateur.
+
+Les interpréteurs \texttt{MiniJaja} et \texttt{JajaCode} manipulent quant à eux un \textbf{état mémoire} reposant sur les mêmes concepts (\texttt{pile}, \texttt{tas}, associations \texttt{identificateur/valeur}). Ce choix facilite la comparaison des comportements entre l’exécution interprétée et l’exécution du code compilé, conformément aux objectifs de validation du projet.
+
+L’\textbf{interface graphique} reste découplée des détails internes des modules de compilation et d’interprétation. Elle invoque leurs fonctionnalités via des points d’entrée clairement identifiés et récupère les résultats d’exécution ou les messages d’erreur à afficher à l’utilisateur.
+
+
+La classe \texttt{App} du module \texttt{GUI} utilise \texttt{MiniJajaInterpreter} et \texttt{JajaCodeInterpreter} du module \texttt{LexerParser}, ainsi que la classe \texttt{Compiler} du module \texttt{compiler}, afin d’exécuter les programmes \texttt{MiniJaja} selon le mode choisi par l’utilisateur : interprétation directe ou compilation en \texttt{JajaCode}.
+
+Le module \texttt{compiler} s’appuie sur \texttt{MiniJajaCompilerVisitor} du module \texttt{LexerParser} pour transformer un programme \texttt{MiniJaja} en instructions \texttt{JajaCode}.
+
+Enfin, le module \texttt{LexerParser} fait appel à la classe \texttt{Stacks} du module \texttt{memoire} à travers \texttt{MiniJajaInterpreter} et \texttt{JajaCodeInterpreter}, afin de gérer la \textbf{pile} et le \textbf{tas} lors de l’exécution des programmes compilés ou interprétés.
