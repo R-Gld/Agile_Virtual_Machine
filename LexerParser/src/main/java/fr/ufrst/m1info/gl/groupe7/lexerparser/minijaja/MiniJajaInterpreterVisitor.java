@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * MiniJajaVisitor builds the Abstract Syntax Tree (AST) from the ANTLR parse
+ * MiniJajaInterpreterVisitor builds the Abstract Syntax Tree (AST) from the ANTLR parse
  * tree.
  * Each visit method creates corresponding AST nodes for the MiniJaja language.
  */
@@ -100,12 +100,18 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	// ======== CLASS ========
 
-	@Override
-	public AstNode visitClasse(MiniJajaParser.ClasseContext ctx) {
-		logger.debug("enter visitClasse: text='{}'", ctx.getText());
-		String className = ctx.IDENT().getText();
-		logger.debug("visitClasse: className='{}'", className);
-		IdentNode ident = new IdentNode(className);
+    /**
+     * Visits the class declaration.
+     *
+     * @param ctx the parse tree context for the class
+     * @return a {@link ClasseNode} representing the class
+     */
+    @Override
+    public AstNode visitClasse(MiniJajaParser.ClasseContext ctx) {
+        logger.debug("enter visitClasse: text='{}'", ctx.getText());
+        String className = ctx.IDENT().getText();
+        logger.debug("visitClasse: className='{}'", className);
+        IdentNode ident = new IdentNode(className);
 
 		DeclsNode decls = (DeclsNode) visit(ctx.decls());
 		MainNode main = (MainNode) visit(ctx.methmain());
@@ -116,14 +122,21 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	// ======== DECLARATIONS ========
 
-	@Override
-	public AstNode visitDecls(MiniJajaParser.DeclsContext ctx) {
-		logger.debug("enter visitDecls: text='{}'", ctx.getText());
-		// Base case: no more declarations
-		if (ctx.decl() == null) {
-			logger.debug("visitDecls: no declarations (vnil)");
-			return withPosition(new DeclsNode(), ctx); // empty declaration list
-		}
+    /**
+     * Visits the declarations (variables, methods, constants).
+     * This is a recursive rule.
+     *
+     * @param ctx the parse tree context for declarations
+     * @return a {@link DeclsNode} representing a list of declarations
+     */
+    @Override
+    public AstNode visitDecls(MiniJajaParser.DeclsContext ctx) {
+        logger.debug("enter visitDecls: text='{}'", ctx.getText());
+        // Base case: no more declarations
+        if (ctx.decl() == null) {
+            logger.debug("visitDecls: no declarations (vnil)");
+            return withPosition(new DeclsNode(), ctx); // empty declaration list
+        }
 
 		AstNode firstDecl = visit(ctx.decl());
 		DeclsNode nextDecls = (DeclsNode) visit(ctx.decls());
@@ -131,34 +144,52 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return withPosition(new DeclsNode(firstDecl, nextDecls), ctx);
 	}
 
-	@Override
-	public AstNode visitDecl(MiniJajaParser.DeclContext ctx) {
-		logger.debug("enter visitDecl: text='{}'", ctx.getText());
-		if (ctx.var() != null) {
-			logger.debug("visitDecl: delegating to visitVar");
-			return visit(ctx.var());
-		} else if (ctx.methode() != null) {
-			logger.debug("visitDecl: delegating to visitMethode");
-			return visit(ctx.methode());
-		}
-		logger.debug("visitDecl: unexpected decl type");
-		return null; // Should not reach here
-	}
+    /**
+     * Visits a single declaration.
+     *
+     * @param ctx the parse tree context for a declaration
+     * @return either a {@link VarNode} (or subclass) or a {@link MethodeNode}
+     */
+    @Override
+    public AstNode visitDecl(MiniJajaParser.DeclContext ctx) {
+        logger.debug("enter visitDecl: text='{}'", ctx.getText());
+        if (ctx.var() != null) {
+            logger.debug("visitDecl: delegating to visitVar");
+            return visit(ctx.var());
+        } else if (ctx.methode() != null) {
+            logger.debug("visitDecl: delegating to visitMethode");
+            return visit(ctx.methode());
+        }
+        logger.debug("visitDecl: unexpected decl type");
+        return null; // Should not reach here
+    }
 
-	@Override
-	public AstNode visitVexp(MiniJajaParser.VexpContext ctx) {
-		logger.debug("enter visitVexp: text='{}'", (ctx.exp() != null ? ctx.exp().getText() : "<null>"));
-		if (ctx.children == null) {
-			logger.debug("visitVexp: no expression (null)");
-			return null;
-		}
-		return visit(ctx.exp());
-	}
+    /**
+     * Visits a variable expression wrapper (Vexp).
+     *
+     * @param ctx the parse tree context for Vexp
+     * @return an {@link Expression} or null
+     */
+    @Override
+    public AstNode visitVexp(MiniJajaParser.VexpContext ctx) {
+        logger.debug("enter visitVexp: text='{}'", (ctx.exp() != null ? ctx.exp().getText() : "<null>"));
+        if (ctx.children == null) {
+            logger.debug("visitVexp: no expression (null)");
+            return null;
+        }
+        return visit(ctx.exp());
+    }
 
 	// ======== MAIN METHOD ========
 
-	@Override
-	public AstNode visitMethmain(MiniJajaParser.MethmainContext ctx) {
+    /**
+     * Visits the main method definition.
+     *
+     * @param ctx the parse tree context for the main method
+     * @return a {@link MainNode}
+     */
+    @Override
+    public AstNode visitMethmain(MiniJajaParser.MethmainContext ctx) {
         logger.debug("enter visitMethmain: text='{}'", ctx.getText());
 		VarsNode vars = (VarsNode) visit(ctx.vars());
 		InstructionsNode instructions = (InstructionsNode) visit(ctx.instrs());
@@ -168,63 +199,72 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	// ======== VARIABLES ========
 
-	@Override
-	public AstNode visitVar(MiniJajaParser.VarContext ctx) {
-		String typeText = ctx.TYPE().getText();
+    /**
+     * Visits a variable declaration.
+     * Handles simple variables ({@link VarNode}), constants ({@link CstNode}),
+     * and arrays ({@link TableauNode}).
+     *
+     * @param ctx the parse tree context for a variable declaration
+     * @return a {@link VarNode}, {@link CstNode}, or {@link TableauNode}
+     */
+    @Override
+    public AstNode visitVar(MiniJajaParser.VarContext ctx) {
+        String typeText = ctx.TYPE().getText();
         Type type;
-		switch (typeText) {
-			case "int":
-				type = Type.ENTIER;
-				break;
-			case "boolean":
-				type = Type.BOOLEEN;
-				break;
-			case "void": // contrôle des types : interdire ça
-				type = Type.VOID;
-				break;
-			default:
-				return null;
-		}
-		
+        switch (typeText) {
+            case "int":
+                type = Type.ENTIER;
+                break;
+            case "boolean":
+                type = Type.BOOLEEN;
+                break;
+            
+            default:
+                return null;
+        }
 
 		IdentNode ident = new IdentNode(ctx.IDENT() != null ? ctx.IDENT().getText() : "");
         logger.debug("visitVar: ident='{}', type='{}'", ident.getNom(), typeText);
 		Expression vexp = null;
 
-		if(ctx.vexp() != null) {	
-		// Si une expression d'initialisation est présente
-		vexp =(Expression) visit(ctx.vexp()) ;
+        if(ctx.vexp() != null) {
+            // If an initialization expression is present
+            vexp = (Expression) visit(ctx.vexp());
 
 		}
 
+        // Case 1: final constant
+        if (ctx.FINAL() != null) {
+                return withPosition((vexp != null)
+                ? new CstNode(type, ident, vexp)
+                : new CstNode(type, ident), ctx);
+        }
 
-		// Cas 1 : constante finale
-		if (ctx.FINAL() != null) {
-				return withPosition((vexp != null)
-				? new CstNode(type, ident, vexp)
-				: new CstNode(type, ident), ctx);
-		}
+        // Case 2: array (declared with a size expression)
+        if (ctx.exp() != null) {
+            Type tableauType = switch (typeText) {
+                case "int" -> Type.ENTIER;
+                case "boolean" -> Type.BOOLEEN;
+                default -> null;
+            };
+            return withPosition(new TableauNode(tableauType, ident, (Expression) visit(ctx.exp())), ctx);
+        }
 
-		// Cas 2 : tableau (déclaré avec une taille exp)
-		if (ctx.exp() != null) {
-			Type tableauType = switch (typeText) {
-				case "int" -> Type.ENTIER;
-				case "boolean" -> Type.BOOLEEN;
-				default -> null;
-			};
-			return withPosition(new TableauNode(tableauType, ident, (Expression) visit(ctx.exp())), ctx);
-		}
-
-		// Cas 3 : variable simple
+        // Case 3: simple variable
         logger.debug("exit visitVar: created variable node for '{}', type='{}'", ident.getNom(), type);
-		return withPosition((vexp != null)
-				? new VarNode(type, ident , vexp)
-				: new VarNode(type, ident), ctx);
-	}
+        return withPosition((vexp != null)
+                ? new VarNode(type, ident , vexp)
+                : new VarNode(type, ident), ctx);
+    }
 
-
-	@Override
-	public AstNode visitVars(MiniJajaParser.VarsContext ctx) {
+    /**
+     * Visits a list of variable declarations (recursive).
+     *
+     * @param ctx the parse tree context for variable list
+     * @return a {@link VarsNode}
+     */
+    @Override
+    public AstNode visitVars(MiniJajaParser.VarsContext ctx) {
         logger.debug("enter visitVars: text='{}'", ctx.getText());
 		if (ctx.children == null)
 			return withPosition(new VarsNode(), ctx);
@@ -234,8 +274,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return withPosition(new VarsNode(firstVar, nextVars), ctx);
 	}
 
-	@Override
-	public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
+    /**
+     * Visits a method declaration.
+     *
+     * @param ctx the parse tree context for a method
+     * @return a {@link MethodeNode}
+     */
+    @Override
+    public AstNode visitMethode(MiniJajaParser.MethodeContext ctx) {
         logger.debug("enter visitMethode: text='{}'", ctx.getText());
 		String typeText = ctx.typemeth().getText();
 		Type typeMeth;
@@ -260,8 +306,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return withPosition(new MethodeNode(typeMeth, ident, entetes, vars, instrs), ctx);
 	}
 
-	@Override
-	public AstNode visitEntetes(MiniJajaParser.EntetesContext ctx) {
+    /**
+     * Visits the list of method headers/parameters (recursive).
+     *
+     * @param ctx the parse tree context for headers
+     * @return an {@link EntetesNode}
+     */
+    @Override
+    public AstNode visitEntetes(MiniJajaParser.EntetesContext ctx) {
         logger.debug("enter visitEntetes: text='{}'", ctx.getText());
 		// Base case: no more parameters
 		if (ctx.entete() == null) {
@@ -269,13 +321,20 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return withPosition(new EntetesNode(), ctx); // empty parameter list
 		}
 
-		EnteteNode firstEntete = ctx.entete() != null ? (EnteteNode) visit(ctx.entete()) : null;
-		EntetesNode nextEntetes = ctx.entetes() != null ? (EntetesNode) visit(ctx.entetes()) : new EntetesNode();
-		logger.debug("exit visitEntetes: created EntetesNode");
-		return withPosition(new EntetesNode(firstEntete, nextEntetes), ctx);
-	}
-	@Override
-	public AstNode visitEntete(MiniJajaParser.EnteteContext ctx) {
+        EnteteNode firstEntete = ctx.entete() != null ? (EnteteNode) visit(ctx.entete()) : null;
+        EntetesNode nextEntetes = ctx.entetes() != null ? (EntetesNode) visit(ctx.entetes()) : new EntetesNode();
+        logger.debug("exit visitEntetes: created EntetesNode");
+        return withPosition(new EntetesNode(firstEntete, nextEntetes), ctx);
+    }
+
+    /**
+     * Visits a single method header/parameter.
+     *
+     * @param ctx the parse tree context for a header
+     * @return an {@link EnteteNode}
+     */
+    @Override
+    public AstNode visitEntete(MiniJajaParser.EnteteContext ctx) {
         logger.debug("enter visitEntete: text='{}'", ctx.getText());
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		String typeText = ctx.TYPE().getText();
@@ -292,19 +351,19 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		}
 
         logger.debug("exit visitEntete: ident='{}' type='{}'", ident.getNom(), type);
-		return withPosition(new EnteteNode(ident, type), ctx);
-	}
-
-
-
-
-
-
+        return withPosition(new EnteteNode(ident, type), ctx);
+    }
 
 	// ======== INSTRUCTIONS ========
 
-	@Override
-	public AstNode visitInstrs(MiniJajaParser.InstrsContext ctx) {
+    /**
+     * Visits a list of instructions (recursive).
+     *
+     * @param ctx the parse tree context for instructions
+     * @return an {@link InstructionsNode}
+     */
+    @Override
+    public AstNode visitInstrs(MiniJajaParser.InstrsContext ctx) {
         logger.debug("enter visitInstrs: text='{}'", ctx.getText());
 
 		if (ctx.instr() == null) {
@@ -318,8 +377,15 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return withPosition(new InstructionsNode(firstInstr, next), ctx);
 	}
 
-	@Override
-	public AstNode visitInstr(MiniJajaParser.InstrContext ctx) {
+    /**
+     * Visits a single instruction.
+     * Handles control flow (if, while, return), calls, I/O, assignments, and increments.
+     *
+     * @param ctx the parse tree context for an instruction
+     * @return an {@link InstructionNode} subtype
+     */
+    @Override
+    public AstNode visitInstr(MiniJajaParser.InstrContext ctx) {
         logger.debug("enter visitInstr: text='{}'", ctx.getText());
 
 		// IF statement
@@ -348,18 +414,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 			return withPosition(new RetourNode(returned), ctx);
 		}
 
-
-
-        //APPELI relou
+        // APPELI (Method call instruction)
         if (ctx.listexp() != null) {
             ListExpNode listExp = (ListExpNode) visit(ctx.listexp());
             IdentNode ident =  new IdentNode(ctx.IDENT().getText());
             logger.debug("visitInstr: IDENT -> AppelINode");
 
             return withPosition(new AppelINode(ident, listExp), ctx);
-
         }
-
 
         // --- 1) WRITE / WRITELN ---
         if (ctx.WRITE() != null || ctx.WRITELN() != null) {
@@ -408,8 +470,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	// ======== EXPRESSIONS ========
 
-	@Override
-	public AstNode visitExp(MiniJajaParser.ExpContext ctx) {
+    /**
+     * Visits general expressions (AND, OR, NOT).
+     *
+     * @param ctx the parse tree context for expression
+     * @return an {@link Expression}
+     */
+    @Override
+    public AstNode visitExp(MiniJajaParser.ExpContext ctx) {
         logger.debug("enter visitExp: text='{}'", ctx.getText());
 		if (ctx.exp1() != null && ctx.exp() != null) {
 			Expression exp1 = (Expression) visit(ctx.exp1());
@@ -428,8 +496,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return null;
 	}
 
-	@Override
-	public AstNode visitExp1(MiniJajaParser.Exp1Context ctx) {
+    /**
+     * Visits level 1 expressions (Equals, GreaterThan).
+     *
+     * @param ctx the parse tree context
+     * @return an {@link Expression}
+     */
+    @Override
+    public AstNode visitExp1(MiniJajaParser.Exp1Context ctx) {
         logger.debug("enter visitExp1: text='{}'", ctx.getText());
 		if (ctx.exp1() != null && ctx.exp2() != null) {
 			Expression exp1 = (Expression) visit(ctx.exp1());
@@ -445,8 +519,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return null;
 	}
 
-	@Override
-	public AstNode visitExp2(MiniJajaParser.Exp2Context ctx) {
+    /**
+     * Visits level 2 expressions (Plus, Minus, UnaryMinus).
+     *
+     * @param ctx the parse tree context
+     * @return an {@link Expression}
+     */
+    @Override
+    public AstNode visitExp2(MiniJajaParser.Exp2Context ctx) {
         logger.debug("enter visitExp2: text='{}'", ctx.getText());
 		if (ctx.exp2() != null && ctx.terme() != null) {
 			Expression exp2 = (Expression) visit(ctx.exp2());
@@ -464,8 +544,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return null;
 	}
 
-	@Override
-	public AstNode visitTerme(MiniJajaParser.TermeContext ctx) {
+    /**
+     * Visits term expressions (Multiplication, Division).
+     *
+     * @param ctx the parse tree context
+     * @return an {@link Expression}
+     */
+    @Override
+    public AstNode visitTerme(MiniJajaParser.TermeContext ctx) {
         logger.debug("enter visitTerme: text='{}'", ctx.getText());
 		if (ctx.fact() != null && ctx.terme() != null) {
 			Expression fact = (Expression) visit(ctx.fact());
@@ -483,8 +569,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 
 	// ======== FACTORS & IDENTIFIERS ========
 
-	@Override
-	public AstNode visitFact(MiniJajaParser.FactContext ctx) {
+    /**
+     * Visits a factor node (identifiers, literals, calls, etc.).
+     *
+     * @param ctx the parse tree context for a factor
+     * @return an {@link Expression} or {@link IdentNode} depending on content
+     */
+    @Override
+    public AstNode visitFact(MiniJajaParser.FactContext ctx) {
         logger.debug("enter visitFact: text='{}'", ctx.getText());
 		if (ctx.ident1() != null)
 			return visit(ctx.ident1());
@@ -508,8 +600,14 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return null;
 	}
 
-	@Override
-	public AstNode visitIdent1(MiniJajaParser.Ident1Context ctx) {
+    /**
+     * Visits a level 1 identifier (Variable access or Array access).
+     *
+     * @param ctx the parse tree context
+     * @return an {@link IdentNode} or {@link TabNode}
+     */
+    @Override
+    public AstNode visitIdent1(MiniJajaParser.Ident1Context ctx) {
         logger.debug("enter visitIdent1: text='{}'", ctx.getText());
 		IdentNode ident = new IdentNode(ctx.IDENT().getText());
 		if (ctx.exp() != null) {
@@ -519,12 +617,18 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 		return withPosition(ident, ctx);
 	}
 
-	@Override
-	public AstNode visitListexp(MiniJajaParser.ListexpContext ctx) {
+    /**
+     * Visits a list of expressions (e.g., arguments in a function call).
+     *
+     * @param ctx the parse tree context for expression list
+     * @return a {@link ListExpNode}
+     */
+    @Override
+    public AstNode visitListexp(MiniJajaParser.ListexpContext ctx) {
         logger.debug("enter visitListexp: text='{}'", ctx.getText());
 
 		if (ctx.exp() == null) {
-			return withPosition(new ListExpNode(null, null), ctx); // Nœud "exnil"
+			return withPosition(new ListExpNode(null, null), ctx); // node"exnil"
 		}
 
 		Expression exp = (Expression) visit(ctx.exp());
@@ -538,13 +642,13 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	}
 
 
-	/**
-	 * Résultat par défaut si une méthode 'visit' n'est pas implémentée.
-	 */
-	@Override
-	protected AstNode defaultResult() {
-		logger.debug("defaultResult called");
-		throw new UnsupportedOperationException("Visite non implémentée pour ce nœud.");
-		
-	}
+    /**
+     * Default result when a 'visit' method is not implemented.
+     */
+    @Override
+    protected AstNode defaultResult() {
+        logger.debug("defaultResult called");
+        throw new UnsupportedOperationException("Visit not implemented for this node.");
+        
+    }
 }

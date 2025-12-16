@@ -44,6 +44,17 @@ public class InstructionsNode extends AstNode {
                 "," + (instructions != null ? instructions.toStringTree() : null) +
                 ")";
     }
+
+
+    /**
+     * Returns the child nodes of this {@code InstructionsNode}.
+     * <p>
+     * If both {@code instructionNode} and {@code instructions} are present,
+     * returns a list containing both. If only {@code instructionNode} is present,
+     * returns a singleton list containing it. If neither is present, returns an empty list.
+     *
+     * @return an {@code Iterable} of child {@code AstNode} instances.
+     */
     @Override
     public Iterable<AstNode> getChildren() {
         if (instructions != null) {

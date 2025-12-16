@@ -13,14 +13,25 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
  * Debug controller for the AST Walker.
- * Supports breakpoints, step-by-step execution, and continue to next breakpoint.
+ * <p>
+ * This class provides debugging capabilities for the MiniJaja interpreter, allowing for
+ * step-by-step execution, management of breakpoints, and inspection of the runtime state
+ * (stack and symbol table). It can be controlled via a command-line interface or integrated
+ * into a GUI through the {@link DebugListener}.
+ * </p>
  */
 public class Debug {
     
+    /**
+     * Defines the execution mode for the debugger.
+     */
     public enum Mode {
-        DISABLED,       // No debugging, run normally
-        STEP_BY_STEP,   // Stop at every node
-        BREAKPOINTS     // Stop only at breakpoints
+        /** No debugging, the program runs without interruption. */
+        DISABLED,
+        /** The debugger pauses before executing each node. */
+        STEP_BY_STEP,
+        /** The debugger pauses only at user-defined breakpoints. */
+        BREAKPOINTS
     }
     
     private Mode mode = Mode.DISABLED;
@@ -33,17 +44,48 @@ public class Debug {
     
     // Listener for debug events (optional, for GUI integration)
     private DebugListener listener;
-    
+
+    /**
+     * A listener for debugger events, useful for GUI integration.
+     * Allows external components to react to debugger state changes.
+     */
     public interface DebugListener {
+        /**
+         * Called when a breakpoint is hit or when the debugger pauses in step-by-step mode.
+         *
+         * @param line   The current line number (node count) where the pause occurred.
+         * @param node   The {@link AstNode} that is about to be executed.
+         * @param stacks The current state of the {@link Stacks} (memory).
+         */
         void onBreakpoint(int line, AstNode node, Stacks stacks);
+        
+        /**
+         * Called on every step when in step-by-step mode.
+         * Note: This is not currently called by the Debugger but is here for potential future use.
+         * @param line The current line number.
+         * @param node The current AST node.
+         * @param stacks The current state of the stacks.
+         */
         void onStep(int line, AstNode node, Stacks stacks);
+
+        /**
+         * Called when the debugger's execution is resumed (e.g., after a 'continue' or 'step' command).
+         */
         void onResume();
     }
 
+    /**
+     * Constructs a new Debug controller, initialized in DISABLED mode.
+     */
     public Debug() {
         this.scanner = new Scanner(System.in);
     }
     
+    /**
+     * Constructs a new Debug controller with a specified initial mode.
+     *
+     * @param mode The initial {@link Mode} for the debugger.
+     */
     public Debug(Mode mode) {
         this();
         this.mode = mode;
@@ -51,46 +93,92 @@ public class Debug {
 
     // ==================== BREAKPOINT MANAGEMENT ====================
     
+    /**
+     * Adds a breakpoint at a specific line number.
+     * The walker will pause before executing the node at this line.
+     *
+     * @param line The line number to set the breakpoint on.
+     */
     public void addBreakPoint(int line) {
         breakPoints.add(line);
     }
     
+    /**
+     * Removes a breakpoint from a specific line number.
+     *
+     * @param line The line number to remove the breakpoint from.
+     */
     public void removeBreakPoint(int line) {
         breakPoints.remove(line);
     }
     
+    /**
+     * Removes all currently set breakpoints.
+     */
     public void clearBreakPoints() {
         breakPoints.clear();
     }
     
+    /**
+     * Retrieves a copy of the set of all currently set breakpoints.
+     *
+     * @return A new {@link Set} containing all breakpoint line numbers.
+     */
     public Set<Integer> getBreakPoints() {
         return new HashSet<>(breakPoints);
     }
     
+    /**
+     * Checks if a breakpoint is set at a specific line number.
+     *
+     * @param line The line number to check.
+     * @return {@code true} if a breakpoint exists at the given line, {@code false} otherwise.
+     */
     public boolean hasBreakPoint(int line) {
         return breakPoints.contains(line);
     }
 
     // ==================== MODE CONTROL ====================
     
+    /**
+     * Sets the debugger's execution mode.
+     *
+     * @param mode The {@link Mode} to set.
+     */
     public void setMode(Mode mode) {
         this.mode = mode;
     }
     
+    /**
+     * Gets the current debugger execution mode.
+     *
+     * @return The current {@link Mode}.
+     */
     public Mode getMode() {
         return mode;
     }
     
+    /**
+     * Checks if the debugger is currently active (i.e., not in {@link Mode#DISABLED}).
+     *
+     * @return {@code true} if the mode is {@link Mode#STEP_BY_STEP} or {@link Mode#BREAKPOINTS}, {@code false} otherwise.
+     */
     public boolean isEnabled() {
         return mode != Mode.DISABLED;
     }
     
+    /**
+     * Enables the debugger. If it was disabled, it defaults to {@link Mode#BREAKPOINTS}.
+     */
     public void enable() {
         if (mode == Mode.DISABLED) {
             mode = Mode.BREAKPOINTS;
         }
     }
     
+    /**
+     * Disables the debugger, allowing the program to run without interruption.
+     */
     public void disable() {
         mode = Mode.DISABLED;
     }
@@ -98,8 +186,13 @@ public class Debug {
     // ==================== EXECUTION CONTROL ====================
     
     /**
-     * Called before each node is interpreted.
-     * Returns true if execution should proceed, false if paused.
+     * This method is called by the {@link Walker} before each node is interpreted.
+     * It determines whether the execution should pause based on the current debug mode and breakpoints.
+     *
+     * @param line   The current line number (node count).
+     * @param node   The {@link AstNode} about to be executed.
+     * @param stacks The current state of the {@link Stacks}.
+     * @return {@code true} if execution should proceed, {@code false} if the walker should stop.
      */
     public boolean beforeNode(int line, AstNode node, Stacks stacks) {
         if (mode == Mode.DISABLED) {
@@ -110,6 +203,7 @@ public class Debug {
         
         boolean shouldStop = false;
         
+        // Determine if we should pause at the current node
         if (mode == Mode.STEP_BY_STEP) {
             shouldStop = true;
         } else if (mode == Mode.BREAKPOINTS && hasBreakPoint(line)) {
@@ -117,6 +211,7 @@ public class Debug {
             logger.info("\n BREAKPOINT HIT at line " + line);
         }
         
+        // If a single step was requested, stop now and reset the flag
         if (stepNext) {
             shouldStop = true;
             stepNext = false;
@@ -125,10 +220,12 @@ public class Debug {
         if (shouldStop) {
             paused = true;
             
+            // Notify the listener that a breakpoint/step has occurred
             if (listener != null) {
                 listener.onBreakpoint(line, node, stacks);
             }
             
+            // Enter the interactive pause loop
             return handlePause(line, node, stacks);
         }
         
@@ -136,7 +233,13 @@ public class Debug {
     }
     
     /**
-     * Handles the debug pause - shows menu and waits for user input.
+     * Handles the interactive debug pause. It displays a menu of debug commands and waits for user
+     * input from the console to determine the next action (step, continue, quit, etc.).
+     *
+     * @param line   The line number where the pause occurred.
+     * @param node   The current {@link AstNode}.
+     * @param stacks The current {@link Stacks} state.
+     * @return {@code false} if the user chooses to quit, {@code true} otherwise.
      */
     private boolean handlePause(int line, AstNode node, Stacks stacks) {
         printDebugState(line, node, stacks);
@@ -148,32 +251,32 @@ public class Debug {
             switch (input) {    
                 case "s", "step" -> {
                     step();
-                    return true;
+                    return true; // Exit loop and execute one step
                 }
                 case "c", "continue" -> {
                     continueStepByStep();
-                    return true;
+                    return true; // Exit loop and continue
                 }
                 case "n", "next" -> {
                     continueToNextBreakpoint();
-                    return true;
+                    return true; // Exit loop and continue
                 }
                 case "p", "print", "stack" -> {
-                    // Print stack
+                    // Print current stack state
                     logger.debug("\n STACK STATE:");
                     stacks.printStack();
                 }
                 case "v", "vars", "symbols" -> {
-                    // Print symbol table
+                    // Print current symbol table
                     logger.debug("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();
                 }
                 case "b", "breakpoints" -> {
-                    // List breakpoints
+                    // List all breakpoints
                     logger.debug("\n BREAKPOINTS: " + breakPoints);
                 }
                 case "q", "quit", "exit" -> {
-                    // Quit debugging
+                    // Quit debugging session
                     logger.debug(" Debug session ended.");
                     mode = Mode.DISABLED;
                     paused = false;
@@ -182,10 +285,11 @@ public class Debug {
                 }
                 
                 default -> {
-                    // Try to parse as breakpoint command: "b 10" or "+10" or "-10"
-                    if (input.startsWith("b ") || input.startsWith("+ ")) {
+                    // Try to parse as a breakpoint command, e.g., "b 10", "+10", or "-10"
+                    if (input.startsWith("b ") || input.startsWith("+")) {
                         try {
-                            int bp = Integer.parseInt(input.substring(2).trim());
+                            String num = input.startsWith("+") ? input.substring(1) : input.substring(2);
+                            int bp = Integer.parseInt(num.trim());
                             addBreakPoint(bp);
                             logger.debug("Breakpoint added at line " + bp);
                         } catch (NumberFormatException e) {
@@ -209,6 +313,14 @@ public class Debug {
         return true;
     }
     
+    /**
+     * Prints the current state of the debugger to the console, including the current line,
+     * the node being executed, and the current memory context.
+     *
+     * @param line   The current line number.
+     * @param node   The current {@link AstNode}.
+     * @param stacks The current {@link Stacks} state.
+     */
     private void printDebugState(int line, AstNode node, Stacks stacks) {
         logger.debug("\n" + "═".repeat(60));
         logger.debug(" DEBUG PAUSE at line " + line);
@@ -221,6 +333,13 @@ public class Debug {
     
    
     
+    /**
+     * Truncates a string to a maximum length, appending "..." if it exceeds the limit.
+     *
+     * @param str    The string to truncate.
+     * @param maxLen The maximum allowed length.
+     * @return The truncated string.
+     */
     private String truncate(String str, int maxLen) {
         if (str.length() <= maxLen) return str;
         return str.substring(0, maxLen - 3) + "...";
@@ -228,20 +347,36 @@ public class Debug {
 
     // ==================== LISTENER ====================
     
+    /**
+     * Sets the listener for debug events.
+     *
+     * @param listener The {@link DebugListener} to notify of debug events.
+     */
     public void setListener(DebugListener listener) {
         this.listener = listener;
     }
     
+    /**
+     * Gets the current line number (node count) where the debugger is paused.
+     *
+     * @return The current line number.
+     */
     public int getCurrentLine() {
         return currentLine;
     }
     
+    /**
+     * Checks if the debugger is currently paused.
+     *
+     * @return {@code true} if paused, {@code false} otherwise.
+     */
     public boolean isPaused() {
         return paused;
     }
     
     /**
-     * Resume execution programmatically (for GUI).
+     * Programmatically resumes execution.
+     * This is intended for use by a GUI or other external controller.
      */
     public void resume() {
         paused = false;
@@ -249,7 +384,9 @@ public class Debug {
     }
     
     /**
-     * Step to next node programmatically (for GUI).
+     * Programmatically executes a single step.
+     * The debugger will pause again at the very next node.
+     * This is intended for use by a GUI or other external controller.
      */
     public void step() {
         stepNext = true;
@@ -258,7 +395,8 @@ public class Debug {
     }
     
     /**
-     * Continue in step-by-step mode.
+     * Programmatically resumes execution and sets the mode to {@link Mode#STEP_BY_STEP}.
+     * The debugger will pause at every subsequent node.
      */
     public void continueStepByStep() {
         mode = Mode.STEP_BY_STEP;
@@ -267,7 +405,8 @@ public class Debug {
     }
     
     /**
-     * Continue execution until next breakpoint.
+     * Programmatically resumes execution and sets the mode to {@link Mode#BREAKPOINTS}.
+     * The debugger will continue until it hits the next breakpoint or the program ends.
      */
     public void continueToNextBreakpoint() {
         mode = Mode.BREAKPOINTS;

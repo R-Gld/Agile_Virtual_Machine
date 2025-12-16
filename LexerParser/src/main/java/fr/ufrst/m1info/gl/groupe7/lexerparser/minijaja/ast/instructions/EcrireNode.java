@@ -29,6 +29,20 @@ public class EcrireNode extends InstructionNode {
         return "ecrire (" + this.Ident1Node + ")";
     }
    
+    /**
+     * Interprets the EcrireNode (print statement) by evaluating the node's argument and logging its value.
+     * Handles different types of nodes:
+     * <ul>
+     *   <li>If the argument is an identifier, resolves its value in the current context (including method scope) and logs it, 
+     *       throwing an exception if the identifier refers to an array or method.</li>
+     *   <li>If the argument is an expression, evaluates and logs its result.</li>
+     *   <li>If the argument is an array access (TabNode), evaluates the index, retrieves the value at that index, and logs it if it is an integer or boolean.</li>
+     *   <li>Otherwise, logs the argument as is.</li>
+     * </ul>
+     * 
+     * @param stacks The current execution stacks, providing variable and context resolution.
+     * @throws RuntimeException if attempting to print an array or method reference directly.
+     */
     public void interpret(Stacks stacks) {
         if (Ident1Node instanceof IdentNode ident1) {
             String varName = ident1.getNom();

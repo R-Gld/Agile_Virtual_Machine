@@ -50,14 +50,14 @@ public class AppelINode extends InstructionNode {
         RestChildren();
         
         if (this.listExp != null) {
-            //list des valeur de l'entree example f(2,3,44) -> listexp = [2,3,44]
+                // list of argument values e.g. f(2,3,44) -> listexp = [2,3,44]
             List<Object> listexp = this.listExp.evaluate(stacks);
 
             // Object obj = stacks.findQuad(this.ident.getNom()) // pareil
             MethodeNode methode = (MethodeNode) this.ident.evaluate(stacks);
             String methodName = methode.getIdent().getNom();
 
-            //list d'entete de la methode example f(int a, int b, int c) -> ents = [a,b,c]
+            // method parameter list e.g. f(int a, int b, int c) -> ents = [a,b,c]
             List<EnteteNode> ents = methode.getEntetes().evaluate(stacks);
 
             if (ents.size() != listexp.size()) {
