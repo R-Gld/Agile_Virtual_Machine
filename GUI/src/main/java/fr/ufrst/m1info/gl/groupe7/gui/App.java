@@ -14,7 +14,9 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaDebugger;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -733,6 +735,9 @@ public class App extends Application {
 
         if (debugBreakpoints.isEmpty()) {
             // No breakpoints: start at the first executable line
+            if (debugSource == DebugSource.MINIJAJA) {
+                mjjDebugWalker.addBreakPoint(1);
+            }
             int firstExecutable = findNextExecutableLine(lines, -1);
             if (firstExecutable < 0) {
                 if (console != null) {
@@ -770,7 +775,9 @@ public class App extends Application {
                 try {
                     if (debugSource == DebugSource.MINIJAJA) {
                         mjjDebugWalker.enable();
-                        mjjDebugger = new MiniJajaDebugger(text, new DiagnosticCollector(), mjjPauseHandler::handlePause, mjjDebugWalker);
+                        mjjDebugger = new MiniJajaDebugger(text, new DiagnosticCollector(), (int line, AstNode node, Stacks stacks) -> {
+                            return mjjPauseHandler.handlePause(line, node, stacks);
+                        }, mjjDebugWalker);
                         mjjDebugger.run();
                     }
                 } catch (Exception e) {
@@ -783,9 +790,9 @@ public class App extends Application {
         task.setOnSucceeded(ev -> {
             if (console != null) {
                 if (debugSource == DebugSource.MINIJAJA) {
-                    console.printMessage("MiniJaja debug ended.");
+                    console.printMessage("MiniJaja debug started.");
                 } else {
-                    console.printMessage("JajaCode debug ended.");
+                    console.printMessage("JajaCode debug started.");
                 }
             }
         });

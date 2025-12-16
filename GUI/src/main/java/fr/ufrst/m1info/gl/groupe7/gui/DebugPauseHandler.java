@@ -18,7 +18,6 @@ public class DebugPauseHandler {
 
     public boolean handlePause(int line, AstNode node, Stacks stacks) {
         updateStack(stacks);
-        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         while (debugWalker.isPaused()) {
             switch (status) {
                 case WAITING:
