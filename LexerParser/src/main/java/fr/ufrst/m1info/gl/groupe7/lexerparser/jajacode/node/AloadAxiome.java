@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +39,14 @@ public class AloadAxiome implements JajaAxiome {
         Stacks.Quad indexQuad = ctx.getStacks().pop();
         if (indexQuad == null) {
             throw new StackUnderflowException("Manque l'indice pour aload",
-                                               "ALOAD", ctx.getInstructionCounter());
+                    JajaCodeInstr.ALOAD.toString(), ctx.getInstructionCounter());
         }
 
         // 2. Vérifier que l'indice est un entier
         if (!(indexQuad.value instanceof Integer index)) {
             throw new TypeMismatchException("Indice de tableau invalide (attendu entier, reçu " +
                                              indexQuad.value.getClass().getSimpleName() + ")",
-                                             "ALOAD", ctx.getInstructionCounter());
+                    JajaCodeInstr.ALOAD.toString(), ctx.getInstructionCounter());
         }
 
         logger.debug("\t\t[DEBUG] Indice dépilé: {}", index);
@@ -55,7 +56,7 @@ public class AloadAxiome implements JajaAxiome {
 
         // 4. Vérifier que le tableau existe
         if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
-            throw new UndefinedSymbolException(scopedIdent, "ALOAD", ctx.getInstructionCounter());
+            throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.ALOAD.toString(), ctx.getInstructionCounter());
         }
 
         // 5. Charger la valeur depuis le tableau (gère les bornes en interne)

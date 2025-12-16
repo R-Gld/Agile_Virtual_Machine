@@ -17,7 +17,7 @@ class SyntaxErrorListenerTest {
     @BeforeEach
     void setUp() {
         collector = mock(DiagnosticCollector.class);
-        listener = new SyntaxErrorListener(collector, "TestFile.java");
+        listener = new SyntaxErrorListener(collector, null);
     }
 
     @Test
@@ -41,7 +41,7 @@ class SyntaxErrorListenerTest {
 
         assertEquals(Severity.ERROR, severityCaptor.getValue());
         assertEquals(Phase.SYNTAX, phaseCaptor.getValue());
-        assertEquals("TestFile.java", positionCaptor.getValue().fileName());
+        assertNull(positionCaptor.getValue().fileName());
         assertEquals(2, positionCaptor.getValue().line());
         assertEquals(4, positionCaptor.getValue().column());
         assertEquals("Unexpected token", messageCaptor.getValue());

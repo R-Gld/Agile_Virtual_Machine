@@ -1,0 +1,205 @@
+\section{Jeux de tests et justification}
+
+\subsection{Justification des choix de tests}
+
+\subsubsection{Tests JajaCode}
+
+Pour garantir la fiabilité de la machine virtuelle, nous avons adopté une approche pragmatique divisée en trois niveaux de tests distincts. L'objectif n'était pas seulement d'atteindre un taux de couverture élevé, mais surtout de sécuriser les composants les plus critiques du moteur d'exécution.
+
+\paragraph{Tests des instructions atomiques (Axiomes)}
+Avant de pouvoir exécuter un programme complet, nous devions être sûrs que chaque instruction de base fonctionnait correctement. Dans \texttt{TestInstructionsJJC.java}, nous testons chaque "Axiome" individuellement.
+
+Concrètement, nous créons une pile vide, nous exécutons une seule instruction (comme \texttt{ADD} ou \texttt{SWAP}), et nous vérifions l'état de la pile juste après. Cela nous a permis de détecter très tôt des erreurs simples mais fatales, comme une inversion d'opérandes dans une soustraction ou une mauvaise gestion des types lors d'un \texttt{STORE}. Nous vérifions aussi systématiquement que les instructions lèvent bien les exceptions attendues (ex: \texttt{StackUnderflow}) si la pile est vide, ce qui est indispensable pour le débogage futur des programmes utilisateurs.
+
+\paragraph{Tests de l'interpréteur sur des programmes manuscrits}
+Une fois les instructions validées, le défi était de vérifier leur enchaînement. Dans \texttt{JajaCodeInterpreterTest.java}, nous n'utilisons pas encore le compilateur. Nous écrivons manuellement des petits programmes JajaCode sous forme de chaînes de caractères (String) que nous passons directement à l'interpréteur.
+
+Cette étape est cruciale pour valider la logique de contrôle (\texttt{GOTO}, \texttt{IF}) et la gestion de la mémoire (\texttt{NEW}, \texttt{POP}). Par exemple, nous avons écrit des boucles simples à la main pour vérifier que le compteur ordinal (PC) sautait bien aux bonnes adresses et ne bouclait pas indéfiniment. C'est à ce niveau que nous validons que la machine virtuelle se comporte comme un tout cohérent.
+
+\paragraph{Tests de la compilation avec Mocks}
+Enfin, pour la partie compilation (\texttt{MiniJajaCompilerVisitorTest.java}), nous ne testons pas l'exécution du code produit, mais sa structure. L'enjeu est de savoir si le visiteur traduit fidèlement l'AST.
+
+Pour éviter de dépendre de l'interpréteur (et donc de cumuler les erreurs potentielles), nous utilisons la bibliothèque \textbf{Mockito}. Nous "mockons" le \texttt{JajaCodeBuilder} et nous vérifions simplement que le visiteur appelle les bonnes méthodes dans le bon ordre. Par exemple, pour un nœud \texttt{Affectation}, nous vérifions que le visiteur appelle d'abord la visite de l'expression, puis génère une instruction \texttt{STORE}. Cette isolation nous permet de valider la logique de traduction sans avoir besoin d'exécuter le code généré.
+
+\paragraph{Validation fonctionnelle par tests d'acceptation}
+Pour compléter notre couverture technique, nous avons intégré des tests d'acceptation basés sur \textbf{Cucumber}. L'objectif ici est de valider les "User Stories" du projet : est-ce que la machine virtuelle exécute correctement un programme complet du point de vue de l'utilisateur ?
+
+Ces tests sont écrits en Gherkin (Given/When/Then). Par exemple : "Étant donné un programme JajaCode valide, Quand l'interpréteur l'exécute, Alors la pile doit être vide à la fin". Cette couche de tests nous force à sortir de la logique d'implémentation pure pour vérifier le comportement observable du système. C'est ce qui nous garantit que nous livrons un produit fonctionnel et pas juste un assemblage de classes qui compilent.
+
+\subsubsection{Tests d'interface}
+
+\paragraph{Problèmes rencontrés}
+La réalisation des tests pour l'interface a été plus compliquée que prévu. L'utilisation de TestFX nous a causé des différences de comportement entre les différentes plateformes sur lesquelles nous développons (macOS, Linux, Windows, WSL). Parfois, les tests passaient chez certains, mais échouaient chez d'autres.
+
+Par ailleurs, en ce qui concerne les tests d'acceptation, le comportement de TestFX était encore plus aléatoire d'un test à l'autre, même en utilisant les mêmes fonctions. Suite à ces observations, nous avons décidé d'écrire les scénarios de tests d'acceptation, mais de les exécuter manuellement.
+
+\paragraph{Choix des tests à effectuer}
+Pour la partie interface, nous avons réalisé plusieurs tests. Dans un premier temps, nous avons testé les différents composants graphiques que nous avons réalisés (par exemple la console ou encore la zone de code). Ces tests ont pour but de vérifier que les modifications apportées à ces composants n'entraînent pas de régression dans l'application produite.
+
+Nous avons également réalisé des tests d'acceptation pour chaque user story afin de valider la bonne réalisation de ces user stories et de vérifier que nous n'avons rien oublié.
+
+\subsection{Tests recette}
+
+Les tests recette valident que le système satisfait les exigences fonctionnelles du cahier des charges. Ces tests ont été exécutés manuellement pour vérifier l'ensemble des fonctionnalités.
+
+\subsubsection{Validation du Fonctionnement (Compilation + Interprétation)}
+
+Nous avons vérifié que la compilation d'un programme Minijaja se déroule sans erreur et que le JajaCode généré s'exécute correctement. L'exécution des tests a utilisé la capture du \textit{stream} de sortie pour récupérer tous les messages de l'interpréteur, confirmant l'exécution séquentielle et correcte de chaque instruction JajaCode.
+
+\begin{minted}[breaklines, fontsize=\footnotesize, tabsize=4]{java}
+/**
+ * Test de bout en bout : compilation d'un programme MiniJaja avec une méthode et writeln.
+ */
+@Test
+void compile_programWithMethodAndWriteln_generatesCorrectJajaCode() {
+    String miniJajaCode = """
+        class TestMethod {
+            int double(int n) {
+                return n;
+            };
+            main {
+                int result = 0;
+                result = double(42);
+                writeln(result);
+            }
+        }
+        """;
+
+    // Compiler le code
+    Compiler compiler = new Compiler(miniJajaCode, Compiler.Destination.STRING, null);
+    assertDoesNotThrow(compiler::run, "Compilation should succeed without errors");
+
+    String jajaCode = compiler.getLastOutput();
+
+    // Vérifications sur le code JajaCode généré
+    assertNotNull(jajaCode, "JajaCode output should not be null");
+    assertFalse(jajaCode.isEmpty(), "JajaCode output should not be empty");
+
+    // Vérifier la présence des instructions clés pour la déclaration de méthode
+    assertTrue(jajaCode.contains("push("),
+        "Should contain push instruction for method address");
+    assertTrue(jajaCode.contains("new(double"),
+        "Should declare method 'double'");
+    assertTrue(jajaCode.contains("meth"),
+        "Method should be declared with 'meth' kind");
+    assertTrue(jajaCode.contains("goto("),
+        "Should contain goto to skip method body");
+
+    // Vérifier la présence de l'instruction return dans le corps de la méthode
+    assertTrue(jajaCode.contains("return"),
+        "Method body should end with return instruction");
+
+    // Vérifier la présence de l'appel de méthode
+    assertTrue(jajaCode.contains("invoke(double"),
+        "Should contain invoke instruction to call the method");
+
+    // Vérifier la présence de writeln
+    assertTrue(jajaCode.contains("writeln"),
+        "Should contain writeln instruction");
+
+    // Vérifier que la valeur 42 est présente (argument de la méthode)
+    assertTrue(jajaCode.contains("push(42)"),
+        "Should push the argument value 42");
+
+    // Afficher le code généré pour debug (optionnel)
+    System.out.println("=== Generated JajaCode ===");
+    System.out.println(jajaCode);
+    System.out.println("==========================");
+}
+\end{minted}
+
+\subsubsection{Validation de la Gestion de la Mémoire (Affectation de Tableaux)}
+
+Un scénario critique testé est l'affectation de tableaux ($T2 = T1$), qui sollicite simultanément le Quad, le Heap et les méthodes de gestion des références (\texttt{ajouterReference}, \texttt{retirerReference}). Nous avons vérifié la place des Quads dans le Stacks et l'état du compteur de références dans le Heap après l'affectation, garantissant ainsi le bon fonctionnement du Ramasse-Miettes.
+
+\begin{minted}[breaklines, fontsize=\footnotesize, tabsize=4]{java}
+@Test
+public void testAffecterTabOverwritesOldReferenceThreeFree() {
+    stacks.declareTab("A", 3, Type.ENTIER);
+    stacks.declareTab("B", 3, Type.ENTIER);
+    stacks.declareTab("C", 3, Type.ENTIER);
+    ArrayInfo infoA = (ArrayInfo) stacks.getValue("A");
+    ArrayInfo infoB = (ArrayInfo) stacks.getValue("B");
+
+    // B initially has one reference, should be released when we assign A to B
+    stacks.printHeap();
+    stacks.affecterTab("B", "A");
+    stacks.printHeap();
+
+    // Old B block should be freed (refCount = 0)
+    assertNull(stacks.getHeap().getEntryNotFree(infoB.getBaseAddress()));
+
+    // New B points to A
+    ArrayInfo newBInfo = (ArrayInfo) stacks.getValue("B");
+    assertEquals(infoA, newBInfo);
+    assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+
+    stacks.affecterTab("C", "A");
+    ArrayInfo infoC = (ArrayInfo) stacks.getValue("C");
+    stacks.printHeap();
+    assertEquals(3, stacks.getHeap().getEntry(infoC.getBaseAddress()).getRefCount());
+
+    stacks.freeTab("B");
+    assertEquals(2, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+
+    stacks.freeTab("A");
+    assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
+}
+\end{minted}
+
+\subsubsection{Tests IHM}
+
+Des tests spécifiques ont été développés pour valider les interactions utilisateur, telles que le fonctionnement des boutons et l'affichage de la trace d'exécution. Des utilitaires basés sur des attentes asynchrones (\texttt{await}) ont été créés pour garantir que les actions et la mise à jour des messages d'erreurs aient le temps de se produire, évitant ainsi les bugs de timing fréquents dans l'interface graphique.
+
+\begin{minted}[breaklines, fontsize=\footnotesize, tabsize=4]{java}
+    private void runOnFxThread(Runnable action) {
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                action.run();
+            } finally {
+                latch.countDown();
+            }
+        });
+        try {
+            latch.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+\end{minted}
+
+\subsubsection{Scénarios de tests d'acceptation}
+
+\paragraph{Scénario 1 : Compilation et interprétation basique}
+\begin{enumerate}
+    \item Ouvrir l'application
+    \item Écrire un programme MiniJaja simple (Hello World)
+    \item Compiler en JajaCode
+    \item Interpréter le code MiniJaja
+    \item Vérifier la sortie console
+\end{enumerate}
+
+\textbf{Résultat attendu :} Le programme compile et s'exécute correctement, affichant "Hello World".
+
+\paragraph{Scénario 2 : Débogage pas à pas}
+\begin{enumerate}
+    \item Écrire un programme avec variables et boucles
+    \item Placer des breakpoints
+    \item Lancer le mode debug
+    \item Avancer pas à pas
+    \item Observer l'état de la mémoire à chaque étape
+\end{enumerate}
+
+\textbf{Résultat attendu :} Le débogueur s'arrête aux breakpoints, la mémoire est visualisable et cohérente.
+
+\paragraph{Scénario 3 : Gestion des erreurs}
+\begin{enumerate}
+    \item Écrire un programme avec erreur syntaxique
+    \item Tenter la compilation
+    \item Vérifier le message d'erreur
+    \item Corriger l'erreur
+    \item Recompiler avec succès
+\end{enumerate}
+
+\textbf{Résultat attendu :} Les erreurs sont détectées et clairement reportées à l'utilisateur.

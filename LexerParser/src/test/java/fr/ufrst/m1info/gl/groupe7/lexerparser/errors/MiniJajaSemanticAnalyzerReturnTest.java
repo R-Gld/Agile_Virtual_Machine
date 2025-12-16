@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SemanticException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
@@ -35,7 +37,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(), "Should report error for return type mismatch");
@@ -67,7 +69,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(), "No error expected for correct return type");
@@ -87,7 +89,7 @@ class MiniJajaSemanticAnalyzerReturnTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(), "Should report error for return in main");

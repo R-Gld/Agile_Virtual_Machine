@@ -1,4 +1,6 @@
-package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
+package fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions;
+
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 
 /**
  * Exception thrown when a syntax error is detected.
@@ -7,11 +9,11 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
  * @see fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MiniJajaCompiler
  * @see fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter
  * @see DiagnosticCollector
- * @see SyntaxErrorListener
- * @see Diagnostic
- * @see Severity
- * @see Phase
- * @see SourcePosition
+ * @see fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxErrorListener
+ * @see fr.ufrst.m1info.gl.groupe7.lexerparser.errors.Diagnostic
+ * @see fr.ufrst.m1info.gl.groupe7.lexerparser.errors.Severity
+ * @see fr.ufrst.m1info.gl.groupe7.lexerparser.errors.Phase
+ * @see fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SourcePosition
  */
 public class SyntaxException extends RuntimeException {
 

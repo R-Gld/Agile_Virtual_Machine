@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SemanticException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
@@ -53,7 +55,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("Test.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -82,7 +84,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("ValidExpr.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -109,7 +111,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("DuplicateGlobal.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -136,7 +138,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("DuplicateLocal.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -166,7 +168,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("UndeclaredAssign.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -191,7 +193,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TypeMismatch.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -216,7 +218,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TabAssign.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -240,7 +242,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing ne doit pas produire d'erreur");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("UndeclaredExpr.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -270,7 +272,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("PlusOk.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -292,7 +294,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("PlusLeftBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -317,7 +319,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("PlusRightBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -342,7 +344,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("UnaryMinusBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -370,7 +372,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("AndOk.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -392,7 +394,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("AndLeftBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -417,7 +419,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("AndRightBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -442,7 +444,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("NotBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -470,7 +472,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("EqualsBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -494,7 +496,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("EqualsOk.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -516,7 +518,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("GreaterOk.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -538,7 +540,7 @@ class MiniJajaSemanticAnalyzerTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("GreaterBad.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -595,7 +597,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing should not produce errors");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("MissingReturn.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -629,7 +631,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing should not produce errors");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("UndeclaredInInit.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 
@@ -663,7 +665,7 @@ class MiniJajaSemanticAnalyzerTest {
         assertFalse(collector.hasErrors(), "Parsing should not produce errors");
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TypeMismatchInit.mjj");
+        analyser.setFileName(null);
 
         analyser.analyse(classe);
 

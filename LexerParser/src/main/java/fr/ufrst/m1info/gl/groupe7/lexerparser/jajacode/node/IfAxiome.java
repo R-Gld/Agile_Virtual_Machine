@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,14 +58,14 @@ public class IfAxiome implements JajaAxiome {
         try {
             targetAddress = Integer.parseInt(adresseArg);
         } catch (NumberFormatException e) {
-            throw new InvalidAddressException(adresseArg, "IF", ctx.getInstructionCounter());
+            throw new InvalidAddressException(adresseArg, JajaCodeInstr.IF.toString(), ctx.getInstructionCounter());
         }
 
         // 2. Récupération de la condition sur la pile
         Stacks.Quad conditionQuad = ctx.getStacks().pop();
 
         if (conditionQuad == null) {
-            throw new StackUnderflowException("IF", ctx.getInstructionCounter());
+            throw new StackUnderflowException(JajaCodeInstr.IF.toString(), ctx.getInstructionCounter());
         }
 
         // 3. Évaluation de la vérité
@@ -76,7 +77,7 @@ public class IfAxiome implements JajaAxiome {
         } else if (val instanceof Integer i) {
             isTrue = i != 0;
         } else {
-            throw new TypeMismatchException("Type de condition invalide (" + val + ")", "IF", ctx.getInstructionCounter());
+            throw new TypeMismatchException("Type de condition invalide (" + val + ")", JajaCodeInstr.IF.toString(), ctx.getInstructionCounter());
         }
 
         // 4. Logique de branchement

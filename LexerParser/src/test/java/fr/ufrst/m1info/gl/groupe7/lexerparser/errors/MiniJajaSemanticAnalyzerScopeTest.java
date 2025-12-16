@@ -1,5 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SemanticException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
@@ -45,7 +47,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(),
@@ -76,7 +78,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(),
@@ -107,7 +109,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(),
@@ -141,7 +143,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(),
@@ -172,7 +174,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertTrue(collector.hasErrors(),
@@ -210,7 +212,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(),
@@ -251,7 +253,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(),
@@ -282,7 +284,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         assertFalse(collector.hasErrors(),
@@ -314,7 +316,7 @@ class MiniJajaSemanticAnalyzerScopeTest {
         ClasseNode classe = parseClasse(code, collector);
 
         MiniJajaSemanticAnalyzer analyser = new MiniJajaSemanticAnalyzer(collector);
-        analyser.setFileName("TestScope.mjj");
+        analyser.setFileName(null);
         analyser.analyse(classe);
 
         // Should succeed: methods can access global variables

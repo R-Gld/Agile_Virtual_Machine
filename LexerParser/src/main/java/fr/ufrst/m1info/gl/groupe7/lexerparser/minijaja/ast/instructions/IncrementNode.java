@@ -40,7 +40,7 @@ public class IncrementNode extends InstructionNode {
             
             int currentValue = (int) stacks.getValue(actualVarName);
             int newValue = currentValue + 1;
-            stacks.AffecterVal(actualVarName, newValue);
+            stacks.affecterVal(actualVarName, newValue);
         } else if (ident1 instanceof TabNode tabNode) {
             String varName = tabNode.getIdent().getNom();
             

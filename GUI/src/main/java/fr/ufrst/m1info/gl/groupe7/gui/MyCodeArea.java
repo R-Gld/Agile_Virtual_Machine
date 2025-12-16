@@ -3,13 +3,16 @@ package fr.ufrst.m1info.gl.groupe7.gui;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
+
+import javafx.event.Event;
+import javafx.scene.control.Tooltip;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -41,6 +44,7 @@ import org.fxmisc.richtext.model.TwoDimensional;
 
 import java.util.HashSet;
 import java.util.Set;
+
 
 /**
  * Zone d'édition de code enrichie pour JavaFX basée sur {@link CodeArea}.
@@ -86,10 +90,10 @@ public class MyCodeArea extends AnchorPane {
     private static final String FUNCTION_PATTERN = "\\b(" + String.join("|", FUNCTIONS) + ")\\b";
     private static final String BOOLEAN_PATTERN = "\\b(" + String.join("|", BOOLEANS) + ")\\b";
 
-    private static final String PAREN_PATTERN = "\\(|\\)";
-    private static final String BRACE_PATTERN = "\\{|\\}";
-    private static final String BRACKET_PATTERN = "\\[|\\]";
-    private static final String SEMICOLON_PATTERN = "\\;";
+    private static final String PAREN_PATTERN = "[()]";
+    private static final String BRACE_PATTERN = "[{}]";
+    private static final String BRACKET_PATTERN = "[\\[\\]]";
+    private static final String SEMICOLON_PATTERN = ";";
     /** Chaînes et commentaires (compatible multi-lignes). */
     private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
     private static final String COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/";
@@ -109,6 +113,8 @@ public class MyCodeArea extends AnchorPane {
 
     /** Langage courant de la zone de code. */
     private final Language language;
+    private MiniJajaSymbolListener semanticListener;
+
 
     /**
      * Calcule les styles de surbrillance combinés (syntaxe + erreurs).
@@ -117,13 +123,100 @@ public class MyCodeArea extends AnchorPane {
      * @return spans de style pour appliquer aux caractères
      */
     private StyleSpans<Collection<String>> computeHighlighting(String text) {
+        // Perform semantic analysis first to get all semantic information
+        runSemanticAnalysis(text);
+
         StyleSpans<Collection<String>> syntaxHighlighting = computeSyntaxHighlighting(text);
         StyleSpans<Collection<String>> errorHighlighting = computeErrorHighlighting(text);
-        return syntaxHighlighting.overlay(errorHighlighting, (style1, style2) -> {
-            Collection<String> combined = new ArrayList<>(style1);
-            combined.addAll(style2);
-            return combined;
-        });
+        StyleSpans<Collection<String>> functionHighlighting = computeFunctionHighlighting();
+        StyleSpans<Collection<String>> unusedVarHighlighting = computeUnusedVariableHighlighting();
+        StyleSpans<Collection<String>> declAfterInstrHighlighting = computeDeclarationAfterInstructionHighlighting();
+        StyleSpans<Collection<String>> declAfterErrorHighlighting = buildStyleSpansFromRanges(errorDeclaredAfterInstructionRanges, "error", codeArea.getLength());
+
+
+        return syntaxHighlighting
+                .overlay(errorHighlighting, this::mergeStyles)
+                .overlay(functionHighlighting, this::mergeStyles)
+                 .overlay(unusedVarHighlighting, this::mergeStyles)
+                 .overlay(declAfterInstrHighlighting, this::mergeStyles)
+                 .overlay(declAfterErrorHighlighting, this::mergeStyles);
+    }
+
+    private Collection<String> mergeStyles(Collection<String> style1, Collection<String> style2) {
+        Collection<String> combined = new ArrayList<>(style1);
+        combined.addAll(style2);
+        return combined;
+    }
+
+    private void runSemanticAnalysis(String text) {
+        if (language == Language.MINIJAJA) {
+            MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
+            lexer.removeErrorListeners();
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            MiniJajaParser parser = new MiniJajaParser(tokens);
+            parser.removeErrorListeners();
+
+            org.antlr.v4.runtime.tree.ParseTree tree = parser.classe();
+            semanticListener = new MiniJajaSymbolListener();
+            org.antlr.v4.runtime.tree.ParseTreeWalker walker = new org.antlr.v4.runtime.tree.ParseTreeWalker();
+            walker.walk(semanticListener, tree);
+        }
+    }
+
+
+    /**
+     * Performs semantic analysis to find user-defined function declarations and calls.
+     *
+     * @return StyleSpans for user-defined functions
+     */
+    private StyleSpans<Collection<String>> computeFunctionHighlighting() {
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            return buildStyleSpansFromRanges(semanticListener.getFunctionStyleRanges(), "function", codeArea.getLength());
+        }
+        return new StyleSpansBuilder<Collection<String>>().add(Collections.emptyList(), codeArea.getLength()).create();
+    }
+
+      /**
+     * Builds StyleSpans for unused variables based on the semantic analysis.
+     *
+     * @return StyleSpans for unused variables.
+     */
+    private StyleSpans<Collection<String>> computeUnusedVariableHighlighting() {
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            return buildStyleSpansFromRanges(semanticListener.getUnusedVariableRanges(), "unused-variable", codeArea.getLength());
+        }
+        return new StyleSpansBuilder<Collection<String>>().add(Collections.emptyList(), codeArea.getLength()).create();
+    }
+
+    private StyleSpans<Collection<String>> computeDeclarationAfterInstructionHighlighting() {
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            return buildStyleSpansFromRanges(semanticListener.getDeclarationAfterInstructionRanges(), "error", codeArea.getLength());
+        }
+        return new StyleSpansBuilder<Collection<String>>().add(Collections.emptyList(), codeArea.getLength()).create();
+    }
+
+    private StyleSpans<Collection<String>> buildStyleSpansFromRanges(List<javafx.scene.control.IndexRange> ranges, String styleClass, int textLength) {
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        ranges.sort(Comparator.comparingInt(javafx.scene.control.IndexRange::getStart));
+        int lastEnd = 0;
+
+        for (javafx.scene.control.IndexRange range : ranges) {
+            if (range.getStart() > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), range.getStart() - lastEnd);
+            }
+            int length = range.getLength();
+            if (length > 0) {
+                spansBuilder.add(Collections.singleton(styleClass), length);
+            }
+            lastEnd = range.getEnd();
+        }
+        // Always add a final span (even if zero-length) to ensure the
+        // StyleSpansBuilder has at least one entry before calling create().
+        if (lastEnd < textLength || textLength == 0) {
+            spansBuilder.add(Collections.emptyList(), textLength - lastEnd);
+        }
+
+        return spansBuilder.create();
     }
 
     /**
@@ -144,7 +237,6 @@ public class MyCodeArea extends AnchorPane {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         while (matcher.find()) {
             String styleClass = getStyleClass(matcher, language);
-            /* never happens */ assert styleClass != null;
             spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
             spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
             lastKwEnd = matcher.end();
@@ -186,6 +278,7 @@ public class MyCodeArea extends AnchorPane {
     private StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         List<javafx.scene.control.IndexRange> errors = new ArrayList<>();
+        final List<javafx.scene.control.IndexRange> declarationAfterInstructionErrorRanges = new ArrayList<>();
 
         if (language == Language.MINIJAJA) {
             MiniJajaLexer lexer = new MiniJajaLexer(CharStreams.fromString(text));
@@ -211,8 +304,8 @@ public class MyCodeArea extends AnchorPane {
 
             try {
                 parser.classe();
-            } catch (Exception e) {
-                // Ignore parser exceptions
+            } catch (Exception ignored) {
+
             }
         }
 
@@ -231,6 +324,20 @@ public class MyCodeArea extends AnchorPane {
             spansBuilder.add(Collections.emptyList(), text.length() - lastEnd);
         }
 
+        // classify some syntax errors as 'declaration after instruction' when they match a TYPE token
+        if (language == Language.MINIJAJA && semanticListener != null) {
+            for (javafx.scene.control.IndexRange e : errors) {
+                String tokenText = text.substring(e.getStart(), Math.min(e.getEnd(), text.length()));
+                boolean isTypeToken = false;
+                for (String t : TYPES) { if (t.equals(tokenText)) { isTypeToken = true; break; } }
+                if ("void".equals(tokenText)) isTypeToken = true;
+                if (isTypeToken && semanticListener.isOffsetInScopeWithInstruction(e.getStart())) {
+                    declarationAfterInstructionErrorRanges.add(e);
+                }
+            }
+            this.errorDeclaredAfterInstructionRanges = declarationAfterInstructionErrorRanges;
+        }
+
         return spansBuilder.create();
     }
 
@@ -241,6 +348,9 @@ public class MyCodeArea extends AnchorPane {
 
     /* Stores all active breakpoints by line index */
     private final Set<Integer> breakpoints = new HashSet<>();
+
+    // Tracks declaration-after-instruction ranges reported by syntax analysis
+    private List<javafx.scene.control.IndexRange> errorDeclaredAfterInstructionRanges = new ArrayList<>();
 
     /**
      * Crée une zone de code MiniJaja avec identifiant donné.
@@ -284,7 +394,6 @@ public class MyCodeArea extends AnchorPane {
         this.language = language;
         this.setId(id);
 
-        this.getStylesheets().add(getClass().getResource("/code_area.css").toExternalForm());
 
         codeArea = new CodeArea(defaultValue);
         codeArea.setId(id + "_code_area"); // for testfx
@@ -295,9 +404,124 @@ public class MyCodeArea extends AnchorPane {
 
         /* Add line numbers */
         IntFunction<Node> numberFactory = LineNumberFactory.get(codeArea);
+        codeArea.setParagraphGraphicFactory(createParagraphGraphicFactory(numberFactory));
 
-        /* Keep line numbers aligned with content */
-        IntFunction<Node> graphicFactory = line -> {
+        /* Add scroll pane */
+        VirtualizedScrollPane<CodeArea> scroll = new VirtualizedScrollPane<>(codeArea);
+        AnchorPane.setTopAnchor(scroll, 0d);
+        AnchorPane.setBottomAnchor(scroll, 0d);
+        AnchorPane.setLeftAnchor(scroll, 0d);
+        AnchorPane.setRightAnchor(scroll, 0d);
+        this.getChildren().add(scroll);
+        initCaretLineHighlight();
+
+        Tooltip declTooltip = new Tooltip("Erreur : déclaration après instructions.");
+        declTooltip.getStyleClass().add("decl-tooltip");
+        final javafx.beans.property.ObjectProperty<javafx.scene.control.IndexRange> current = new javafx.beans.property.SimpleObjectProperty<>(null);
+
+        // Show tooltip when hovering over the problematic type token
+        codeArea.addEventHandler(javafx.scene.input.MouseEvent.MOUSE_MOVED, e -> {
+            if (semanticListener == null) {
+                declTooltip.hide();
+                current.set(null);
+                return;
+            }
+            try {
+                int pos = codeArea.hit(e.getX(), e.getY()).getInsertionIndex();
+                javafx.scene.control.IndexRange found = null;
+                // check semantic listener ranges
+                for (javafx.scene.control.IndexRange r : semanticListener.getDeclarationAfterInstructionRanges()) {
+                    if (r.getStart() <= pos && pos < r.getEnd()) {
+                        found = r;
+                        break;
+                    }
+                }
+                // check syntax-derived ranges
+                if (found == null) {
+                    for (javafx.scene.control.IndexRange r : errorDeclaredAfterInstructionRanges) {
+                        if (r.getStart() <= pos && pos < r.getEnd()) {
+                            found = r;
+                            break;
+                        }
+                    }
+                }
+                if (found != null) {
+                    if (current.get() == null || !current.get().equals(found)) {
+                        declTooltip.show(codeArea, e.getScreenX() + 10, e.getScreenY() + 10);
+                        current.set(found);
+                    }
+                } else {
+                    declTooltip.hide();
+                    current.set(null);
+                }
+            } catch (Exception ignored) {
+            }
+        });
+
+        // Auto-completion
+        codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+                if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
+                    autoCompletionPopup.hide();
+                } else {
+                    showManualCompletion();
+                }
+                event.consume();
+            } else if (event.getCode() == KeyCode.TAB) {
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+                String prefix = text.substring(start, caretPosition);
+
+                if (!prefix.isEmpty()) {
+                    List<String> suggestions = getSuggestions(prefix);
+                    if (!suggestions.isEmpty()) {
+                        String completion = suggestions.get(0);
+                        codeArea.replaceText(start, caretPosition, completion);
+                        if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
+                            autoCompletionPopup.hide();
+                        }
+                        event.consume();
+                        return;
+                    }
+                }
+
+                // If no completion, insert spaces.
+                int tabSize = EditorPreferences.getInstance().getTabSize();
+                String spaces = " ".repeat(tabSize);
+                codeArea.replaceSelection(spaces);
+                event.consume();
+            } else if (event.getCode() == KeyCode.ENTER && EditorPreferences.getInstance().isSmartIndentation()) {
+                handleSmartIndentation(event);
+            }
+        });
+
+        // Auto-close pairs
+        codeArea.addEventFilter(KeyEvent.KEY_TYPED, event -> {
+            if (EditorPreferences.getInstance().isAutoClosePairs()) {
+                handleAutoClose(event);
+            }
+        });
+
+        // Auto-show completion popup
+        codeArea.textProperty().addListener((obs, oldText, newText) -> {
+            // A simple heuristic to avoid showing popup on deletion.
+            if (newText.length() > oldText.length()) {
+                showAutoCompletion();
+            } else {
+                 if (autoCompletionPopup != null) {
+                    autoCompletionPopup.hide();
+                }
+            }
+        });
+    }
+
+    private IntFunction<Node> createParagraphGraphicFactory(IntFunction<Node> numberFactory) {
+        return line -> {
             HBox hbox = new HBox();
 
             /* Create breakpoint circle (initially hidden) */
@@ -340,8 +564,8 @@ public class MyCodeArea extends AnchorPane {
             });
 
             // Also consume mouse pressed and released to prevent any propagation
-            hbox.setOnMousePressed(e -> e.consume());
-            hbox.setOnMouseReleased(e -> e.consume());
+            hbox.setOnMousePressed(Event::consume);
+            hbox.setOnMouseReleased(Event::consume);
 
             hbox.setCursor(javafx.scene.Cursor.HAND); // Visual feedback for clickability
 
@@ -368,49 +592,36 @@ public class MyCodeArea extends AnchorPane {
                 toggleBreakpoint(line, bpCircle);
                 e.consume();
             });
-            stack.setOnMousePressed(e -> e.consume());
-            stack.setOnMouseReleased(e -> e.consume());
+            stack.setOnMousePressed(Event::consume);
+            stack.setOnMouseReleased(Event::consume);
             stack.setCursor(javafx.scene.Cursor.HAND);
 
             return stack;
         };
+    }
 
-        codeArea.setParagraphGraphicFactory(graphicFactory);
 
-        /* Add scroll pane */
-        VirtualizedScrollPane<CodeArea> scroll = new VirtualizedScrollPane<>(codeArea);
-        AnchorPane.setTopAnchor(scroll, 0d);
-        AnchorPane.setBottomAnchor(scroll, 0d);
-        AnchorPane.setLeftAnchor(scroll, 0d);
-        AnchorPane.setRightAnchor(scroll, 0d);
-        this.getChildren().add(scroll);
-        initCaretLineHighlight();
+    private void showManualCompletion() {
+        String text = codeArea.getText();
+        int caretPosition = codeArea.getCaretPosition();
 
-        // Auto-completion
-        codeArea.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
-                if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
-                    autoCompletionPopup.hide();
-                } else {
-                    showAutoCompletion();
-                }
-                event.consume();
-            } else if (event.getCode() == KeyCode.TAB) {
-                int tabSize = EditorPreferences.getInstance().getTabSize();
-                String spaces = " ".repeat(tabSize);
-                codeArea.replaceSelection(spaces);
-                event.consume();
-            } else if (event.getCode() == KeyCode.ENTER && EditorPreferences.getInstance().isSmartIndentation()) {
-                handleSmartIndentation(event);
+        // Find the word before the caret
+        int start = caretPosition;
+        while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+            start--;
+        }
+        String prefix = text.substring(start, caretPosition);
+
+        List<String> suggestions = getSuggestions(prefix);
+
+        if (suggestions.isEmpty()) {
+            if (autoCompletionPopup != null) {
+                autoCompletionPopup.hide();
             }
-        });
+            return;
+        }
 
-        // Auto-close pairs
-        codeArea.addEventFilter(KeyEvent.KEY_TYPED, event -> {
-            if (EditorPreferences.getInstance().isAutoClosePairs()) {
-                handleAutoClose(event);
-            }
-        });
+        displaySuggestions(suggestions, start, caretPosition);
     }
 
     /**
@@ -420,9 +631,39 @@ public class MyCodeArea extends AnchorPane {
      * @param event événement clavier ENTER consommé
      */
     private void handleSmartIndentation(KeyEvent event) {
-        int currentParagraph = codeArea.getCurrentParagraph();
+        int caretPosition = codeArea.getCaretPosition();
+        String text = codeArea.getText();
 
-        // Get previous line content
+        // Case 1: Enter is pressed between {}
+        if (caretPosition > 0 && caretPosition < text.length() &&
+            text.charAt(caretPosition - 1) == '{' && text.charAt(caretPosition) == '}') {
+
+            int currentParagraph = codeArea.getCurrentParagraph();
+            String lineText = codeArea.getText(currentParagraph);
+            
+            // Get base indentation of the current line
+            String baseIndentation = "";
+            Matcher matcher = Pattern.compile("^\\s*").matcher(lineText);
+            if (matcher.find()) {
+                baseIndentation = matcher.group();
+            }
+            
+            int tabSize = EditorPreferences.getInstance().getTabSize();
+            String indentedLine = baseIndentation + " ".repeat(tabSize);
+
+
+            String toInsert = "\n" + indentedLine + "\n" + baseIndentation;
+            
+
+            codeArea.replaceSelection(toInsert);
+
+            codeArea.moveTo(caretPosition + 1 + indentedLine.length());
+            event.consume();
+            return;
+        }
+
+        // Case 2: Original logic for line ending with {
+        int currentParagraph = codeArea.getCurrentParagraph();
         if (currentParagraph >= 0) {
             String lineText = codeArea.getText(currentParagraph);
             String indentation = "";
@@ -431,8 +672,7 @@ public class MyCodeArea extends AnchorPane {
                 indentation = matcher.group();
             }
 
-            // Check if the line ends with {
-            String trimmedLine = lineText.trim();
+            String trimmedLine = lineText.substring(0, codeArea.getCaretColumn()).trim();
             if (trimmedLine.endsWith("{")) {
                 int tabSize = EditorPreferences.getInstance().getTabSize();
                 indentation += " ".repeat(tabSize);
@@ -492,10 +732,6 @@ public class MyCodeArea extends AnchorPane {
      * courant. CTRL+Espace pour basculer.
      */
     private void showAutoCompletion() {
-        if (autoCompletionPopup != null && autoCompletionPopup.isShowing()) {
-            autoCompletionPopup.hide();
-        }
-
         String text = codeArea.getText();
         int caretPosition = codeArea.getCaretPosition();
 
@@ -506,31 +742,79 @@ public class MyCodeArea extends AnchorPane {
         }
         String prefix = text.substring(start, caretPosition);
 
-        List<String> suggestions = getSuggestions(prefix);
-
-        if (suggestions.isEmpty()) {
+        // For automatic completion, only trigger if there is a prefix.
+        if (prefix.isEmpty()) {
+            if (autoCompletionPopup != null) {
+                autoCompletionPopup.hide();
+            }
             return;
         }
 
-        final int finalStart = start;
-        autoCompletionPopup = new ContextMenu();
-        autoCompletionPopup.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+        List<String> suggestions = getSuggestions(prefix);
+
+        if (suggestions.isEmpty() || (suggestions.size() == 1 && suggestions.get(0).equals(prefix))) {
+            if (autoCompletionPopup != null) {
                 autoCompletionPopup.hide();
-                event.consume();
             }
-        });
+            return;
+        }
+
+        displaySuggestions(suggestions, start, caretPosition);
+    }
+
+    private void displaySuggestions(List<String> suggestions, int start, int caretPosition) {
+        final int finalStart = start;
+        List<MenuItem> menuItems = new ArrayList<>();
         for (String suggestion : suggestions) {
             MenuItem item = new MenuItem(suggestion);
             item.setOnAction(e -> {
                 codeArea.replaceText(finalStart, caretPosition, suggestion);
+                int parenIndex = suggestion.indexOf('(');
+                if (parenIndex >= 0) {
+                    codeArea.moveTo(finalStart + parenIndex + 1);
+                } else {
+                    codeArea.moveTo(finalStart + suggestion.length());
+                }
             });
-            autoCompletionPopup.getItems().add(item);
+            menuItems.add(item);
         }
 
-        Optional<Bounds> bounds = codeArea.getCaretBounds();
-        if (bounds.isPresent()) {
-            autoCompletionPopup.show(codeArea, bounds.get().getMaxX(), bounds.get().getMaxY());
+        if (autoCompletionPopup == null) {
+            autoCompletionPopup = new ContextMenu();
+            autoCompletionPopup.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                if (event.getCode() == KeyCode.SPACE && event.isControlDown()) {
+                    autoCompletionPopup.hide();
+                    event.consume();
+                } else if (event.getCode() == KeyCode.TAB) {
+                    if (!autoCompletionPopup.getItems().isEmpty()) {
+                        // We need to find the prefix to replace, using the most current text
+                        int currentCaret = codeArea.getCaretPosition();
+                        int currentStart = currentCaret;
+                        String currentText = codeArea.getText();
+                        while (currentStart > 0 && Character.isJavaIdentifierPart(currentText.charAt(currentStart - 1))) {
+                            currentStart--;
+                        }
+                        // Use the text from the first item
+                        String suggestion = autoCompletionPopup.getItems().get(0).getText();
+                        codeArea.replaceText(currentStart, currentCaret, suggestion);
+                        int parenIndex = suggestion.indexOf('(');
+                        if (parenIndex >= 0) {
+                            codeArea.moveTo(currentStart + parenIndex + 1);
+                        } else {
+                            codeArea.moveTo(currentStart + suggestion.length());
+                        }
+                    }
+                    autoCompletionPopup.hide();
+                    event.consume();
+                }
+            });
+        }
+
+        autoCompletionPopup.getItems().setAll(menuItems);
+
+        if (!autoCompletionPopup.isShowing()) {
+            Optional<Bounds> bounds = codeArea.getCaretBounds();
+            bounds.ifPresent(b -> autoCompletionPopup.show(codeArea, b.getMaxX(), b.getMaxY()));
         }
     }
 
@@ -556,6 +840,7 @@ public class MyCodeArea extends AnchorPane {
         }
     }
 
+
     /**
      * Retourne les suggestions filtrées par préfixe pour le langage actif.
      *
@@ -563,19 +848,103 @@ public class MyCodeArea extends AnchorPane {
      * @return liste de suggestions correspondantes
      */
     private List<String> getSuggestions(String prefix) {
-        List<String> allSuggestions = new ArrayList<>();
+        // We'll build ordered suggestions: methods first, then scoped variables, then base keywords/types/functions
+        java.util.List<String> result = new java.util.ArrayList<>();
         if (language == Language.MINIJAJA) {
-            Collections.addAll(allSuggestions, KEYWORDS);
-            Collections.addAll(allSuggestions, TYPES);
-            Collections.addAll(allSuggestions, FUNCTIONS);
-            Collections.addAll(allSuggestions, BOOLEANS);
-            // Snippets
-            allSuggestions.add("main"); // We will handle expansion in the action
+            if (prefix != null) {
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+
+                int idx = start - 1;
+                while (idx >= 0 && Character.isWhitespace(text.charAt(idx))) idx--;
+                int endPrev = idx;
+                while (idx >= 0 && Character.isJavaIdentifierPart(text.charAt(idx))) idx--;
+                int startPrev = idx + 1;
+                String prevToken = (endPrev >= startPrev && startPrev >= 0) ? text.substring(startPrev, endPrev + 1) : "";
+
+                boolean isTypeKeyword = false;
+                for (String t : TYPES) {
+                    if (t.equals(prevToken)) { isTypeKeyword = true; break; }
+                }
+
+                if ("void".equals(prevToken)) isTypeKeyword = true;
+
+                if (isTypeKeyword) {
+                    return result;
+                }
+            }
+
+            // 1) methods
+            if (semanticListener != null) {
+                for (String mth : semanticListener.getDeclaredMethods()) {
+                    String suggestion = mth + "()";
+                    if (prefix == null || mth.startsWith(prefix)) {
+                        result.add(suggestion);
+                    }
+                }
+            }
+
+            // 2) variables (scope-aware, ordered)
+            boolean addVariables = false;
+            if (semanticListener != null && prefix != null) {
+                // Determine whether we are in a declaration context (after a type)
+                String text = codeArea.getText();
+                int caretPosition = codeArea.getCaretPosition();
+                int start = caretPosition;
+                while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
+                    start--;
+                }
+
+                // Find the previous token (word) before the prefix
+                int idx = start - 1;
+                while (idx >= 0 && Character.isWhitespace(text.charAt(idx))) idx--;
+                int endPrev = idx;
+                while (idx >= 0 && Character.isJavaIdentifierPart(text.charAt(idx))) idx--;
+                int startPrev = idx + 1;
+                String prevToken = (endPrev >= startPrev && startPrev >= 0) ? text.substring(startPrev, endPrev + 1) : "";
+
+                boolean isTypeKeyword = false;
+                for (String t : TYPES) {
+                    if (t.equals(prevToken)) { isTypeKeyword = true; break; }
+                }
+                addVariables = !isTypeKeyword;
+
+                if (addVariables) {
+                    for (String var : semanticListener.getVisibleVariablesOrdered(codeArea.getCaretPosition())) {
+                        if (var.startsWith(prefix) && !result.contains(var)) {
+                            result.add(var);
+                        }
+                    }
+                }
+            }
+
+            // 3) base suggestions (keywords, types, functions, booleans)
+            List<String> base = new ArrayList<>();
+            Collections.addAll(base, KEYWORDS);
+            Collections.addAll(base, TYPES);
+            Collections.addAll(base, FUNCTIONS);
+            Collections.addAll(base, BOOLEANS);
+
+            for (String b : base) {
+                String suggestion = b;
+                boolean isFunc = false;
+                for (String func : FUNCTIONS) {
+                    if (func.equals(b)) { isFunc = true; break; }
+                }
+                if ("while".equals(b)) isFunc = true;
+                if (isFunc) suggestion = b + "()";
+
+                if ((prefix == null || b.startsWith(prefix)) && !result.contains(suggestion)) {
+                    result.add(suggestion);
+                }
+            }
         }
 
-        return allSuggestions.stream()
-                .filter(s -> s.startsWith(prefix))
-                .collect(Collectors.toList());
+        return result;
     }
 
     /**

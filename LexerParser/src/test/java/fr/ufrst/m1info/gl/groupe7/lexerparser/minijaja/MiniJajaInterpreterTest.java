@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
 
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.SyntaxException;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.exceptions.SyntaxException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

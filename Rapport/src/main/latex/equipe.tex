@@ -1,0 +1,47 @@
+
+\section{Compte rendu du travail en équipe}
+
+Le projet a été réalisé en groupe, ce qui a nécessité une organisation rigoureuse et une communication régulière entre les membres. Le travail en équipe a été globalement bénéfique, mais a également mis en évidence certaines limites.
+
+\subsection{Organisation et répartition du travail}
+
+Nous avons répartis le travail en fonction des modules à réaliser pour le projet.
+
+Jusqu'à la release 1, nous étions organisé de la manière suivante :
+\begin{itemize}
+    \item Félix : interface graphique
+    \item Romain : interprétation JajaCode et compilation MiniJaja vers JajaCode
+    \item Lucas : interprétation JajaCode et compilation MiniJaja vers JajaCode
+    \item Léo : interprétation MiniJaja, analyse lexicale et syntaxique
+    \item Ahmed : interprétation MiniJaja, analyse lexicale et syntaxique
+    \item Théo : pile et table des symboles (Mémoire)
+    \item Javad : pile et table des symboles (Mémoire)
+\end{itemize}
+\vspace{0.5cm}
+Mais nous avons accumulé du retard sur la partie mémoire vers la fin du sprint 3, donc après la 1ère release nous avons décidé de réorganiser les groupes
+en passant Javad à l'interface graphique pour travailler avec félix.
+
+
+
+\subsection{Revues de code et communication}
+
+Des revues de code ont été mises en place au travers des merge requests via GitLab afin d’améliorer la qualité globale du projet et de limiter les erreurs d’intégration.
+Ces revues ont permis de détecter des problèmes avant la fusion dans la branche de développement, pour garantir un projet fonctionnel sur cette branche.
+\vspace{0.5cm}
+
+Nous avons principalement utilisés les merge requests de Gitlab ainsi que discord pour communiquer.
+Nous avons plusieurs fois organisés des réunions sur discord afin de discuter de choix de conceptions, ou encore de rétrospectives de sprint.
+Les séances de TP ainsi que les TD prévus pour le projet ont également servi de points de synchronisation importants.
+
+
+\subsection{Avantages et inconvénients du travail en équipe}
+
+Le principal avantage du travail en équipe a été la possibilité de développer plusieurs parties du projet en parallèle, tout en confrontant régulièrement les choix techniques.
+Nous avons aussi pu faire du pair programming à plusieurs reprises, comme pour l'implémentation du visiteur MiniJaja.
+
+\vspace{0.5cm}
+En revanche, certaines difficultés sont apparues, notamment lors de l’intégration des modules ou en raison de différences de rythme de travail entre les membres.
+Pour résoudre ces problèmes, nous avons confrontés nos points de vue lors de réunions et avons ajusté notre organisation en conséquence.
+Exemple : lors de la gestion des types pour l'implémentation des noeuds de l'AST, nous avons eu des difficultés à trouver un accord commun.
+Etant donné que ce choix a des répercussions sur plusieurs modules, il était important que tout le monde soit d'accord sur la solution à adopter.
+Cela nous a alors pris presque une semaine pour trouver une solution et l'implémenter sous la forme d'une énumération dans les modules concernés.

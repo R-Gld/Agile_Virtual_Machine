@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInstr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class NewAxiome implements JajaAxiome {
         // 1. Dépacking des arguments (Format attendu: "ident,type,kind,depth")
         String[] parts = argsPacked.split(",");
         if (parts.length < 3) {
-            throw new JajaCodeRuntimeException("Arguments manquants (attendu 'ident,type,kind')", "NEW", ctx.getInstructionCounter());
+            throw new JajaCodeRuntimeException("Arguments manquants (attendu 'ident,type,kind')", JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
         }
 
         String ident = parts[0].trim();
@@ -63,14 +64,14 @@ public class NewAxiome implements JajaAxiome {
             try {
                 depth = Integer.parseInt(parts[3].trim());
             } catch (NumberFormatException ignored) {
-                throw new JajaCodeRuntimeException("Depth invalide: '" + parts[3].trim() + "'", "NEW", ctx.getInstructionCounter());
+                throw new JajaCodeRuntimeException("Depth invalide: '" + parts[3].trim() + "'", JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
             }
         }
 
         // 2. Conversion du Type (String -> Enum)
         Type type = parseType(typeStr);
         if (type == null) {
-            throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'", "NEW", ctx.getInstructionCounter());
+            throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'", JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
         }
 
         logger.debug("\t\t[DEBUG] axiomeNew appelé: ident={}, type={}, kind={}, depth={}", ident, type, kind, depth);
@@ -104,7 +105,7 @@ public class NewAxiome implements JajaAxiome {
             List<Stacks.Quad> stackContent = ctx.getStacks().getStackFromTopToBottom();
 
             if (stackContent.size() < depth + 1) {
-                throw new StackUnderflowException("Pile insuffisante pour depth=" + depth, "NEW", ctx.getInstructionCounter());
+                throw new StackUnderflowException("Pile insuffisante pour depth=" + depth, JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
             }
 
             // Récupérer la valeur et le quad à la position depth
@@ -132,7 +133,7 @@ public class NewAxiome implements JajaAxiome {
             Stacks.Quad valeurQuad = ctx.getStacks().pop();
 
             if (valeurQuad == null) {
-                throw new StackUnderflowException("Manque la valeur d'initialisation", "NEW", ctx.getInstructionCounter());
+                throw new StackUnderflowException("Manque la valeur d'initialisation", JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
             }
 
             Object valeur = valeurQuad.value;
@@ -149,7 +150,7 @@ public class NewAxiome implements JajaAxiome {
                     ctx.getStacks().declareCst(scopedIdent, valeur, type);
                     break;
                 default:
-                    throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, "NEW", ctx.getInstructionCounter());
+                    throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());
             }
 
             logger.debug("\t\tAxiome NEW exécuté: {} ({}/{}) créé.", scopedIdent, type, kind);

@@ -61,13 +61,12 @@ public class Heap {
 
     private void put(Node block) {
         int index = hash(block.entry.getSize());
-        logger.debug("index table allocated: " + index+"block.entry.getSize() :"+block.entry.getSize());
+        logger.debug("index table allocated: {}block.entry.getSize() :{}", index, block.entry.getSize());
         block.next = table[index];
         table[index] = block;
         if(block.entry.isFree()){
             freeCount++;
         }
-
     }
 
     private Node remove(int size) {
@@ -125,7 +124,7 @@ public class Heap {
 
         Node block = findBlock(blockSize);
         if (block == null) {
-            logger.debug("Error: not enough memory for " + id);
+            logger.debug("Error: not enough memory for {}", id);
             return null;
         }
 
@@ -150,7 +149,7 @@ public class Heap {
         // Allocate final block
         HeapEntry allocated = new HeapEntry(id, block.entry.getAddress(), blockSize, ref, false);
         put(new Node(allocated));
-        logger.debug("-> Allocated " + id + " (" + blockSize + " cells) at address " + allocated.getAddress());
+        logger.debug("-> Allocated {} ({} cells) at address {}", id, blockSize, allocated.getAddress());
 
         return allocated;
     }
@@ -171,9 +170,9 @@ public class Heap {
         while (newIndex < entry.getSize()) {
             newIndex*=2;
         }
-        logger.debug(" newIndex "+newIndex);
+        logger.debug(" newIndex {}", newIndex);
         int index = hash(newIndex);
-        logger.debug(" Index remove allocated "+index);
+        logger.debug(" Index remove allocated {}", index);
         Node current = table[index];
         Node prev = null;
 
@@ -190,7 +189,7 @@ public class Heap {
                     freeCount--;
                 }
                  // keep same counting semantics as put()
-                logger.debug("-> Removed allocated HeapEntry [" + h.getId() + "] at addr=" + h.getAddress());
+                logger.debug("-> Removed allocated HeapEntry [{}] at addr={}", h.getId(), h.getAddress());
                 return true;
             }
             prev = current;
@@ -221,7 +220,7 @@ public class Heap {
                     if(current.entry.isFree()){
                         freeCount--;
                     }
-                    logger.debug("-> Removed HeapEntry (fallback) [" + h.getId() + "] at addr=" + h.getAddress() + " from bucket " + i);
+                    logger.debug("-> Removed HeapEntry (fallback) [{}] at addr={} from bucket {}", h.getId(), h.getAddress(), i);
                     return true;
                 }
                 prev = current;
@@ -229,7 +228,7 @@ public class Heap {
             }
         }
         // nothing found
-        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr=" + entry.getAddress() + " size=" + entry.getSize() + " id=" + entry.getId());
+        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr={} size={} id={}", entry.getAddress(), entry.getSize(), entry.getId());
         return false;
     }
     /**
@@ -252,14 +251,14 @@ public class Heap {
                 if(current.entry.isFree()){
                     freeCount--;
                 }
-                logger.debug("-> Removed (by identity) HeapEntry [" + entry.getId() + "] from bucket " + index);
+                logger.debug("-> Removed (by identity) HeapEntry [{}] from bucket {}", entry.getId(), index);
                 return true;
             }
             prev = current;
             current = current.next;
         }
 
-        logger.debug("⚠️ removeEntry (by identity) did not find: " + entry);
+        logger.debug("⚠️ removeEntry (by identity) did not find: {}", entry);
         return false;
     }
 
@@ -275,7 +274,7 @@ public class Heap {
         // 1. Supprimer l'entrée de la liste des allocations actives
         boolean removed = this.removeAllocatedEntry(entry);
         if (!removed) {
-            logger.debug("⚠️ Entry not found in allocated blocks: " + entry.getId());
+            logger.debug("⚠️ Entry not found in allocated blocks: {}", entry.getId());
             return;
         }
 
@@ -288,7 +287,7 @@ public class Heap {
                 true    // indique que c'est libre
         );
 
-        logger.debug("← Freed block [" + entry.getId() + "] addr=" + entry.getAddress() + " size=" + entry.getSize());
+        logger.debug("← Freed block [{}] addr={} size={}", entry.getId(), entry.getAddress(), entry.getSize());
 
         // 3. Ajouter ce bloc libre dans la liste des blocs libres
         Node newFreeNode = new Node(freeEntry);
@@ -361,8 +360,6 @@ public class Heap {
         return freeCount;
     }
 
-
-
     public Object read(int address) {
         if (address < 0 || address >= HEAP_SIZE) {
             throw new IndexOutOfBoundsException("Heap.read: address out of bounds: " + address);
@@ -385,6 +382,7 @@ public class Heap {
                 value,
                 (value != null ? value.getClass().getSimpleName() : "null"));
     }
+
     public void releaseReference(HeapEntry entry) {
         if (entry == null) return;
 
@@ -393,6 +391,7 @@ public class Heap {
             free(entry);
         }
     }
+
     public HeapEntry getEntryNotFree(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -409,6 +408,7 @@ public class Heap {
         }
         return null;
     }
+
     public HeapEntry getEntry(int baseAddress) {
 
         for (int i = 0; i < TABLE_SIZE; i++) {
@@ -425,11 +425,9 @@ public class Heap {
         }
         return null;
     }
+
     public Object[] getMemory() {
         return memory;
     }
-
-
-
 
 }
