@@ -8,22 +8,22 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code invoke(i)}.
+ * Axiome representing the JajaCode instruction {@code invoke(i)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [invoke] : &lt;m,a&gt; ⊢ invoke(i) –» &lt;&lt;w, a+1,cst,*&gt;.m, Val(i, m)&gt;
  * </pre>
  *
- * <p>Cette instruction effectue un appel de méthode :</p>
+ * <p>This instruction performs a method call:</p>
  * <ol>
- *   <li>Pousse le contexte de la méthode sur la pile de contextes</li>
- *   <li>Empile l'adresse de retour (PC + 1) sur la pile</li>
- *   <li>Saute à l'adresse de la méthode stockée dans la variable {@code i}</li>
+ *   <li>Push the method context onto the context stack</li>
+ *   <li>Push the return address (PC + 1) onto the stack</li>
+ *   <li>Jump to the address of the method stored in variable {@code i}</li>
  * </ol>
  *
- * <p><b>Gestion de la récursivité :</b> L'implémentation utilise un identifiant spécial
- * {@code %RET_methodName%} pour l'adresse de retour afin de gérer les appels récursifs.</p>
+ * <p><b>Recursion handling:</b> The implementation uses a special identifier
+ * {@code %RET_methodName%} for the return address to support recursive calls.</p>
  *
  * @see JajaAxiome
  * @see ReturnAxiome
@@ -40,39 +40,39 @@ public class InvokeAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String ident) {
-        logger.debug("\t\t[DEBUG] axiomeInvoke appelé: ident={}", ident);
+        logger.debug("\t\t[DEBUG] axiomeInvoke called: ident={}", ident);
 
-        // Récupérer l'adresse de la méthode depuis la mémoire
+        // Retrieve the method address from memory
         Object methodAddress = ctx.getStacks().getValue(ident);
 
         if (methodAddress == null) {
-            logger.debug("Erreur dans axiomeInvoke : méthode '{}' non trouvée.", ident);
+            logger.debug("Error in axiomeInvoke: method '{}' not found.", ident);
             ctx.stop();
             return;
         }
 
         if (!(methodAddress instanceof Integer)) {
-            logger.debug("Erreur dans axiomeInvoke : l'adresse de la méthode '{}' n'est pas un entier : {}", ident, methodAddress);
+            logger.debug("Error in axiomeInvoke: the address of method '{}' is not an integer: {}", ident, methodAddress);
             ctx.stop();
             return;
         }
 
         int adresse = (Integer) methodAddress;
 
-        // Pousser le contexte AVANT d'empiler l'adresse de retour
-        // Cela permet de savoir dans quel contexte on est lors du return
+        // Push the context BEFORE pushing the return address
+        // This allows knowing which context we're in at return time
         ctx.getStacks().pushContext(ident);
 
-        // Empiler l'adresse de retour (PC + 1) sous forme de quad
-        // On utilise un identifiant spécial "%RET_methodName%" pour éviter les conflits
-        // avec le nom de la méthode lors des appels récursifs
+        // Push the return address (PC + 1) as a quad
+        // Use a special identifier "%RET_methodName%" to avoid conflicts
+        // with the method name during recursive calls
         String returnIdent = "%RET_" + ident + "%";
         Stacks.Quad returnQuad = new Stacks.Quad(returnIdent, ctx.getInstructionCounter() + 1, "cst", Type.ENTIER);
         ctx.getStacks().push(returnQuad);
 
-        logger.debug("\t\tAxiome INVOKE exécuté: appel de '{}' à l'adresse {}, retour prévu à {}", ident, adresse, ctx.getInstructionCounter() + 1);
+        logger.debug("\t\tAxiome INVOKE executed: call to '{}' at address {}, return expected at {}", ident, adresse, ctx.getInstructionCounter() + 1);
 
-        // Sauter à l'adresse de la méthode
+        // Jump to the method address
         ctx.setInstructionCounter(adresse);
     }
 }

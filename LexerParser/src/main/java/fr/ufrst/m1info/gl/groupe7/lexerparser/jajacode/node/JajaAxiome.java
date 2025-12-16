@@ -3,20 +3,20 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 
 /**
- * Interface de base pour tous les axiomes JajaCode.
+ * Base interface for all JajaCode axioms.
  *
- * <p>Chaque axiome représente une instruction de la machine virtuelle JajaCode et
- * implémente la sémantique formelle définie dans le cours de compilation.</p>
+ * <p>Each axiom represents an instruction of the JajaCode virtual machine and
+ * implements the formal semantics defined in the compilation course.</p>
  *
- * <p>Les axiomes manipulent l'état de la machine via le {@link MachineContext},
- * qui contient la pile d'exécution, la table des symboles, et le compteur de programme (PC).</p>
+ * <p>Axioms manipulate the machine state via the {@link MachineContext},
+ * which contains the execution stack, symbol table, and the program counter (PC).</p>
  *
- * <p><b>Structure générale d'un axiome :</b></p>
+ * <p><b>General structure of an axiom:</b></p>
  * <pre>
- * [nom] : &lt;m,a&gt; ⊢ instruction –» &lt;m',a'&gt;
+ * [name] : &lt;m,a&gt; ⊢ instruction –» &lt;m',a'&gt;
  * </pre>
- * <p>où {@code m} est l'état de la mémoire, {@code a} est l'adresse (PC),
- * {@code m'} est le nouvel état, et {@code a'} est la nouvelle adresse.</p>
+ * <p>where {@code m} is the memory state, {@code a} is the address (PC),
+ * {@code m'} is the resulting state, and {@code a'} is the new address.</p>
  *
  * @see MachineContext
  */

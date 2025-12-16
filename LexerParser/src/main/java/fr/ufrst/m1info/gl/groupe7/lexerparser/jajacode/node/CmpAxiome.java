@@ -11,22 +11,22 @@ import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import java.util.Objects;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code cmp}.
+ * Axiome representing the JajaCode instruction {@code cmp}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
- * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ cmp –» &lt;&lt;w, v1 == v2, cst,*&gt;.m, a+1&gt;
+ * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ cmp –» &lt;&lt;w, v1 == v2, cst,*&gt;.m, a+1&gt;
  * </pre>
  *
- * <p>Cette instruction dépile deux valeurs {@code v1} et {@code v2},
- * compare leur égalité {@code v1 == v2}, puis empile le résultat booléen.</p>
+ * <p>This instruction pops two values {@code v1} and {@code v2},
+ * compares their equality {@code v1 == v2}, and then pushes the boolean result.</p>
  *
- * <p><b>Note :</b> Cette implémentation utilise {@link Objects#equals} pour
- * supporter la comparaison de différents types de valeurs (entiers, booléens, etc.).</p>
+ * <p><b>Note:</b> This implementation uses {@link Objects#equals}
+ * to support comparison across different value types (integers, booleans, etc.).</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile contient moins de 2 éléments</li>
+ *   <li>{@link StackUnderflowException} if the stack contains fewer than 2 elements</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -44,22 +44,22 @@ public class CmpAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String arg) {
-        // 1. Dépilement (Attention : op2 est le sommet, op1 est en dessous)
+        // 1. Pop (Note: op2 is the top, op1 is below)
         Stacks.Quad op2 = ctx.getStacks().pop();
         Stacks.Quad op1 = ctx.getStacks().pop();
 
-        // 2. Vérification pile vide
+        // 2. Check for empty stack
         if (op1 == null || op2 == null) {
             throw new StackUnderflowException("Besoin de 2 opérandes", JajaCodeInstr.CMP.toString(), ctx.getInstructionCounter());
         }
 
-        // 3. Calcul de l'égalité
+        // 3. Compute equality
         boolean result = Objects.equals(op1.value, op2.value);
 
-        // 4. Empilement du résultat
+        // 4. Push the result
         ctx.getStacks().push(new Stacks.Quad(result, Type.BOOLEEN));
 
-        // 5. Log et incrément PC
+        // 5. Log and increment PC
         logger.debug("\t\tAxiome {} exécuté: {} == {} = {}", JajaCodeInstr.CMP, op1.value, op2.value, result);
         ctx.incrementPC();
     }

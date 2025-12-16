@@ -11,33 +11,59 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * JajaCodeInterpreterVisitor is a visitor class responsible for interpreting and executing
+ * JajaCode instructions using the visitor pattern. It encapsulates the state of the virtual
+ * machine, manages the instruction set (axioms), and executes instructions step by step.
+ *
+ * This class implements the {@link Runnable} interface, allowing the interpreter to be run
+ * in a separate thread. It also provides step-by-step execution for debugging and testing.
+ *
+ * Main responsibilities:
+ * - Initialize the machine context and register all supported instructions (axioms).
+ * - Load a JajaCode program into memory, mapping addresses to instructions.
+ * - Interpret and execute instructions by dispatching to the appropriate axiom.
+ * - Handle errors and provide debugging information via logging.
+ * - Support step-by-step execution for testing and debugging purposes.
+ *
+ * The interpreter supports a wide range of instructions, including memory operations,
+ * arithmetic and logic operations, control flow, input/output, and array manipulations.
+ *
+ * Example usage:
+ *     Stacks stacks = new Stacks();
+ *     JajaCodeInterpreterVisitor interpreter = new JajaCodeInterpreterVisitor(stacks);
+ *     interpreter.load(parsedClasseContext);
+ *     interpreter.run();
+ *
+ * @author groupe-7
+ */
 public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object> implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(JajaCodeInterpreterVisitor.class);
 
-    // L'état de la machine est maintenant encapsulé ici
+    // The machine state is now encapsulated here
     private final MachineContext context;
 
-    // Le registre des commandes (Pattern Command)
+    // The command registry (Command Pattern)
     private final Map<JajaCodeInstr, JajaAxiome> axiomes = new HashMap<>();
 
-    // Le programme (Map adresse -> instruction)
+    // The program (Map address -> instruction)
     private final Map<Integer, JajaCodeParser.InstrContext> programme = new HashMap<>();
 
     public JajaCodeInterpreterVisitor(Stacks stacks) {
-        // 1. Initialisation du contexte
+        // 1. Initialize the context
         this.context = new MachineContext(stacks);
 
-        // 2. Enregistrement des Axiomes
+        // 2. Register axioms
         initAxiomes();
     }
 
     private void initAxiomes() {
-        // --- Instructions de base ---
+        // --- Basic instructions ---
         axiomes.put(JajaCodeInstr.INIT, new InitAxiome());
         axiomes.put(JajaCodeInstr.JCSTOP, new JCStopAxiome());
 
-        // --- Mémoire et Pile ---
+        // --- Memory and Stack ---
         axiomes.put(JajaCodeInstr.PUSH, new PushAxiome());
         axiomes.put(JajaCodeInstr.POP, new PopAxiome());
         axiomes.put(JajaCodeInstr.SWAP, new SwapAxiome());
@@ -47,11 +73,11 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         axiomes.put(JajaCodeInstr.INVOKE, new InvokeAxiome());
         axiomes.put(JajaCodeInstr.RETURN, new ReturnAxiome());
 
-        // --- Contrôle de flux ---
+        // --- Control flow ---
         axiomes.put(JajaCodeInstr.IF, new IfAxiome());
         axiomes.put(JajaCodeInstr.GOTO, new GotoAxiome());
 
-        // --- Arithmétique et Logique ---
+        // --- Arithmetic and Logic ---
         axiomes.put(JajaCodeInstr.ADD, new AddAxiome());
         axiomes.put(JajaCodeInstr.SUB, new SubAxiome());
         axiomes.put(JajaCodeInstr.MUL, new MulAxiome());
@@ -64,11 +90,11 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         axiomes.put(JajaCodeInstr.OR, new OrAxiome());
         axiomes.put(JajaCodeInstr.AND, new AndAxiome());
 
-        // --- Entrées / Sorties ---
+        // --- Input / Output ---
         axiomes.put(JajaCodeInstr.WRITE, new WriteAxiome());
         axiomes.put(JajaCodeInstr.WRITELN, new WriteLnAxiome());
 
-        // --- Opérations sur Tableaux ---
+        // --- Array operations ---
         axiomes.put(JajaCodeInstr.NEWARRAY, new NewarrayAxiome());
         axiomes.put(JajaCodeInstr.ALOAD, new AloadAxiome());
         axiomes.put(JajaCodeInstr.ASTORE, new AstoreAxiome());
@@ -92,35 +118,33 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     @Override
     public void run() {
-        // Reset du contexte
+        // Reset the context
         context.setInstructionCounter(1);
 
-        logger.debug("Interpréteur: Exécution démarrée à l'adresse 1.");
+        logger.debug("Interpreter: Execution started at address 1.");
 
         while (context.isRunning()) {
             int pc = context.getInstructionCounter();
             JajaCodeParser.InstrContext instruction = programme.get(pc);
 
             if (instruction == null) {
-                logger.error("Error : @ {} introuvable !", pc);
+                logger.error("Error: instruction at @{} not found!", pc);
                 context.stop();
                 break;
             }
-
             logger.debug("PC: {} -> {}", pc, instruction.getText());
 
-            // Le visiteur va dispatcher vers le bon axiome
+            // The visitor will dispatch to the correct axiom
             visit(instruction);
         }
-
-        logger.info("--- Exécution Terminée ---");
+        logger.info("--- Execution Finished ---");
         context.getStacks().printStack();
         context.getStacks().printSymbolTable();
     }
 
     @Override
     public Object visitInstr(JajaCodeParser.InstrContext ctx) {
-        // 1. Instructions sans arguments
+        // 1. Instructions without arguments
         if (ctx.INIT() != null) dispatch(JajaCodeInstr.INIT);
         else if (ctx.SWAP() != null) dispatch(JajaCodeInstr.SWAP);
         else if (ctx.POP() != null) dispatch(JajaCodeInstr.POP);
@@ -129,43 +153,43 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         else if (ctx.WRITELN() != null) dispatch(JajaCodeInstr.WRITELN);
         else if (ctx.RETURN() != null) dispatch(JajaCodeInstr.RETURN);
 
-        // 2. Instructions avec VALEUR
+        // 2. Instructions with VALUE
         else if (ctx.PUSH() != null) {
-            // On extrait le texte brut ("5", "true", "x")
+            // Extract raw text ("5", "true", "x")
             String valText = ctx.valeur().getText();
-            // Cas spécial pour les chaînes avec guillemets si nécessaire
+            // Special case for quoted strings if needed
             if (ctx.valeur().STRING() != null) {
                 valText = ctx.valeur().STRING().getText().replace("\"", "");
             }
             dispatch(JajaCodeInstr.PUSH, valText);
         }
 
-        // 3. Instructions avec IDENTIFIANT
+        // 3. Instructions with IDENTIFIER
         else if (ctx.ident() != null) {
             String ident = ctx.ident().getText();
             if (ctx.STORE() != null) dispatch(JajaCodeInstr.STORE, ident);
             else if (ctx.LOAD() != null) dispatch(JajaCodeInstr.LOAD, ident);
             else if (ctx.INC() != null) dispatch(JajaCodeInstr.INC, ident);
             else if (ctx.INVOKE() != null) dispatch(JajaCodeInstr.INVOKE, ident);
-                // NEW est spécial (4 args)
+                // NEW is special (4 args)
             else if (ctx.NEW() != null) handleNew(ctx);
-                // Opérations sur tableaux
+                // Array operations
             else if (ctx.ALOAD() != null) dispatch(JajaCodeInstr.ALOAD, ident);
             else if (ctx.ASTORE() != null) dispatch(JajaCodeInstr.ASTORE, ident);
             else if (ctx.AINC() != null) dispatch(JajaCodeInstr.AINC, ident);
             else if (ctx.LENGTH() != null) dispatch(JajaCodeInstr.LENGTH, ident);
-                // NEWARRAY est spécial (2 args: ident, type)
+                // NEWARRAY is special (2 args: ident, type)
             else if (ctx.NEWARRAY() != null) handleNewarray(ctx);
         }
 
-        // 4. Instructions avec ADRESSE
+        // 4. Instructions with ADDRESS
         else if (ctx.adresse() != null) {
             String addr = ctx.adresse().getText();
             if (ctx.IF() != null) dispatch(JajaCodeInstr.IF, addr);
             else if (ctx.GOTO() != null) dispatch(JajaCodeInstr.GOTO, addr);
         }
 
-        // 5. Opérations (Déléguées aux sous-visiteurs)
+        // 5. Operations (delegated to sub-visitors)
         else if (ctx.oper() != null) {
             visitChildren(ctx);
         }
@@ -175,14 +199,14 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
     private void dispatch(JajaCodeInstr command) { dispatch(command, null); }
 
-    // Helper pour exécuter un axiome
+    // Helper to execute an axiom
     private void dispatch(JajaCodeInstr command, String arg) {
         JajaAxiome axiome = axiomes.get(command);
         if (axiome != null) {
             try {
                 axiome.execute(context, arg);
             } catch (JajaCodeRuntimeException e) {
-                logger.error("\nERREUR D'EXÉCUTION JAJACODE:");
+                logger.error("\nJAJACODE EXECUTION ERROR:");
                 logger.error(e.getMessage());
                 logger.error("");
 
@@ -191,12 +215,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
                 throw e;
             }
         } else {
-            logger.error("Axiome non implémenté : {}", command);
-            context.incrementPC(); // Pour éviter boucle infinie
+            logger.error("Axiom not implemented: {}", command);
+            context.incrementPC(); // Move to next instruction to avoid infinite loop
         }
     }
 
-    // Gestion spécifique pour NEW (concaténation des args)
+    // Specific handling for NEW (pack args)
     private void handleNew(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "void";
@@ -205,19 +229,19 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         logger.debug("\t\t[DEBUG handleNew] ident={}, type={}, sorte={}, depth={}", ident, type, sorte, depth);
 
-        // On pack les arguments pour l'interface générique (ident,type,sorte,depth)
+        // Pack arguments for the generic interface (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
         dispatch(JajaCodeInstr.NEW, packedArgs);
     }
 
-    // Gestion spécifique pour NEWARRAY (concaténation des args: ident,type)
+    // Specific handling for NEWARRAY (pack args: ident,type)
     private void handleNewarray(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "int";
 
         logger.debug("\t\t[DEBUG handleNewarray] ident={}, type={}", ident, type);
 
-        // On pack les arguments pour l'interface générique (ident,type)
+        // Pack arguments for the generic interface (ident,type)
         String packedArgs = ident + "," + type;
         dispatch(JajaCodeInstr.NEWARRAY, packedArgs);
     }

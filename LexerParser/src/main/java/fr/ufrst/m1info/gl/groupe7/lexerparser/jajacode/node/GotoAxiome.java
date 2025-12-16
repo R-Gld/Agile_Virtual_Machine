@@ -8,20 +8,20 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.InvalidAddressException;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code goto(a1)}.
+ * Axiome representing the JajaCode instruction {@code goto(a1)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [goto] : &lt;m,a&gt; ⊢ goto(a1) –» &lt;m, a1&gt;
  * </pre>
  *
- * <p>Cette instruction effectue un saut inconditionnel à l'adresse {@code a1}.
- * Le compteur de programme (PC) est directement modifié pour pointer vers
- * l'adresse cible, sans modifier la pile.</p>
+ * <p>This instruction performs an unconditional jump to address {@code a1}.
+ * The program counter (PC) is directly set to the target address without
+ * modifying the stack.</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link InvalidAddressException} si l'adresse de saut n'est pas un entier valide</li>
+ *   <li>{@link InvalidAddressException} if the jump address is not a valid integer</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -40,13 +40,13 @@ public class GotoAxiome implements JajaAxiome {
     @Override
     public void execute(MachineContext ctx, String adresseArg) {
         try {
-            // 1. Conversion de l'argument (String) en adresse (int)
+            // 1. Convert the argument (String) to an address (int)
             int adresse = Integer.parseInt(adresseArg);
 
-            // 2. Mise à jour directe du PC
+            // 2. Directly set the PC
             ctx.setInstructionCounter(adresse);
 
-            logger.debug("\t\tAxiome GOTO exécuté: saut à l'adresse {}.", adresse);
+            logger.debug("\t\tAxiome GOTO executed: jumped to address {}.", adresse);
 
         } catch (NumberFormatException e) {
             throw new InvalidAddressException(adresseArg, JajaCodeInstr.GOTO.toString(), ctx.getInstructionCounter());

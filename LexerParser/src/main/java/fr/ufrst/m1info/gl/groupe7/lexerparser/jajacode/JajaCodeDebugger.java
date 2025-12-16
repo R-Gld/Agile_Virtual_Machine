@@ -11,8 +11,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 /**
- * Petit wrapper pour faire du pas-à-pas sur un programme JajaCode.
- * Utilise JajaCodeInterpreterVisitor (step(), isFinished(),
+ * Small wrapper to step through a JajaCode program.
+ * Uses JajaCodeInterpreterVisitor (step(), isFinished(),
  * getCurrentInstructionIndex()).
  */
 public class JajaCodeDebugger {

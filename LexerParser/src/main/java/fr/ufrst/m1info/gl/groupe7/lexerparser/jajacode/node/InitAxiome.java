@@ -3,15 +3,15 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.node;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code init}.
+ * Axiome representing the JajaCode instruction {@code init}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [init] : &lt;m,a&gt; ⊢ init –» &lt;[], a+1&gt;
  * </pre>
  *
- * <p>Cette instruction initialise la pile à vide et incrémente le compteur de programme.
- * Elle est généralement la première instruction d'un programme JajaCode.</p>
+ * <p>This instruction initializes the stack to empty and increments the program
+ * counter. It is typically the first instruction of a JajaCode program.</p>
  *
  * @see JajaAxiome
  */
