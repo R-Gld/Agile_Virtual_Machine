@@ -7,7 +7,7 @@
         <version>1.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>compiler</artifactId>
+    <artifactId>Compiler</artifactId>
     <packaging>jar</packaging>
 
     <build>
