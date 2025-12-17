@@ -556,6 +556,7 @@ public class App extends Application {
                         case MINI_JAJA_NAME: {
                             MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
                             interpreter.run();
+                            break;
                         }
                         case JAJA_CODE_NAME: {
                             String[] lines = jjcText.split("\\n");
@@ -569,6 +570,7 @@ public class App extends Application {
                             JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(),
                                     new DiagnosticCollector());
                             jjcInterpreter.run();
+                            break;
                         }
                     }
                 } catch (Exception e) {
