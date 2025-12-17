@@ -291,8 +291,7 @@ public class MyCodeArea extends AnchorPane {
                 @Override
                 public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
                         int charPositionInLine, String msg, RecognitionException e) {
-                    if (offendingSymbol instanceof Token) {
-                        Token token = (Token) offendingSymbol;
+                    if (offendingSymbol instanceof Token token) {
                         int start = token.getStartIndex();
                         int stop = token.getStopIndex() + 1;
                         if (start >= 0 && stop > start) {
