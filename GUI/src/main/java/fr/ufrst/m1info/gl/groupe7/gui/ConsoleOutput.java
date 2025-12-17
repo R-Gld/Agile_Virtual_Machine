@@ -14,7 +14,6 @@ import javafx.scene.text.Font;
 
 public class ConsoleOutput extends StackPane {
     private final TextArea console;
-    private final Button clearButton;
 
     /**
      * Creates a console with an internal Clear button.
@@ -32,7 +31,7 @@ public class ConsoleOutput extends StackPane {
         console.setFocusTraversable(false);
 
         // Clear button inside the console
-        clearButton = new Button("Clear");
+        Button clearButton = new Button("Clear");
         clearButton.getStyleClass().add("console-clear-button");
         clearButton.setOnAction(e -> clear());
         clearButton.setFocusTraversable(false);
