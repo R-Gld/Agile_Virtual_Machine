@@ -2649,6 +2649,261 @@ public class StacksTest {
     }
 
 
+    // ==================== Tests for JajaCode-specific methods ====================
+
+    @Test
+    void testDeclareVarJJC_shouldAddToStackOnly() {
+        // Given
+        stacks.declareVarJJC("x", 42, Type.ENTIER);
+
+        // Then - should be on stack
+        Stacks.Quad quad = stacks.findQuad("x");
+        assertNotNull(quad, "Variable should be on stack");
+        assertEquals("x", quad.ident);
+        assertEquals(42, quad.value);
+        assertEquals("var", quad.object);
+        assertEquals(Type.ENTIER, quad.type);
+
+        // Then - should NOT be in symbol table (JajaCode mode)
+        assertFalse(stacks.getSymbolTable().contains("x"),
+            "Variable should NOT be in symbol table during JajaCode execution");
+    }
+
+    @Test
+    void testDeclareVarJJC_duplicateIdentifier_shouldThrow() {
+        // Given
+        stacks.declareVarJJC("x", 42, Type.ENTIER);
+
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.declareVarJJC("x", 100, Type.ENTIER));
+        assertTrue(exception.getMessage().contains("var already declare"));
+    }
+
+    @Test
+    void testDeclareVarJJC_multipleVariables() {
+        // Given
+        stacks.declareVarJJC("x", 10, Type.ENTIER);
+        stacks.declareVarJJC("y", 20, Type.ENTIER);
+        stacks.declareVarJJC("z", true, Type.BOOLEEN);
+
+        // Then
+        assertNotNull(stacks.findQuad("x"));
+        assertNotNull(stacks.findQuad("y"));
+        assertNotNull(stacks.findQuad("z"));
+        assertEquals(10, stacks.getValue("x"));
+        assertEquals(20, stacks.getValue("y"));
+        assertEquals(true, stacks.getValue("z"));
+    }
+
+    @Test
+    void testDeclareCstJJC_shouldAddToStackOnly() {
+        // Given
+        stacks.declareCstJJC("PI", 3.14, Type.ENTIER);
+
+        // Then - should be on stack
+        Stacks.Quad quad = stacks.findQuad("PI");
+        assertNotNull(quad, "Constant should be on stack");
+        assertEquals("PI", quad.ident);
+        assertEquals(3.14, quad.value);
+        assertEquals("cst", quad.object);
+
+        // Then - should NOT be in symbol table
+        assertFalse(stacks.getSymbolTable().contains("PI"));
+    }
+
+    @Test
+    void testDeclareCstJJC_duplicateIdentifier_shouldThrow() {
+        // Given
+        stacks.declareCstJJC("MAX", 100, Type.ENTIER);
+
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.declareCstJJC("MAX", 200, Type.ENTIER));
+        assertTrue(exception.getMessage().contains("cst already declared"));
+    }
+
+    @Test
+    void testDeclareTabJJC_shouldAddToStackAndHeap() {
+        // Given
+        stacks.declareTabJJC("arr", 5, Type.ENTIER);
+
+        // Then - should be on stack
+        Stacks.Quad quad = stacks.findQuad("arr");
+        assertNotNull(quad, "Array should be on stack");
+        assertEquals("arr", quad.ident);
+        assertEquals("tab", quad.object);
+        assertEquals(Type.ENTIER, quad.type);
+        assertTrue(quad.value instanceof ArrayInfo, "Value should be ArrayInfo");
+
+        ArrayInfo info = (ArrayInfo) quad.value;
+        assertEquals(5, info.getSize());
+        assertTrue(info.getBaseAddress() >= 0, "Base address should be allocated");
+
+        // Then - should NOT be in symbol table
+        assertFalse(stacks.getSymbolTable().contains("arr"));
+    }
+
+    @Test
+    void testDeclareTabJJC_duplicateIdentifier_shouldThrow() {
+        // Given
+        stacks.declareTabJJC("arr1", 3, Type.ENTIER);
+
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.declareTabJJC("arr1", 5, Type.ENTIER));
+        assertTrue(exception.getMessage().contains("array already in tab declare"));
+    }
+
+    @Test
+    void testDeclareTabJJC_differentSizes() {
+        // Given
+        stacks.declareTabJJC("small", 1, Type.ENTIER);
+        stacks.declareTabJJC("medium", 10, Type.ENTIER);
+        stacks.declareTabJJC("large", 100, Type.ENTIER);
+
+        // Then
+        ArrayInfo small = (ArrayInfo) stacks.findQuad("small").value;
+        ArrayInfo medium = (ArrayInfo) stacks.findQuad("medium").value;
+        ArrayInfo large = (ArrayInfo) stacks.findQuad("large").value;
+
+        assertEquals(1, small.getSize());
+        assertEquals(10, medium.getSize());
+        assertEquals(100, large.getSize());
+    }
+
+    @Test
+    void testAffecterValJJC_simpleAssignment() {
+        // Given
+        stacks.declareVarJJC("x", 10, Type.ENTIER);
+
+        // When
+        boolean result = stacks.affecterValJJC("x", 42);
+
+        // Then
+        assertTrue(result);
+        assertEquals(42, stacks.getValue("x"));
+    }
+
+    @Test
+    void testAffecterValJJC_variableNotFound_shouldThrow() {
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.affecterValJJC("nonexistent", 100));
+        assertTrue(exception.getMessage().contains("Variable not found on stack"));
+    }
+
+    @Test
+    void testAffecterValJJC_assignToConstant_shouldThrow() {
+        // Given
+        stacks.declareCstJJC("MAX", 100, Type.ENTIER);
+
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.affecterValJJC("MAX", 200));
+        assertTrue(exception.getMessage().contains("la valeur de la constante MAX ne peut pas être modifiée"));
+    }
+
+    @Test
+    void testAffecterValJJC_arrayReferenceAssignment() {
+        // Given
+        stacks.declareTabJJC("arr1", 5, Type.ENTIER);
+        stacks.declareTabJJC("arr2", 5, Type.ENTIER);
+
+        ArrayInfo arr1Info = (ArrayInfo) stacks.findQuad("arr1").value;
+        ArrayInfo arr2Info = (ArrayInfo) stacks.findQuad("arr2").value;
+
+        // When - assign arr2 reference to arr1
+        boolean result = stacks.affecterValJJC("arr1", arr2Info);
+
+        // Then
+        assertTrue(result);
+        ArrayInfo newArr1Info = (ArrayInfo) stacks.findQuad("arr1").value;
+        assertEquals(arr2Info.getBaseAddress(), newArr1Info.getBaseAddress());
+        assertEquals(arr2Info.getSize(), newArr1Info.getSize());
+    }
+
+    @Test
+    void testAffecterValJJC_nonArrayValueToArray_shouldThrow() {
+        // Given
+        stacks.declareTabJJC("arr", 5, Type.ENTIER);
+
+        // When/Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> stacks.affecterValJJC("arr", 42));
+        assertTrue(exception.getMessage().contains("est un tableau, affectation non permise"));
+    }
+
+    @Test
+    void testAffecterValJJC_multipleAssignments() {
+        // Given
+        stacks.declareVarJJC("counter", 0, Type.ENTIER);
+
+        // When
+        for (int i = 1; i <= 10; i++) {
+            stacks.affecterValJJC("counter", i);
+        }
+
+        // Then
+        assertEquals(10, stacks.getValue("counter"));
+    }
+
+    @Test
+    void testJJCMethods_integrationScenario() {
+        // Simulate a JajaCode execution scenario
+        // 1. init
+        // 2. push(5), new(x@global, int, var, 0)
+        // 3. push(10), new(y@global, int, var, 0)
+        // 4. load(x@global), load(y@global), add, store(x@global)
+
+        // Step 1: Declare variables
+        stacks.declareVarJJC("x@global", 5, Type.ENTIER);
+        stacks.declareVarJJC("y@global", 10, Type.ENTIER);
+
+        // Step 2: Load and compute (simulated)
+        int x = (Integer) stacks.getValue("x@global");
+        int y = (Integer) stacks.getValue("y@global");
+        int sum = x + y;
+
+        // Step 3: Store result
+        stacks.affecterValJJC("x@global", sum);
+
+        // Verify
+        assertEquals(15, stacks.getValue("x@global"));
+        assertEquals(10, stacks.getValue("y@global"));
+
+        // Verify no symbol table pollution
+        assertFalse(stacks.getSymbolTable().contains("x@global"));
+        assertFalse(stacks.getSymbolTable().contains("y@global"));
+    }
+
+    @Test
+    void testJJCMethods_arrayIntegrationScenario() {
+        // Simulate array operations in JajaCode
+        // 1. newarray(tab@global, int, 3)
+        // 2. astore operations
+        // 3. aload operations
+
+        // Step 1: Declare array
+        stacks.declareTabJJC("tab@global", 3, Type.ENTIER);
+
+        // Step 2: Store values in array
+        stacks.setArrayValue("tab@global", 0, 100);
+        stacks.setArrayValue("tab@global", 1, 200);
+        stacks.setArrayValue("tab@global", 2, 300);
+
+        // Step 3: Load values
+        assertEquals(100, stacks.getArrayValue("tab@global", 0));
+        assertEquals(200, stacks.getArrayValue("tab@global", 1));
+        assertEquals(300, stacks.getArrayValue("tab@global", 2));
+
+        // Verify array length
+        assertEquals(3, stacks.getArrayLength("tab@global"));
+
+        // Verify no symbol table pollution
+        assertFalse(stacks.getSymbolTable().contains("tab@global"));
+    }
+
 }
 
 

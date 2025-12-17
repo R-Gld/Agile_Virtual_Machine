@@ -70,7 +70,7 @@ public class AincAxiome implements JajaAxiome {
         String scopedIdent = resolveScopedName(ctx, ident);
 
         // 6. Vérifier que le tableau existe
-        if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+        if (ctx.getStacks().findQuad(scopedIdent) == null) {
             throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.AINC.toString(), ctx.getInstructionCounter());
         }
 
@@ -111,7 +111,7 @@ public class AincAxiome implements JajaAxiome {
 
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
-                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                if (ctx.getStacks().findQuad(scopedIdent) != null) {
                     return scopedIdent;
                 }
             }

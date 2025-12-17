@@ -991,12 +991,13 @@ class JajaCodeAxiomesCompletTest {
                 1 init
                 2 push(true)
                 3 new(x@global, boolean, var, 0)
-                4 inc(x@global)
-                5 jcstop
+                4 push(1)
+                5 inc(x@global)
+                6 jcstop
                 """;
 
         TypeMismatchException e = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
-        assertEquals(4, e.getProgramCounter());
+        assertEquals(5, e.getProgramCounter());
         assertTrue(e.getMessage().contains("Tentative d'incrémenter avec des valeurs non entières"));
     }
 
