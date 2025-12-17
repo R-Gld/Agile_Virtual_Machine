@@ -447,7 +447,7 @@ public class Stacks {
 
         int pos = getStackPosition(ident);
         symbolTable.creationSymbol(ident, pos, type, true); // true = isArray
-        //to do debug overflow
+
         logger.debug("-> Array {} allocated: base={} cells={} (size={})", ident, baseAddress, totalSize, size);
 
     }

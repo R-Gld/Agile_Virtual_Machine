@@ -1,9 +1,12 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -1372,24 +1375,6 @@ public class StacksTest {
     }
 
 
-
-
-    /*
-        @Test
-    public void testDeclareOmegaConstThenAssignFails() {
-        Stacks stacks = new Stacks();
-
-        stacks.declareCst("k", Type.ENTIER);
-
-
-        assertThrows(RuntimeException.class, () -> stacks.getValue("k"));
-
-
-        stacks.declareCst("k", 3, Type.ENTIER);
-        assertEquals(3, stacks.getValue("k"));
-    }
-     */
-
     @Test
     public void testDoubleDeclarationVarThrows() {
         Stacks stacks = new Stacks();
@@ -1971,53 +1956,47 @@ public class StacksTest {
         stacks.freeTab("A");
         assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
     }
-    /*todo ask teacher about retrait
     @Test
-    public void testPopTableFreesMemoryWithoutFreeElements() {
+    void testNotEnoughMemoryLogIsWritten() {
+        // Arrange
+        Logger logger = (Logger) LoggerFactory.getLogger(Heap.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
 
+        Heap heap = new Heap();
 
+        // Act
+        heap.allocate("X", 999, null);
 
-        stacks.declareTab("myArray", 3, Type.ENTIER);
+        // Assert
+        boolean logFound = appender.list.stream()
+                .anyMatch(event ->
+                        event.getLevel().toString().equals("DEBUG")
+                                && event.getFormattedMessage()
+                                .contains("overflow more than heap_size X")
+                );
 
+        assertTrue(logFound, "Expected DEBUG log about insufficient memory");
 
-        stacks.declareVar("x", 10, Type.ENTIER);
-        stacks.declareVar("y", 20, Type.ENTIER);
-
-
-        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
-        assertNotNull(arrayQuad);
-
-
-        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
-        assertNotEquals(-1, base);
-
-
-        stacks.setArrayValue("myArray", 0, 100);
-        stacks.setArrayValue("myArray", 1, 200);
-        stacks.setArrayValue("myArray", 2, 300);
-
-
-        assertEquals(100, stacks.getArrayValue("myArray", 0));
-        assertEquals(200, stacks.getArrayValue("myArray", 1));
-        assertEquals(300, stacks.getArrayValue("myArray", 2));
-
-
-        stacks.printStack();
-        stacks.pop(); // pop "y"
-        stacks.printStack();
-        stacks.pop(); // pop "x"
-        stacks.printStack();
-        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
-
-        assertNotNull(poppedArray);
-        assertEquals("myArray", poppedArray.ident);
-
-        // 6. check if all heap are empty
-        assertNull(stacks.getHeap().read(base));
-        assertNull(stacks.getHeap().read(base + 1));
-        assertNull(stacks.getHeap().read(base + 2));
+        logger.detachAppender(appender);
     }
-     */
+
+    @Test
+    public void testAffecterTabOveflow() {
+
+        // Arrange
+
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareTab("C", 251, Type.ENTIER);
+        });
+        assertTrue(ex.getMessage().contains("Heap allocation failed for array C"));
+
+
+    }
+
 
     // ============================================================
     // CONTEXT MANAGEMENT TESTS
@@ -2527,6 +2506,7 @@ public class StacksTest {
         assertTrue(str.contains("var"));
         assertTrue(str.contains("integer"));
     }
+
 
 }
 
