@@ -114,10 +114,10 @@ class JajaCodeDebugTest {
         when(stacks.getHeap().getEntryNotFree(100)).thenReturn(heapEntry);
         List<JajaCodeDebug.HeapInfo> heapInfos = JajaCodeDebug.captureHeapState(stacks);
         assertEquals(1, heapInfos.size());
-        assertEquals(100, heapInfos.get(0).baseAddress());
-        assertEquals(2, heapInfos.get(0).size());
-        assertEquals(3, heapInfos.get(0).allocatedSize());
-        assertEquals(List.of(10, 20), heapInfos.get(0).elements());
+        assertEquals(100, heapInfos.getFirst().baseAddress());
+        assertEquals(2, heapInfos.getFirst().size());
+        assertEquals(3, heapInfos.getFirst().allocatedSize());
+        assertEquals(List.of(10, 20), heapInfos.getFirst().elements());
     }
 
     @Test
@@ -128,10 +128,10 @@ class JajaCodeDebugTest {
         when(stacks.getStackFromTopToBottom()).thenReturn(quads);
         List<JajaCodeDebug.VariableInfo> globalVars = JajaCodeDebug.getVariablesInScope(stacks, "global");
         assertEquals(1, globalVars.size());
-        assertEquals("x@global", globalVars.get(0).identifier());
+        assertEquals("x@global", globalVars.getFirst().identifier());
         List<JajaCodeDebug.VariableInfo> factVars = JajaCodeDebug.getVariablesInScope(stacks, "fact@int");
         assertEquals(1, factVars.size());
-        assertEquals("y@fact@int", factVars.get(0).identifier());
+        assertEquals("y@fact@int", factVars.getFirst().identifier());
     }
 
     @Test
