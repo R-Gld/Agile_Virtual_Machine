@@ -512,11 +512,12 @@ public class App extends Application {
             @Override
             protected String call() {
                 Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+                String compilerOutput = compiler.compileToString();
                 logger.debug("Starting compilation task...");
                 logger.debug("MiniJaja code length: {} characters", code.length());
                 logger.debug("Instruction jajacode générée :");
-                logger.debug("{}", compiler.compileToString());
-                return compiler.compileToString();
+                logger.debug("{}", compilerOutput);
+                return compilerOutput;
             }
         };
 
