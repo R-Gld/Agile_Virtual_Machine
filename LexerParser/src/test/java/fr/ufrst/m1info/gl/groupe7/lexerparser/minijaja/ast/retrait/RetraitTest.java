@@ -199,7 +199,7 @@ public class RetraitTest {
         VarsNode varsNode = new VarsNode();
         rVars rvars = new rVars(varsNode);
         
-        assertEquals("", rvars.toStringTree());
+        assertEquals("Retrait Vars", rvars.toStringTree());
     }
 
     // ========================================
@@ -446,7 +446,7 @@ public class RetraitTest {
         DeclsNode declsNode = new DeclsNode();
         rDeclrs rdeclrs = new rDeclrs(declsNode);
         
-        assertEquals("", rdeclrs.toStringTree());
+        assertEquals("Retrait déclarations", rdeclrs.toStringTree());
     }
 
     // ========================================
