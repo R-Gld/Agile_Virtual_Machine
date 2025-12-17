@@ -93,9 +93,9 @@ class TestApp {
     @Test
     void testBorderPaneHasBottomConsole() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
-        // Console is now inside hbox in mainSplitPane, not at bottom
+        // Console is now directly in mainSplitPane as ConsoleOutput
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        assertInstanceOf(HBox.class, mainSplitPane.getItems().get(1), "Console doit être dans mainSplitPane");
+        assertInstanceOf(ConsoleOutput.class, mainSplitPane.getItems().get(1), "Console doit être dans mainSplitPane");
     }
 
     @Test
@@ -215,8 +215,7 @@ class TestApp {
     void testConsoleHasCorrectId() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
-        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
+        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
         assertEquals("console", console.getId(), "Console doit avoir l'ID 'console'");
     }
 
@@ -368,9 +367,25 @@ class TestApp {
         });
         WaitForAsyncUtils.waitForFxEvents();
 
+        // Wait a bit for debug to initialize
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        WaitForAsyncUtils.waitForFxEvents();
+
         runOnFxThread(() -> {
             stopButton.fire();
         });
+        WaitForAsyncUtils.waitForFxEvents();
+
+        // Wait a bit for stop to complete
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         WaitForAsyncUtils.waitForFxEvents();
 
         // Les boutons step et stop doivent être désactivés
@@ -386,8 +401,7 @@ class TestApp {
         VBox vbox = (VBox) root.getTop();
         HBox toolbar = (HBox) vbox.getChildren().get(2);
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
-        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
+        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
 
         java.util.List<Button> buttons = toolbar.getChildren().stream()
                 .filter(node -> node instanceof Button)
@@ -551,8 +565,7 @@ class TestApp {
     void testConsoleHasStyling() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
-        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
+        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
 
         String style = console.getStyle();
         assertNotNull(style, "Console should have style applied");
@@ -977,8 +990,7 @@ class TestApp {
     void testConsoleHasProperStyling() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
-        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
+        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
 
         assertNotNull(console, "Console should exist");
         assertEquals("console", console.getId(), "Console should have correct ID");
