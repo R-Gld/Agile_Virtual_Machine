@@ -4,6 +4,11 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
@@ -64,9 +69,9 @@ public class Walker {
         stopped = false;
         
         if (debug.isEnabled()) {
-            logger.debug(" Debug mode: {}", debug.getMode());
-            logger.debug("Breakpoints: {}", debug.getBreakPoints());
-            logger.debug("Starting execution...\n");
+            System.out.println(" Debug mode: " + debug.getMode());
+            System.out.println("Breakpoints: " + debug.getBreakPoints());
+            System.out.println("Starting execution...\n");
         }
         
         visitNode(root);
@@ -91,21 +96,36 @@ public class Walker {
             return;
         }
         
-        // Check debug breakpoints / step on every node
-        if (debug.isEnabled()) {
-            int sourceLineNumber = getSourceLine(node);
+        // Always display all nodes being visited
+        int sourceLineNumber = getSourceLine(node);
+        if (sourceLineNumber > 0) {
+            System.err.println("  → Visiting source line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+        } else {
+            System.err.println("  → Traversing: " + node.getClass().getSimpleName());
+        }
+        
+        // Trace and check for specific node types before debugging
+        if (node instanceof VarNode || node instanceof MethodeNode || node instanceof InstructionNode || node instanceof CstNode || node instanceof TableauNode) {
             
-            boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack);
-            if (!shouldContinue) {
-                stopped = true;
-                return;
+            if (sourceLineNumber > 0) {
+                System.err.println("    [BREAKABLE] Visiting source line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+                
+                // Check debug breakpoints / step before executing
+                if (debug.isEnabled()) {
+                    System.err.println("      Debug enabled, breakpoints: " + debug.getBreakPoints() + ", checking line: " + sourceLineNumber);
+                    boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack);
+                    if (!shouldContinue) {
+                        stopped = true;
+                        return;
+                    }
+                }
             }
         }
         
         // Execute the node
         node.interpret(stack);
 
-        // Always visit children (null-safe)
+        // Always visit children (null-safe) - don't skip them
         Iterable<AstNode> children = node.getChildren();
         if (children != null) {
             for (AstNode child : children) {
