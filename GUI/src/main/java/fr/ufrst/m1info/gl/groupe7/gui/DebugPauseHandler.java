@@ -24,6 +24,11 @@ public class DebugPauseHandler {
         while (debugWalker.isPaused()) {
             switch (status) {
                 case WAITING:
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     continue;
                 case NEXT_STEP:
                     debugWalker.step();
@@ -45,7 +50,6 @@ public class DebugPauseHandler {
         for (int i = 0; i < stack.size(); i++) {
             memoryList.add(new StackModel(stack.get(i), stack.size()-i));
         }
-        stacks.printStack();
     }
 
     public void updateStatus(Status status) {
