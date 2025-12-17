@@ -7,6 +7,8 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.retrait.rVars;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
+import java.util.Objects;
+
 public class MainNode extends AstNode {
 
     private final VarsNode vars;
@@ -54,9 +56,9 @@ public class MainNode extends AstNode {
     public Iterable<AstNode> getChildren() {
         if (vars != null) {
             if (restoreContext != null) {
-                return java.util.List.of(vars, instrs, rvars, restoreContext);
+                return java.util.List.of(vars, instrs, Objects.requireNonNull(rvars), restoreContext);
             }
-            return java.util.List.of(vars, instrs, rvars);
+            return java.util.List.of(vars, instrs, Objects.requireNonNull(rvars));
         } else {
             if (restoreContext != null) {
                 return java.util.List.of(instrs, restoreContext);
