@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestMiniJajaSymbolListener {
 
@@ -72,7 +71,7 @@ public class TestMiniJajaSymbolListener {
         // Expect x and z to be unused, but not y
         assertTrue(unusedVars.contains("x"), "Field 'x' should be reported as unused");
         assertTrue(unusedVars.contains("z"), "Local 'z' should be reported as unused");
-        assertTrue(!unusedVars.contains("y"), "Local 'y' should not be reported as unused");
+        assertFalse(unusedVars.contains("y"), "Local 'y' should not be reported as unused");
     }
 
     @Test

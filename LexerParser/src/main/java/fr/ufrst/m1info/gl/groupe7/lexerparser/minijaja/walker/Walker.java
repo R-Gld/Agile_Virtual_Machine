@@ -64,9 +64,9 @@ public class Walker {
         stopped = false;
         
         if (debug.isEnabled()) {
-            System.out.println(" Debug mode: " + debug.getMode());
-            System.out.println("Breakpoints: " + debug.getBreakPoints());
-            System.out.println("Starting execution...\n");
+            logger.debug(" Debug mode: {}", debug.getMode());
+            logger.debug("Breakpoints: {}", debug.getBreakPoints());
+            logger.debug("Starting execution...\n");
         }
         
         visitNode(root);

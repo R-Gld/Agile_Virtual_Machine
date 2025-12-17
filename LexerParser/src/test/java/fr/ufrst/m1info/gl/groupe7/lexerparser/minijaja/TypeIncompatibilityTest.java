@@ -35,10 +35,10 @@ public class TypeIncompatibilityTest {
     void setUp() {
         stacks = new Stacks();
         // Declare test variables of different types
-        stacks.declareVar("intVar", 10,type.ENTIER );
-        stacks.declareVar("boolVar", true, type.BOOLEEN);
-        stacks.declareVar("intVar2", 5, type.ENTIER);
-        stacks.declareVar("boolVar2", false, type.BOOLEEN);
+        stacks.declareVar("intVar", 10, Type.ENTIER);
+        stacks.declareVar("boolVar", true, Type.BOOLEEN);
+        stacks.declareVar("intVar2", 5, Type.ENTIER);
+        stacks.declareVar("boolVar2", false, Type.BOOLEEN);
     }
 
     // ========================================

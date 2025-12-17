@@ -3,6 +3,7 @@ package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 
 import java.util.List;
+import java.util.Objects;
 
 public class InstructionsNode extends AstNode {
 
@@ -58,7 +59,7 @@ public class InstructionsNode extends AstNode {
     @Override
     public Iterable<AstNode> getChildren() {
         if (instructions != null) {
-            return List.of(instructionNode, instructions);
+            return List.of(Objects.requireNonNull(instructionNode), instructions);
         } else if (instructionNode != null) {
             return List.of(instructionNode);
         } else {

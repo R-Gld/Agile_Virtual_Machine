@@ -208,7 +208,7 @@ public class Debug {
             shouldStop = true;
         } else if (mode == Mode.BREAKPOINTS && hasBreakPoint(line)) {
             shouldStop = true;
-            logger.info("\n BREAKPOINT HIT at line " + line);
+            logger.info("\n BREAKPOINT HIT at line {}", line);
         }
         
         // If a single step was requested, stop now and reset the flag
@@ -271,10 +271,8 @@ public class Debug {
                    System.out.println("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();  
                 }
-                case "b", "breakpoints" -> {
-                    // List all breakpoints
-                   System.out.println("\n BREAKPOINTS: " + breakPoints);
-                }
+                case "b", "breakpoints" -> // List all breakpoints
+                        logger.debug("\n BREAKPOINTS: " + breakPoints);
                 case "q", "quit", "exit" -> {
                     // Quit debugging session
                    System.out.println(" Debug session ended.");
@@ -282,10 +280,8 @@ public class Debug {
                     paused = false;
                     scanner.close();
                     return false; // Signal to stop execution
-                }case "h", "help" -> {
-                    // Print help menu
-                    printHelp();
-                }
+                }case "h", "help" -> // Print help menu
+                        printHelp();
                 
                 default -> {
                     // Try to parse as a breakpoint command, e.g., "b 10", "+10", or "-10"
@@ -294,7 +290,7 @@ public class Debug {
                             String num = input.startsWith("+") ? input.substring(1) : input.substring(2);
                             int bp = Integer.parseInt(num.trim());
                             addBreakPoint(bp);
-                           System.out.println("Breakpoint added at line " + bp);
+                            logger.debug("Breakpoint added at line {}", bp);
                         } catch (NumberFormatException e) {
                            System.out.println(" Invalid line number");
                         }
@@ -302,7 +298,7 @@ public class Debug {
                         try {
                             int bp = Integer.parseInt(input.substring(1).trim());
                             removeBreakPoint(bp);
-                           System.out.println(" Breakpoint removed from line " + bp);
+                            logger.debug(" Breakpoint removed from line {}", bp);
                         } catch (NumberFormatException e) {
                            System.out.println(" Invalid line number");
                         }

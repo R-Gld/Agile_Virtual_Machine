@@ -15,20 +15,20 @@ import java.util.Map;
  * JajaCodeInterpreterVisitor is a visitor class responsible for interpreting and executing
  * JajaCode instructions using the visitor pattern. It encapsulates the state of the virtual
  * machine, manages the instruction set (axioms), and executes instructions step by step.
- *
+ * <p>
  * This class implements the {@link Runnable} interface, allowing the interpreter to be run
  * in a separate thread. It also provides step-by-step execution for debugging and testing.
- *
+ * <p>
  * Main responsibilities:
  * - Initialize the machine context and register all supported instructions (axioms).
  * - Load a JajaCode program into memory, mapping addresses to instructions.
  * - Interpret and execute instructions by dispatching to the appropriate axiom.
  * - Handle errors and provide debugging information via logging.
  * - Support step-by-step execution for testing and debugging purposes.
- *
+ * <p>
  * The interpreter supports a wide range of instructions, including memory operations,
  * arithmetic and logic operations, control flow, input/output, and array manipulations.
- *
+ * <p>
  * Example usage:
  *     Stacks stacks = new Stacks();
  *     JajaCodeInterpreterVisitor interpreter = new JajaCodeInterpreterVisitor(stacks);
