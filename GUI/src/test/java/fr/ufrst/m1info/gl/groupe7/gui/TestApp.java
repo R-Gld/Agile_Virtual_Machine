@@ -18,6 +18,7 @@ import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 import org.testfx.util.WaitForAsyncUtils;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
@@ -153,7 +154,7 @@ class TestApp {
                 .findFirst()
                 .orElse(null);
 
-        Menu fileMenu = menuBar.getMenus().get(0);
+        Menu fileMenu = Objects.requireNonNull(menuBar).getMenus().get(0);
         assertEquals(2, fileMenu.getItems().size(), "File menu doit avoir 2 items");
 
         MenuItem saveItem = fileMenu.getItems().get(0);
@@ -278,7 +279,7 @@ class TestApp {
     }
 
     @Test
-    void testStopMethod() throws Exception {
+    void testStopMethod() {
         // Tester que stop() ne lance pas d'exception
         runOnFxThread(() -> {
             try {
@@ -418,10 +419,10 @@ class TestApp {
                 .findFirst()
                 .orElse(null);
 
-        runOnFxThread(() -> choiceBox.setValue("Jajacode"));
+        runOnFxThread(() -> Objects.requireNonNull(choiceBox).setValue("Jajacode"));
         WaitForAsyncUtils.waitForFxEvents();
 
-        assertEquals("Jajacode", choiceBox.getValue(), "ChoiceBox doit pouvoir changer de valeur");
+        assertEquals("Jajacode", Objects.requireNonNull(choiceBox).getValue(), "ChoiceBox doit pouvoir changer de valeur");
     }
 
     @Test
@@ -886,10 +887,10 @@ class TestApp {
                 .orElse(null);
 
         // Switch to Jajacode
-        runOnFxThread(() -> choiceBox.setValue("Jajacode"));
+        runOnFxThread(() -> Objects.requireNonNull(choiceBox).setValue("Jajacode"));
         WaitForAsyncUtils.waitForFxEvents();
 
-        assertEquals("Jajacode", choiceBox.getValue(), "Should be set to Jajacode");
+        assertEquals("Jajacode", Objects.requireNonNull(choiceBox).getValue(), "Should be set to Jajacode");
 
         // Get run button
         java.util.List<Button> buttons = toolbar.getChildren().stream()
