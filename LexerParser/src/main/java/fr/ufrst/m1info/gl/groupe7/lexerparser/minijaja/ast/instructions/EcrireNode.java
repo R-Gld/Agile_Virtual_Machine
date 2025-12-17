@@ -68,7 +68,6 @@ public class EcrireNode extends InstructionNode {
 
                 logger.info("{}", ident1.evaluate(stacks));
             }
-            case Expression expr -> logger.info("{}", expr.evaluate(stacks));
             case TabNode tabNode -> {
                 String varName = stacks.resolveVariableName(tabNode.getIdent().getNom());
 
@@ -83,6 +82,7 @@ public class EcrireNode extends InstructionNode {
                 }
 
             }
+            case Expression expr -> logger.info("{}", expr.evaluate(stacks));
             case null, default -> logger.info("{}", Ident1Node);
         }
 
