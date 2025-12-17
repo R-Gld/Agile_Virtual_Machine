@@ -45,7 +45,7 @@ public class TabNode extends Expression {
         }
         
         int index = (int) expR.evaluate(stacks);
-        return (Integer) stacks.getArrayValue(varName, index);
+        return stacks.getArrayValue(varName, index);
     }
 
 }
