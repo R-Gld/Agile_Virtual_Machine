@@ -4,7 +4,7 @@
     <parent>
         <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
         <artifactId>MiniJAJA</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.1</version>
     </parent>
 
     <artifactId>CLI</artifactId>
@@ -52,7 +52,7 @@
         <dependency>
             <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
             <artifactId>LexerParser</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.1</version>
             <scope>compile</scope>
         </dependency>
 

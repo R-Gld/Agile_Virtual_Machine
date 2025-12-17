@@ -6,7 +6,7 @@
     <!-- Parent project information -->
     <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
     <artifactId>MiniJAJA</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>pom</packaging>
 
     <name>MiniJAJA</name>
@@ -214,7 +214,7 @@
         <developerConnection>
             scm:git:https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7.git
         </developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.1</tag>
     </scm>
 
     <distributionManagement>
