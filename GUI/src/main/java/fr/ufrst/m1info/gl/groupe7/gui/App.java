@@ -1,46 +1,23 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeDebug;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaDebugger;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
-import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
-import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
-
-// Breakpoint support
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * JavaFX App
@@ -69,6 +46,14 @@ public class App extends Application {
     private Button buildButton;
     private Button runButton;
     private Button debugButton;
+
+
+    private MenuItem compileItem;
+    private MenuItem runItem;
+    private MenuItem debugItem;
+    private MenuItem stepItem;
+    private MenuItem continueItem;
+    private MenuItem stopItem;
 
     /**
      * Console used to display messages (debug, info, errors)
@@ -209,7 +194,8 @@ public class App extends Application {
 
         // Initialize controller and set up button actions
         this.controller = new GuiController(appStage, mjjCodeArea, jjcCodeArea, fileToRun, console, stackTable, heapTable, stepButton, stopButton, continueButton);
-        
+
+
         // Set up button actions
         buildButton.setOnAction(e -> controller.compile());
         runButton.setOnAction(e -> controller.run());
@@ -217,10 +203,24 @@ public class App extends Application {
         stepButton.setOnAction(e -> controller.stepDebug());
         continueButton.setOnAction(e -> controller.continueDebug());
         stopButton.setOnAction(e -> controller.stopDebug());
-        
+
+
         // Set up menu actions
         openItem.setOnAction(e -> controller.loadFile());
         saveItem.setOnAction(e -> controller.saveFile());
+
+
+        compileItem.setOnAction(e -> controller.compile());
+        runItem.setOnAction(e -> controller.run());
+        debugItem.setOnAction(e -> controller.startDebug());
+        stepItem.setOnAction(e -> controller.stepDebug());
+        continueItem.setOnAction(e -> controller.continueDebug());
+        stopItem.setOnAction(e -> controller.stopDebug());
+
+
+        stepItem.disableProperty().bind(stepButton.disableProperty());
+        continueItem.disableProperty().bind(continueButton.disableProperty());
+        stopItem.disableProperty().bind(stopButton.disableProperty());
 
         stage.show();
     }
@@ -284,6 +284,29 @@ public class App extends Application {
         this.saveItem.setId("saveItem");
 
         fileMenu.getItems().addAll(saveItem, openItem);
+
+        Menu runMenu = new Menu("Run");
+        menuBar.getMenus().add(runMenu);
+
+        this.compileItem = new MenuItem("Compile");
+        this.compileItem.setAccelerator(new KeyCodeCombination(KeyCode.B, KeyCombination.CONTROL_DOWN));
+
+        this.runItem = new MenuItem("Run");
+        this.runItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.CONTROL_DOWN));
+
+        this.debugItem = new MenuItem("Start Debug");
+        this.debugItem.setAccelerator(new KeyCodeCombination(KeyCode.F4));
+
+        this.stepItem = new MenuItem("Step");
+        this.stepItem.setAccelerator(new KeyCodeCombination(KeyCode.F6));
+
+        this.continueItem = new MenuItem("Continue");
+        this.continueItem.setAccelerator(new KeyCodeCombination(KeyCode.F8));
+
+        this.stopItem = new MenuItem("Stop");
+        this.stopItem.setAccelerator(new KeyCodeCombination(KeyCode.F5, KeyCombination.SHIFT_DOWN));
+
+        runMenu.getItems().addAll(compileItem, runItem, new SeparatorMenuItem(), debugItem, stepItem, continueItem, stopItem);
 
         hbox.getChildren().add(menuBar);
 
@@ -406,17 +429,6 @@ public class App extends Application {
 
         return hbox;
     }
-
-
-
-
-
-
-
-
-
-
-
 
 
     /**
