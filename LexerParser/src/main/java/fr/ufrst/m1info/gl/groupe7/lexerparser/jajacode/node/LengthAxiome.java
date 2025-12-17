@@ -35,7 +35,7 @@ public class LengthAxiome implements JajaAxiome {
         String scopedIdent = resolveScopedName(ctx, ident);
 
         // 2. Vérifier que le tableau existe
-        if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+        if (ctx.getStacks().findQuad(scopedIdent) == null) {
             throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.LENGTH.toString(), ctx.getInstructionCounter());
         }
 
@@ -66,7 +66,7 @@ public class LengthAxiome implements JajaAxiome {
 
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
-                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                if (ctx.getStacks().findQuad(scopedIdent) != null) {
                     return scopedIdent;
                 }
             }

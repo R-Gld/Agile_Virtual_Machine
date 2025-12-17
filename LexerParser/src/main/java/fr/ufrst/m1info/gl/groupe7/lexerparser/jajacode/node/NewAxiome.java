@@ -140,14 +140,15 @@ public class NewAxiome implements JajaAxiome {
             logger.debug("\t\t[DEBUG] Valeur dépilée: {}", valeur);
 
             // Logique de déclaration selon la sorte (kind)
+            // Use JajaCode-specific versions that don't use symbol table
             switch (kind.toLowerCase()) {
                 case "variable":
                 case "var":
-                    ctx.getStacks().declareVar(scopedIdent, valeur, type);
+                    ctx.getStacks().declareVarJJC(scopedIdent, valeur, type);
                     break;
                 case "cst":
                 case "meth":
-                    ctx.getStacks().declareCst(scopedIdent, valeur, type);
+                    ctx.getStacks().declareCstJJC(scopedIdent, valeur, type);
                     break;
                 default:
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());

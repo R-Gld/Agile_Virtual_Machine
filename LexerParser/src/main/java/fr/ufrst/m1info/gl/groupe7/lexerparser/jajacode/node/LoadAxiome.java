@@ -46,8 +46,8 @@ public class LoadAxiome implements JajaAxiome {
         // 1. Résoudre le nom scopé pour la récursivité
         String scopedIdent = resolveScopedName(ctx, ident);
 
-        // 2. Vérification de l'existence de la variable
-        if (!ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+        // 2. Vérification de l'existence de la variable (check STACK only, not symbol table)
+        if (ctx.getStacks().findQuad(scopedIdent) == null) {
             throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.LOAD.toString(), ctx.getInstructionCounter());
         }
 
@@ -68,6 +68,7 @@ public class LoadAxiome implements JajaAxiome {
     /**
      * Résout le nom scopé pour la récursivité.
      * Cherche d'abord la variable avec le suffixe de récursivité, puis sans.
+     * Uses STACK only (not symbol table) for JajaCode compatibility.
      */
     private String resolveScopedName(MachineContext ctx, String ident) {
         // Si la variable est globale, pas de scopage
@@ -81,10 +82,11 @@ public class LoadAxiome implements JajaAxiome {
             String methodName = ctx.getStacks().getCurrentMethodName();
             int recursionLevel = ctx.getStacks().getRecursionDepth(methodName);
 
-            // Si on est en récursivité (niveau > 1), chercher la variable scopée
+            // Si on est en récursivité (niveau > 1), chercher la variable scopée dans la PILE
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
-                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                // Check in the STACK (not symbol table) for JajaCode compatibility
+                if (ctx.getStacks().findQuad(scopedIdent) != null) {
                     return scopedIdent;
                 }
             }
