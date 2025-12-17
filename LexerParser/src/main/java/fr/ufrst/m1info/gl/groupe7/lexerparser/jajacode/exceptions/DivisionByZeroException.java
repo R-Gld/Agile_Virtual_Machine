@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée lors d'une division par zéro
+ * Exception when a division by zero occurs in JajaCode.
  */
 public class DivisionByZeroException extends JajaCodeRuntimeException {
 

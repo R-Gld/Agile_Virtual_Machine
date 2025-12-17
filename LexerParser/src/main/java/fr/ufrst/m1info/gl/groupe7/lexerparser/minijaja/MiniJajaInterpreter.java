@@ -59,19 +59,19 @@ public class MiniJajaInterpreter implements Runnable {
             throw new SyntaxException(collector);
         }
 
-        logger.info("Debut de l'interprétation du minijaja");
+        logger.info("Start of MiniJaja interpretation");
 
         AstNode astRoot = visitor.visit(tree);
-        logger.info("\n=====  ARBRE SYNTAXIQUE ABSTRAIT (AST)  =====");
+        logger.info("\n=====  ABSTRACT SYNTAX TREE (AST)  =====");
         if (astRoot != null) {
             logger.info(astRoot.toStringTree());
         } else {
-            logger.error("ERREUR: L'AST est null.");
+            logger.error("ERROR: AST is null.");
         }
 
         // Semantic analysis
         if (astRoot instanceof ClasseNode classNode) {
-            logger.info("\n=====  ANALYSE SÉMANTIQUE  =====");
+            logger.info("\n=====  SEMANTIC ANALYSIS  =====");
             MiniJajaSemanticAnalyzer semanticAnalyser = new MiniJajaSemanticAnalyzer(collector);
             semanticAnalyser.analyse(classNode);
 
@@ -82,7 +82,7 @@ public class MiniJajaInterpreter implements Runnable {
                     throw new SyntaxException(collector);
                 }
             }
-            logger.info("Analyse sémantique réussie - aucune erreur détectée");
+            logger.info("Semantic analysis succeeded - no errors detected");
         }
 
         logger.info("==============================================");

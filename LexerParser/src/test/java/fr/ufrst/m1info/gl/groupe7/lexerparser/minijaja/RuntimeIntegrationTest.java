@@ -68,33 +68,37 @@ public class RuntimeIntegrationTest {
     }
 
     private void executeInstruction(InstructionNode node, Stacks stacks) {
-        if (node == null) return;
-
-        if (node instanceof SiNode si) {
-            si.interpret(stacks);
-            Iterable<AstNode> children = si.getChildren();
-            if (children != null) {
-                for (var child : children) {
-                    if (child instanceof InstructionNode in) executeInstruction(in, stacks);
-                    else if (child instanceof InstructionsNode ins)
-                        executeInstructionsNode(ins, stacks);
-                }
+        switch (node) {
+            case null -> {
+                return;
             }
-            return;
-        }
-
-        if (node instanceof TantqueNode tq) {
-            // interpret sets children to body + next loop or empty list
-            tq.interpret(stacks);
-            Iterable<AstNode> children = tq.getChildren();
-            if (children != null) {
-                for (var child : children) {
-                    if (child instanceof InstructionNode in) executeInstruction(in, stacks);
-                    else if (child instanceof InstructionsNode ins)
-                        executeInstructionsNode(ins, stacks);
+            case SiNode si -> {
+                si.interpret(stacks);
+                Iterable<AstNode> children = si.getChildren();
+                if (children != null) {
+                    for (var child : children) {
+                        if (child instanceof InstructionNode in) executeInstruction(in, stacks);
+                        else if (child instanceof InstructionsNode ins)
+                            executeInstructionsNode(ins, stacks);
+                    }
                 }
+                return;
             }
-            return;
+            case TantqueNode tq -> {
+                // interpret sets children to body + next loop or empty list
+                tq.interpret(stacks);
+                Iterable<AstNode> children = tq.getChildren();
+                if (children != null) {
+                    for (var child : children) {
+                        if (child instanceof InstructionNode in) executeInstruction(in, stacks);
+                        else if (child instanceof InstructionsNode ins)
+                            executeInstructionsNode(ins, stacks);
+                    }
+                }
+                return;
+            }
+            default -> {
+            }
         }
 
         // default: instruction can interpret itself (affectation, somme, ecrire, ...)

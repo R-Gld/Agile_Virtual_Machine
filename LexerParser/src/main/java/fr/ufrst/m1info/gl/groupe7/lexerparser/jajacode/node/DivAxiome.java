@@ -12,24 +12,24 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code div}.
+ * Axiome representing the JajaCode instruction {@code div}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [op2] : &lt;&lt;w, v2,cst,*&gt;.&lt;w, v1,cst,*&gt;.m,a&gt; ⊢ div –» &lt;&lt;w, v1 / v2, cst,*&gt;.m, a+1&gt;
  * </pre>
  *
- * <p>Cette instruction dépile deux valeurs entières {@code v1} et {@code v2},
- * effectue la division entière {@code v1 / v2}, puis empile le résultat.</p>
+ * <p>This instruction pops two integer values {@code v1} and {@code v2},
+ * performs the integer division {@code v1 / v2}, and then pushes the result.</p>
  *
- * <p><b>Ordre des opérandes :</b> L'avant-dernier élément de la pile ({@code v1}) est le dividende,
- * le dernier élément ({@code v2}) est le diviseur.</p>
+ * <p><b>Operand order:</b> The penultimate element on the stack ({@code v1}) is the dividend,
+ * the last element ({@code v2}) is the divisor.</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile contient moins de 2 éléments</li>
- *   <li>{@link TypeMismatchException} si les opérandes ne sont pas de type entier</li>
- *   <li>{@link DivisionByZeroException} si le diviseur est égal à zéro</li>
+ *   <li>{@link StackUnderflowException} if the stack contains fewer than 2 elements</li>
+ *   <li>{@link TypeMismatchException} if the operands are not integers</li>
+ *   <li>{@link DivisionByZeroException} if the divisor equals zero</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -49,16 +49,16 @@ public class DivAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String arg) {
-        // 1. Dépilement (op2 est le diviseur, op1 est le dividende)
+        // 1. Pop (op2 is the divisor, op1 is the dividend)
         Stacks.Quad op2 = ctx.getStacks().pop();
         Stacks.Quad op1 = ctx.getStacks().pop();
 
-        // 2. Vérification pile vide
+        // 2. Check for stack underflow
         if (op1 == null || op2 == null) {
             throw new StackUnderflowException("Besoin de 2 opérandes", "DIV", ctx.getInstructionCounter());
         }
 
-        // 3. Vérification de type (Entiers uniquement)
+        // 3. Type check (integers only)
         if (!(op1.value instanceof Integer) || !(op2.value instanceof Integer)) {
             throw new TypeMismatchException(
                 "Opérandes non entiers (" + op1.value + " / " + op2.value + ")",
@@ -67,19 +67,19 @@ public class DivAxiome implements JajaAxiome {
             );
         }
 
-        // 4. Vérification Division par Zéro (Spécifique à DIV)
+        // 4. Division by zero check (specific to DIV)
         if ((Integer) op2.value == 0) {
             throw new DivisionByZeroException("DIV", ctx.getInstructionCounter());
         }
 
-        // 5. Calcul
+        // 5. Compute
         int result = (Integer) op1.value / (Integer) op2.value;
 
-        // 6. Empilement du résultat
+        // 6. Push the result
         ctx.getStacks().push(new Stacks.Quad(result, Type.ENTIER));
 
-        // 7. Log et suite
-        logger.debug("\t\tAxiome DIV exécuté: {} / {} = {}", op1.value, op2.value, result);
+        // 7. Log and continue
+        logger.debug("\t\tAxiome DIV executed: {} / {} = {}", op1.value, op2.value, result);
         ctx.incrementPC();
     }
 }

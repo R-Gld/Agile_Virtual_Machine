@@ -24,6 +24,18 @@ public class IncrementNode extends InstructionNode {
     }
 
 
+    /**
+     * Interprets the increment instruction for either a variable or an array element.
+     * <p>
+     * If {@code ident1} is an {@link IdentNode}, this method increments the value of the variable,
+     * taking into account the current method context and possible variable scoping.
+     * If {@code ident1} is a {@link TabNode}, this method increments the value at the specified index
+     * of the array, also considering method context and scoping.
+     * </p>
+     *
+     * @param stacks the current execution stacks, providing variable and array value management,
+     *               as well as context information for scoping.
+     */
     @Override
     public void interpret(Stacks stacks) {
         if (ident1 instanceof IdentNode identNode) {

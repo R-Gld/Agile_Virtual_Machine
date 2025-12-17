@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée quand un symbole/variable n'est pas trouvé
+ * Exception when an undefined symbol is accessed in JajaCode.
  */
 public class UndefinedSymbolException extends JajaCodeRuntimeException {
 

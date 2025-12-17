@@ -24,30 +24,11 @@ public class DebugeParsingETC {
   public void DebugeParsing() {
     Stacks stacks = new Stacks();
     String program = """
-        class ConstTest {
-          final int GLOBAL_CST = 100;
-          final boolean FLAG = true;
+        class ConstTest {//1
+          final int GLOBAL_CST = 100;//2
+          final boolean FLAG = true;//3 
           int x = 0;
-          
-          int useConst(int n) {
-            final int LOCAL_CST = 50;
-            final int DERIVED = LOCAL_CST + n;
-            int result;
-            result = GLOBAL_CST + LOCAL_CST + DERIVED + n;
-            return result;
-          };
-          
-          int multiConst(int a) {
-            final int C1 = 10;
-            final int C2 = 20;
-            final int C3 = C1 + C2;
-            final int C4 = C3 * 2;
-            int res;
-            res = a + C1 + C2 + C3 + C4;
-            return res;
-          };
-          
-          boolean constBool(boolean input) {
+          void constBool(boolean input) {
             final boolean TRUE_CST = true;
             final boolean FALSE_CST = false;
             boolean result;
@@ -55,82 +36,15 @@ public class DebugeParsingETC {
               result = TRUE_CST;
             } else {
               result = FALSE_CST;
+            };
+          
+          };
+          
+          main{
+            constBool(FLAG);
+             x = GLOBAL_CST;
             }
-            return result;
-          };
-          
-          int constInExpr(int val) {
-            final int A = 5;
-            final int B = 10;
-            final int C = 15;
-            int r;
-            r = val * A + val * B - val / C + A * B * C;
-            return r;
-          };
-          
-          int constInCondition(int n) {
-            final int THRESHOLD = 50;
-            final int LOW = 10;
-            final int HIGH = 100;
-            int result;
-            if (n > THRESHOLD) {
-              result = HIGH;
-            } else {
-              if (n > LOW) {
-                result = THRESHOLD;
-              } else {
-                result = LOW;
-              }
-            }
-            return result;
-          };
-          
-          int constInLoop(int count) {
-            final int STEP = 2;
-            final int MAX = 20;
-            int sum;
-            int i;
-            sum = 0;
-            i = 0;
-            while (count > i) {
-              sum = sum + STEP;
-              i = i + 1;
-            }
-            return sum + MAX;
-          };
-          
-          main {
-            final int MAIN_CST = 42;
-            final int ANOTHER = MAIN_CST + GLOBAL_CST;
-            final boolean MAIN_FLAG = true;
-            int r1;
-            int r2;
-            int r3;
-            int r4;
-            int r5;
-            int r6;
-            boolean b1;
-            
-            x = GLOBAL_CST;
-            
-            r1 = useConst(5);
-            r2 = multiConst(MAIN_CST);
-            b1 = constBool(MAIN_FLAG);
-            r3 = constInExpr(MAIN_CST);
-            r4 = constInCondition(ANOTHER);
-            r5 = constInLoop(10);
-            
-           r6 = GLOBAL_CST + MAIN_CST + ANOTHER + r1 + r2 + r3 + r4 + r5;
-            if (FLAG && MAIN_FLAG) {
-             r6 = r6 + 1;
-           }
-            writeln(r1);
-            writeln(r2);
-            writeln(r3);
-            writeln(r4);
-            writeln(r5);
-            writeln(r6);
-          }
+        
         }
         """;
 
@@ -159,11 +73,12 @@ public class DebugeParsingETC {
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       // 4) Affichage de l'AST
-    Debug debug = new Debug(Debug.Mode.DISABLED);
-    debug.addBreakPoint(60); // Exemple de breakpoint
+    Debug debug = new Debug(Debug.Mode.STEP_BY_STEP);
+    debug.addBreakPoint(19    ); // Exemple de breakpoint
     System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks, debug, null);
     walker.walk();
+    System.out.println(debug.getCurrentLine());
     //stacks.printStack();
 
     } else {
@@ -180,8 +95,9 @@ public class DebugeParsingETC {
    * Run with: mvn exec:java -pl LexerParser -Dexec.mainClass="fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.DebugeParsingETC"
    */
   public static void main(String[] args) {
-    DebugeParsingETC test = new DebugeParsingETC();
-    test.DebugeParsing();
+    DebugeParsingETC debugParsingETC = new DebugeParsingETC();
+    debugParsingETC.DebugeParsing();
+   
   }
 
 }

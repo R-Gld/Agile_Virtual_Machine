@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
@@ -95,7 +96,7 @@ public class TestCodeAreaSuggestions {
 
                         @SuppressWarnings("unchecked")
                         List<String> declSuggestions = (List<String>) m.invoke(area, "my");
-                        assertTrue(!declSuggestions.contains("myVar"), "While declaring a variable (after 'int'), existing variable 'myVar' should not be suggested");
+                        assertFalse(declSuggestions.contains("myVar"), "While declaring a variable (after 'int'), existing variable 'myVar' should not be suggested");
 
                         runOnFxThread(() -> {
                             try {

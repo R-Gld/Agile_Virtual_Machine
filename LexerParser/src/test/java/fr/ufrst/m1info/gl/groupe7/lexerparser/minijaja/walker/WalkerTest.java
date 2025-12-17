@@ -35,7 +35,7 @@ class WalkerTest {
         private final String name;
         private final List<AstNode> children;
         private boolean interpreted = false;
-        private static List<String> interpretOrder = new ArrayList<>();
+        private static final List<String> interpretOrder = new ArrayList<>();
 
         public MockAstNode(String name) {
             this.name = name;

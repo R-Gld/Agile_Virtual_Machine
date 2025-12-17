@@ -1,36 +1,35 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
 /**
- * Gestionnaire des préférences de l'éditeur.
+ * Manager for editor preferences.
  * <p>
- * Cette classe implémente un singleton exposant quelques réglages
- * d'édition (taille des tabulations, fermeture automatique des paires,
- * indentation intelligente). Les valeurs sont maintenues en mémoire et
- * accessibles globalement via {@link #getInstance()}.
+ * This class implements a singleton exposing some editing settings
+ * (tab size, auto-closing of pairs, smart indentation). Values are
+ * kept in memory and are globally accessible via {@link #getInstance()}.
  * </p>
  */
 public class EditorPreferences {
-    /** Instance unique du singleton. */
+    /** Singleton instance. */
     private static EditorPreferences instance;
 
-    /** Nombre d'espaces utilisés pour une tabulation. */
+    /** Number of spaces used for a tab. */
     private int tabSize = 4;
-    /** Active la fermeture automatique des paires ((), {}, "", etc.). */
+    /** Whether auto-closing of pairs ((), {}, "", etc.) is enabled. */
     private boolean autoClosePairs = true;
-    /** Active l'indentation intelligente lors de la frappe. */
+    /** Whether smart indentation while typing is enabled. */
     private boolean smartIndentation = true;
 
     /**
-     * Constructeur privé pour le pattern Singleton.
+     * Private constructor for the Singleton pattern.
      */
     private EditorPreferences() {
     }
 
     /**
-     * Retourne l'instance unique des préférences de l'éditeur.
-     * Si aucune instance n'existe, elle est créée à la première invocation.
+     * Returns the singleton instance of editor preferences.
+     * If no instance exists, it is created on first invocation.
      *
-     * @return l'instance unique d'EditorPreferences
+     * @return the singleton instance of EditorPreferences
      */
     public static EditorPreferences getInstance() {
         if (instance == null) {
@@ -40,19 +39,19 @@ public class EditorPreferences {
     }
 
     /**
-     * Retourne la taille de tabulation (en nombre d'espaces).
+     * Returns the tab size (number of spaces).
      *
-     * @return la taille de tabulation
+     * @return the tab size
      */
     public int getTabSize() {
         return tabSize;
     }
 
     /**
-     * Définit la taille de tabulation (en nombre d'espaces).
+     * Sets the tab size (number of spaces).
      *
-     * @param tabSize nouvelle taille de tabulation (doit être strictement positive)
-     * @throws IllegalArgumentException si {@code tabSize} <= 0
+     * @param tabSize new tab size (must be strictly positive)
+     * @throws IllegalArgumentException if {@code tabSize} <= 0
      */
     public void setTabSize(int tabSize) {
         if (tabSize <= 0) {
@@ -62,36 +61,36 @@ public class EditorPreferences {
     }
 
     /**
-     * Indique si la fermeture automatique des paires est activée.
+     * Indicates whether auto-closing of pairs is enabled.
      *
-     * @return {@code true} si activée, sinon {@code false}
+     * @return {@code true} if enabled, otherwise {@code false}
      */
     public boolean isAutoClosePairs() {
         return autoClosePairs;
     }
 
     /**
-     * Active ou désactive la fermeture automatique des paires.
+     * Enables or disables auto-closing of pairs.
      *
-     * @param autoClosePairs {@code true} pour activer, {@code false} pour désactiver
+     * @param autoClosePairs {@code true} to enable, {@code false} to disable
      */
     public void setAutoClosePairs(boolean autoClosePairs) {
         this.autoClosePairs = autoClosePairs;
     }
 
     /**
-     * Indique si l'indentation intelligente est activée.
+     * Indicates whether smart indentation is enabled.
      *
-     * @return {@code true} si activée, sinon {@code false}
+     * @return {@code true} if enabled, otherwise {@code false}
      */
     public boolean isSmartIndentation() {
         return smartIndentation;
     }
 
     /**
-     * Active ou désactive l'indentation intelligente.
+     * Enables or disables smart indentation.
      *
-     * @param smartIndentation {@code true} pour activer, {@code false} pour désactiver
+     * @param smartIndentation {@code true} to enable, {@code false} to disable
      */
     public void setSmartIndentation(boolean smartIndentation) {
         this.smartIndentation = smartIndentation;

@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée quand la pile est vide lors d'une opération qui nécessite des éléments
+ * Exception when a stack underflow occurs in JajaCode.
  */
 public class StackUnderflowException extends JajaCodeRuntimeException {
 

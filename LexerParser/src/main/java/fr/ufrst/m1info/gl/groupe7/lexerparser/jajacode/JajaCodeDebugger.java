@@ -11,17 +11,14 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 /**
- * Petit wrapper pour faire du pas-à-pas sur un programme JajaCode.
- * Utilise JajaCodeInterpreterVisitor (step(), isFinished(),
+ * Small wrapper to step through a JajaCode program.
+ * Uses JajaCodeInterpreterVisitor (step(), isFinished(),
  * getCurrentInstructionIndex()).
  */
 public class JajaCodeDebugger {
 
-    private final Stacks stacks;
-    private final JajaCodeInterpreterVisitor visitor;
-
     public JajaCodeDebugger(String jajaCode, DiagnosticCollector collector) {
-        this.stacks = new Stacks();
+        Stacks stacks = new Stacks();
 
         CharStream stream = CharStreams.fromString(jajaCode);
         JajaCodeLexer lexer = new JajaCodeLexer(stream);
@@ -38,8 +35,8 @@ public class JajaCodeDebugger {
             throw new SyntaxException(collector);
         }
 
-        this.visitor = new JajaCodeInterpreterVisitor(stacks);
-        this.visitor.load(arbreJajaCode);
+        JajaCodeInterpreterVisitor visitor = new JajaCodeInterpreterVisitor(stacks);
+        visitor.load(arbreJajaCode);
 
     }
 }

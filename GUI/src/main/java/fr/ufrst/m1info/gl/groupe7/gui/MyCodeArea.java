@@ -47,43 +47,43 @@ import java.util.Set;
 
 
 /**
- * Zone d'édition de code enrichie pour JavaFX basée sur {@link CodeArea}.
+ * Enhanced code editing area for JavaFX based on {@link CodeArea}.
  * <p>
- * Fournit la coloration syntaxique, la mise en évidence des erreurs
- * (via ANTLR pour MiniJaja), la numérotation des lignes, l'auto-complétion,
- * la fermeture automatique des paires et l'indentation intelligente.
+ * Provides syntax highlighting, error highlighting
+ * (via ANTLR for MiniJaja), line numbering, autocompletion,
+ * auto-closing of pairs and smart indentation.
  * </p>
  */
 public class MyCodeArea extends AnchorPane {
     /**
-     * Langages supportés par la zone de code.
+     * Languages supported by the code area.
      */
     public enum Language {
-        /** MiniJaja (coloration, erreurs, auto-complétion). */
+        /** MiniJaja (highlighting, errors, autocompletion). */
         MINIJAJA,
-        /** JajaCode (affichage brut sans coloration syntaxique). */
+        /** JajaCode (raw display without syntax highlighting). */
         JAJACODE
     }
 
-    /** Mots-clés pris en charge pour la coloration syntaxique MiniJaja. */
+    /** Keywords supported for MiniJaja syntax highlighting. */
     private static final String[] KEYWORDS = new String[] {
             "class", "final", "void", "main", "if", "else", "while", "return", "length"
     };
-    /** Types MiniJaja. */
+    /** MiniJaja types. */
     private static final String[] TYPES = new String[] {
             "int", "boolean"
     };
-    /** Fonctions MiniJaja exposées pour l'auto-complétion. */
+    /** MiniJaja functions exposed for autocompletion. */
     private static final String[] FUNCTIONS = new String[] {
             "write", "writeln"
     };
-    /** Littéraux booléens MiniJaja. */
+    /** MiniJaja boolean literals. */
     private static final String[] BOOLEANS = new String[] {
             "true", "false"
     };
 
     /**
-     * Modèles de recherche pour la coloration syntaxique.
+     * Regex patterns used for syntax highlighting.
      */
     private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", KEYWORDS) + ")\\b";
     private static final String TYPE_PATTERN = "\\b(" + String.join("|", TYPES) + ")\\b";
@@ -94,11 +94,11 @@ public class MyCodeArea extends AnchorPane {
     private static final String BRACE_PATTERN = "[{}]";
     private static final String BRACKET_PATTERN = "[\\[\\]]";
     private static final String SEMICOLON_PATTERN = ";";
-    /** Chaînes et commentaires (compatible multi-lignes). */
-    private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
-    private static final String COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/";
+    /** Strings and comments (supports multi-line). */
+    private static final String STRING_PATTERN = "\\\"([^\\\"\\\\\\\\]|\\\\\\\\.)*\\\"";
+    private static final String COMMENT_PATTERN = "//[^\\n]*" + "|" + "/\\\\*(.|\\\\R)*?\\\\*/";
 
-    /** Pattern global pour extraire les éléments syntaxiques. */
+    /** Global pattern to extract syntactic elements. */
     private static final Pattern PATTERN = Pattern.compile(
             "(?<KEYWORD>" + KEYWORD_PATTERN + ")"
                     + "|(?<TYPE>" + TYPE_PATTERN + ")"
@@ -111,16 +111,16 @@ public class MyCodeArea extends AnchorPane {
                     + "|(?<STRING>" + STRING_PATTERN + ")"
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")");
 
-    /** Langage courant de la zone de code. */
+    /** Current language of the code area. */
     private final Language language;
     private MiniJajaSymbolListener semanticListener;
 
 
     /**
-     * Calcule les styles de surbrillance combinés (syntaxe + erreurs).
+     * Computes combined highlight styles (syntax + errors).
      *
-     * @param text contenu complet de la zone de code
-     * @return spans de style pour appliquer aux caractères
+     * @param text full content of the code area
+     * @return style spans to apply to characters
      */
     private StyleSpans<Collection<String>> computeHighlighting(String text) {
         // Perform semantic analysis first to get all semantic information
@@ -220,10 +220,10 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Calcule la coloration syntaxique selon le langage.
+     * Computes syntax highlighting according to the active language.
      *
-     * @param text texte sur lequel appliquer la coloration
-     * @return spans de style décrivant les classes CSS à appliquer
+     * @param text text to apply highlighting on
+     * @return style spans describing CSS classes to apply
      */
     private StyleSpans<Collection<String>> computeSyntaxHighlighting(String text) {
         if (language == Language.JAJACODE) {
@@ -246,11 +246,11 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Détermine la classe de style CSS à appliquer en fonction du groupe capturé.
+     * Determines the CSS style class to apply based on the captured group.
      *
-     * @param matcher le matcher regex contenant les groupes capturés
-     * @param language le langage actif pour la coloration
-     * @return la classe CSS correspondante ou null si aucun groupe ne correspond
+     * @param matcher the regex matcher containing captured groups
+     * @param language the active language for highlighting
+     * @return the corresponding CSS class or null if no group matches
      */
     private String getStyleClass(Matcher matcher, Language language) {
         List<String> groups = List.of("KEYWORD", "TYPE", "FUNCTION", "BOOLEAN",
@@ -269,11 +269,11 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Analyse le texte pour localiser les régions en erreur (MiniJaja) et
-     * les marque avec la classe CSS "error".
+     * Analyzes the text to locate error regions (MiniJaja) and
+     * marks them with the CSS class "error".
      *
-     * @param text texte à analyser
-     * @return spans de style pour les erreurs et zones neutres
+     * @param text text to analyze
+     * @return style spans for error and neutral regions
      */
     private StyleSpans<Collection<String>> computeErrorHighlighting(String text) {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
@@ -341,9 +341,9 @@ public class MyCodeArea extends AnchorPane {
         return spansBuilder.create();
     }
 
-    /** Zone de code sous-jacente. */
+    /** Underlying code area. */
     private final CodeArea codeArea;
-    /** Popup pour l'auto-complétion. */
+    /** Popup for autocompletion. */
     private ContextMenu autoCompletionPopup;
 
     /* Stores all active breakpoints by line index */
@@ -353,42 +353,42 @@ public class MyCodeArea extends AnchorPane {
     private List<javafx.scene.control.IndexRange> errorDeclaredAfterInstructionRanges = new ArrayList<>();
 
     /**
-     * Crée une zone de code MiniJaja avec identifiant donné.
+     * Creates a MiniJaja code area with a given identifier.
      *
-     * @param id identifiant de ce composant pour JavaFX
+     * @param id identifier of this component for JavaFX
      */
     public MyCodeArea(String id) {
         this(id, "", Language.MINIJAJA);
     }
 
     /**
-     * Crée une zone de code avec le langage précisé.
+     * Creates a code area with the specified language.
      *
-     * @param id       identifiant de ce composant pour JavaFX
-     * @param language langage de la zone de code
+     * @param id       identifier of this component for JavaFX
+     * @param language language of the code area
      */
     public MyCodeArea(String id, Language language) {
         this(id, "", language);
     }
 
     /**
-     * Crée une zone de code MiniJaja avec une valeur par défaut.
+     * Creates a MiniJaja code area with a default value.
      *
-     * @param id           identifiant de ce composant pour JavaFX
-     * @param defaultValue texte initial
+     * @param id           identifier of this component for JavaFX
+     * @param defaultValue initial text
      */
     public MyCodeArea(String id, String defaultValue) {
         this(id, defaultValue, Language.MINIJAJA);
     }
 
     /**
-     * Crée une zone de code avec identifiant, texte initial et langage.
-     * Initialise la coloration, la numérotation des lignes, le scroll,
-     * l'auto-complétion, la fermeture des paires et l'indentation.
+     * Creates a code area with id, initial text and language.
+     * Initializes highlighting, line numbering, scroll, autocompletion,
+     * auto-closing pairs and indentation.
      *
-     * @param id           identifiant de ce composant pour JavaFX
-     * @param defaultValue texte initial
-     * @param language     langage de la zone de code
+     * @param id           identifier of this component for JavaFX
+     * @param defaultValue initial text
+     * @param language     language of the code area
      */
     public MyCodeArea(String id, String defaultValue, Language language) {
         this.language = language;
@@ -415,7 +415,7 @@ public class MyCodeArea extends AnchorPane {
         this.getChildren().add(scroll);
         initCaretLineHighlight();
 
-        Tooltip declTooltip = new Tooltip("Erreur : déclaration après instructions.");
+        Tooltip declTooltip = new Tooltip("Error: declaration after instructions.");
         declTooltip.getStyleClass().add("decl-tooltip");
         final javafx.beans.property.ObjectProperty<javafx.scene.control.IndexRange> current = new javafx.beans.property.SimpleObjectProperty<>(null);
 
@@ -625,10 +625,9 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Gère l'indentation intelligente à l'appui de Entrée.
-     * Ajoute l'indentation de la ligne précédente et augmente après '{'.
+     * Handles smart indentation on ENTER key. Adds the previous line's indentation and increases after '{'.
      *
-     * @param event événement clavier ENTER consommé
+     * @param event consumed ENTER key event
      */
     private void handleSmartIndentation(KeyEvent event) {
         int caretPosition = codeArea.getCaretPosition();
@@ -684,10 +683,10 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Gère la fermeture automatique des paires: (), {}, [], "".
-     * Saute la paire fermante si déjà présente.
+     * Handles auto-closing pairs: (), {}, [], "".
+     * Skips the closing pair if it is already present.
      *
-     * @param event événement clavier typé
+     * @param event typed key event
      */
     private void handleAutoClose(KeyEvent event) {
         String character = event.getCharacter();
@@ -728,8 +727,8 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Affiche un menu d'auto-complétion près du caret en fonction du préfixe
-     * courant. CTRL+Espace pour basculer.
+     * Shows an autocompletion menu near the caret based on the current prefix.
+     * CTRL+Space toggles it.
      */
     private void showAutoCompletion() {
         String text = codeArea.getText();
@@ -842,10 +841,10 @@ public class MyCodeArea extends AnchorPane {
 
 
     /**
-     * Retourne les suggestions filtrées par préfixe pour le langage actif.
+     * Returns suggestions filtered by prefix for the active language.
      *
-     * @param prefix préfixe tapé avant le caret
-     * @return liste de suggestions correspondantes
+     * @param prefix prefix typed before the caret
+     * @return list of matching suggestions
      */
     private List<String> getSuggestions(String prefix) {
         // We'll build ordered suggestions: methods first, then scoped variables, then base keywords/types/functions
@@ -853,8 +852,7 @@ public class MyCodeArea extends AnchorPane {
         if (language == Language.MINIJAJA) {
             if (prefix != null) {
                 String text = codeArea.getText();
-                int caretPosition = codeArea.getCaretPosition();
-                int start = caretPosition;
+                int start = codeArea.getCaretPosition();
                 while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
                     start--;
                 }
@@ -889,12 +887,11 @@ public class MyCodeArea extends AnchorPane {
             }
 
             // 2) variables (scope-aware, ordered)
-            boolean addVariables = false;
+            boolean addVariables;
             if (semanticListener != null && prefix != null) {
                 // Determine whether we are in a declaration context (after a type)
                 String text = codeArea.getText();
-                int caretPosition = codeArea.getCaretPosition();
-                int start = caretPosition;
+                int start = codeArea.getCaretPosition();
                 while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
                     start--;
                 }
@@ -948,25 +945,25 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Retourne le contenu de la zone de code.
+     * Returns the content of the code area.
      *
-     * @return le code écrit
+     * @return the written code
      */
     public String getText() {
         return codeArea.getText();
     }
 
     /**
-     * Charge du texte dans la zone de code.
+     * Loads text into the code area.
      *
-     * @param string texte à charger
+     * @param string text to load
      */
     public void loadText(String string) {
         codeArea.replaceText(string);
     }
 
     /**
-     * Désactive l'édition dans la zone de code.
+     * Disables editing in the code area.
      */
     public void disable() {
         codeArea.setEditable(false);
@@ -974,10 +971,10 @@ public class MyCodeArea extends AnchorPane {
 
     // START highlight
     /**
-     * Met en évidence une ligne avec la classe CSS "current-line".
-     * Utilisée durant le débogage pour indiquer la ligne d'exécution courante.
+     * Highlights a line with the CSS class "current-line".
+     * Used during debugging to indicate the current execution line.
      *
-     * @param lineIndex index de ligne (base 0)
+     * @param lineIndex line index (zero-based)
      */
     public void highlightLine(int lineIndex) {
         if (lineIndex < 0)

@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception de base pour les erreurs d'exécution du code JajaCode
+ * Base class for runtime exceptions in JajaCode.
  */
 public class JajaCodeRuntimeException extends RuntimeException {
 

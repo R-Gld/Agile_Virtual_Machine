@@ -6,22 +6,22 @@ import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.MachineContext;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code return}.
+ * Axiome representing the JajaCode instruction {@code return}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [return] : &lt;&lt;w ,a1,cst,*&gt;.m,a&gt; ⊢ return –» &lt;m, a1&gt;
  * </pre>
  *
- * <p>Cette instruction effectue un retour de méthode :</p>
+ * <p>This instruction performs a method return:</p>
  * <ol>
- *   <li>Dépile le quad contenant l'adresse de retour</li>
- *   <li>Restaure le contexte d'exécution précédent (pop le contexte de la méthode)</li>
- *   <li>Saute à l'adresse de retour</li>
+ *   <li>Pop the quad containing the return address</li>
+ *   <li>Restore the previous execution context (pop the method context)</li>
+ *   <li>Jump to the return address</li>
  * </ol>
  *
- * <p><b>Format du quad de retour :</b> Le quad dépilé doit avoir une sorte {@code cst}
- * et contenir l'adresse de retour. L'identifiant suit le format {@code %RET_methodName%}.</p>
+ * <p><b>Return quad format:</b> The popped quad must have kind {@code cst}
+ * and contain the return address. The identifier uses the format {@code %RET_methodName%}.</p>
  *
  * @see JajaAxiome
  * @see InvokeAxiome
@@ -38,49 +38,51 @@ public class ReturnAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String arg) {
-        logger.debug("\t\t[DEBUG] axiomeReturn appelé");
+        logger.debug("\t\t[DEBUG] axiomeReturn called");
 
-        // Dépiler le quad de retour
+        logger.debug("\t\t[DEBUG] Pop return quad");
+
+        // Pop the return quad
         var returnQuad = ctx.getStacks().pop();
 
         if (returnQuad == null) {
-            logger.debug("Erreur dans axiomeReturn : pile vide.");
+            logger.debug("Error in axiomeReturn: empty stack.");
             ctx.stop();
             return;
         }
 
-        // Vérifier que c'est bien un quad de retour (cst avec une adresse)
+        // Check that this is indeed a return quad (kind = cst with an address)
         if (!"cst".equals(returnQuad.object)) {
-            logger.debug("Erreur dans axiomeReturn : le quad dépilé n'est pas un quad de retour : {}", returnQuad);
+            logger.debug("Error in axiomeReturn: popped quad is not a return quad: {}", returnQuad);
             ctx.stop();
             return;
         }
 
         if (!(returnQuad.value instanceof Integer)) {
-            logger.debug("Erreur dans axiomeReturn : l'adresse de retour n'est pas un entier : {}", returnQuad.value);
+            logger.debug("Error in axiomeReturn: return address is not an integer: {}", returnQuad.value);
             ctx.stop();
             return;
         }
 
         int returnAddress = (Integer) returnQuad.value;
 
-        // Récupérer le nom de la méthode depuis le quad de retour
+        // Retrieve method name from the return quad
         // Format: %RET_methodName%
         String returnIdent = returnQuad.ident;
         String methodName;
         if (returnIdent.startsWith("%RET_") && returnIdent.endsWith("%")) {
             methodName = returnIdent.substring(5, returnIdent.length() - 1);
         } else {
-            // Compatibilité avec l'ancien format
+            // Backwards compatibility with older format
             methodName = returnIdent;
         }
 
-        logger.debug("\t\tAxiome RETURN exécuté: retour à l'adresse {} (sortie de '{}')", returnAddress, methodName);
+        logger.debug("\t\tAxiome RETURN executed: returning to address {} (exit from '{}')", returnAddress, methodName);
 
-        // Pop le contexte de la méthode courante
+        // Pop the current method context
         ctx.getStacks().popContext(methodName);
 
-        // Restaurer le PC à l'adresse de retour
+        // Restore the PC to the return address
         ctx.setInstructionCounter(returnAddress);
     }
 }
