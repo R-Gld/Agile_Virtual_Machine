@@ -147,8 +147,10 @@ public class NewAxiome implements JajaAxiome {
                     ctx.getStacks().declareVarJJC(scopedIdent, valeur, type);
                     break;
                 case "cst":
-                case "meth":
                     ctx.getStacks().declareCstJJC(scopedIdent, valeur, type);
+                    break;
+                case "meth":
+                    ctx.getStacks().declareMeth(scopedIdent, valeur, type);
                     break;
                 default:
                     throw new JajaCodeRuntimeException("Sorte inconnue: " + kind, JajaCodeInstr.NEW.toString(), ctx.getInstructionCounter());

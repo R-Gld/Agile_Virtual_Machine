@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeDebug;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
 import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
@@ -83,11 +84,14 @@ public class App extends Application {
      * JAJACODE → jjcCodeArea
      */
     private enum DebugSource {
-        MINIJAJA,
-        JAJACODE
+        MINIJAJA, JAJACODE
     }
 
     private DebugSource debugSource = DebugSource.MINIJAJA;
+
+    private JajaCodeDebugHandler debugHandler;
+    private TableView<JajaCodeDebug.VariableInfo> stackTable;
+    private TableView<JajaCodeDebug.HeapInfo> heapTable;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r);
@@ -162,16 +166,24 @@ public class App extends Application {
 
         SplitPane editorSplitPane = new SplitPane(miniWrapper, jajaWrapper);
 
+        // Memory View
+        SplitPane memoryView = buildMemoryView();
+
+        // Horizontal split: Editors | Memory View
+        SplitPane contentSplitPane = new SplitPane(editorSplitPane, memoryView);
+        contentSplitPane.setDividerPositions(0.7);
+
         // Console
         this.console = new ConsoleOutput("console");
         this.console.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 0 0;");
-        root.setBottom(this.console);
 
         GuiAppender.setGuiConsole(this.console);
         logger.info("GUI application started successfully");
-        SplitPane mainSplitPane = new SplitPane(editorSplitPane, this.console);
+
+        // Vertical split: Content | Console
+        SplitPane mainSplitPane = new SplitPane(contentSplitPane, this.console);
         mainSplitPane.setOrientation(Orientation.VERTICAL);
-        mainSplitPane.setDividerPositions(0.7);
+        mainSplitPane.setDividerPositions(0.75);
 
         root.setCenter(mainSplitPane);
 
@@ -179,11 +191,10 @@ public class App extends Application {
         root.setOnDragOver(event -> {
             if (event.getGestureSource() != root && event.getDragboard().hasFiles()) {
                 // Accept the drop only if one of the files is a .mjj or .jjc file
-                boolean canAccept = event.getDragboard().getFiles().stream()
-                        .anyMatch(file -> {
-                            String name = file.getName().toLowerCase();
-                            return name.endsWith(".mjj") || name.endsWith(".jjc");
-                        });
+                boolean canAccept = event.getDragboard().getFiles().stream().anyMatch(file -> {
+                    String name = file.getName().toLowerCase();
+                    return name.endsWith(".mjj") || name.endsWith(".jjc");
+                });
                 if (canAccept) {
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
                 }
@@ -196,11 +207,7 @@ public class App extends Application {
             boolean success = false;
             if (db.hasFiles()) {
                 // Find the first valid file and load it.
-                db.getFiles().stream()
-                        .filter(file -> file.getName().toLowerCase().endsWith(".mjj") ||
-                                       file.getName().toLowerCase().endsWith(".jjc"))
-                        .findFirst()
-                        .ifPresent(this::loadFileContent);
+                db.getFiles().stream().filter(file -> file.getName().toLowerCase().endsWith(".mjj") || file.getName().toLowerCase().endsWith(".jjc")).findFirst().ifPresent(this::loadFileContent);
                 success = true;
             }
             event.setDropCompleted(success);
@@ -220,7 +227,7 @@ public class App extends Application {
 
     /**
      * Stop the application.
-     * 
+     *
      * @throws Exception if an error occurs
      */
     @Override
@@ -339,8 +346,7 @@ public class App extends Application {
         hbox.setId("debug-toolbar");
 
         Button buildButton = new Button("");
-        buildButton.setGraphic(
-                new ImageView(Objects.requireNonNull(getClass().getResource("/icons/build.png")).toExternalForm()));
+        buildButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/build.png")).toExternalForm()));
         buildButton.setOnAction(e -> compile());
         buildButton.setTooltip(new Tooltip("Compile file"));
         hbox.getChildren().add(buildButton);
@@ -353,8 +359,7 @@ public class App extends Application {
 
         /* Execute button */
         Button runButton = new Button("");
-        runButton.setGraphic(new ImageView(
-                Objects.requireNonNull(getClass().getResource("/icons/threadRunning.png")).toExternalForm()));
+        runButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/threadRunning.png")).toExternalForm()));
         runButton.setTooltip(new Tooltip("Run"));
         runButton.setOnAction(e -> run());
 
@@ -371,33 +376,28 @@ public class App extends Application {
         continueButton = new Button();
 
         debugButton.setTooltip(new Tooltip("Start debug on current file"));
-        ImageView debugIcon = new ImageView(new Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/icons/bug.png")), 20, 20, true, true));
+        ImageView debugIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/bug.png")), 20, 20, true, true));
         debugButton.setGraphic(debugIcon);
         hbox.getChildren().add(debugButton);
         debugButton.setOnAction(e -> startDebugEnhanced());
 
         stepButton.setTooltip(new Tooltip("Step to next line"));
         stepButton.setDisable(true);
-        ImageView stepIcon = new ImageView(new Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/icons/next.png")), 20, 20, true, true));
+        ImageView stepIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/next.png")), 20, 20, true, true));
         stepButton.setGraphic(stepIcon);
         hbox.getChildren().add(stepButton);
         stepButton.setOnAction(e -> stepDebugEnhanced());
 
         continueButton.setTooltip(new Tooltip("Continue to next breakpoint"));
         continueButton.setDisable(true);
-        ImageView continueIcon = new ImageView(new Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/icons/fast-forward.png")), 20, 20, true,
-                true));
+        ImageView continueIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/fast-forward.png")), 20, 20, true, true));
         continueButton.setGraphic(continueIcon);
         hbox.getChildren().add(continueButton);
         continueButton.setOnAction(e -> continueDebug());
 
         stopButton.setTooltip(new Tooltip("Stop debug mode"));
         stopButton.setDisable(true);
-        ImageView stopIcon = new ImageView(new Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/icons/stop.png")), 20, 20, true, true));
+        ImageView stopIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/stop.png")), 20, 20, true, true));
         stopButton.setGraphic(stopIcon);
         hbox.getChildren().add(stopButton);
         stopButton.setOnAction(e -> stopDebugWithReset());
@@ -411,9 +411,7 @@ public class App extends Application {
     private void loadFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
-                new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"), new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showOpenDialog(appStage);
         loadFileContent(file);
     }
@@ -471,12 +469,9 @@ public class App extends Application {
      */
     private void saveFile() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"),
-                new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"), new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
         File file = fileChooser.showSaveDialog(appStage);
-        if (file == null)
-            return;
+        if (file == null) return;
 
         try {
             FileWriter fileWriter = new FileWriter(file);
@@ -564,13 +559,9 @@ public class App extends Application {
                         String[] lines = jjcText.split("\\n");
                         StringBuilder result = new StringBuilder();
                         for (int i = 0; i < lines.length; i++) {
-                            result.append(i + 1)
-                                    .append(" ")
-                                    .append(lines[i])
-                                    .append("\n");
+                            result.append(i + 1).append(" ").append(lines[i]).append("\n");
                         }
-                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(),
-                                new DiagnosticCollector());
+                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
                         jjcInterpreter.run();
                     }
                 } catch (Exception e) {
@@ -605,42 +596,26 @@ public class App extends Application {
         executor.submit(task);
     }
 
-    // DEBUG (Start / Step / Stop) pour MiniJaja et JajaCode
+    // DEBUG (Start / Step / Stop) pour JajaCode avec JajaCodeDebugHandler
 
     /**
      * Continue button jumps from breakpoint to breakpoint.
-     * If no more breakpoints exist after current line, stops execution.
      */
     private void continueDebug() {
-        if (!debugMode)
-            return;
+        if (!debugMode || debugHandler == null) return;
 
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
+        debugBreakpoints.clear();
+        debugBreakpoints.addAll(jjcCodeArea.getBreakpoints());
 
-        // Find next breakpoint after current line
-        int nextBreakpoint = findNextBreakpointAfter(debugCurrentLine);
+        debugHandler.continueDebug(debugBreakpoints);
 
-        if (nextBreakpoint >= 0) {
-            // Jump to next breakpoint
-            debugCurrentLine = nextBreakpoint;
-            if (console != null) {
-                String text = currentArea.getText();
-                String[] lines = text.split("\\R", -1);
-                console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1) +
-                        ": " + lines[debugCurrentLine]);
-            }
-            currentArea.highlightLine(debugCurrentLine);
-        } else {
-            // No more breakpoints, stop execution
-            if (console != null) {
-                console.printMessage("[DEBUG] No more breakpoints. Execution stopped.");
-            }
+        if (!debugHandler.isRunning()) {
             stopDebugWithReset();
         }
     }
 
     /**
-     * Stops simple debug mode.
+     * Stops debug mode.
      */
     private void stopDebug() {
         if (!debugMode) {
@@ -648,6 +623,12 @@ public class App extends Application {
         }
         debugMode = false;
         debugCurrentLine = -1;
+
+        if (debugHandler != null) {
+            debugHandler.stop();
+            debugHandler = null;
+        }
+
         if (console != null) {
             console.printMessage("[DEBUG] Debug mode stopped.");
         }
@@ -657,7 +638,7 @@ public class App extends Application {
     }
 
     /**
-     * Starts debug mode with improved step behavior using breakpoints.
+     * Starts debug mode - compiles MiniJaja if needed and initializes JajaCode debugger.
      */
     private void startDebugEnhanced() {
         if (debugMode) {
@@ -665,143 +646,63 @@ public class App extends Application {
         }
 
         String choice = fileToRun.getValue();
-        if ("Jajacode".equals(choice)) {
-            debugSource = DebugSource.JAJACODE;
+        String codeToDebug;
+
+        // If MiniJaja is selected, compile it first
+        if ("MiniJaja".equals(choice)) {
+            try {
+                Compiler compiler = new Compiler(mjjCodeArea.getText(), Compiler.Destination.STRING, null);
+                codeToDebug = compiler.compileToString();
+                jjcCodeArea.loadText(codeToDebug);
+                if (console != null) {
+                    console.printMessage("[DEBUG] Compiled MiniJaja to JajaCode for debugging.");
+                }
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Compilation Error");
+                alert.setContentText("Cannot debug: Compilation failed.\n" + e.getMessage());
+                alert.showAndWait();
+                return;
+            }
         } else {
-            debugSource = DebugSource.MINIJAJA;
+            codeToDebug = jjcCodeArea.getText();
+        }
+
+        // Prepare JajaCode with line numbers (interpreter expects "1 init" format)
+        String[] lines = codeToDebug.split("\\n");
+        StringBuilder numberedCode = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            numberedCode.append(i + 1).append(" ").append(lines[i]).append("\n");
+        }
+
+        // Initialize handler with tables
+        debugHandler = new JajaCodeDebugHandler(console, jjcCodeArea, stackTable, heapTable);
+        debugHandler.start(numberedCode.toString());
+
+        if (!debugHandler.isRunning()) {
+            return; // Failed to start
         }
 
         debugMode = true;
-        debugCurrentLine = -1;
+        debugSource = DebugSource.JAJACODE; // Always debug JajaCode
         stepButton.setDisable(false);
         stopButton.setDisable(false);
         continueButton.setDisable(false);
-
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        debugBreakpoints.clear();
-        debugBreakpoints.addAll(currentArea.getBreakpoints());
-
-        if (console != null) {
-            console.printMessage("[DEBUG] Debug mode started on " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") + ".");
-        }
-
-        // Conditional start behavior based on breakpoints
-        String text = currentArea.getText();
-        String[] lines = text.split("\\R", -1);
-
-        if (debugBreakpoints.isEmpty()) {
-            // No breakpoints: start at the first executable line
-            int firstExecutable = findNextExecutableLine(lines, -1);
-            if (firstExecutable < 0) {
-                if (console != null) {
-                    console.printMessage("[DEBUG] No executable lines.");
-                }
-                stopDebugWithReset();
-                return;
-            }
-            debugCurrentLine = firstExecutable;
-            if (console != null) {
-                console.printMessage("[DEBUG] " +
-                        (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
-                        " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
-            }
-            currentArea.highlightLine(debugCurrentLine);
-        } else {
-            // Breakpoints exist: start at the first breakpoint
-            int firstBreakpoint = findNextBreakpointAfter(-1);
-            if (firstBreakpoint < 0) {
-                if (console != null) {
-                    console.printMessage("[DEBUG] No valid breakpoints found.");
-                }
-                stopDebugWithReset();
-                return;
-            }
-            debugCurrentLine = firstBreakpoint;
-            if (console != null) {
-                console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1));
-            }
-            currentArea.highlightLine(debugCurrentLine);
-        }
     }
 
     /**
-     * Steps in debug mode line by line.
-     * After the initial jump to first breakpoint (if any), always go line by line.
+     * Steps through JajaCode execution one instruction at a time.
      */
     private void stepDebugEnhanced() {
-        if (!debugMode) {
+        if (!debugMode || debugHandler == null) {
             return;
         }
 
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        String text = currentArea.getText();
-        String[] lines = text.split("\\R", -1);
+        debugHandler.step();
 
-        if (lines.length == 0) {
-            if (console != null) {
-                console.printMessage("[DEBUG] No lines to debug.");
-            }
+        if (!debugHandler.isRunning()) {
             stopDebugWithReset();
-            return;
         }
-
-        // Always go line by line, ignoring breakpoints
-        int nextLine = findNextExecutableLine(lines, debugCurrentLine);
-        if (nextLine < 0) {
-            if (console != null) {
-                console.printMessage("[DEBUG] End of file reached.");
-            }
-            stopDebugWithReset();
-            return;
-        }
-        debugCurrentLine = nextLine;
-
-        if (debugCurrentLine < 0 || debugCurrentLine >= lines.length) {
-            if (console != null) {
-                console.printMessage("[DEBUG] End of file reached.");
-            }
-            stopDebugWithReset();
-            return;
-        }
-
-        if (console != null) {
-            console.printMessage("[DEBUG] " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
-                    " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
-        }
-
-        currentArea.highlightLine(debugCurrentLine);
-    }
-
-    /**
-     * Finds the next non-empty line after a given index.
-     */
-    private int findNextExecutableLine(String[] lines, int fromIndex) {
-        int index = fromIndex + 1;
-        while (index < lines.length) {
-            if (!lines[index].trim().isEmpty()) {
-                return index;
-            }
-            index++;
-        }
-        return -1;
-    }
-
-    /**
-     * Finds the next breakpoint strictly after the given line index.
-     */
-    private int findNextBreakpointAfter(int lineIndex) {
-        if (debugBreakpoints.isEmpty()) {
-            return -1;
-        }
-        int candidate = Integer.MAX_VALUE;
-        for (int bp : debugBreakpoints) {
-            if (bp > lineIndex && bp < candidate) {
-                candidate = bp;
-            }
-        }
-        return (candidate == Integer.MAX_VALUE) ? -1 : candidate;
     }
 
     /**
@@ -809,8 +710,72 @@ public class App extends Application {
      */
     private void stopDebugWithReset() {
         stopDebug();
-        MyCodeArea currentArea = (debugSource == DebugSource.MINIJAJA) ? mjjCodeArea : jjcCodeArea;
-        currentArea.highlightLine(0);
+        jjcCodeArea.highlightLine(-1);
+    }
+
+    /**
+     * Builds the memory view panel with Stack and Heap tables.
+     */
+    private SplitPane buildMemoryView() {
+        // Stack Table
+        stackTable = new TableView<>();
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> idCol = new TableColumn<>("Identifier");
+        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().identifier()));
+        idCol.setPrefWidth(120);
+
+        TableColumn<JajaCodeDebug.VariableInfo, Object> valCol = new TableColumn<>("Value");
+        valCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().value()));
+        valCol.setPrefWidth(80);
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> kindCol = new TableColumn<>("Kind");
+        kindCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().kind()));
+        kindCol.setPrefWidth(60);
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().type())));
+        typeCol.setPrefWidth(70);
+
+        stackTable.getColumns().addAll(idCol, valCol, kindCol, typeCol);
+        stackTable.setPlaceholder(new Label("Stack is empty - Start debugging to see memory"));
+
+        Label stackLabel = new Label("Stack");
+        stackLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5;");
+        VBox stackBox = new VBox(stackLabel, stackTable);
+        VBox.setVgrow(stackTable, Priority.ALWAYS);
+
+        // Heap Table
+        heapTable = new TableView<>();
+
+        TableColumn<JajaCodeDebug.HeapInfo, String> heapIdCol = new TableColumn<>("Array");
+        heapIdCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().identifier()));
+        heapIdCol.setPrefWidth(100);
+
+        TableColumn<JajaCodeDebug.HeapInfo, Integer> addrCol = new TableColumn<>("Addr");
+        addrCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().baseAddress()));
+        addrCol.setPrefWidth(50);
+
+        TableColumn<JajaCodeDebug.HeapInfo, Integer> sizeCol = new TableColumn<>("Size");
+        sizeCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().size()));
+        sizeCol.setPrefWidth(50);
+
+        TableColumn<JajaCodeDebug.HeapInfo, String> elementsCol = new TableColumn<>("Elements");
+        elementsCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().elements().toString()));
+        elementsCol.setPrefWidth(150);
+
+        heapTable.getColumns().addAll(heapIdCol, addrCol, sizeCol, elementsCol);
+        heapTable.setPlaceholder(new Label("Heap is empty"));
+
+        Label heapLabel = new Label("Heap (Arrays)");
+        heapLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5;");
+        VBox heapBox = new VBox(heapLabel, heapTable);
+        VBox.setVgrow(heapTable, Priority.ALWAYS);
+
+        SplitPane memoryPane = new SplitPane(stackBox, heapBox);
+        memoryPane.setOrientation(Orientation.VERTICAL);
+        memoryPane.setDividerPositions(0.7);
+
+        return memoryPane;
     }
 
     public static void main(String[] args) {
@@ -818,3 +783,4 @@ public class App extends Application {
     }
 
 }
+
