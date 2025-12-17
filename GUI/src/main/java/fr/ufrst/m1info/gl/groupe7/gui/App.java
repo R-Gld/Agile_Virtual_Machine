@@ -114,8 +114,6 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         appStage = stage;
-        mjjDebugWalker = new Debug();
-        mjjPauseHandler = new DebugPauseHandler(mjjDebugWalker, memoryList);
 
         // Structure de l'interface :
         BorderPane root = new BorderPane();
@@ -265,6 +263,10 @@ public class App extends Application {
 
         stage.setScene(scene);
         stage.show();
+
+        // setup debug mjj
+        mjjDebugWalker = new Debug();
+        mjjPauseHandler = new DebugPauseHandler(mjjDebugWalker, memoryList);
     }
 
     /**

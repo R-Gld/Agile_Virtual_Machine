@@ -1,8 +1,18 @@
 package fr.ufrst.m1info.gl.groupe7.gui;
 
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import javafx.beans.property.*;
 
 public class StackModel {
+
+    public StackModel(Stacks.Quad quad, int address) {
+        setIdent(quad.ident);
+        setType(quad.type.toString());
+        setAddress(address);
+        setValue(quad.value);
+        setObject(quad.object);
+    }
+
     // Address
     private IntegerProperty address;
     public void setAddress(int address) {addressProperty().set(address);}
@@ -38,6 +48,8 @@ public class StackModel {
 
     // Object
     private StringProperty object;
+    public void setObject(String object) {this.objectProperty().set(object);}
+    public String getObject() {return objectProperty().get();}
     public StringProperty  objectProperty() {
         if (object == null) {
             object = new SimpleStringProperty(this, "object");
