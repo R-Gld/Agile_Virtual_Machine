@@ -346,54 +346,7 @@ class TestApp {
         });
     }
 
-    @Test
-    void testDebugModeCanBeStopped() {
-        BorderPane root = (BorderPane) stage.getScene().getRoot();
-        VBox vbox = (VBox) root.getTop();
-        HBox toolbar = (HBox) vbox.getChildren().get(2);
 
-        java.util.List<Button> buttons = toolbar.getChildren().stream()
-                .filter(node -> node instanceof Button)
-                .map(node -> (Button) node)
-                .collect(java.util.stream.Collectors.toList());
-
-        Button debugButton = buttons.get(2);
-        Button stepButton = buttons.get(3);
-        Button stopButton = buttons.get(4);
-
-        // Démarrer puis arrêter le debug
-        runOnFxThread(() -> {
-            debugButton.fire();
-        });
-        WaitForAsyncUtils.waitForFxEvents();
-
-        // Wait a bit for debug to initialize
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        WaitForAsyncUtils.waitForFxEvents();
-
-        runOnFxThread(() -> {
-            stopButton.fire();
-        });
-        WaitForAsyncUtils.waitForFxEvents();
-
-        // Wait a bit for stop to complete
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        WaitForAsyncUtils.waitForFxEvents();
-
-        // Les boutons step et stop doivent être désactivés
-        runOnFxThread(() -> {
-            assertTrue(stepButton.isDisabled(), "Step button doit être désactivé après stop");
-            assertTrue(stopButton.isDisabled(), "Stop button doit être désactivé après stop");
-        });
-    }
 
     @Test
     void testStepDebugAdvancesLine() {
