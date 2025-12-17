@@ -31,7 +31,7 @@
         </dependency>
         <dependency>
             <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
-            <artifactId>Compiler</artifactId>
+            <artifactId>CLI</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

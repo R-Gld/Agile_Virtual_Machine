@@ -204,7 +204,7 @@
         <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
-        <module>Compiler</module>
+        <module>CLI</module>
         <module>ASTExporter</module>
         <module>CoverageReport</module>
         <module>Rapport</module>

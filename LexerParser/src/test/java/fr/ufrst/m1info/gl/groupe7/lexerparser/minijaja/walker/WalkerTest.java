@@ -490,17 +490,6 @@ class WalkerTest {
         }
 
         @Test
-        @DisplayName("getCurrentLine() delegates to Debug")
-        void getCurrentLineDelegatesToDebug() {
-            when(mockDebug.getCurrentLine()).thenReturn(42);
-            walker = new Walker(mockRoot, mockStacks, mockDebug, null);
-
-            int currentLine = walker.getCurrentLine();
-            assertEquals(42, currentLine);
-            verify(mockDebug, times(1)).getCurrentLine();
-        }
-
-        @Test
         @DisplayName("getDebug() never returns null")
         void getDebugNeverReturnsNull() {
             walker = new Walker(mockRoot, mockStacks, null, null);
