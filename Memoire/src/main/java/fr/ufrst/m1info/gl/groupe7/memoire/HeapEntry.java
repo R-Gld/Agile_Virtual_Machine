@@ -43,12 +43,12 @@ public class HeapEntry {
     // -------------------------------------------------------------------------
     public void incrementRef() {
         refCount++;
-        logger.error("[GC] Increment refCount of {} -> {}", id, refCount);
+        logger.debug("[GC] Increment refCount of {} -> {}", id, refCount);
     }
 
     public void decrementRef() {
         refCount--;
-        logger.error("[GC] Decrement refCount of {} -> {}", id, refCount);
+        logger.debug("[GC] Decrement refCount of {} -> {}", id, refCount);
     }
 
     public int getRefCount() {
