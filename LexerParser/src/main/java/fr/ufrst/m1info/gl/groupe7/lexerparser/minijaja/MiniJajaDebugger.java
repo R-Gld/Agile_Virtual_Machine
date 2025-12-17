@@ -22,7 +22,7 @@ public class MiniJajaDebugger implements Runnable {
     
     private final Stacks stacks;
     private final Debug debug;
-    private String input;
+    private final String input;
     private DiagnosticCollector collector;
     private final HandlePauseCallback callback;
 

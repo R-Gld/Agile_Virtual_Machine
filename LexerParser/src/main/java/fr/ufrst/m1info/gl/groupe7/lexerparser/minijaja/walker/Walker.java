@@ -102,7 +102,6 @@ public class Walker {
         // Check debug breakpoints / step before executing
         if (debug.isEnabled()) {
             boolean shouldContinue = debug.beforeNode(lineCounter, node, stack, callback);
-            System.out.println(shouldContinue);
             if (!shouldContinue) {
                 stopped = true;
                 return;

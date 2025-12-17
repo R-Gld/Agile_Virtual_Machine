@@ -744,51 +744,44 @@ public class App extends Application {
         debugBreakpoints.clear();
         debugBreakpoints.addAll(currentArea.getBreakpoints());
 
-        if (console != null) {
-            console.printMessage("[DEBUG] Debug mode started on " +
-                    (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") + ".");
-        }
-
         // Conditional start behavior based on breakpoints
         String text = currentArea.getText();
         String[] lines = text.split("\\R", -1);
 
         if (debugBreakpoints.isEmpty()) {
             // No breakpoints: start at the first executable line
-            if (debugSource == DebugSource.MINIJAJA) {
-                mjjDebugWalker.addBreakPoint(1);
-            }
+
             int firstExecutable = findNextExecutableLine(lines, -1);
             if (firstExecutable < 0) {
-                if (console != null) {
-                    console.printMessage("[DEBUG] No executable lines.");
-                }
+                logger.debug("No executable lines.");
                 stopDebugWithReset();
                 return;
             }
             debugCurrentLine = firstExecutable;
-            if (console != null) {
-                console.printMessage("[DEBUG] " +
-                        (debugSource == DebugSource.MINIJAJA ? "MiniJaja" : "JajaCode") +
-                        " line " + (debugCurrentLine + 1) + ": " + lines[debugCurrentLine]);
+            System.out.println(debugCurrentLine);
+            if (debugSource == DebugSource.MINIJAJA) {
+                mjjDebugWalker.addBreakPoint(debugCurrentLine+1);
             }
-            currentArea.highlightLine(debugCurrentLine);
         } else {
             // Breakpoints exist: start at the first breakpoint
             int firstBreakpoint = findNextBreakpointAfter(-1);
             if (firstBreakpoint < 0) {
-                if (console != null) {
-                    console.printMessage("[DEBUG] No valid breakpoints found.");
-                }
+                logger.debug("No valid breakpoints found.");
                 stopDebugWithReset();
                 return;
             }
             debugCurrentLine = firstBreakpoint;
-            if (console != null) {
-                console.printMessage("[DEBUG] Hit breakpoint at line " + (debugCurrentLine + 1));
+            if (debugSource == DebugSource.MINIJAJA) {
+                mjjDebugWalker.addBreakPoint(firstBreakpoint+1);
+                for (int breakPoint : debugBreakpoints ) {
+                    if (breakPoint+1 != firstBreakpoint) {
+                        mjjDebugWalker.addBreakPoint(breakPoint+1);
+                    }
+                }
             }
-            currentArea.highlightLine(debugCurrentLine);
         }
+        currentArea.highlightLine(debugCurrentLine);
+
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
@@ -864,7 +857,7 @@ public class App extends Application {
         }
         debugCurrentLine = nextLine;
 
-        if (debugCurrentLine < 0 || debugCurrentLine >= lines.length) {
+        if (debugCurrentLine >= lines.length) {
             if (console != null) {
                 console.printMessage("[DEBUG] End of file reached.");
             }
