@@ -58,8 +58,6 @@ public class App extends Application {
     private ChoiceBox<String> fileToRun;
     private ToggleButton darkMode;
 
-    // Debug Buttons
-    private Button debugButton;
     private Button stepButton;
     private Button stopButton;
     private Button continueButton;
@@ -368,7 +366,8 @@ public class App extends Application {
          * Simple debug control bar with icons only: Start Debug / Step / Stop
          */
 
-        debugButton = new Button();
+        // Debug Buttons
+        Button debugButton = new Button();
         stepButton = new Button();
         stopButton = new Button();
         continueButton = new Button();
