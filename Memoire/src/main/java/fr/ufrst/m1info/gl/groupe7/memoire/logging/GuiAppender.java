@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Custom Logback appender that redirects log messages to a JavaFX ConsoleOutput widget.
  * This appender is designed to work with the GUI module without creating a circular dependency.
- *
+ * <p>
  * Thread-safe: Uses JavaFX Platform.runLater() for GUI updates.
  * Headless-friendly: Gracefully handles absence of GUI (CLI mode).
  */

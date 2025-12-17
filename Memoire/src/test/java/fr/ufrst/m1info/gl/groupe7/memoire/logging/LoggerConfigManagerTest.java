@@ -83,7 +83,7 @@ class LoggerConfigManagerTest {
         Map<String, Level> loggers = LoggerConfigManager.getAllLoggers();
 
         assertNotNull(loggers);
-        assertTrue(loggers.size() > 0, "Should have at least root logger");
+        assertTrue(!loggers.isEmpty(), "Should have at least root logger");
     }
 
     @Test
@@ -93,7 +93,7 @@ class LoggerConfigManagerTest {
         Map<String, Level> loggers = LoggerConfigManager.getAllLoggers();
 
         // Root logger should be included
-        assertTrue(loggers.containsKey("ROOT") || loggers.values().contains(Level.INFO));
+        assertTrue(loggers.containsKey("ROOT") || loggers.containsValue(Level.INFO));
     }
 
     @Test

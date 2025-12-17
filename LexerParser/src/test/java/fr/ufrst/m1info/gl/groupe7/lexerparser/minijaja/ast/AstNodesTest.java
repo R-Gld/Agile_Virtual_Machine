@@ -733,7 +733,7 @@ class AstNodesTest {
         
         assertNotNull(children);
         int count = 0;
-        for (AstNode child : children) {
+        for (AstNode ignored : children) {
             count++;
         }
         assertEquals(0, count);

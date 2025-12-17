@@ -476,7 +476,7 @@ public class MiniJajaCompilerVisitor {
      * Compiles an increment instruction according to the [cincrément] and [cincrémentT] rules:
      * - [cincrément]: n ⊢ incrément(ident(i)) ⇒ {jcnil ⊕D push(1) ⊕D inc(i), 2}
      * - [cincrémentT]: n ⊢ incrément(tab(ident(i), e) ⇒ {pe ⊕D push(1) ⊕D ainc(i), ne + 2}
-     *
+     * <p>
      * Examples:
      * - x++; -> push(1), inc(x@global)
      * - arr[5]++; -> push(5), push(1), ainc(arr@global)

@@ -230,7 +230,7 @@ public class SiNodeTest {
         List<AstNode> childList = new ArrayList<>();
         children.forEach(childList::add);
         assertEquals(1, childList.size());
-        assertEquals(mockChild, childList.get(0));
+        assertEquals(mockChild, childList.getFirst());
     }
 
     // ========================================
@@ -283,7 +283,7 @@ public class SiNodeTest {
         List<AstNode> childList = new ArrayList<>();
         children.forEach(childList::add);
         assertEquals(1, childList.size());
-        assertEquals(mockElseChild, childList.get(0));
+        assertEquals(mockElseChild, childList.getFirst());
     }
 
     // ========================================
@@ -490,7 +490,7 @@ public class SiNodeTest {
         
         List<AstNode> childList = new ArrayList<>();
         children.forEach(childList::add);
-        assertTrue(childList.size() > 0);
+        assertTrue(!childList.isEmpty());
     }
 
     @Test
@@ -510,7 +510,7 @@ public class SiNodeTest {
         
         List<AstNode> childList = new ArrayList<>();
         children.forEach(childList::add);
-        assertTrue(childList.size() > 0);
+        assertTrue(!childList.isEmpty());
     }
 
     // ========================================

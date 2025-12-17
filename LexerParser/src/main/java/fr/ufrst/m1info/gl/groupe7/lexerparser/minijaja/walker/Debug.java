@@ -208,7 +208,7 @@ public class Debug {
             shouldStop = true;
         } else if (mode == Mode.BREAKPOINTS && hasBreakPoint(line)) {
             shouldStop = true;
-            logger.info("\n BREAKPOINT HIT at line " + line);
+            logger.info("\n BREAKPOINT HIT at line {}", line);
         }
         
         // If a single step was requested, stop now and reset the flag
@@ -271,10 +271,8 @@ public class Debug {
                     logger.debug("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();  
                 }
-                case "b", "breakpoints" -> {
-                    // List all breakpoints
-                    logger.debug("\n BREAKPOINTS: " + breakPoints);
-                }
+                case "b", "breakpoints" -> // List all breakpoints
+                        logger.debug("\n BREAKPOINTS: " + breakPoints);
                 case "q", "quit", "exit" -> {
                     // Quit debugging session
                     logger.debug(" Debug session ended.");
@@ -282,10 +280,8 @@ public class Debug {
                     paused = false;
                     scanner.close();
                     return false; // Signal to stop execution
-                }case "h", "help" -> {
-                    // Print help menu
-                    printHelp();
-                }
+                }case "h", "help" -> // Print help menu
+                        printHelp();
                 
                 default -> {
                     // Try to parse as a breakpoint command, e.g., "b 10", "+10", or "-10"
@@ -294,7 +290,7 @@ public class Debug {
                             String num = input.startsWith("+") ? input.substring(1) : input.substring(2);
                             int bp = Integer.parseInt(num.trim());
                             addBreakPoint(bp);
-                            logger.debug("Breakpoint added at line " + bp);
+                            logger.debug("Breakpoint added at line {}", bp);
                         } catch (NumberFormatException e) {
                             logger.debug(" Invalid line number");
                         }
@@ -302,7 +298,7 @@ public class Debug {
                         try {
                             int bp = Integer.parseInt(input.substring(1).trim());
                             removeBreakPoint(bp);
-                            logger.debug(" Breakpoint removed from line " + bp);
+                            logger.debug(" Breakpoint removed from line {}", bp);
                         } catch (NumberFormatException e) {
                             logger.debug(" Invalid line number");
                         }
@@ -325,12 +321,12 @@ public class Debug {
      * @param stacks The current {@link Stacks} state.
      */
     private void printDebugState(int line, AstNode node, Stacks stacks) {
-        logger.debug("\n" + "═".repeat(60));
-        logger.debug(" DEBUG PAUSE at line " + line);
+        logger.debug("\n{}", "═".repeat(60));
+        logger.debug(" DEBUG PAUSE at line {}", line);
         logger.debug("═".repeat(60));
-        logger.debug(" Node: " + node.getClass().getSimpleName());
-        logger.debug(" AST:  " + truncate(node.toStringTree(), 80));
-        logger.debug(" Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
+        logger.debug(" Node: {}", node.getClass().getSimpleName());
+        logger.debug(" AST:  {}", truncate(node.toStringTree(), 80));
+        logger.debug(" Context: {}", stacks.isInMethodContext() ? stacks.getCurrentContext() : "main");
         logger.debug("═".repeat(60));
     }
 

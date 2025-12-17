@@ -949,11 +949,11 @@ public class StacksTest {
         System.out.println("Heap: with tab six elem ");
 
         stacks.setArrayValue("arr2",9,true);
-        assertEquals(stacks.getArrayValue("arr1",1),21);
-        assertEquals(stacks.getArrayValue("arr1",3),15);
-        assertEquals(stacks.getArrayValue("arr2",2),true);
-        assertEquals(stacks.getArrayValue("arr2",4),true);
-        assertEquals(stacks.getArrayValue("arr2",7),false);
+        assertEquals(21, stacks.getArrayValue("arr1",1));
+        assertEquals(15, stacks.getArrayValue("arr1",3));
+        assertEquals(true, stacks.getArrayValue("arr2",2));
+        assertEquals(true, stacks.getArrayValue("arr2",4));
+        assertEquals(false, stacks.getArrayValue("arr2",7));
 
 
 
@@ -1096,7 +1096,7 @@ public class StacksTest {
 
         stacks.setArrayValue("tab1",2,12);
         stacks.setArrayValue("tab1",2,14);
-        assertEquals(stacks.getArrayValue("tab1",2),14);
+        assertEquals(14, stacks.getArrayValue("tab1",2));
 
     }
 

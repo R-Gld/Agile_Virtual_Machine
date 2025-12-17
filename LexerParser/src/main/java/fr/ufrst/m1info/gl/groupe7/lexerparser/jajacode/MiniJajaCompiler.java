@@ -49,8 +49,10 @@ public class MiniJajaCompiler {
         if (collector.hasErrors()) {
             if (collector.hasSemanticErrors()) {
                 throw new SemanticException(collector);
-            } else {
+            } else if(collector.hasSyntaxErrors()){
                 throw new SyntaxException(collector);
+            } else {
+                throw new RuntimeException("Unknown error(s): " + collector.formatDiagnostics());
             }
         }
 

@@ -7,7 +7,7 @@ package fr.ufrst.m1info.gl.groupe7.memoire;
  * Contains only:
  *   - baseAddress : first cell of the array in the Heap
  *   - size        : number of logical elements in the array
- *
+ * <p>
  * Element addresses are computed as:
  *   address = baseAddress + index * cellPerElement
  */
