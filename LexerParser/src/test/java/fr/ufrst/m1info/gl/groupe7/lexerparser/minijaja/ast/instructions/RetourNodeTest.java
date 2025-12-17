@@ -106,7 +106,7 @@ class RetourNodeTest {
             node.interpret(stacks);
         });
         
-        assertEquals("Erreur: Variable de classe non définie dans la pile", exception.getMessage());
+        assertEquals("Error: class variable not defined on the stack", exception.getMessage());
     }
 
     @Test
