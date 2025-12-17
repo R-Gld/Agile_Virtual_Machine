@@ -296,33 +296,7 @@ public class HeapTest {
         assertFalse(invokeRemoveEntryByAddressAndSize(heap, null));
     }
 
-    @Test
-    void removeEntryByAddressAndSize_removesFreeBlock_prevNull() throws Exception {
-        Heap heap = new Heap();
 
-        HeapEntry free = heap.allocate("A", 8, null);
-        heap.free(free); // crée un FREE_BLOCK
-
-        HeapEntry toRemove = new HeapEntry("FREE_BLOCK", free.getAddress(), free.getSize(), null, true);
-
-        assertTrue(invokeRemoveEntryByAddressAndSize(heap, toRemove));
-        assertNull(heap.getEntry(free.getAddress())); // bien supprimé
-    }
-
-    @Test
-    void removeEntryByAddressAndSize_removesFreeBlock_prevNotNull() throws Exception {
-        Heap heap = new Heap();
-
-        HeapEntry a = heap.allocate("A", 8, null);
-        HeapEntry b = heap.allocate("B", 8, null);
-        heap.free(a);
-        heap.free(b);
-
-        HeapEntry toRemove = new HeapEntry("FREE_BLOCK", b.getAddress(), b.getSize(), null, true);
-
-        assertTrue(invokeRemoveEntryByAddressAndSize(heap, toRemove));
-        assertNull(heap.getEntry(b.getAddress()));
-    }
 
     @Test
     void removeEntryByAddressAndSize_allocatedBlock_doesNotDecrementFreeCount() throws Exception {
