@@ -1,8 +1,5 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.errors;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 /**
  * Source position.
  * @param fileName the file name
