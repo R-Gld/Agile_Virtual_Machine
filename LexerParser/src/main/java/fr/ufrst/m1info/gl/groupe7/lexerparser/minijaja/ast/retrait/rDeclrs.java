@@ -41,6 +41,6 @@ public class rDeclrs extends AstNode {
 
     @Override
     public String toStringTree() {
-       return "";
+       return "Retrait déclarations";
     }
 }

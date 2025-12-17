@@ -73,7 +73,7 @@ public class DebugeParsingETC {
     if (astRoot != null) {
       // Utilise la méthode toStringTree() corrigée
       // 4) Affichage de l'AST
-    Debug debug = new Debug(Debug.Mode.STEP_BY_STEP);
+    Debug debug = new Debug(Debug.Mode.DISABLED);
     debug.addBreakPoint(19    ); // Exemple de breakpoint
     System.out.println(astRoot.toStringTree());
     Walker walker = new Walker(astRoot, stacks, debug, null);

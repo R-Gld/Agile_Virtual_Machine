@@ -145,14 +145,15 @@ public class JajaCodeInterpreter implements Runnable {
 
     // === Debug methods for GUI ===
 
-   /**
-    * Capture the full memory state (stack and heap) for the UI.
-    * To be used during step-by-step execution.
-    *
-    * @return A complete snapshot of the memory state, or null if not initialized
-    */
+    /**
+     * Capture the full memory state (stack and heap) for the UI.
+     * To be used during step-by-step execution.
+     *
+     * @return A complete snapshot of the memory state, or null if not initialized
+     */
     public JajaCodeDebug.MemorySnapshot captureMemoryState() {
-        if (!initialized || stacks == null) {
+        ensureInitialized();
+        if (stacks == null) {
             return null;
         }
         int pc = interpreteur.getCurrentInstructionIndex();

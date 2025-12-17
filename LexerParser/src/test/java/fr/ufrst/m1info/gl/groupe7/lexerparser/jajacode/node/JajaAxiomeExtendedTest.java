@@ -39,7 +39,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "oneElem,int");
 
-            assertTrue(stacks.getSymbolTable().contains("oneElem"));
+            assertTrue(stacks.findQuad("oneElem") != null);
             assertEquals(1, stacks.getArrayLength("oneElem"));
         }
 
@@ -51,7 +51,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "mediumArray,int");
 
-            assertTrue(stacks.getSymbolTable().contains("mediumArray"));
+            assertTrue(stacks.findQuad("mediumArray") != null);
             assertEquals(100, stacks.getArrayLength("mediumArray"));
         }
 
@@ -74,7 +74,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "arr@global,int");
 
-            assertTrue(stacks.getSymbolTable().contains("arr@global"));
+            assertTrue(stacks.findQuad("arr@global") != null);
             assertEquals(5, stacks.getArrayLength("arr@global"));
         }
 
@@ -86,7 +86,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "boolArr,boolean");
 
-            assertTrue(stacks.getSymbolTable().contains("boolArr"));
+            assertTrue(stacks.findQuad("boolArr") != null);
             assertEquals(3, stacks.getArrayLength("boolArr"));
         }
 
@@ -98,7 +98,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "bArr,booleen");
 
-            assertTrue(stacks.getSymbolTable().contains("bArr"));
+            assertTrue(stacks.findQuad("bArr") != null);
             assertEquals(2, stacks.getArrayLength("bArr"));
         }
 
@@ -131,7 +131,7 @@ public class JajaAxiomeExtendedTest {
 
             axiome.execute(context, "arr,entier");
 
-            assertTrue(stacks.getSymbolTable().contains("arr"));
+            assertTrue(stacks.findQuad("arr") != null);
             assertEquals(4, stacks.getArrayLength("arr"));
         }
     }

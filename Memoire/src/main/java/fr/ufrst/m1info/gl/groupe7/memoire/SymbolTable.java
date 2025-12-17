@@ -98,7 +98,6 @@ public class SymbolTable {
     /**
      * Insert or replace a Quad in the hash table.
      * If the identifier already exists -> replace its Quad.
-     * todo multi scope (further test will be done)
      */
     private void put(Symbol symbol) {
         int index = hash(symbol.getName());
@@ -278,4 +277,5 @@ public class SymbolTable {
         }
         return symbols;
     }
+
 }

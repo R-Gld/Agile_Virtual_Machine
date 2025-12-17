@@ -299,7 +299,7 @@ public class Stacks {
     /** Pop (Dépiler): remove the top element from the stack */
     public Quad pop() {
         if (!stack.isEmpty()) {
-            Quad q =stack.peek();
+            Quad q = stack.peek();
 
             if (("tab".equals(q.object))&& q.value instanceof ArrayInfo info) {
 
@@ -411,6 +411,76 @@ public class Stacks {
             throw new RuntimeException("cst already declared: " + ident);
         }
         declareCst(ident, Omega.getInstance(), type);
+    }
+
+    // ============================================================
+    // JAJACODE-SPECIFIC DECLARATION METHODS (no symbol table)
+    // ============================================================
+
+    /**
+     * Declare a variable for JajaCode execution.
+     * Uses ONLY the stack, does NOT use symbol table.
+     */
+    public void declareVarJJC(String ident, Object value, Type type) {
+        // Check in the STACK only (JajaCode source of truth)
+        for (Quad q : stack) {
+            if (q.ident.equals(ident)) {
+                throw new RuntimeException("var already declare: " + ident);
+            }
+        }
+        Quad q = new Quad(ident, value, "var", type);
+        stack.add(q);
+        logger.debug("-> Variable {} declared (JajaCode mode, no symbol table)", ident);
+    }
+
+    /**
+     * Declare a constant for JajaCode execution.
+     * Uses ONLY the stack, does NOT use symbol table.
+     */
+    public void declareCstJJC(String ident, Object value, Type type) {
+        // Check in the STACK only (JajaCode source of truth)
+        for (Quad q : stack) {
+            if (q.ident.equals(ident)) {
+                throw new RuntimeException("cst already declared: " + ident);
+            }
+        }
+        Quad q = new Quad(ident, value, "cst", type);
+        stack.add(q);
+        logger.debug("-> Constant {} declared (JajaCode mode, no symbol table)", ident);
+    }
+
+    /**
+     * Declare an array for JajaCode execution.
+     * Uses ONLY the stack and heap, does NOT use symbol table.
+     */
+    public void declareTabJJC(String ident, int size, Type type) {
+        // Check in the STACK only (JajaCode source of truth)
+        for (Quad q : stack) {
+            if (q.ident.equals(ident)) {
+                throw new RuntimeException("array already in tab declare" + ident);
+            }
+        }
+
+        int cellPerElement = switch (type) {
+            case ENTIER, BOOLEEN -> 1;
+            default -> throw new RuntimeException("Unsupported array type: " + type);
+        };
+        int totalSize = size * cellPerElement;
+
+        HeapEntry entry = heap.allocate(ident, totalSize, null);
+        if (entry == null) {
+            throw new RuntimeException("Heap allocation failed for array " + ident);
+        }
+        int baseAddress = entry.getAddress();
+
+        ArrayInfo info = new ArrayInfo(size);
+        info.setBaseAddress(baseAddress);
+
+        Quad q = new Quad(ident, info, "tab", type);
+        pushNewTab(q);
+
+        logger.debug("-> Array {} allocated (JajaCode mode): base={} cells={} (size={})",
+                     ident, baseAddress, totalSize, size);
     }
 
     /*Retrait de Declaration */
@@ -611,12 +681,31 @@ public class Stacks {
             if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
                 throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
             }
+
+            // Handle array reference assignment
             if ("tab".equals(q.object)) {
-                throw new RuntimeException("Erreur : " + ident+" est un tableau, affectation non permise.");
-                
+                // If we're assigning an ArrayInfo (array reference), handle reference counting
+                if (newValue instanceof ArrayInfo newInfo) {
+                    ArrayInfo oldInfo = (ArrayInfo) q.value;
+
+                    // 1. Release the old reference
+                    retirerReference(oldInfo);
+
+                    // 2. Add a reference to the new array
+                    ajouterReference(newInfo);
+
+                    // 3. Update the Quad with the new ArrayInfo
+                    q.value = newInfo;
+                    stack.set(i, q);
+
+                    logger.debug("[REF COPY] {} = ArrayInfo(base={}, size={})", ident, newInfo.getBaseAddress(), newInfo.getSize());
+                    return true;
+                } else {
+                    throw new RuntimeException("Erreur : " + ident + " est un tableau, affectation non permise.");
+                }
             }
 
-            // For arrays and methods, assignment should be handled by dedicated APIs
+            // For methods, assignment should be handled by dedicated APIs
             if ("meth".equals(q.object)) {
                 throw new RuntimeException("Erreur : " + ident + " est une méthode, affectation non permise.");
             }
@@ -637,6 +726,70 @@ public class Stacks {
 
         // Shouldn't happen because we checked symbol existence, but keep safe fallback
         throw new RuntimeException("Symbol found in symbol table but not on stack: " + ident);
+    }
+
+    /**
+     * JajaCode-specific version of affecterVal that ONLY uses the stack (no symbol table).
+     * Used during JajaCode execution where symbol table should never be consulted.
+     *
+     * @param ident the identifier to assign to
+     * @param newValue the new value to assign
+     * @return true if assignment succeeded
+     * @throws RuntimeException if assignment fails
+     */
+    public boolean affecterValJJC(String ident, Object newValue) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Quad q = stack.get(i);
+            if (!q.ident.equals(ident))
+                continue;
+
+            // Prevent assigning to constants
+            if ("cst".equals(q.object) && !Omega.getInstance().equals(q.value)) {
+                throw new RuntimeException("la valeur de la constante " + ident + " ne peut pas être modifiée.");
+            }
+
+            // Handle array reference assignment
+            if ("tab".equals(q.object)) {
+                // If we're assigning an ArrayInfo (array reference), handle reference counting
+                if (newValue instanceof ArrayInfo newInfo) {
+                    ArrayInfo oldInfo = (ArrayInfo) q.value;
+
+                    // 1. Release the old reference
+                    retirerReference(oldInfo);
+
+                    // 2. Add a reference to the new array
+                    ajouterReference(newInfo);
+
+                    // 3. Update the Quad with the new ArrayInfo
+                    q.value = newInfo;
+                    stack.set(i, q);
+
+                    logger.debug("[REF COPY] {} = ArrayInfo(base={}, size={})", ident, newInfo.getBaseAddress(), newInfo.getSize());
+                    return true;
+                } else {
+                    throw new RuntimeException("Erreur : " + ident + " est un tableau, affectation non permise.");
+                }
+            }
+
+            // For methods, assignment should be handled by dedicated APIs
+            if ("meth".equals(q.object)) {
+                throw new RuntimeException("Erreur : " + ident + " est une méthode, affectation non permise.");
+            }
+
+            // Check type compatibility
+            if (!isTypeCompatible(q.type, newValue)) {
+                throw new RuntimeException("Type error - Type de variable " + ident +
+                        ": attendu " + q.type + " mais reçu " + newValue.getClass().getSimpleName());
+            }
+
+            // Perform assignment and update stack entry explicitly
+            q.value = newValue;
+            stack.set(i, q); // replace to be explicit (Quad is mutable, but keep consistency)
+            return true;
+        }
+
+        // Variable not found on stack
+        throw new RuntimeException("Variable not found on stack: " + ident);
     }
 
     /**
@@ -709,6 +862,7 @@ public class Stacks {
 
         }
     }
+
 
     public SymbolTable getSymbolTable() {
         return symbolTable;

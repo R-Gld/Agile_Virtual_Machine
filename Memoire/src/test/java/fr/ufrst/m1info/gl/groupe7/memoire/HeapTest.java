@@ -273,8 +273,91 @@ public class HeapTest {
         assertEquals(2,entry.getRef());
         entry.setFree(true);
         assertTrue(entry.isFree());
+    }
+    private boolean invokeRemoveEntryByAddressAndSize(Heap heap, HeapEntry entry) throws Exception {
+        Method m = Heap.class.getDeclaredMethod("removeEntryByAddressAndSize", HeapEntry.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(heap, entry);
+    }
+
+    private boolean invokeRemoveEntry(Heap heap, HeapEntry entry) throws Exception {
+        Method m = Heap.class.getDeclaredMethod("removeEntry", HeapEntry.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(heap, entry);
+    }
+
+    /* ============================================================
+       removeEntryByAddressAndSize
+       ============================================================ */
+
+    @Test
+    void removeEntryByAddressAndSize_nullEntry_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+        assertFalse(invokeRemoveEntryByAddressAndSize(heap, null));
+    }
 
 
+
+    @Test
+    void removeEntryByAddressAndSize_allocatedBlock_doesNotDecrementFreeCount() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry allocated = heap.allocate("X", 8, null);
+        int before = heap.getFreeCount();
+
+        HeapEntry fake = new HeapEntry("X", allocated.getAddress(), allocated.getSize(), null, false);
+
+        assertTrue(invokeRemoveEntryByAddressAndSize(heap, fake));
+        assertEquals(before, heap.getFreeCount());
+    }
+
+    @Test
+    void removeEntryByAddressAndSize_notFound_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry fake = new HeapEntry("NOPE", 123, 8, null, true);
+        assertFalse(invokeRemoveEntryByAddressAndSize(heap, fake));
+    }
+
+    /* ============================================================
+       removeEntry (by identity)
+       ============================================================ */
+
+    @Test
+    void removeEntry_nullEntry_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+        assertFalse(invokeRemoveEntry(heap, null));
+    }
+
+    @Test
+    void removeEntry_identityMatch_removesEntry() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = heap.allocate("ID", 8, null);
+        assertTrue(invokeRemoveEntry(heap, entry));
+        assertNull(heap.getEntry(entry.getAddress()));
+    }
+
+    @Test
+    void removeEntry_identityMatch_freeBlock_decrementsFreeCount() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = heap.allocate("Y", 8, null);
+        heap.free(entry);
+
+        int before = heap.getFreeCount();
+        HeapEntry free = heap.getEntry(entry.getAddress());
+
+        assertTrue(invokeRemoveEntry(heap, free));
+        assertEquals(before - 1, heap.getFreeCount());
+    }
+
+    @Test
+    void removeEntry_notFound_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = new HeapEntry("Z", 0, 8, null, true);
+        assertFalse(invokeRemoveEntry(heap, entry));
     }
 
 }

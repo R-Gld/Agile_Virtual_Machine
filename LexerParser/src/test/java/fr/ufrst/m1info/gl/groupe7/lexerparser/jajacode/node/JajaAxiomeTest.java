@@ -1011,7 +1011,7 @@ class JajaAxiomeTest {
 
             axiome.execute(context, "arr,int");
 
-            assertTrue(stacks.getSymbolTable().contains("arr"));
+            assertTrue(stacks.findQuad("arr") != null);
             assertEquals(10, stacks.getArrayLength("arr"));
             assertEquals(initialPC + 1, context.getInstructionCounter());
         }
@@ -1024,7 +1024,7 @@ class JajaAxiomeTest {
 
             axiome.execute(context, "arr,boolean");
 
-            assertTrue(stacks.getSymbolTable().contains("arr"));
+            assertTrue(stacks.findQuad("arr") != null);
             assertEquals(5, stacks.getArrayLength("arr"));
         }
 

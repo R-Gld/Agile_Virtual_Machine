@@ -19,7 +19,7 @@ public class rClass extends AstNode {
     }
     @Override
     public String toStringTree() {
-        return "";
+        return "Retrait classe";
     }
     
 }

@@ -142,7 +142,7 @@ class JajaCodeAxiomesCompletTest {
         String code = """
                 1 init
                 2 push(42)
-                3 new(CONST@global, int, meth, 0)
+                3 new(CONST@global, int, cst, 0)
                 4 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
@@ -168,7 +168,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         Stacks stacks = executeJajaCode(code);
         assertEquals(5, stacks.getValue("test"));
-        assertEquals("cst", stacks.getObjectType("test"));
+        assertEquals("meth", stacks.getObjectType("test"));
     }
 
     @Test
@@ -405,7 +405,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-       
+
         assertTrue(exception.getMessage().contains("Non-integer operands"));
     }
 
@@ -479,7 +479,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-      
+
         assertTrue(exception.getMessage().contains("Non-integer operands"));
     }
 
@@ -997,12 +997,13 @@ class JajaCodeAxiomesCompletTest {
                 1 init
                 2 push(true)
                 3 new(x@global, boolean, var, 0)
-                4 inc(x@global)
-                5 jcstop
+                4 push(1)
+                5 inc(x@global)
+                6 jcstop
                 """;
 
         TypeMismatchException e = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
-        assertEquals(4, e.getProgramCounter());
+        assertEquals(5, e.getProgramCounter());
         assertTrue(e.getMessage().contains("Attempt to increment with non-integer values"));
     }
 
@@ -1344,7 +1345,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(2, exception.getProgramCounter());
-       
+
         assertTrue(exception.getMessage().contains("Missing value to write"));
     }
 

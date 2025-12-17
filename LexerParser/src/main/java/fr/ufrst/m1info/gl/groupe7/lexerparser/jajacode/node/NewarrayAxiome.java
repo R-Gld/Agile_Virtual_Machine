@@ -72,7 +72,8 @@ public class NewarrayAxiome implements JajaAxiome {
         String scopedIdent = resolveScopedName(ctx, ident);
 
         // 6. Declare the array (allocates on heap via Stacks.declareTab)
-        ctx.getStacks().declareTab(scopedIdent, size, type);
+        // Use JajaCode-specific version that doesn't use symbol table
+        ctx.getStacks().declareTabJJC(scopedIdent, size, type);
 
         logger.debug("\t\tAxiome NEWARRAY executed: {}[{}] ({}) created.", scopedIdent, size, type);
 
@@ -83,6 +84,7 @@ public class NewarrayAxiome implements JajaAxiome {
     /**
      * Resolves the scoped name for recursion.
      * Same logic as LoadAxiome/StoreAxiome.
+     * Uses STACK only (not symbol table) for JajaCode compatibility.
      */
     private String resolveScopedName(MachineContext ctx, String ident) {
         // Si la variable est globale, pas de scopage
@@ -99,7 +101,8 @@ public class NewarrayAxiome implements JajaAxiome {
             // If we are in recursion (level > 1), look for the scoped variable
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
-                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                // Check in the STACK (not symbol table) for JajaCode compatibility
+                if (ctx.getStacks().findQuad(scopedIdent) != null) {
                     return scopedIdent;
                 }
             }

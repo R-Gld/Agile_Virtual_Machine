@@ -114,26 +114,27 @@ public class Walker {
             System.err.println("  → Traversing: " + node.getClass().getSimpleName());
         }
 
-        // Trace and check for specific node types before debugging
-        if (node instanceof VarNode || node instanceof MethodeNode || node instanceof InstructionNode || node instanceof CstNode || node instanceof TableauNode) {
+        // Check if this is a breakable node type
+        boolean isBreakableNode = node instanceof VarNode || node instanceof MethodeNode ||
+                                  node instanceof InstructionNode || node instanceof CstNode ||
+                                  node instanceof TableauNode;
 
-            if (sourceLineNumber > 0) {
-                System.err.println("    [BREAKABLE] Visiting source line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+        // Execute the node FIRST
+        node.interpret(stack);
 
-                // Check debug breakpoints / step before executing
-                if (debug.isEnabled()) {
-                    System.err.println("      Debug enabled, breakpoints: " + debug.getBreakPoints() + ", checking line: " + sourceLineNumber);
-                    boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack, callback);
-                    if (!shouldContinue) {
-                        stopped = true;
-                        return;
-                    }
+        // THEN check debug breakpoints / step AFTER executing (so user sees the result)
+        if (isBreakableNode && sourceLineNumber > 0) {
+            System.err.println("    [BREAKABLE] Executed line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+
+            if (debug.isEnabled()) {
+                System.err.println("      Debug enabled, breakpoints: " + debug.getBreakPoints() + ", checking line: " + sourceLineNumber);
+                boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack, callback);
+                if (!shouldContinue) {
+                    stopped = true;
+                    return;
                 }
             }
         }
-
-        // Execute the node
-        node.interpret(stack);
 
         // Always visit children (null-safe) - don't skip them
         Iterable<AstNode> children = node.getChildren();
