@@ -245,7 +245,7 @@ public class Debug {
         printDebugState(line, node, stacks);
         
         while (paused) {
-            logger.debug("\n (s)tep | (c)ontinue | (n)ext breakpoint | (p)rint stack | (v)ars | (q)uit > ");
+           System.out.println("\n (s)tep | (c)ontinue | (n)ext breakpoint | (p)rint stack | (v)ars | (q)uit > ");
             String input = scanner.nextLine().trim().toLowerCase();
             
             switch (input) {    
@@ -263,21 +263,21 @@ public class Debug {
                 }
                 case "p", "print", "stack" -> {
                     // Print current stack state
-                    logger.debug("\n STACK STATE:");
+                   System.out.println("\n STACK STATE:");
                     stacks.printStack();
                 }
                 case "v", "vars", "symbols" -> {
                     // Print current symbol table
-                    logger.debug("\n SYMBOL TABLE:");
+                   System.out.println("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();  
                 }
                 case "b", "breakpoints" -> {
                     // List all breakpoints
-                    logger.debug("\n BREAKPOINTS: " + breakPoints);
+                   System.out.println("\n BREAKPOINTS: " + breakPoints);
                 }
                 case "q", "quit", "exit" -> {
                     // Quit debugging session
-                    logger.debug(" Debug session ended.");
+                   System.out.println(" Debug session ended.");
                     mode = Mode.DISABLED;
                     paused = false;
                     scanner.close();
@@ -294,20 +294,20 @@ public class Debug {
                             String num = input.startsWith("+") ? input.substring(1) : input.substring(2);
                             int bp = Integer.parseInt(num.trim());
                             addBreakPoint(bp);
-                            logger.debug("Breakpoint added at line " + bp);
+                           System.out.println("Breakpoint added at line " + bp);
                         } catch (NumberFormatException e) {
-                            logger.debug(" Invalid line number");
+                           System.out.println(" Invalid line number");
                         }
                     } else if (input.startsWith("-")) {
                         try {
                             int bp = Integer.parseInt(input.substring(1).trim());
                             removeBreakPoint(bp);
-                            logger.debug(" Breakpoint removed from line " + bp);
+                           System.out.println(" Breakpoint removed from line " + bp);
                         } catch (NumberFormatException e) {
-                            logger.debug(" Invalid line number");
+                           System.out.println(" Invalid line number");
                         }
                     } else {
-                        logger.debug(" Unknown command. Type 'h' for help.");
+                       System.out.println(" Unknown command. Type 'h' for help.");
                     }
                 }
             }
@@ -325,13 +325,14 @@ public class Debug {
      * @param stacks The current {@link Stacks} state.
      */
     private void printDebugState(int line, AstNode node, Stacks stacks) {
-        logger.debug("\n" + "═".repeat(60));
-        logger.debug(" DEBUG PAUSE at line " + line);
-        logger.debug("═".repeat(60));
-        logger.debug(" Node: " + node.getClass().getSimpleName());
-        logger.debug(" AST:  " + truncate(node.toStringTree(), 80));
-        logger.debug(" Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
-        logger.debug("═".repeat(60));
+       System.out.println("\n" + "═".repeat(60));
+       if(line >0){ System.out.println(" DEBUG PAUSE at line " + line);}
+       else{System.out.println(" REMOVE");}
+       System.out.println("═".repeat(60));
+       System.out.println(" Node: " + node.getClass().getSimpleName());
+       System.out.println(" AST:  " + truncate(node.toStringTree(), 80));
+       System.out.println(" Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
+       System.out.println("═".repeat(60));
     }
 
     private void printHelp() {
@@ -364,6 +365,9 @@ public class Debug {
      * @return The truncated string.
      */
     private String truncate(String str, int maxLen) {
+        if (str == null) {
+            return "";
+        }
         if (str.length() <= maxLen) return str;
         return str.substring(0, maxLen - 3) + "...";
     }

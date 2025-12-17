@@ -4,11 +4,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
@@ -395,6 +404,49 @@ class DebugTest {
         }
     }
 
+    @Test
+    void lineVerification() {
+        String Code="""
+            class TestDebug {
+              int x;
+              
+              void method() {// Line 3
+                x = 10; // Line 4
+                x = x + 1; // Line 5
+              };
+              main{
+                method(); // Line 8
+                }
+            };
+            """;
+
+        // 1) Initialisation
+        CharStream cs = CharStreams.fromString(Code);
+        MiniJajaLexer lexer = new MiniJajaLexer(cs);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        MiniJajaParser parser = new MiniJajaParser(tokens);
+   
+    
+        // Créez le Visitor en lui passant la table
+        MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
+    
+        // 2) Lancement du parsing pour obtenir l'arbre d'analyse (ParseTree)
+        ParseTree tree = parser.classe();
+        System.out.println(tree.toString());
+    
+        // 3) Construction de l'AST en appelant visitor.visit(tree)
+        AstNode astRoot = visitor.visit(tree);
+        System.out.println(astRoot.toStringTree());
+        Debug debug = new Debug(Debug.Mode.BREAKPOINTS);
+        debug.addBreakPoint(4);
+        Walker walker = new Walker(astRoot, new Stacks(), debug);
+        //parallèle à l'execution
+        walker.walk();
+        System.out.println(debug.getBreakPoints());
+        System.out.println(debug.getCurrentLine());
+        System.out.println(debug.isPaused());
+    }
+
     // ==================== BEFORE NODE TESTS ====================
 
     @Nested
@@ -460,7 +512,7 @@ class DebugTest {
             // This test verifies the listener callback mechanism
         }
     }
-
+      
     // ==================== MODE ENUM TESTS ====================
 
     @Nested

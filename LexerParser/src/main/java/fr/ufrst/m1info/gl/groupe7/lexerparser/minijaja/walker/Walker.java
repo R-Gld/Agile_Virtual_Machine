@@ -1,5 +1,6 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
@@ -25,8 +26,6 @@ public class Walker {
     private final Stacks stack;
     // debug controller
     private final Debug debug;
-    // current line counter (incremented for each node visited)
-    private int lineCounter = 0;
     // flag to stop execution
     private boolean stopped = false;
     
@@ -62,19 +61,18 @@ public class Walker {
      * (invoking {@code interpret}), then recurses into its children.</p>
      */
     public void walk() {
-        lineCounter = 0;
         stopped = false;
         
         if (debug.isEnabled()) {
-            logger.debug(" Debug mode: " + debug.getMode());
-            logger.debug("Breakpoints: " + debug.getBreakPoints());
-            logger.debug("Starting execution...\n");
+            System.out.println(" Debug mode: " + debug.getMode());
+            System.out.println("Breakpoints: " + debug.getBreakPoints());
+            System.out.println("Starting execution...\n");
         }
         
         visitNode(root);
         
         if (debug.isEnabled() && !stopped) {
-            logger.debug("\n Execution completed.");
+            System.out.println("\n Execution completed.");
         }
     }
 
@@ -93,11 +91,11 @@ public class Walker {
             return;
         }
         
-        lineCounter++;
-        
-        // Check debug breakpoints / step before executing
+        // Check debug breakpoints / step on every node
         if (debug.isEnabled()) {
-            boolean shouldContinue = debug.beforeNode(lineCounter, node, stack);
+            int sourceLineNumber = getSourceLine(node);
+            
+            boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack);
             if (!shouldContinue) {
                 stopped = true;
                 return;
@@ -107,7 +105,7 @@ public class Walker {
         // Execute the node
         node.interpret(stack);
 
-        // Visit children (null-safe)
+        // Always visit children (null-safe)
         Iterable<AstNode> children = node.getChildren();
         if (children != null) {
             for (AstNode child : children) {
@@ -115,6 +113,19 @@ public class Walker {
                 visitNode(child);
             }
         }
+    }
+
+    /**
+     * Extract the source line number from a node's SourcePosition.
+     * 
+     * @param node the AST node
+     * @return the source line number, or 0 if not available
+     */
+    private int getSourceLine(AstNode node) {
+        if (node == null || node.getSourcePosition() == null) {
+            return 0;
+        }
+        return node.getSourcePosition().line();
     }
     
     /**
@@ -130,7 +141,7 @@ public class Walker {
      * @return the current line number
      */
     public int getCurrentLine() {
-        return lineCounter;
+        return debug.getCurrentLine();
     }
     
     /**
@@ -147,4 +158,5 @@ public class Walker {
     public void stop() {
         stopped = true;
     }
+
 }

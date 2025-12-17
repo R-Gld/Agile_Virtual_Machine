@@ -38,6 +38,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.vars.VarsNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 
 
@@ -52,6 +56,8 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	private static final Logger logger = LoggerFactory.getLogger(MiniJajaInterpreterVisitor.class);
 
 	private final String fileName;
+	// Maps source line number to list of nodes created on that line
+	private final Map<Integer, List<AstNode>> lineToNodes = new HashMap<>();
 
 	/**
 	 * Constructor with file name for source position tracking.
@@ -94,8 +100,46 @@ public class MiniJajaInterpreterVisitor extends MiniJajaParserBaseVisitor<AstNod
 	private <T extends AstNode> T withPosition(T node, ParserRuleContext ctx) {
 		if (node != null) {
 			node.setSourcePosition(extractPosition(ctx));
+			recordNodeAtLine(node, ctx);
 		}
 		return node;
+	}
+
+	/**
+	 * Record a node as being created on a specific source line.
+	 * @param node the AST node being created
+	 * @param ctx the parser rule context containing line information
+	 */
+	private void recordNodeAtLine(AstNode node, ParserRuleContext ctx) {
+		if (ctx == null || ctx.getStart() == null) {
+			return;
+		}
+		int lineNumber = ctx.getStart().getLine();
+		lineToNodes.computeIfAbsent(lineNumber, k -> new ArrayList<>()).add(node);
+	}
+
+	/**
+	 * Get all nodes created on a specific source line.
+	 * @param lineNumber the source line number
+	 * @return list of nodes created on that line, or empty list if none
+	 */
+	public List<AstNode> getNodesAtLine(int lineNumber) {
+		return lineToNodes.getOrDefault(lineNumber, new ArrayList<>());
+	}
+
+	/**
+	 * Get the complete mapping of lines to nodes.
+	 * @return map of line number -> list of nodes
+	 */
+	public Map<Integer, List<AstNode>> getLineToNodesMapping() {
+		return new HashMap<>(lineToNodes);
+	}
+
+	/**
+	 * Clear the line-to-nodes mapping.
+	 */
+	public void clearLineMapping() {
+		lineToNodes.clear();
 	}
 
 	// ======== CLASS ========
