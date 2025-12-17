@@ -35,6 +35,8 @@ public class Walker {
     private boolean stopped = false;
     // callback when debug is in pause
     private final HandlePauseCallback callback;
+    // line counter for tracking nodes visited
+    private int lineCounter = 0;
 
     private static final Logger logger = LoggerFactory.getLogger(Walker.class);
 
@@ -71,7 +73,8 @@ public class Walker {
      */
     public void walk() {
         stopped = false;
-        
+        lineCounter = 0;
+
         if (debug.isEnabled()) {
             System.out.println(" Debug mode: " + debug.getMode());
             System.out.println("Breakpoints: " + debug.getBreakPoints());
@@ -99,7 +102,10 @@ public class Walker {
         if (node == null || stopped) {
             return;
         }
-        
+
+        // Increment line counter for each node visited
+        lineCounter++;
+
         // Always display all nodes being visited
         int sourceLineNumber = getSourceLine(node);
         if (sourceLineNumber > 0) {
@@ -125,7 +131,7 @@ public class Walker {
                 }
             }
         }
-        
+
         // Execute the node
         node.interpret(stack);
 
@@ -165,7 +171,7 @@ public class Walker {
      * @return the current line number
      */
     public int getCurrentLine() {
-        return debug.getCurrentLine();
+        return lineCounter;
     }
     
     /**
