@@ -111,7 +111,7 @@ public class MyCodeArea extends AnchorPane {
                     + "|(?<STRING>" + STRING_PATTERN + ")"
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")");
 
-    /** Langage courant de la zone de code. */
+    /** Current language of the code area. */
     private final Language language;
     private MiniJajaSymbolListener semanticListener;
 
@@ -353,42 +353,42 @@ public class MyCodeArea extends AnchorPane {
     private List<javafx.scene.control.IndexRange> errorDeclaredAfterInstructionRanges = new ArrayList<>();
 
     /**
-     * Crée une zone de code MiniJaja avec identifiant donné.
+     * Creates a MiniJaja code area with a given identifier.
      *
-     * @param id identifiant de ce composant pour JavaFX
+     * @param id identifier of this component for JavaFX
      */
     public MyCodeArea(String id) {
         this(id, "", Language.MINIJAJA);
     }
 
     /**
-     * Crée une zone de code avec le langage précisé.
+     * Creates a code area with the specified language.
      *
-     * @param id       identifiant de ce composant pour JavaFX
-     * @param language langage de la zone de code
+     * @param id       identifier of this component for JavaFX
+     * @param language language of the code area
      */
     public MyCodeArea(String id, Language language) {
         this(id, "", language);
     }
 
     /**
-     * Crée une zone de code MiniJaja avec une valeur par défaut.
+     * Creates a MiniJaja code area with a default value.
      *
-     * @param id           identifiant de ce composant pour JavaFX
-     * @param defaultValue texte initial
+     * @param id           identifier of this component for JavaFX
+     * @param defaultValue initial text
      */
     public MyCodeArea(String id, String defaultValue) {
         this(id, defaultValue, Language.MINIJAJA);
     }
 
     /**
-     * Crée une zone de code avec identifiant, texte initial et langage.
-     * Initialise la coloration, la numérotation des lignes, le scroll,
-     * l'auto-complétion, la fermeture des paires et l'indentation.
+     * Creates a code area with id, initial text and language.
+     * Initializes highlighting, line numbering, scroll, autocompletion,
+     * auto-closing pairs and indentation.
      *
-     * @param id           identifiant de ce composant pour JavaFX
-     * @param defaultValue texte initial
-     * @param language     langage de la zone de code
+     * @param id           identifier of this component for JavaFX
+     * @param defaultValue initial text
+     * @param language     language of the code area
      */
     public MyCodeArea(String id, String defaultValue, Language language) {
         this.language = language;
@@ -415,7 +415,7 @@ public class MyCodeArea extends AnchorPane {
         this.getChildren().add(scroll);
         initCaretLineHighlight();
 
-        Tooltip declTooltip = new Tooltip("Erreur : déclaration après instructions.");
+        Tooltip declTooltip = new Tooltip("Error: declaration after instructions.");
         declTooltip.getStyleClass().add("decl-tooltip");
         final javafx.beans.property.ObjectProperty<javafx.scene.control.IndexRange> current = new javafx.beans.property.SimpleObjectProperty<>(null);
 
@@ -625,10 +625,9 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Gère l'indentation intelligente à l'appui de Entrée.
-     * Ajoute l'indentation de la ligne précédente et augmente après '{'.
+     * Handles smart indentation on ENTER key. Adds the previous line's indentation and increases after '{'.
      *
-     * @param event événement clavier ENTER consommé
+     * @param event consumed ENTER key event
      */
     private void handleSmartIndentation(KeyEvent event) {
         int caretPosition = codeArea.getCaretPosition();
@@ -684,10 +683,10 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Gère la fermeture automatique des paires: (), {}, [], "".
-     * Saute la paire fermante si déjà présente.
+     * Handles auto-closing pairs: (), {}, [], "".
+     * Skips the closing pair if it is already present.
      *
-     * @param event événement clavier typé
+     * @param event typed key event
      */
     private void handleAutoClose(KeyEvent event) {
         String character = event.getCharacter();
@@ -728,8 +727,8 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Affiche un menu d'auto-complétion près du caret en fonction du préfixe
-     * courant. CTRL+Espace pour basculer.
+     * Shows an autocompletion menu near the caret based on the current prefix.
+     * CTRL+Space toggles it.
      */
     private void showAutoCompletion() {
         String text = codeArea.getText();
@@ -842,10 +841,10 @@ public class MyCodeArea extends AnchorPane {
 
 
     /**
-     * Retourne les suggestions filtrées par préfixe pour le langage actif.
+     * Returns suggestions filtered by prefix for the active language.
      *
-     * @param prefix préfixe tapé avant le caret
-     * @return liste de suggestions correspondantes
+     * @param prefix prefix typed before the caret
+     * @return list of matching suggestions
      */
     private List<String> getSuggestions(String prefix) {
         // We'll build ordered suggestions: methods first, then scoped variables, then base keywords/types/functions
@@ -948,25 +947,25 @@ public class MyCodeArea extends AnchorPane {
     }
 
     /**
-     * Retourne le contenu de la zone de code.
+     * Returns the content of the code area.
      *
-     * @return le code écrit
+     * @return the written code
      */
     public String getText() {
         return codeArea.getText();
     }
 
     /**
-     * Charge du texte dans la zone de code.
+     * Loads text into the code area.
      *
-     * @param string texte à charger
+     * @param string text to load
      */
     public void loadText(String string) {
         codeArea.replaceText(string);
     }
 
     /**
-     * Désactive l'édition dans la zone de code.
+     * Disables editing in the code area.
      */
     public void disable() {
         codeArea.setEditable(false);
@@ -974,10 +973,10 @@ public class MyCodeArea extends AnchorPane {
 
     // START highlight
     /**
-     * Met en évidence une ligne avec la classe CSS "current-line".
-     * Utilisée durant le débogage pour indiquer la ligne d'exécution courante.
+     * Highlights a line with the CSS class "current-line".
+     * Used during debugging to indicate the current execution line.
      *
-     * @param lineIndex index de ligne (base 0)
+     * @param lineIndex line index (zero-based)
      */
     public void highlightLine(int lineIndex) {
         if (lineIndex < 0)

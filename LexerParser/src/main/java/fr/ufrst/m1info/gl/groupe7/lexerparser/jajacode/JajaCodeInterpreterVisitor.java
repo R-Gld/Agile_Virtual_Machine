@@ -197,7 +197,9 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
-    private void dispatch(JajaCodeInstr command) { dispatch(command, null); }
+    private void dispatch(JajaCodeInstr command) {
+        dispatch(command, null);
+    }
 
     // Helper to execute an axiom
     private void dispatch(JajaCodeInstr command, String arg) {
@@ -216,11 +218,11 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
             }
         } else {
             logger.error("Axiom not implemented: {}", command);
-            context.incrementPC(); // Move to next instruction to avoid infinite loop
+            context.incrementPC(); // To avoid infinite loop
         }
     }
 
-    // Specific handling for NEW (pack args)
+    // Specific handling for NEW (argument concatenation)
     private void handleNew(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "void";
@@ -229,12 +231,12 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
 
         logger.debug("\t\t[DEBUG handleNew] ident={}, type={}, sorte={}, depth={}", ident, type, sorte, depth);
 
-        // Pack arguments for the generic interface (ident,type,sorte,depth)
+        // Pack arguments for generic interface (ident,type,sorte,depth)
         String packedArgs = ident + "," + type + "," + sorte + "," + depth;
         dispatch(JajaCodeInstr.NEW, packedArgs);
     }
 
-    // Specific handling for NEWARRAY (pack args: ident,type)
+    // Specific handling for NEWARRAY (argument concatenation: ident,type)
     private void handleNewarray(JajaCodeParser.InstrContext ctx) {
         String ident = ctx.ident().getText();
         String type = (ctx.TYPE() != null) ? ctx.TYPE().getText() : "int";
@@ -266,14 +268,23 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return null;
     }
 
-    // for test
+    // for test and debug
+
+    private boolean stepInitialized = false;
 
     public boolean step() {
+        // Initialize PC to 1 on first step (same as run())
+        if (!stepInitialized) {
+            context.setInstructionCounter(1);
+            stepInitialized = true;
+            logger.debug("Step mode: Execution started at address 1.");
+        }
+
         int pc = context.getInstructionCounter();
         JajaCodeParser.InstrContext instruction = programme.get(pc);
 
         if (instruction == null) {
-            logger.error("Erreur : @{} introuvable !", pc);
+            logger.error("Error: @{} not found!", pc);
             context.stop();
             return false; // Program finished (error case)
         }
@@ -284,12 +295,34 @@ public class JajaCodeInterpreterVisitor extends JajaCodeParserBaseVisitor<Object
         return context.isRunning();
     }
 
+    /**
+     * Resets the step execution state for a new debug session.
+     */
+    public void resetStep() {
+        stepInitialized = false;
+        context.setInstructionCounter(1);
+    }
+
     public boolean isFinished() {
         return !context.isRunning();
     }
 
     public int getCurrentInstructionIndex() {
         return context.getInstructionCounter();
+    }
+
+    /**
+     * Returns the text of the current instruction for debugging.
+     *
+     * @return The instruction text or "N/A" if not found
+     */
+    public String getCurrentInstructionText() {
+        int pc = context.getInstructionCounter();
+        JajaCodeParser.InstrContext instruction = programme.get(pc);
+        if (instruction != null) {
+            return instruction.getText();
+        }
+        return "N/A";
     }
 
 }
