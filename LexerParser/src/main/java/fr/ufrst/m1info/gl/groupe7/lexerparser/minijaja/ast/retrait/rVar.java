@@ -18,23 +18,28 @@ public class rVar {
     }
 
     public void interpret(Stacks stacks) {
-    AstNode node = var;
-    String name = "";
+        AstNode node = var;
+        String name = "";
 
-    if (node instanceof VarNode) {
-        name = ((VarNode) node).getIdent().getNom();
-    } else if (node instanceof TableauNode) {
-        name = ((TableauNode) node).getIdent().getNom();
-    } else if (node instanceof CstNode) {
-        name = ((CstNode) node).getIdent().getNom();
-    }
-
-    if (name != null) {
-        if (stacks.isInMethodContext()) {
-            name = stacks.getScopedName(name);
+        if (node instanceof VarNode) {
+            name = ((VarNode) node).getIdent().getNom();
+        } else if (node instanceof TableauNode) {
+            name = ((TableauNode) node).getIdent().getNom();
+        } else if (node instanceof CstNode) {
+            name = ((CstNode) node).getIdent().getNom();
         }
-        stacks.retirerDecl(name);
+
+        if (name != null) {
+            if (stacks.isInMethodContext()) {
+                name = stacks.getScopedName(name);
+            }
+            stacks.retirerDecl(name);
+        }
+
     }
 
-        
-}}
+    public String toStringStree() {
+        return "Retrait Var";
+    }
+
+}
