@@ -19,14 +19,6 @@ import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -362,7 +354,7 @@ public class App extends Application {
         hbox.getChildren().add(runButton);
 
         // Added section: debug controls (icons only, no text)
-        /**
+        /*
          * Simple debug control bar with icons only: Start Debug / Step / Stop
          */
 
@@ -560,21 +552,24 @@ public class App extends Application {
             @Override
             protected Void call() {
                 try {
-                    if (MINI_JAJA_NAME.equals(choice)) {
-                        MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
-                        interpreter.run();
-                    } else {
-                        String[] lines = jjcText.split("\\n");
-                        StringBuilder result = new StringBuilder();
-                        for (int i = 0; i < lines.length; i++) {
-                            result.append(i + 1)
-                                    .append(" ")
-                                    .append(lines[i])
-                                    .append("\n");
+                    switch(choice) {
+                        case MINI_JAJA_NAME: {
+                            MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
+                            interpreter.run();
                         }
-                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(),
-                                new DiagnosticCollector());
-                        jjcInterpreter.run();
+                        case JAJA_CODE_NAME: {
+                            String[] lines = jjcText.split("\\n");
+                            StringBuilder result = new StringBuilder();
+                            for (int i = 0; i < lines.length; i++) {
+                                result.append(i + 1)
+                                        .append(" ")
+                                        .append(lines[i])
+                                        .append("\n");
+                            }
+                            JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(),
+                                    new DiagnosticCollector());
+                            jjcInterpreter.run();
+                        }
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -730,7 +725,7 @@ public class App extends Application {
 
     /**
      * Steps in debug mode line by line.
-     * After the initial jump to first breakpoint (if any), always go line by line.
+     * After the initial jump to the first breakpoint (if any), always go line by line.
      */
     private void stepDebugEnhanced() {
         if (!debugMode) {
@@ -760,7 +755,7 @@ public class App extends Application {
         }
         debugCurrentLine = nextLine;
 
-        if (debugCurrentLine < 0 || debugCurrentLine >= lines.length) {
+        if (debugCurrentLine >= lines.length) {
             if (console != null) {
                 console.printMessage("[DEBUG] End of file reached.");
             }
