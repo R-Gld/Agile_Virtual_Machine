@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée lors d'une erreur d'affectation (ex: constante, échec mémoire)
+ * Exception when an assignment fails in JajaCode.
  */
 public class AssignmentException extends JajaCodeRuntimeException {
 

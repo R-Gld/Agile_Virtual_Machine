@@ -72,10 +72,10 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Extrait le nom d'un identifiant depuis un AstNode.
+     * Extracts the identifier name from an AstNode.
      *
-     * @param identNode le nœud contenant l'identifiant
-     * @return le nom de l'identifiant
+     * @param identNode the node containing the identifier
+     * @return the identifier name
      */
     private String extractIdentifierName(AstNode identNode) {
         if (identNode instanceof IdentNode identNodeTyped) {
@@ -90,19 +90,19 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Détermine le scope approprié pour une variable.
-     * Cherche d'abord dans le scope actuel (méthode ou main), puis dans global.
+     * Determines the appropriate scope for a variable.
+     * Searches first in the current scope (method or main), then in global.
      *
-     * @param variableName le nom de la variable
-     * @return le scope approprié (signature de méthode, "main" ou "global")
+     * @param variableName the variable name
+     * @return the appropriate scope (method signature, "main" or "global")
      */
     private String resolveVariableScope(String variableName) {
-        // D'abord chercher dans le scope actuel (peut être une signature de méthode comme "test@int")
+        // First, search in the current scope (can be a method signature like "test@int")
         if (currentScopeVariables.contains(variableName)) {
             return currentScope;
         }
 
-        // Ensuite chercher dans le main
+        // Then search in main
         if ("main".equals(currentScope) && mainLocalVariables.contains(variableName)) {
             return "main";
         }
@@ -111,9 +111,9 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Crée un visiteur temporaire qui hérite du contexte actuel.
+     * Creates a temporary visitor that inherits the current context.
      *
-     * @return un nouveau visiteur avec le scope et les variables locales propagés
+     * @return a new visitor with the current scope and local variables propagated
      */
     private MiniJajaCompilerVisitor createChildVisitor() {
         MiniJajaCompilerVisitor childVisitor = new MiniJajaCompilerVisitor(collector);
@@ -125,41 +125,41 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Compile une classe selon la règle [cclasse] :
+     * Compiles a class according to rule [cclasse]:
      * n ⊢ classe(ident(i), dss, mma) ⇒ {init ⊕G (pdss ⊕ pmma ⊕ prdss) ⊕D pop ⊕D jcstop, ...}
      */
     public void visit(ClasseNode node) {
         jjcBuilder.addInstruction(INIT);
 
-        // pdss : Traiter les déclarations globales
+        // pdss: process global declarations
         if (node.getDeclarations() != null) {
             visit(node.getDeclarations());
         }
 
-        // pmma : Traiter le main (sans le retrait des variables locales ici)
+        // pmma: process the main (without removing local variables here)
         if (node.getMethodeMain() != null) {
             visit((MainNode) node.getMethodeMain());
         }
 
-        // prdss : Retrait des déclarations globales (swap/pop pour chaque)
+        // prdss: removal of global declarations (swap/pop for each)
         while (!variablesToPop.isEmpty()) {
             variablesToPop.pop();
             jjcBuilder.addInstruction(SWAP);
             jjcBuilder.addInstruction(POP);
         }
 
-        // pop : Retrait du 0 du main
+        // pop: remove the 0 from main
         jjcBuilder.addInstruction(POP);
 
         jjcBuilder.addInstruction(JCSTOP);
     }
 
     /**
-     * Compile le main selon la règle [cmain] :
+     * Compiles the main according to rule [cmain]:
      * n ⊢ main(dvs, iss) ⇒ {pdvs ⊕ piss ⊕D push(0) ⊕ prdvs, ndvs + niss + nrdvs + 1}
      * <p>
-     * Note: Le main ne déclare pas de variables dans cet exemple simplifié,
-     * donc prdvs est vide.
+     * Note: The main does not declare variables in this simplified example,
+     * so prdvs is empty.
      */
     public void visit(MainNode node) {
         currentScope = "main";
@@ -226,85 +226,85 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Compile une instruction conditionnelle (if/else) en code JajaCode.
+     * Compiles a conditional instruction (if/else) into JajaCode.
      *
-     * <p>Cette méthode génère le code pour une instruction {@code if} ou {@code if/else} en suivant
-     * la structure suivante :
+     * <p>This method generates the code for an {@code if} or {@code if/else} instruction following
+     * this structure:
      * <pre>
-     *   [code pour évaluer la condition]
-     *   if(adresse_else)              // saute au else si la condition est fausse (0)
-     *   [code du bloc then]
-     *   goto(adresse_fin)             // saute après le else (seulement si else présent)
-     *   [code du bloc else]           // à l'adresse_else
-     *   [suite du programme]          // à l'adresse_fin
+     *   [code to evaluate the condition]
+     *   if(else_address)              // jumps to else if the condition is false (0)
+     *   [then block code]
+     *   goto(end_address)             // jumps after the else (only if else is present)
+     *   [else block code]           // at else_address
+     *   [rest of the program]          // at end_address
      * </pre>
      *
-     * <p><b>Exemple de code généré :</b>
-     * <p>Pour le code MiniJaja suivant :
+     * <p><b>Example of generated code:</b>
+     * <p>For the following MiniJaja code:
      * <pre>
-     * if(12 &gt; 1) {
+     * if(12 > 1) {
      *     x = true;
      * } else {
      *     x = false;
      * }
      * </pre>
-     * Le code JajaCode généré sera :
+     * The generated JajaCode will be:
      * <pre>
      * push(12)
      * push(1)
      * sup
-     * if(11)                  // adresse du else
-     * push(true)              // bloc then
+     * if(11)                  // else address
+     * push(true)              // then block
      * store(x@global)
-     * goto(13)                // adresse de fin
-     * push(false)             // bloc else (adresse 11)
+     * goto(13)                // end address
+     * push(false)             // else block (address 11)
      * store(x@global)
-     * [suite...]              // adresse 13
+     * [suite...]              // address 13
      * </pre>
      *
-     * <p><b>Calcul des adresses :</b>
+     * <p><b>Address calculation:</b>
      * <ul>
-     *   <li>{@code adresse_else = adresse_courante + 1 + taille_bloc_then + (1 si else présent, 0 sinon)}</li>
-     *   <li>{@code adresse_fin = adresse_else + taille_bloc_else}</li>
+     *   <li>{@code else_address = current_address + 1 + then_block_size + (1 if else is present, 0 otherwise)}</li>
+     *   <li>{@code end_address = else_address + else_block_size}</li>
      * </ul>
      *
-     * <p><b>Sémantique de l'instruction {@code if(adresse)} :</b>
-     * <p>L'instruction {@code if(adresse)} dépile une valeur de la pile :
+     * <p><b>Semantics of the {@code if(address)} instruction:</b>
+     * <p>The {@code if(address)} instruction pops a value from the stack:
      * <ul>
-     *   <li>Si la valeur est {@code 0} (faux), saute à {@code adresse}</li>
-     *   <li>Si la valeur est différente de {@code 0} (vrai), continue à l'instruction suivante</li>
+     *   <li>If the value is {@code 0} (false), it jumps to {@code address}</li>
+     *   <li>If the value is different from {@code 0} (true), it continues to the next instruction</li>
      * </ul>
      *
-     * <p><b>Note d'implémentation :</b>
-     * <p>Cette méthode crée des visiteurs temporaires pour compiler les blocs then et else de manière
-     * isolée, afin de pouvoir calculer leurs tailles avant de générer les instructions de saut.
-     * Les builders temporaires sont ensuite fusionnés avec le builder principal dans le bon ordre.
+     * <p><b>Implementation note:</b>
+     * <p>This method creates temporary visitors to compile the then and else blocks in isolation,
+     * in order to calculate their sizes before generating the jump instructions.
+     * The temporary builders are then merged with the main builder in the correct order.
      *
-     * @param node le nœud SiNode représentant l'instruction if/else à compiler
-     * @throws NullPointerException si node est null
+     * @param node the SiNode representing the if/else instruction to compile
+     * @throws NullPointerException if node is null
      */
     private void visitSi(SiNode node) {
-        // Règle [csi] : n ⊢ si(e, iss, iss1) ⇒ {(pe ⊕D if(addr)) ⊕ (piss1 ⊕D goto(fin)) ⊕ piss, ...}
-        // Selon [csi], si condition VRAIE, on saute au bloc iss (else)
-        // Donc on génère: condition, if(addr_then), else_code, goto(fin), then_code
-        // Cela inverse l'ordre pour que le THEN s'exécute quand condition est VRAIE
+        // Rule [csi]: n ⊢ si(e, iss, iss1) ⇒ {(pe ⊕D if(addr)) ⊕ (piss1 ⊕D goto(fin)) ⊕ piss, ...}
+        // According to [csi], if condition is TRUE, we jump to the iss block (else)
+        // So we generate: condition, if(addr_then), else_code, goto(fin), then_code
+        // This inverts the order so that the THEN block is executed when the condition is TRUE
 
-        // Évaluer la condition
+        // Evaluate the condition
         if (node.getExpressionNode() != null) {
             visitExpression(node.getExpressionNode());
         }
 
-        // Obtenir l'adresse courante APRÈS la condition
+        // Get the current address AFTER the condition
         int addrAfterCondition = jjcBuilder.getCurrentAddress();
 
-        // Compiler le bloc then dans un builder temporaire pour calculer sa taille
+        // Compile the then block in a temporary builder to calculate its size
         MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             thenVisitor.visit(node.getInstructionsNode());
         }
         int thenSize = thenVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Compiler le bloc else (si présent) dans un builder temporaire
+        // Compile the else block (if present) in a temporary builder
         int elseSize = 0;
         boolean hasElse = node.getInstructionsNode2() != null;
         if (hasElse) {
@@ -313,128 +313,128 @@ public class MiniJajaCompilerVisitor {
             elseSize = elseVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
         }
 
-        // Calculer les adresses selon [csi]
+        // Calculate addresses according to [csi]
         // Structure: IF(thenAddr), [else], GOTO(endAddr), [then]
-        // if saute au then quand condition vraie
+        // if jumps to then when condition is true
         int elseStartAddr = addrAfterCondition + 1;
-        int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 pour GOTO
+        int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 for GOTO
         int endAddr = thenAddr + thenSize;
 
-        // Générer IF qui saute au THEN quand condition vraie
+        // Generate IF that jumps to THEN when condition is true
         jjcBuilder.addInstruction(IF, thenAddr);
 
-        // Compiler le bloc ELSE d'abord (exécuté quand condition fausse)
+        // Compile the ELSE block first (executed when condition is false)
         if (hasElse) {
             visit(node.getInstructionsNode2());
             jjcBuilder.addInstruction(GOTO, endAddr);
         }
 
-        // Compiler le bloc THEN ensuite (exécuté quand condition vraie via saut)
+        // Compile the THEN block next (executed when condition is true via jump)
         if (node.getInstructionsNode() != null) {
             visit(node.getInstructionsNode());
         }
     }
 
     /**
-     * Compile une boucle while (tantque) en code JajaCode.
+     * Compiles a while loop (tantque) into JajaCode.
      *
-     * <p>Cette méthode génère le code pour une boucle {@code while} en suivant
-     * la structure suivante :
+     * <p>This method generates the code for a {@code while} loop following
+     * this structure:
      * <pre>
-     *   label_debut:
-     *   [code pour évaluer la condition]
-     *   not                           // inverser car if saute si faux
-     *   if(adresse_fin)               // si faux, sortir de la boucle
-     *   [code du corps de la boucle]
-     *   goto(adresse_debut)           // retour au début
-     *   label_fin:
-     *   [suite du programme]
+     *   start_label:
+     *   [code to evaluate the condition]
+     *   not                           // invert because if jumps if false
+     *   if(end_address)               // if false, exit the loop
+     *   [loop body code]
+     *   goto(start_address)           // return to the beginning
+     *   end_label:
+     *   [rest of the program]
      * </pre>
      *
-     * <p><b>Exemple de code généré :</b>
-     * <p>Pour le code MiniJaja suivant :
+     * <p><b>Example of generated code:</b>
+     * <p>For the following MiniJaja code:
      * <pre>
-     * while(i &gt; 0) {
+     * while(i > 0) {
      *     i += -1;
      * }
      * </pre>
-     * Le code JajaCode généré sera :
+     * The generated JajaCode will be:
      * <pre>
-     * load(i@main)        // adresse 8 (début)
+     * load(i@main)        // address 8 (start)
      * push(0)
      * sup
      * not
-     * if(17)              // adresse de fin
-     * push(1)             // corps de la boucle
+     * if(17)              // end address
+     * push(1)             // loop body
      * neg
      * inc(i@main)
-     * goto(8)             // retour au début
-     *                     // adresse 17 (fin)
+     * goto(8)             // return to the beginning
+     *                     // address 17 (end)
      * </pre>
      *
-     * <p><b>Calcul des adresses :</b>
+     * <p><b>Address calculation:</b>
      * <ul>
-     *   <li>{@code adresse_debut = adresse_courante}</li>
-     *   <li>{@code adresse_fin = adresse_debut + taille_condition + 2 (not + if) + taille_corps + 1 (goto)}</li>
+     *   <li>{@code start_address = current_address}</li>
+     *   <li>{@code end_address = start_address + condition_size + 2 (not + if) + body_size + 1 (goto)}</li>
      * </ul>
      *
-     * <p><b>Sémantique :</b>
-     * <p>La condition est évaluée à chaque itération. Si elle est vraie (≠ 0),
-     * le corps est exécuté et on retourne au début. Si elle est fausse (= 0),
-     * on sort de la boucle.
+     * <p><b>Semantics:</b>
+     * <p>The condition is evaluated at each iteration. If it is true (≠ 0),
+     * the body is executed and we return to the beginning. If it is false (= 0),
+     * we exit the loop.
      *
-     * <p><b>Note d'implémentation :</b>
-     * <p>Un visiteur temporaire est créé pour compiler le corps de la boucle de manière
-     * isolée, afin de pouvoir calculer sa taille avant de générer les instructions de saut.
+     * <p><b>Implementation note:</b>
+     * <p>A temporary visitor is created to compile the loop body in isolation,
+     * in order to calculate its size before generating the jump instructions.
      *
-     * @param node le nœud TantqueNode représentant la boucle while à compiler
-     * @throws NullPointerException si node est null
+     * @param node the TantqueNode representing the while loop to compile
+     * @throws NullPointerException if node is null
      */
     private void visitTantque(TantqueNode node) {
         int loopStartAddr = jjcBuilder.getCurrentAddress();
 
-        // Évaluer la condition et l'inverser
+        // Evaluate the condition and invert it
         if (node.getExpressionNode() != null) {
             visitExpression(node.getExpressionNode());
         }
         jjcBuilder.addInstruction(NOT);
 
-        // Compiler le corps de la boucle dans un visitor temporaire pour calculer la taille
+        // Compile the loop body in a temporary visitor to calculate the size
         MiniJajaCompilerVisitor bodyVisitor = createChildVisitor();
         if (node.getInstructionsNode() != null) {
             bodyVisitor.visit(node.getInstructionsNode());
         }
         int bodySize = bodyVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
 
-        // Calculer les adresses
+        // Calculate addresses
         int currentAddr = jjcBuilder.getCurrentAddress();
-        int loopEndAddr = currentAddr + 1 + bodySize + 1; // +1 pour IF, +1 pour GOTO
+        int loopEndAddr = currentAddr + 1 + bodySize + 1; // +1 for IF, +1 for GOTO
 
-        // Générer IF
+        // Generate IF
         jjcBuilder.addInstruction(IF, loopEndAddr);
 
-        // Compiler le corps directement dans le builder principal
+        // Compile the body directly in the main builder
         if (node.getInstructionsNode() != null) {
             visit(node.getInstructionsNode());
         }
 
-        // Générer GOTO pour retourner au début
+        // Generate GOTO to return to the beginning
         jjcBuilder.addInstruction(GOTO, loopStartAddr);
     }
 
     /**
-     * Compile une instruction de somme (+=) en code JajaCode.
+     * Compiles a sum instruction (+=) into JajaCode.
      *
-     * <p>Cette méthode génère le code pour une instruction {@code variable += expression}
-     * en utilisant l'instruction {@code inc(variable)} qui incrémente la variable
-     * avec la valeur au sommet de la pile.</p>
+     * <p>This method generates the code for a {@code variable += expression} instruction
+     * using the {@code inc(variable)} instruction, which increments the variable
+     * with the value at the top of the stack.</p>
      *
-     * <p><b>Exemple de code généré :</b>
-     * <p>Pour le code MiniJaja suivant :
+     * <p><b>Example of generated code:</b>
+     * <p>For the following MiniJaja code:
      * <pre>
      * y += 2 * x;
      * </pre>
-     * Le code JajaCode généré sera :
+     * The generated JajaCode will be:
      * <pre>
      * push(2)
      * load(x@global)
@@ -442,13 +442,13 @@ public class MiniJajaCompilerVisitor {
      * inc(y@global)
      * </pre>
      *
-     * @param node le nœud SommeNode représentant l'instruction += à compiler
+     * @param node the SommeNode representing the += instruction to compile
      */
     private void visitSomme(SommeNode node) {
         AstNode target = node.getIdent1Node();
 
         if (target instanceof IdentNode identNode) {
-            // Variable simple : compiler incrément, puis inc
+            // Simple variable: compile increment, then inc
             if (node.getExpressionNode() != null) {
                 visitExpression(node.getExpressionNode());
             }
@@ -458,12 +458,12 @@ public class MiniJajaCompilerVisitor {
             jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
 
         } else if (target instanceof TabNode tabNode) {
-            // Élément de tableau : compiler index, puis incrément, puis ainc
-            // Règle [csommeT]: pe1 ⊕ pe ⊕D ainc(i)
+            // Array element: compile index, then increment, then ainc
+            // Rule [csommeT]: pe1 ⊕ pe ⊕D ainc(i)
             visitExpression(tabNode.getIndex());  // pe1 - index
 
             if (node.getExpressionNode() != null) {
-                visitExpression(node.getExpressionNode());  // pe - valeur d'incrémentation
+                visitExpression(node.getExpressionNode());  // pe - increment value
             }
 
             String arrayName = extractIdentifierName(tabNode.getIdent());
@@ -473,22 +473,22 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Compile une instruction d'incrémentation selon les règles [cincrément] et [cincrémentT]:
+     * Compiles an increment instruction according to the [cincrément] and [cincrémentT] rules:
      * - [cincrément]: n ⊢ incrément(ident(i)) ⇒ {jcnil ⊕D push(1) ⊕D inc(i), 2}
      * - [cincrémentT]: n ⊢ incrément(tab(ident(i), e) ⇒ {pe ⊕D push(1) ⊕D ainc(i), ne + 2}
-     *
-     * Exemples:
+     * <p>
+     * Examples:
      * - x++; -> push(1), inc(x@global)
      * - arr[5]++; -> push(5), push(1), ainc(arr@global)
      *
-     * @param node le nœud IncrementNode représentant l'instruction ++ à compiler
+     * @param node the IncrementNode representing the ++ instruction to compile
      */
     private void visitIncrement(IncrementNode node) {
         AstNode target = node.getIdent1();
 
         if (target instanceof IdentNode identNode) {
-            // Variable simple : push(1), puis inc
-            // Règle [cincrément]: jcnil ⊕D push(1) ⊕D inc(i)
+            // Simple variable: push(1), then inc
+            // Rule [cincrément]: jcnil ⊕D push(1) ⊕D inc(i)
             jjcBuilder.addInstruction(PUSH, 1);
 
             String ident = extractIdentifierName(identNode);
@@ -496,8 +496,8 @@ public class MiniJajaCompilerVisitor {
             jjcBuilder.addInstruction(INC, ident + "@" + scopeAddress);
 
         } else if (target instanceof TabNode tabNode) {
-            // Élément de tableau : compiler index, puis push(1), puis ainc
-            // Règle [cincrémentT]: pe ⊕D push(1) ⊕D ainc(i)
+            // Array element: compile index, then push(1), then ainc
+            // Rule [cincrémentT]: pe ⊕D push(1) ⊕D ainc(i)
             visitExpression(tabNode.getIndex());  // pe - index
 
             jjcBuilder.addInstruction(PUSH, 1);
@@ -512,7 +512,7 @@ public class MiniJajaCompilerVisitor {
         AstNode target = node.getIdent1Node();
 
         if (target instanceof IdentNode identNode) {
-            // Variable simple : compiler valeur, puis store
+            // Simple variable: compile value, then store
             if (node.getExpression() != null) {
                 visitExpression(node.getExpression());
             }
@@ -522,19 +522,19 @@ public class MiniJajaCompilerVisitor {
             jjcBuilder.addInstruction(STORE, ident + "@" + scopeAddress);
 
         } else if (target instanceof TabNode tabNode) {
-            // Élément de tableau : compiler index, puis valeur, puis astore
-            // Règle [caffecteT]: pe1 ⊕ pe ⊕D astore(i)
+            // Array element: compile index, then value, then astore
+            // Rule [caffecteT]: pe1 ⊕ pe ⊕D astore(i)
             visitExpression(tabNode.getIndex());  // pe1 - index
 
             if (node.getExpression() != null) {
-                visitExpression(node.getExpression());  // pe - valeur
+                visitExpression(node.getExpression());  // pe - value
             }
 
             String arrayName = extractIdentifierName(tabNode.getIdent());
             String scopeAddress = resolveVariableScope(arrayName);
             jjcBuilder.addInstruction(ASTORE, arrayName + "@" + scopeAddress);
         } else if (target != null) {
-            // Cas par défaut : comportement original pour compatibilité avec tests
+            // Default case: original behavior for test compatibility
             if (node.getExpression() != null) {
                 visitExpression(node.getExpression());
             }
@@ -585,32 +585,32 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Compile une déclaration de constante en code JajaCode.
-     * Selon la règle [ccst] :
+     * Compiles a constant declaration into JajaCode.
+     * According to the [ccst] rule:
      * n ⊢ cst(t, ident(i), e) ⇒ {pe ⊕D new(i, t, cst, 0), ne + 1}
      *
-     * @param node le nœud CstNode à compiler
+     * @param node the CstNode to compile
      */
     public void visit(CstNode node) {
         compileDeclaration(node.getExp(), node.getType(), node.getIdent().getNom(), "cst");
     }
 
     /**
-     * Compile une déclaration de tableau selon la règle [ctableau]:
+     * Compiles an array declaration according to the [ctableau] rule:
      * n ⊢ tableau(t, ident(i), e) ⇒ {pe ⊕D newarray(i, t), ne + 1}
-     * Exemple: int tableau[20]; -> push(20), newarray(tableau@global, int)
+     * Example: int tableau[20]; -> push(20), newarray(tableau@global, int)
      *
-     * @param node le nœud TableauNode à compiler
+     * @param node the TableauNode to compile
      */
     public void visit(TableauNode node) {
-        // Compiler l'expression de taille (pe)
+        // Compile the size expression (pe)
         if (node.getExp() != null) {
             visitExpression(node.getExp());
         } else {
             jjcBuilder.addInstruction(PUSH, 0);
         }
 
-        // Récupérer nom, type et scope
+        // Get name, type, and scope
         String ident = node.getIdent().getNom();
         String type = typeToJajaCode(node.getType());
         String scopeAddress = currentScope;
@@ -618,10 +618,10 @@ public class MiniJajaCompilerVisitor {
         // ⊕D newarray(i, t)
         jjcBuilder.addInstruction(NEWARRAY, ident + "@" + scopeAddress, type);
 
-        // Tracker pour cleanup (swap + pop)
+        // Track for cleanup (swap + pop)
         variablesToPop.push(ident + "@" + scopeAddress);
 
-        // Enregistrer dans le scope
+        // Register in the scope
         if ("global".equals(currentScope)) {
             globalVariables.add(ident);
         } else if ("main".equals(currentScope)) {
@@ -632,12 +632,12 @@ public class MiniJajaCompilerVisitor {
     }
 
     /**
-     * Méthode commune pour compiler une déclaration de variable ou de constante.
+     * Common method to compile a variable or constant declaration.
      *
-     * @param vexpWrapper l'expression d'initialisation (peut être null)
-     * @param type        le type de la déclaration
-     * @param ident       le nom de l'identifiant
-     * @param kind        le type de déclaration ("var" ou "cst")
+     * @param vexpWrapper the initialization expression (can be null)
+     * @param type        the declaration type
+     * @param ident       the identifier name
+     * @param kind        the declaration kind ("var" ou "cst")
      */
     private void compileDeclaration(Vexp vexpWrapper, Type type, String ident, String kind) {
         Expression vexp = vexpWrapper != null ? vexpWrapper.getVexp() : null;
@@ -645,8 +645,8 @@ public class MiniJajaCompilerVisitor {
         if (vexp != null) {
             visitExpression(vexp);
         } else {
-            // Si pas d'expression d'initialisation, push w (omega) pour toutes les variables/constantes
-            // Omega représente une valeur non initialisée, acceptée par le système de types
+            // If no initialization expression, push w (omega) for all variables/constants
+            // Omega represents an uninitialized value, accepted by the type system
             jjcBuilder.addInstruction(PUSH, "w");
         }
 
@@ -660,7 +660,7 @@ public class MiniJajaCompilerVisitor {
         } else if ("main".equals(currentScope)) {
             mainLocalVariables.add(ident);
         } else {
-            // On est dans une méthode
+            // We are in a method
             currentScopeVariables.add(ident);
         }
     }

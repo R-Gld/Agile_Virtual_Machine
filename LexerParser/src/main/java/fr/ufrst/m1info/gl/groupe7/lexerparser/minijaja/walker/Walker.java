@@ -1,8 +1,14 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.cst.CstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.instructions.InstructionNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.methode.MethodeNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
@@ -25,24 +31,26 @@ public class Walker {
     private final Stacks stack;
     // debug controller
     private final Debug debug;
-    // current line counter (incremented for each node visited)
-    private int lineCounter = 0;
     // flag to stop execution
     private boolean stopped = false;
-    
+    // callback when debug is in pause
+    private final HandlePauseCallback callback;
+
     private static final Logger logger = LoggerFactory.getLogger(Walker.class);
 
     /**
      * Create a new Walker for the given AST root and runtime stacks with debugging support.
      *
-     * @param root  the AST root node to traverse (may be null)
-     * @param stack the runtime stacks/environment provided to node interpretation
-     * @param debug the debug controller for breakpoints and stepping
+     * @param root     the AST root node to traverse (may be null)
+     * @param stack    the runtime stacks/environment provided to node interpretation
+     * @param debug    the debug controller for breakpoints and stepping
+     * @param callback the callback methode called when debug walker is paused
      */
-    public Walker(AstNode root, Stacks stack, Debug debug) {
+    public Walker(AstNode root, Stacks stack, Debug debug, HandlePauseCallback callback) {
         this.root = root;
         this.stack = stack;
         this.debug = debug != null ? debug : new Debug();
+        this.callback = callback;
     }
 
     /**
@@ -52,7 +60,7 @@ public class Walker {
      * @param stack the runtime stacks/environment provided to node interpretation
      */
     public Walker(AstNode root, Stacks stack) {
-        this(root, stack, new Debug());
+        this(root, stack, new Debug(), null);
     }
 
     /**
@@ -62,19 +70,18 @@ public class Walker {
      * (invoking {@code interpret}), then recurses into its children.</p>
      */
     public void walk() {
-        lineCounter = 0;
         stopped = false;
         
         if (debug.isEnabled()) {
-            logger.debug(" Debug mode: " + debug.getMode());
-            logger.debug("Breakpoints: " + debug.getBreakPoints());
-            logger.debug("Starting execution...\n");
+            System.out.println(" Debug mode: " + debug.getMode());
+            System.out.println("Breakpoints: " + debug.getBreakPoints());
+            System.out.println("Starting execution...\n");
         }
-        
-        visitNode(root);
-        
+
+        visitNode(root, this.callback);
+
         if (debug.isEnabled() && !stopped) {
-            logger.debug("\n Execution completed.");
+            System.out.println("\n Execution completed.");
         }
     }
 
@@ -88,35 +95,64 @@ public class Walker {
      *
      * @param node the AST node to visit (may be null)
      */
-    private void visitNode(AstNode node) {
+    private void visitNode(AstNode node, HandlePauseCallback callback) {
         if (node == null || stopped) {
             return;
         }
         
-        lineCounter++;
-        
-        // Check debug breakpoints / step before executing
-        if (debug.isEnabled()) {
-            boolean shouldContinue = debug.beforeNode(lineCounter, node, stack);
-            if (!shouldContinue) {
-                stopped = true;
-                return;
-            }
+        // Always display all nodes being visited
+        int sourceLineNumber = getSourceLine(node);
+        if (sourceLineNumber > 0) {
+            System.err.println("  → Visiting source line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+        } else {
+            System.err.println("  → Traversing: " + node.getClass().getSimpleName());
         }
-        
-        // Execute the node
+
+        // Check if this is a breakable node type
+        boolean isBreakableNode = node instanceof VarNode || node instanceof MethodeNode ||
+                                  node instanceof InstructionNode || node instanceof CstNode ||
+                                  node instanceof TableauNode;
+
+        // Execute the node FIRST
         node.interpret(stack);
 
-        // Visit children (null-safe)
+        // THEN check debug breakpoints / step AFTER executing (so user sees the result)
+        if (isBreakableNode && sourceLineNumber > 0) {
+            System.err.println("    [BREAKABLE] Executed line " + sourceLineNumber + ": " + node.getClass().getSimpleName());
+
+            if (debug.isEnabled()) {
+                System.err.println("      Debug enabled, breakpoints: " + debug.getBreakPoints() + ", checking line: " + sourceLineNumber);
+                boolean shouldContinue = debug.beforeNode(sourceLineNumber, node, stack, callback);
+                if (!shouldContinue) {
+                    stopped = true;
+                    return;
+                }
+            }
+        }
+
+        // Always visit children (null-safe) - don't skip them
         Iterable<AstNode> children = node.getChildren();
         if (children != null) {
             for (AstNode child : children) {
                 if (stopped) break;
-                visitNode(child);
+                visitNode(child, callback);
             }
         }
     }
-    
+
+    /**
+     * Extract the source line number from a node's SourcePosition.
+     *
+     * @param node the AST node
+     * @return the source line number, or 0 if not available
+     */
+    private int getSourceLine(AstNode node) {
+        if (node == null || node.getSourcePosition() == null) {
+            return 0;
+        }
+        return node.getSourcePosition().line();
+    }
+
     /**
      * Get the debug controller.
      * @return the debug controller
@@ -130,7 +166,7 @@ public class Walker {
      * @return the current line number
      */
     public int getCurrentLine() {
-        return lineCounter;
+        return debug.getCurrentLine();
     }
     
     /**
@@ -147,4 +183,5 @@ public class Walker {
     public void stop() {
         stopped = true;
     }
+
 }

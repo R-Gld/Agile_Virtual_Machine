@@ -540,7 +540,7 @@ public class Stacks {
      * Removes a declaration (Quad) from the stack and from the symbol table.
      * This is NOT a normal stack pop: it removes a specific identifier located
      * anywhere inside the stack. Normally, pop() handles the classic LIFO case.
-     *
+     * <p>
      * This method is intended for explicit targeted removal of declarations.
      */
     public void retirerDecl(String ident) {
@@ -633,7 +633,7 @@ public class Stacks {
 
     /**
      * Résout correctement le nom d'une variable dans le contexte MiniJaja.
-     *
+     * <p>
      * Si on est dans une méthode, il peut exister un nom 'scopé'
      * Si un tel nom existe dans la mémoire, on le retourne.
      * Sinon, on retourne le nom global.
@@ -1039,7 +1039,7 @@ public class Stacks {
 
         // Now release the entire block
         heap.releaseReference(entry);
-        logger.debug("← Freed array " + ident + " (block starting at " + base + ")");
+     logger.debug("← Freed array {} (block starting at {})", ident, base);
     }
 
     public int getArrayLength(String ident) {

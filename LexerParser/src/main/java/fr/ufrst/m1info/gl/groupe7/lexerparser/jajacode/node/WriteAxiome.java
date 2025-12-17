@@ -7,19 +7,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code write}.
+ * Axiome representing the JajaCode instruction {@code write}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [write] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ write –» &lt;Afficher(v,m),a+1&gt;
  * </pre>
  *
- * <p>Cette instruction dépile une valeur {@code v} et l'affiche sur la sortie standard
- * sans retour à la ligne.</p>
+ * <p>This instruction pops a value {@code v} and prints it to standard output
+ * without a newline.</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile est vide</li>
+ *   <li>{@link StackUnderflowException} if the stack is empty</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -41,11 +41,11 @@ public class WriteAxiome implements JajaAxiome {
         Stacks.Quad valeur = ctx.getStacks().pop();
 
         if (valeur == null) {
-            throw new StackUnderflowException("Manque la valeur à écrire", "WRITE", ctx.getInstructionCounter());
+            throw new StackUnderflowException("Missing value to write", "WRITE", ctx.getInstructionCounter());
         }
 
         logger.info("{}", valeur.value);
-        logger.debug("\t\tAxiome WRITE exécuté: {} affiché.", valeur.value);
+        logger.debug("\t\tAxiome WRITE executed: {} printed.", valeur.value);
         ctx.incrementPC();
     }
 }

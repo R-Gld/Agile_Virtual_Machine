@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests unitaires pour les axiomes JajaCode.
  * Vérifie l'implémentation par rapport aux règles d'interprétation :
- *
+ * <p>
  * Règles de la sémantique interprétative :
  * < MEM, ADR > ⊢ JCODE –» < MEM, ADR >
  */

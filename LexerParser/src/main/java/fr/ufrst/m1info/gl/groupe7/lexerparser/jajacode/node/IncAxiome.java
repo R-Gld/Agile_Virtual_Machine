@@ -12,25 +12,25 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.UndefinedSymbo
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code inc(i)}.
+ * Axiome representing the JajaCode instruction {@code inc(i)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [inc] : &lt;&lt;w,v, cst,*&gt;.m,a&gt; ⊢ inc(i) –» &lt;AffecterVal(i,Val(i,m)+v,m), a+1&gt;
  * </pre>
  *
- * <p>Cette instruction dépile une valeur {@code v}, l'ajoute à la valeur actuelle
- * de la variable identifiée par {@code i}, puis met à jour la variable avec le résultat.</p>
+ * <p>This instruction pops a value {@code v}, adds it to the current value
+ * of the variable identified by {@code i}, and updates the variable with the result.</p>
  *
- * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
- * en résolvant les noms de variables scopées.</p>
+ * <p><b>Scoping:</b> This implementation supports recursion by resolving
+ * scoped variable names.</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile est vide</li>
- *   <li>{@link UndefinedSymbolException} si l'identifiant n'existe pas</li>
- *   <li>{@link TypeMismatchException} si les valeurs ne sont pas de type entier</li>
- *   <li>{@link AssignmentException} si l'affectation échoue</li>
+ *   <li>{@link StackUnderflowException} if the stack is empty</li>
+ *   <li>{@link UndefinedSymbolException} if the identifier does not exist</li>
+ *   <li>{@link TypeMismatchException} if values are not integers</li>
+ *   <li>{@link AssignmentException} if the assignment fails</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -51,41 +51,41 @@ public class IncAxiome implements JajaAxiome {
      */
     @Override
     public void execute(MachineContext ctx, String ident) {
-        // 1. On récupère la valeur d'incrément sur la pile (le sommet)
+        // 1. Retrieve the increment value from the stack (top)
         Stacks.Quad incrementQuad = ctx.getStacks().pop();
 
         if (incrementQuad == null) {
             throw new StackUnderflowException("INC", ctx.getInstructionCounter());
         }
 
-        // 2. Résoudre le nom scopé pour la récursivité
+        // 2. Resolve the scoped name for recursion
         String scopedIdent = resolveScopedName(ctx, ident);
 
-        // 3. On récupère la valeur actuelle de la variable 'scopedIdent'
+        // 3. Get the current value of variable 'scopedIdent'
         Object currentValue = ctx.getStacks().getValue(scopedIdent);
 
-        // Vérification d'existence
+        // Existence check
         if (currentValue == null && ctx.getStacks().findQuad(scopedIdent) == null) {
             throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.INC.toString(), ctx.getInstructionCounter());
         }
 
-        // 4. Vérification des types (doivent être des entiers)
+        // 4. Type checks (must be integers)
         if (!(currentValue instanceof Integer) || !(incrementQuad.value instanceof Integer)) {
-            throw new TypeMismatchException("Tentative d'incrémenter avec des valeurs non entières (" + currentValue + " + " + incrementQuad.value + ")", "INC", ctx.getInstructionCounter());
+            throw new TypeMismatchException("Attempt to increment with non-integer values (" + currentValue + " + " + incrementQuad.value + ")", "INC", ctx.getInstructionCounter());
         }
 
-        // 5. Calcul de la nouvelle valeur
+        // 5. Compute the new value
         int newValue = (Integer) currentValue + (Integer) incrementQuad.value;
 
-        // 6. Mise à jour en mémoire
+        // 6. Update memory
         boolean success = ctx.getStacks().affecterValJJC(scopedIdent, newValue);
 
         if (!success) {
-            throw new AssignmentException(scopedIdent, "échec de l'affectation", "INC", ctx.getInstructionCounter());
+            throw new AssignmentException(scopedIdent, "assignment failed", "INC", ctx.getInstructionCounter());
         }
 
-        // 7. Succès
-        logger.debug("\t\tAxiome INC exécuté: {} += {} -> {}", scopedIdent, incrementQuad.value, newValue);
+        // 7. Success
+        logger.debug("\t\tAxiome INC executed: {} += {} -> {}", scopedIdent, incrementQuad.value, newValue);
         ctx.incrementPC();
     }
 

@@ -13,21 +13,20 @@ import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeDebug;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaDebugger;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -50,17 +49,23 @@ public class App extends Application {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
+    public static final String MINI_JAJA_NAME = "MiniJaja";
+    public static final String JAJA_CODE_NAME = "JajaCode";
+
     private Stage appStage;
     private MyCodeArea mjjCodeArea;
     private MyCodeArea jjcCodeArea;
     private ChoiceBox<String> fileToRun;
     private ToggleButton darkMode;
 
-    // Debug Buttons
-    private Button debugButton;
     private Button stepButton;
     private Button stopButton;
     private Button continueButton;
+    // Debug minijaja
+    private MiniJajaDebugHandler mjjDebugHandler;
+
+    // List of element in memory to show to gui
+    ObservableList<StackModel> memoryList;
 
     /**
      * Console used to display messages (debug, info, errors)
@@ -129,7 +134,7 @@ public class App extends Application {
         miniTitleBar.setPrefHeight(26);
         miniTitleBar.setMaxHeight(26);
 
-        Label mjjLabel = new Label("MiniJaja");
+        Label mjjLabel = new Label(MINI_JAJA_NAME);
         mjjLabel.getStyleClass().add("panel-title-label");
 
         Region mjjSpacer = new Region();
@@ -149,7 +154,7 @@ public class App extends Application {
         jajaTitleBar.setPrefHeight(26);
         jajaTitleBar.setMaxHeight(26);
 
-        Label jjcLabel = new Label("JajaCode");
+        Label jjcLabel = new Label(JAJA_CODE_NAME);
         jjcLabel.getStyleClass().add("panel-title-label");
 
         Region jajaSpacer = new Region();
@@ -353,8 +358,8 @@ public class App extends Application {
 
         /* Select file to be interpreted */
         fileToRun = new ChoiceBox<>();
-        fileToRun.getItems().addAll("MiniJaja", "Jajacode");
-        fileToRun.setValue("MiniJaja");
+        fileToRun.getItems().addAll(MINI_JAJA_NAME, "Jajacode");
+        fileToRun.setValue(MINI_JAJA_NAME);
         hbox.getChildren().add(fileToRun);
 
         /* Execute button */
@@ -366,11 +371,12 @@ public class App extends Application {
         hbox.getChildren().add(runButton);
 
         // Added section: debug controls (icons only, no text)
-        /**
+        /*
          * Simple debug control bar with icons only: Start Debug / Step / Stop
          */
 
-        debugButton = new Button();
+        // Debug Buttons
+        Button debugButton = new Button();
         stepButton = new Button();
         stopButton = new Button();
         continueButton = new Button();
@@ -411,7 +417,7 @@ public class App extends Application {
     private void loadFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"), new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter(MINI_JAJA_NAME, "*.mjj"), new FileChooser.ExtensionFilter(JAJA_CODE_NAME, "*.jjc"));
         File file = fileChooser.showOpenDialog(appStage);
         loadFileContent(file);
     }
@@ -453,7 +459,7 @@ public class App extends Application {
 
         if (name.endsWith(".mjj")) {
             mjjCodeArea.loadText(content);
-            fileToRun.setValue("MiniJaja");
+            fileToRun.setValue(MINI_JAJA_NAME);
         } else if (name.endsWith(".jjc")) {
             jjcCodeArea.loadText(content);
             fileToRun.setValue("Jajacode");
@@ -469,7 +475,7 @@ public class App extends Application {
      */
     private void saveFile() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("MiniJaja", "*.mjj"), new FileChooser.ExtensionFilter("JajaCode", "*.jjc"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter(MINI_JAJA_NAME, "*.mjj"), new FileChooser.ExtensionFilter(JAJA_CODE_NAME, "*.jjc"));
         File file = fileChooser.showSaveDialog(appStage);
         if (file == null) return;
 
@@ -507,11 +513,12 @@ public class App extends Application {
             @Override
             protected String call() {
                 Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+                String compilerOutput = compiler.compileToString();
                 logger.debug("Starting compilation task...");
                 logger.debug("MiniJaja code length: {} characters", code.length());
                 logger.debug("Instruction jajacode générée :");
-                logger.debug("{}", compiler.compileToString());
-                return compiler.compileToString();
+                logger.debug("{}", compilerOutput);
+                return compilerOutput;
             }
         };
 
@@ -552,17 +559,22 @@ public class App extends Application {
             @Override
             protected Void call() {
                 try {
-                    if ("MiniJaja".equals(choice)) {
-                        MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
-                        interpreter.run();
-                    } else {
-                        String[] lines = jjcText.split("\\n");
-                        StringBuilder result = new StringBuilder();
-                        for (int i = 0; i < lines.length; i++) {
-                            result.append(i + 1).append(" ").append(lines[i]).append("\n");
+                    switch (choice) {
+                        case MINI_JAJA_NAME: {
+                            MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
+                            interpreter.run();
+                            break;
                         }
-                        JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
-                        jjcInterpreter.run();
+                        case JAJA_CODE_NAME: {
+                            String[] lines = jjcText.split("\\n");
+                            StringBuilder result = new StringBuilder();
+                            for (int i = 0; i < lines.length; i++) {
+                                result.append(i + 1).append(" ").append(lines[i]).append("\n");
+                            }
+                            JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
+                            jjcInterpreter.run();
+                            break;
+                        }
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -573,7 +585,7 @@ public class App extends Application {
 
         task.setOnSucceeded(ev -> {
             if (console != null) {
-                if ("MiniJaja".equals(choice)) {
+                if (MINI_JAJA_NAME.equals(choice)) {
                     console.printMessage("MiniJaja executed.");
                 } else {
                     console.printMessage("JajaCode executed.");
@@ -602,15 +614,25 @@ public class App extends Application {
      * Continue button jumps from breakpoint to breakpoint.
      */
     private void continueDebug() {
-        if (!debugMode || debugHandler == null) return;
+        if (!debugMode) return;
 
-        debugBreakpoints.clear();
-        debugBreakpoints.addAll(jjcCodeArea.getBreakpoints());
-
-        debugHandler.continueDebug(debugBreakpoints);
-
-        if (!debugHandler.isRunning()) {
-            stopDebugWithReset();
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                Set<Integer> breakpoints = mjjCodeArea.getBreakpoints();
+                mjjDebugHandler.continueDebug(breakpoints);
+                if (!mjjDebugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        } else {
+            if (debugHandler != null) {
+                debugBreakpoints.clear();
+                debugBreakpoints.addAll(jjcCodeArea.getBreakpoints());
+                debugHandler.continueDebug(debugBreakpoints);
+                if (!debugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
         }
     }
 
@@ -621,13 +643,21 @@ public class App extends Application {
         if (!debugMode) {
             return;
         }
+
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                mjjDebugHandler.stop();
+                mjjDebugHandler = null;
+            }
+        } else {
+            if (debugHandler != null) {
+                debugHandler.stop();
+                debugHandler = null;
+            }
+        }
+
         debugMode = false;
         debugCurrentLine = -1;
-
-        if (debugHandler != null) {
-            debugHandler.stop();
-            debugHandler = null;
-        }
 
         if (console != null) {
             console.printMessage("[DEBUG] Debug mode stopped.");
@@ -638,7 +668,7 @@ public class App extends Application {
     }
 
     /**
-     * Starts debug mode - compiles MiniJaja if needed and initializes JajaCode debugger.
+     * Starts debug mode - determines whether to debug MiniJaja or JajaCode.
      */
     private void startDebugEnhanced() {
         if (debugMode) {
@@ -646,27 +676,46 @@ public class App extends Application {
         }
 
         String choice = fileToRun.getValue();
-        String codeToDebug;
 
-        // If MiniJaja is selected, compile it first
         if ("MiniJaja".equals(choice)) {
-            try {
-                Compiler compiler = new Compiler(mjjCodeArea.getText(), Compiler.Destination.STRING, null);
-                codeToDebug = compiler.compileToString();
-                jjcCodeArea.loadText(codeToDebug);
-                if (console != null) {
-                    console.printMessage("[DEBUG] Compiled MiniJaja to JajaCode for debugging.");
-                }
-            } catch (Exception e) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Compilation Error");
-                alert.setContentText("Cannot debug: Compilation failed.\n" + e.getMessage());
-                alert.showAndWait();
-                return;
-            }
+            // Debug MiniJaja directly
+            startMiniJajaDebug();
         } else {
-            codeToDebug = jjcCodeArea.getText();
+            // Debug JajaCode
+            startJajaCodeDebug();
         }
+    }
+
+    /**
+     * Starts MiniJaja debug session.
+     */
+    private void startMiniJajaDebug() {
+        String code = mjjCodeArea.getText();
+        Set<Integer> breakpoints = mjjCodeArea.getBreakpoints();
+
+        if (breakpoints.isEmpty()) {
+            console.printMessage("[DEBUG MJJ] Warning: No breakpoints set. Add breakpoints by clicking on line numbers.");
+        }
+
+        mjjDebugHandler = new MiniJajaDebugHandler(console, mjjCodeArea, stackTable, heapTable);
+        mjjDebugHandler.start(code, breakpoints);
+
+        if (!mjjDebugHandler.isRunning()) {
+            return;
+        }
+
+        debugMode = true;
+        debugSource = DebugSource.MINIJAJA;
+        stepButton.setDisable(false);
+        stopButton.setDisable(false);
+        continueButton.setDisable(false);
+    }
+
+    /**
+     * Starts JajaCode debug session.
+     */
+    private void startJajaCodeDebug() {
+        String codeToDebug = jjcCodeArea.getText();
 
         // Prepare JajaCode with line numbers (interpreter expects "1 init" format)
         String[] lines = codeToDebug.split("\\n");
@@ -684,24 +733,34 @@ public class App extends Application {
         }
 
         debugMode = true;
-        debugSource = DebugSource.JAJACODE; // Always debug JajaCode
+        debugSource = DebugSource.JAJACODE;
         stepButton.setDisable(false);
         stopButton.setDisable(false);
         continueButton.setDisable(false);
     }
 
     /**
-     * Steps through JajaCode execution one instruction at a time.
+     * Steps through execution one instruction at a time.
      */
     private void stepDebugEnhanced() {
-        if (!debugMode || debugHandler == null) {
+        if (!debugMode) {
             return;
         }
 
-        debugHandler.step();
-
-        if (!debugHandler.isRunning()) {
-            stopDebugWithReset();
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                mjjDebugHandler.step();
+                if (!mjjDebugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        } else {
+            if (debugHandler != null) {
+                debugHandler.step();
+                if (!debugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
         }
     }
 
@@ -709,8 +768,13 @@ public class App extends Application {
      * Stops debug mode and resets the current line highlight.
      */
     private void stopDebugWithReset() {
+        DebugSource currentSource = debugSource;
         stopDebug();
-        jjcCodeArea.highlightLine(-1);
+        if (currentSource == DebugSource.MINIJAJA) {
+            mjjCodeArea.highlightLine(-1);
+        } else {
+            jjcCodeArea.highlightLine(-1);
+        }
     }
 
     /**

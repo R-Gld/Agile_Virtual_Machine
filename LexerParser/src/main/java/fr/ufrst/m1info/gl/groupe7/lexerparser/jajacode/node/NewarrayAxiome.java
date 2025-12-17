@@ -12,17 +12,17 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code newarray(i, t)}.
+ * Axiome representing the JajaCode instruction {@code newarray(i, t)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [newarray] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ newarray(i, t) –» &lt;DeclTab(i, v, t, m), a+1&gt;
  * </pre>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile est vide</li>
- *   <li>{@link TypeMismatchException} si la taille n'est pas un entier</li>
+ *   <li>{@link StackUnderflowException} if the stack is empty</li>
+ *   <li>{@link TypeMismatchException} if the size is not an integer</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -33,7 +33,7 @@ public class NewarrayAxiome implements JajaAxiome {
 
     @Override
     public void execute(MachineContext ctx, String argsPacked) {
-        // 1. Dépacking des arguments (Format: "ident,type")
+        // 1. Unpack arguments (Format: "ident,type")
         String[] parts = argsPacked.split(",");
         if (parts.length != 2) {
             throw new JajaCodeRuntimeException("Arguments manquants (attendu 'ident,type')",
@@ -43,47 +43,47 @@ public class NewarrayAxiome implements JajaAxiome {
         String ident = parts[0].trim();
         String typeStr = parts[1].trim();
 
-        // 2. Conversion du Type
+        // 2. Convert the Type
         Type type = parseType(typeStr);
         if (type == null) {
-            throw new JajaCodeRuntimeException("Type inconnu '" + typeStr + "'",
-                    JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
+            throw new JajaCodeRuntimeException("Unknown type '" + typeStr + "'",
+                JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
         logger.debug("\t\t[DEBUG] axiomeNewarray appelé: ident={}, type={}", ident, type);
 
-        // 3. Dépiler la taille depuis la pile
+        // 3. Pop the size from the stack
         Stacks.Quad sizeQuad = ctx.getStacks().pop();
         if (sizeQuad == null) {
-            throw new StackUnderflowException("Manque la taille du tableau",
+            throw new StackUnderflowException("Missing array size",
                     JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
-        // 4. Vérifier que la taille est un entier
+        // 4. Verify the size is an integer
         if (!(sizeQuad.value instanceof Integer size)) {
-            throw new TypeMismatchException("Taille de tableau invalide (attendu entier, reçu " +
+            throw new TypeMismatchException("Invalid array size (expected integer, found " +
                                              sizeQuad.value.getClass().getSimpleName() + ")",
                     JajaCodeInstr.NEWARRAY.toString(), ctx.getInstructionCounter());
         }
 
-        logger.debug("\t\t[DEBUG] Taille dépilée: {}", size);
+        logger.debug("\t\t[DEBUG] Popped size: {}", size);
 
-        // 5. Gérer la récursivité: résoudre le nom scopé
+        // 5. Handle recursion: resolve scoped name
         String scopedIdent = resolveScopedName(ctx, ident);
 
-        // 6. Déclarer le tableau (alloue dans le tas via Stacks.declareTabJJC)
+        // 6. Declare the array (allocates on heap via Stacks.declareTab)
         // Use JajaCode-specific version that doesn't use symbol table
         ctx.getStacks().declareTabJJC(scopedIdent, size, type);
 
-        logger.debug("\t\tAxiome NEWARRAY exécuté: {}[{}] ({}) créé.", scopedIdent, size, type);
+        logger.debug("\t\tAxiome NEWARRAY executed: {}[{}] ({}) created.", scopedIdent, size, type);
 
-        // 7. Incrémenter PC
+        // 7. Increment PC
         ctx.incrementPC();
     }
 
     /**
-     * Résout le nom scopé pour la récursivité.
-     * Même logique que LoadAxiome/StoreAxiome.
+     * Resolves the scoped name for recursion.
+     * Same logic as LoadAxiome/StoreAxiome.
      * Uses STACK only (not symbol table) for JajaCode compatibility.
      */
     private String resolveScopedName(MachineContext ctx, String ident) {
@@ -92,13 +92,13 @@ public class NewarrayAxiome implements JajaAxiome {
             return ident;
         }
 
-        // Vérifier si on est dans un contexte de méthode récursif
+        // Check if we are in a recursive method context
         String currentContext = ctx.getStacks().getCurrentContext();
         if (currentContext != null) {
             String methodName = ctx.getStacks().getCurrentMethodName();
             int recursionLevel = ctx.getStacks().getRecursionDepth(methodName);
 
-            // Si on est en récursivité (niveau > 1), chercher la variable scopée dans la PILE
+            // If we are in recursion (level > 1), look for the scoped variable
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
                 // Check in the STACK (not symbol table) for JajaCode compatibility
@@ -108,7 +108,7 @@ public class NewarrayAxiome implements JajaAxiome {
             }
         }
 
-        // Sinon, retourner le nom original
+        // Otherwise, return the original name
         return ident;
     }
 

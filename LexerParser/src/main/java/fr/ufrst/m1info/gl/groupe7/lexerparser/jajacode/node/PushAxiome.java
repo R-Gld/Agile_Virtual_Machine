@@ -9,22 +9,22 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code push(v)}.
+ * Axiome representing the JajaCode instruction {@code push(v)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [push] : &lt;m,a&gt; ⊢ push(v) –» &lt;&lt;w, v, cst,*&gt;.m, a+1&gt;
  * </pre>
  *
- * <p>Cette instruction empile une valeur immédiate {@code v} sur la pile.
- * La valeur peut être de type booléen ({@code true}, {@code false}),
- * entier, ou vide (oméga/nil).</p>
+ * <p>This instruction pushes an immediate value {@code v} onto the stack.
+ * The value can be boolean ({@code true}, {@code false}),
+ * integer, or empty (omega/nil).</p>
  *
- * <p>Le type de la valeur est automatiquement détecté lors du parsing de l'argument :
+ * <p>The value type is automatically detected while parsing the argument:
  * <ul>
- *   <li>Booléen : {@code true} ou {@code false}</li>
- *   <li>Entier : séquence de chiffres</li>
- *   <li>Vide : tout autre valeur</li>
+ *   <li>Boolean: {@code true} or {@code false}</li>
+ *   <li>Integer: sequence of digits</li>
+ *   <li>Empty: any other value</li>
  * </ul>
  * </p>
  *
@@ -45,7 +45,7 @@ public class PushAxiome implements JajaAxiome {
         Object valeur;
         Type type;
 
-        // 1. Parsing manuel de la chaîne de caractères
+        // 1. Manual parsing of the string
         if ("true".equals(arg)) {
             valeur = true;
             type = Type.BOOLEEN;
@@ -55,20 +55,21 @@ public class PushAxiome implements JajaAxiome {
         } else {
             try {
                 // On essaie de voir si c'est un entier
+                // Try to see if it's an integer
                 valeur = Integer.parseInt(arg);
                 type = Type.ENTIER;
             } catch (NumberFormatException e) {
-                // Si ce n'est ni un booléen ni un entier, c'est 'vide' (omega/nil)
+                // If it's neither boolean nor integer, treat it as 'empty' (omega/nil)
                 // Use Omega singleton instance instead of null for proper constant initialization
                 valeur = Omega.getInstance();
                 type = Type.VOID;
             }
         }
 
-        // 2. Création du Quad et Push
+        // 2. Create the Quad and push
         ctx.getStacks().push(new Stacks.Quad(valeur, type));
 
-        logger.debug("\t\tAxiome PUSH exécuté: {} ({}) poussé sur la pile.", valeur, type);
+        logger.debug("\t\tAxiome PUSH executed: {} ({}) pushed on the stack.", valeur, type);
         ctx.incrementPC();
     }
 }

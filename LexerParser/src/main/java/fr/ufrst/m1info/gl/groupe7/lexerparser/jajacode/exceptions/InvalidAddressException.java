@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée lorsqu'une adresse est invalide
+ * Exception when an invalid address is accessed in JajaCode.
  */
 public class InvalidAddressException extends JajaCodeRuntimeException {
 

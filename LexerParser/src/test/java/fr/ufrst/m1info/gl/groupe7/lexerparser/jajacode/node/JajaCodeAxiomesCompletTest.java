@@ -390,7 +390,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(3, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Besoin de 2 opérandes"));
+        assertTrue(exception.getMessage().contains("Requires 2 operands"));
     }
 
     @Test
@@ -405,7 +405,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Opérandes non entiers"));
+
+        assertTrue(exception.getMessage().contains("Non-integer operands"));
     }
 
     // ==================== Tests MUL ====================
@@ -463,7 +464,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(3, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Besoin de 2 opérandes"));
+        assertTrue(exception.getMessage().contains("Requires 2 operands"));
     }
 
     @Test
@@ -478,7 +479,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Opérandes non entiers"));
+
+        assertTrue(exception.getMessage().contains("Non-integer operands"));
     }
 
     // ==================== Tests DIV ====================
@@ -610,7 +612,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(3, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Besoin de 2 opérandes"));
+        System.out.println(exception.getMessage());
+        assertTrue(exception.getMessage().contains("Requires 2 operands"));
     }
 
     @Test
@@ -625,7 +628,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Tentative de comparer des valeurs non entières"));
+        System.out.println(exception.getMessage());
+        assertTrue(exception.getMessage().contains("Attempt to compare non-integer values"));
     }
 
     // ==================== Tests CMP ====================
@@ -839,7 +843,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(3, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Besoin de 2 opérandes"));
+        assertTrue(exception.getMessage().contains("Requires 2 operands"));
     }
 
     @Test
@@ -854,7 +858,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(4, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Tentative d'opération sur des types non booléens (false || 10)"));
+
+        assertTrue(exception.getMessage().contains("Attempt to operate on non-boolean types (false || 10)"));
     }
 
     // ==================== Tests NOT ====================
@@ -908,7 +913,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         TypeMismatchException exception = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(3, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("L'opérande doit être booléen"));
+        System.out.println(exception.getMessage());
+        assertTrue(exception.getMessage().contains("Operand must be boolean"));
     }
 
     // ==================== Tests INC ====================
@@ -998,7 +1004,7 @@ class JajaCodeAxiomesCompletTest {
 
         TypeMismatchException e = assertThrows(TypeMismatchException.class, () -> executeJajaCode(code));
         assertEquals(5, e.getProgramCounter());
-        assertTrue(e.getMessage().contains("Tentative d'incrémenter avec des valeurs non entières"));
+        assertTrue(e.getMessage().contains("Attempt to increment with non-integer values"));
     }
 
     @Test
@@ -1339,7 +1345,8 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(2, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Manque la valeur à écrire"));
+
+        assertTrue(exception.getMessage().contains("Missing value to write"));
     }
 
     @Test
@@ -1394,7 +1401,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         StackUnderflowException exception = assertThrows(StackUnderflowException.class, () -> executeJajaCode(code));
         assertEquals(2, exception.getProgramCounter());
-        assertTrue(exception.getMessage().contains("Manque la valeur à écrire"));
+        assertTrue(exception.getMessage().contains("Missing value to write"));
     }
 
     // ==================== Tests complexes ====================

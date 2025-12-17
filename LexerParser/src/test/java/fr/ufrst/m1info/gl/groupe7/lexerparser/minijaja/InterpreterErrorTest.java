@@ -44,7 +44,7 @@ public class InterpreterErrorTest {
         ParseTree tree = parser.classe();
         AstNode astRoot = visitor.visit(tree);
         assertNotNull(astRoot, "AST should not be null");
-        Walker walker = new Walker(astRoot, stacks, new Debug());
+        Walker walker = new Walker(astRoot, stacks, new Debug(), null);
         walker.walk();
     }
 

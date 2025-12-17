@@ -28,7 +28,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
     private static class Scope {
         final Map<String, Variable> variables = new HashMap<>();
-        int start = -1;
+        int start;
         int end = -1;
         boolean seenInstruction = false;
         boolean isMethodOrMainScope = false;
@@ -94,7 +94,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         if (scopes.isEmpty() || name == null || token == null) return;
         int start = token.getStartIndex();
         int stop = token.getStopIndex() + 1;
-        scopes.peek().variables.put(name, new Variable(new IndexRange(start, stop)));
+        Objects.requireNonNull(scopes.peek()).variables.put(name, new Variable(new IndexRange(start, stop)));
         // record declared variable for autocomplete suggestions
         declaredVariableNames.add(name);
     }
@@ -154,9 +154,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
 
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
         for (PersistedScope ps : enclosing) {
-            for (String v : ps.variables) {
-                ordered.add(v);
-            }
+            ordered.addAll(ps.variables);
         }
         return new ArrayList<>(ordered);
     }

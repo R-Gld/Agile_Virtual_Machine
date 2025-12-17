@@ -10,23 +10,23 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions.StackUnderflow
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 /**
- * Axiome représentant l'instruction JajaCode {@code store(i)}.
+ * Axiome representing the JajaCode instruction {@code store(i)}.
  *
- * <p><b>Sémantique formelle :</b></p>
+ * <p><b>Formal semantics:</b></p>
  * <pre>
  * [store] : &lt;&lt;w, v, cst,*&gt;.m,a&gt; ⊢ store(i) –» &lt;AffecterVal(i,v,m), a+1&gt;
  * </pre>
  *
- * <p>Cette instruction dépile une valeur {@code v} du sommet de la pile et l'affecte
- * à la variable identifiée par {@code i} dans la mémoire.</p>
+ * <p>This instruction pops a value {@code v} from the top of the stack and assigns
+ * it to the variable identified by {@code i} in memory.</p>
  *
- * <p><b>Gestion du scopage :</b> Cette implémentation supporte la récursivité
- * en résolvant les noms de variables scopées (suffixe {@code $N} pour les appels récursifs).</p>
+ * <p><b>Scoping:</b> This implementation supports recursion by resolving
+ * scoped variable names (suffix {@code $N} for recursive calls).</p>
  *
- * <p><b>Exceptions :</b></p>
+ * <p><b>Exceptions:</b></p>
  * <ul>
- *   <li>{@link StackUnderflowException} si la pile est vide</li>
- *   <li>{@link AssignmentException} si l'affectation échoue</li>
+ *   <li>{@link StackUnderflowException} if the stack is empty</li>
+ *   <li>{@link AssignmentException} if the assignment fails</li>
  * </ul>
  *
  * @see JajaAxiome
@@ -57,10 +57,10 @@ public class StoreAxiome implements JajaAxiome {
         boolean success = ctx.getStacks().affecterValJJC(scopedIdent, valeur.value);
 
         if (!success) {
-            throw new AssignmentException(scopedIdent, "impossible d'affecter la valeur", JajaCodeInstr.STORE.toString(), ctx.getInstructionCounter());
+            throw new AssignmentException(scopedIdent, "unable to assign value", JajaCodeInstr.STORE.toString(), ctx.getInstructionCounter());
         }
 
-        logger.debug("\t\tAxiome STORE exécuté: {} mis à jour avec valeur {}.", scopedIdent, valeur.value);
+        logger.debug("\t\tAxiome STORE executed: {} updated with value {}.", scopedIdent, valeur.value);
         ctx.incrementPC();
     }
 

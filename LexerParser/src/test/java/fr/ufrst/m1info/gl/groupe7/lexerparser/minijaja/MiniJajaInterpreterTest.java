@@ -419,7 +419,8 @@ public class MiniJajaInterpreterTest {
         }
         
         String output = outputStream.toString();
-        assertTrue(output.contains("ARBRE SYNTAXIQUE ABSTRAIT"));
+      
+        assertTrue(output.contains("ABSTRACT SYNTAX TREE"));
         assertTrue(output.contains("INTERPRETATION"));
     }
 

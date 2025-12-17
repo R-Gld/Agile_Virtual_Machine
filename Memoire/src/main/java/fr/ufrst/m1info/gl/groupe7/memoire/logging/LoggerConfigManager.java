@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Manager for dynamic log level configuration.
  * Allows the GUI to change log levels at runtime without restarting the application.
- *
+ * <p>
  * This class provides programmatic control over Logback's logging configuration,
  * enabling users to adjust verbosity on-the-fly from the GUI interface.
  */
@@ -31,7 +31,7 @@ public class LoggerConfigManager {
     /**
      * Sets the log level for a specific logger by name.
      * Useful for controlling verbosity of individual packages or classes.
-     *
+     * <p>
      * Examples:
      * - "fr.ufrst.m1info.gl.groupe7.memoire" - all classes in Memoire module
      * - "fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreterVisitor" - specific class

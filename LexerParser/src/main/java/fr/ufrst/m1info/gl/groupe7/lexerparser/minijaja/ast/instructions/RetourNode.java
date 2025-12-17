@@ -21,14 +21,23 @@ public class RetourNode extends InstructionNode {
                 ')';
     }
 
+    /**
+     * Interprets the return instruction for the AST node.
+     * <p>
+     * Evaluates the expression associated with this return node and assigns its value
+     * to the class variable currently defined in the stack. If no class variable is defined,
+     * a {@link RuntimeException} is thrown.
+     *
+     * @param stacks the execution stacks containing variable and class context
+     * @throws RuntimeException if no class variable is defined in the stack
+     */
     @Override
     public void interpret(Stacks stacks) {
         Object exp = this.getExp().evaluate(stacks);
 
         String varClasse = stacks.getVariableClasse();
         if (varClasse == null) {
-            throw new RuntimeException("Erreur: Variable de classe non définie dans la pile"); // TODO : message
-                                                                                               // d'erreur plus clair
+            throw new RuntimeException("Error: class variable not defined on the stack"); // TODO: clearer error message
         }
         stacks.affecterVal(varClasse, exp);
     }

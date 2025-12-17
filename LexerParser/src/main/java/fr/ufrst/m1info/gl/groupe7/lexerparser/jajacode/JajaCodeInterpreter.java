@@ -105,7 +105,7 @@ public class JajaCodeInterpreter implements Runnable {
      *
      * @return true if there are still instructions to execute after this step,
      *         false if the program has finished (reached halt/jcstop).
-     *
+     * <p>
      * Note: This method expects that JajaCodeInterpreterVisitor implements
      * a step() method that executes a single instruction and returns whether
      * the program has finished or not.
@@ -130,9 +130,9 @@ public class JajaCodeInterpreter implements Runnable {
     /**
      * Returns the index of the current instruction (0-based) in the
      * internal JajaCode program representation.
-     *
+     * <p>
      * This can be used by the GUI to highlight the current JajaCode line.
-     *
+     * <p>
      * Note: You must implement getCurrentInstructionIndex() in
      * JajaCodeInterpreterVisitor.
      */

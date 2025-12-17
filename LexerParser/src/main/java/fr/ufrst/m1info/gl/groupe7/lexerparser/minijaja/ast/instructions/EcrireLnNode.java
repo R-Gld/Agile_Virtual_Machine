@@ -30,46 +30,47 @@ public class EcrireLnNode extends EcrireNode {
     }
     @Override
     public void interpret(Stacks stacks) {
-        if (ident1Node instanceof IdentNode ident1) {
-            String varName = ident1.getNom();
-            
-            // Try scoped name first (for function context with recursion support)
-            String actualVarName = varName;
-            if (stacks.isInMethodContext()) {
-                String scopedName = stacks.getScopedName(varName);
-                if (stacks.getObjectType(scopedName) != null) {
-                    actualVarName = scopedName;
+        switch (ident1Node) {
+            case IdentNode ident1 -> {
+                String varName = ident1.getNom();
+
+                // Try scoped name first (for function context with recursion support)
+                String actualVarName = varName;
+                if (stacks.isInMethodContext()) {
+                    String scopedName = stacks.getScopedName(varName);
+                    if (stacks.getObjectType(scopedName) != null) {
+                        actualVarName = scopedName;
+                    }
                 }
+
+                String OT = stacks.getObjectType(actualVarName);
+                if (OT == null) {
+                    OT = stacks.getObjectType(varName);
+                }
+
+                if (OT != null && (OT.equals("tab") || OT.equals("meth"))) {
+                    throw new RuntimeException("Type error: cannot print array directly or method reference");
+                }
+
+                logger.info("{}\n", ident1.evaluate(stacks));
             }
-            
-            String OT = stacks.getObjectType(actualVarName);
-            if (OT == null) {
-                OT = stacks.getObjectType(varName);
+            case TabNode tabNode -> {
+
+                String varName = stacks.getScopedName(tabNode.getIdent().getNom());
+
+
+                int index = (int) tabNode.getIndex().evaluate(stacks);
+                Object currentValue = stacks.getArrayValue(varName, index);
+
+                if (currentValue instanceof Integer) {
+                    logger.info("{}\n", currentValue);
+                } else if (currentValue instanceof Boolean) {
+                    logger.info("{}\n", currentValue);
+                }
+
             }
-            
-            if (OT != null && (OT.equals("tab") || OT.equals("meth"))) { 
-                throw new RuntimeException("Type error: cannot print array directly or method reference");
-            }
-            
-            logger.info("{}\n", ident1.evaluate(stacks));
-        } else if (ident1Node instanceof Expression expr) {
-            logger.info("{}\n", expr.evaluate(stacks));
-        } else if (ident1Node instanceof TabNode  tabNode) {
-
-            String varName = stacks.getScopedName(tabNode.getIdent().getNom());
-
-
-            int index = (int) tabNode.getIndex().evaluate(stacks);
-            Object currentValue =  stacks.getArrayValue(varName, index);
-
-            if (currentValue instanceof Integer) {
-                logger.info("{}\n", currentValue);
-            }  else if (currentValue instanceof Boolean) {
-                logger.info("{}\n", currentValue);
-            }
-
-        } else {
-            logger.info("{}\n", ident1Node);
+            case Expression expr -> logger.info("{}\n", expr.evaluate(stacks));
+            case null, default -> logger.info("{}\n", ident1Node);
         }
 
     }
