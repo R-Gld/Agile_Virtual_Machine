@@ -1,13 +1,17 @@
 package fr.ufrst.m1info.gl.groupe7.memoire;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import fr.ufrst.m1info.gl.groupe7.memoire.utils.Type;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 
@@ -1372,24 +1376,6 @@ public class StacksTest {
     }
 
 
-
-
-    /*
-        @Test
-    public void testDeclareOmegaConstThenAssignFails() {
-        Stacks stacks = new Stacks();
-
-        stacks.declareCst("k", Type.ENTIER);
-
-
-        assertThrows(RuntimeException.class, () -> stacks.getValue("k"));
-
-
-        stacks.declareCst("k", 3, Type.ENTIER);
-        assertEquals(3, stacks.getValue("k"));
-    }
-     */
-
     @Test
     public void testDoubleDeclarationVarThrows() {
         Stacks stacks = new Stacks();
@@ -1971,53 +1957,47 @@ public class StacksTest {
         stacks.freeTab("A");
         assertEquals(1, stacks.getHeap().getEntry(infoA.getBaseAddress()).getRefCount());
     }
-    /*todo ask teacher about retrait
     @Test
-    public void testPopTableFreesMemoryWithoutFreeElements() {
+    void testNotEnoughMemoryLogIsWritten() {
+        // Arrange
+        Logger logger = (Logger) LoggerFactory.getLogger(Heap.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
 
+        Heap heap = new Heap();
 
+        // Act
+        heap.allocate("X", 999, null);
 
-        stacks.declareTab("myArray", 3, Type.ENTIER);
+        // Assert
+        boolean logFound = appender.list.stream()
+                .anyMatch(event ->
+                        event.getLevel().toString().equals("DEBUG")
+                                && event.getFormattedMessage()
+                                .contains("overflow more than heap_size X")
+                );
 
+        assertTrue(logFound, "Expected DEBUG log about insufficient memory");
 
-        stacks.declareVar("x", 10, Type.ENTIER);
-        stacks.declareVar("y", 20, Type.ENTIER);
-
-
-        Stacks.Quad arrayQuad = stacks.findQuad("myArray");
-        assertNotNull(arrayQuad);
-
-
-        int base = ((ArrayInfo) arrayQuad.value).getBaseAddress();
-        assertNotEquals(-1, base);
-
-
-        stacks.setArrayValue("myArray", 0, 100);
-        stacks.setArrayValue("myArray", 1, 200);
-        stacks.setArrayValue("myArray", 2, 300);
-
-
-        assertEquals(100, stacks.getArrayValue("myArray", 0));
-        assertEquals(200, stacks.getArrayValue("myArray", 1));
-        assertEquals(300, stacks.getArrayValue("myArray", 2));
-
-
-        stacks.printStack();
-        stacks.pop(); // pop "y"
-        stacks.printStack();
-        stacks.pop(); // pop "x"
-        stacks.printStack();
-        Stacks.Quad poppedArray = stacks.pop(); // pop "myArray"
-
-        assertNotNull(poppedArray);
-        assertEquals("myArray", poppedArray.ident);
-
-        // 6. check if all heap are empty
-        assertNull(stacks.getHeap().read(base));
-        assertNull(stacks.getHeap().read(base + 1));
-        assertNull(stacks.getHeap().read(base + 2));
+        logger.detachAppender(appender);
     }
-     */
+
+    @Test
+    public void testAffecterTabOveflow() {
+
+        // Arrange
+
+        stacks.declareTab("A", 3, Type.ENTIER);
+        stacks.declareTab("B", 3, Type.ENTIER);
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            stacks.declareTab("C", 251, Type.ENTIER);
+        });
+        assertTrue(ex.getMessage().contains("Heap allocation failed for array C"));
+
+
+    }
+
 
     // ============================================================
     // CONTEXT MANAGEMENT TESTS
@@ -2527,6 +2507,147 @@ public class StacksTest {
         assertTrue(str.contains("var"));
         assertTrue(str.contains("integer"));
     }
+    private boolean invokeRemoveEntryByAddressAndSize(Heap heap, HeapEntry entry) throws Exception {
+        Method m = Heap.class.getDeclaredMethod("removeEntryByAddressAndSize", HeapEntry.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(heap, entry);
+    }
+
+    private boolean invokeRemoveEntry(Heap heap, HeapEntry entry) throws Exception {
+        Method m = Heap.class.getDeclaredMethod("removeEntry", HeapEntry.class);
+        m.setAccessible(true);
+        return (boolean) m.invoke(heap, entry);
+    }
+
+    /* ============================================================
+       removeEntryByAddressAndSize
+       ============================================================ */
+
+    @Test
+    void removeEntryByAddressAndSize_nullEntry_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+        assertFalse(invokeRemoveEntryByAddressAndSize(heap, null));
+    }
+
+    @Test
+    void removeEntryByAddressAndSize_removesFreeBlock_prevNull() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry allocated = heap.allocate("A", 8, null);
+        heap.free(allocated);
+
+
+        HeapEntry freeBlock = heap.getEntry(allocated.getAddress());
+        assertNotNull(freeBlock);
+        assertTrue(freeBlock.isFree());
+
+
+        HeapEntry toRemove = new HeapEntry(
+                null,
+                freeBlock.getAddress(),
+                freeBlock.getSize(),
+                null,
+                true
+        );
+
+        assertTrue(invokeRemoveEntryByAddressAndSize(heap, toRemove));
+        assertNull(heap.getEntry(freeBlock.getAddress()));
+    }
+
+    @Test
+    void removeEntryByAddressAndSize_removesFreeBlock_prevNotNull() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry a = heap.allocate("A", 8, null);
+        HeapEntry b = heap.allocate("B", 8, null);
+
+        heap.free(a);
+        heap.free(b);
+
+        // Après fusion, un seul FREE_BLOCK existe
+        HeapEntry mergedFree = heap.getEntry(0);
+
+        assertNotNull(mergedFree);
+        assertTrue(mergedFree.isFree());
+        assertEquals(256, mergedFree.getSize());
+
+        // On supprime ce FREE_BLOCK
+        HeapEntry toRemove = new HeapEntry(
+                null,
+                mergedFree.getAddress(),
+                mergedFree.getSize(),
+                null,
+                true
+        );
+
+        assertTrue(invokeRemoveEntryByAddressAndSize(heap, toRemove));
+
+        // Le heap ne doit plus contenir ce bloc
+        assertNull(heap.getEntry(mergedFree.getAddress()));
+    }
+
+    @Test
+    void removeEntryByAddressAndSize_allocatedBlock_doesNotDecrementFreeCount() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry allocated = heap.allocate("X", 8, null);
+        int before = heap.getFreeCount();
+
+        HeapEntry fake = new HeapEntry("X", allocated.getAddress(), allocated.getSize(), null, false);
+
+        assertTrue(invokeRemoveEntryByAddressAndSize(heap, fake));
+        assertEquals(before, heap.getFreeCount());
+    }
+
+    @Test
+    void removeEntryByAddressAndSize_notFound_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry fake = new HeapEntry("NOPE", 123, 8, null, true);
+        assertFalse(invokeRemoveEntryByAddressAndSize(heap, fake));
+    }
+
+    /* ============================================================
+       removeEntry (by identity)
+       ============================================================ */
+
+    @Test
+    void removeEntry_nullEntry_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+        assertFalse(invokeRemoveEntry(heap, null));
+    }
+
+    @Test
+    void removeEntry_identityMatch_removesEntry() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = heap.allocate("ID", 8, null);
+        assertTrue(invokeRemoveEntry(heap, entry));
+        assertNull(heap.getEntry(entry.getAddress()));
+    }
+
+    @Test
+    void removeEntry_identityMatch_freeBlock_decrementsFreeCount() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = heap.allocate("Y", 8, null);
+        heap.free(entry);
+
+        int before = heap.getFreeCount();
+        HeapEntry free = heap.getEntry(entry.getAddress());
+
+        assertTrue(invokeRemoveEntry(heap, free));
+        assertEquals(before - 1, heap.getFreeCount());
+    }
+
+    @Test
+    void removeEntry_notFound_returnsFalse() throws Exception {
+        Heap heap = new Heap();
+
+        HeapEntry entry = new HeapEntry("Z", 0, 8, null, true);
+        assertFalse(invokeRemoveEntry(heap, entry));
+    }
+
 
 }
 
