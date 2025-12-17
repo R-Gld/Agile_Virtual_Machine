@@ -142,7 +142,7 @@ class JajaCodeAxiomesCompletTest {
         String code = """
                 1 init
                 2 push(42)
-                3 new(CONST@global, int, meth, 0)
+                3 new(CONST@global, int, cst, 0)
                 4 jcstop
                 """;
         Stacks stacks = executeJajaCode(code);
@@ -168,7 +168,7 @@ class JajaCodeAxiomesCompletTest {
                 """;
         Stacks stacks = executeJajaCode(code);
         assertEquals(5, stacks.getValue("test"));
-        assertEquals("cst", stacks.getObjectType("test"));
+        assertEquals("meth", stacks.getObjectType("test"));
     }
 
     @Test

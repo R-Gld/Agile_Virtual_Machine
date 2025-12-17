@@ -101,7 +101,8 @@ class TestApp {
     void testSplitPaneHasTwoWrapperForCodeAreas() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         assertEquals(2, editorSplitPane.getItems().size(), "editorSplitPane doit contenir 2 éléments");
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
@@ -187,10 +188,11 @@ class TestApp {
     void testMjjCodeAreaHasDefaultCode() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         MyCodeArea mjjCodeArea = (MyCodeArea) miniWrapper.getChildren().get(1); // code area is second child after
-                                                                                // titlebar
+        // titlebar
         String text = mjjCodeArea.getText();
 
         assertTrue(text.contains("class C"), "Code par défaut doit contenir 'class C'");
@@ -201,7 +203,8 @@ class TestApp {
     void testJjcCodeAreaIsEmpty() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
         MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
         assertEquals("", jjcCodeArea.getText(), "JJC code area doit être vide initialement");
@@ -219,7 +222,8 @@ class TestApp {
     void testMjjCodeAreaHasCorrectId() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         MyCodeArea mjjCodeArea = (MyCodeArea) miniWrapper.getChildren().get(1);
         assertEquals("mjj-code", mjjCodeArea.getId(), "MJJ code area doit avoir l'ID 'mjj-code'");
@@ -229,7 +233,8 @@ class TestApp {
     void testJjcCodeAreaHasCorrectId() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
         MyCodeArea jjcCodeArea = (MyCodeArea) jajaWrapper.getChildren().get(1);
         assertEquals("jjc-code", jjcCodeArea.getId(), "JJC code area doit avoir l'ID 'jjc-code'");
@@ -241,7 +246,8 @@ class TestApp {
         VBox vbox = (VBox) root.getTop();
         HBox toolbar = (HBox) vbox.getChildren().get(2);
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         // Trouver le bouton compile (premier bouton après le spacer)
         Button buildButton = null;
@@ -465,7 +471,8 @@ class TestApp {
     void testCodeAreasAreCorrectType() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
@@ -589,7 +596,8 @@ class TestApp {
     void testCodeAreasHaveUniqueIds() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
@@ -642,7 +650,8 @@ class TestApp {
     void testCodeAreaWrappersHaveTitles() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
@@ -688,7 +697,8 @@ class TestApp {
     void testClearJajaCodeButton() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
 
         // Get title bar and clear button
@@ -792,7 +802,8 @@ class TestApp {
         VBox vbox = (VBox) root.getTop();
         HBox toolbar = (HBox) vbox.getChildren().get(2);
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);
@@ -913,7 +924,8 @@ class TestApp {
     void testCodeAreasAreEditable() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        SplitPane editorSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane contentSplitPane = (SplitPane) mainSplitPane.getItems().get(0);
+        SplitPane editorSplitPane = (SplitPane) contentSplitPane.getItems().get(0);
 
         VBox miniWrapper = (VBox) editorSplitPane.getItems().get(0);
         VBox jajaWrapper = (VBox) editorSplitPane.getItems().get(1);

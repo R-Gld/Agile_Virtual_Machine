@@ -11,39 +11,40 @@ import java.util.List;
 
 public class JajaCodeDebug {
 
-    public record VariableInfo(String identifier, Object value, String kind, Type type, int stackPosition, boolean isTemporary) {
+    public record VariableInfo(String identifier, Object value, String kind, Type type, int stackPosition,
+                               boolean isTemporary) {
 
         public boolean isConstant() {
-                return "cst".equals(kind);
-            }
-
-            public boolean isVariable() {
-                return "var".equals(kind);
-            }
-
-            public boolean isMethod() {
-                return "meth".equals(kind);
-            }
-
-            public boolean isArray() {
-                return "tab".equals(kind);
-            }
-
-            @Override
-            public String toString() {
-                if (isTemporary) {
-                    return String.format("[TEMP] %s (%s)", value, type);
-                }
-                String kindLabel = switch (kind) {
-                    case "var" -> "Variable";
-                    case "cst" -> "Constant";
-                    case "meth" -> "Method";
-                    case "tab" -> "Array";
-                    default -> kind;
-                };
-                return String.format("%s = %s (%s, %s)", identifier, value, kindLabel, type);
-            }
+            return "cst".equals(kind);
         }
+
+        public boolean isVariable() {
+            return "var".equals(kind);
+        }
+
+        public boolean isMethod() {
+            return "meth".equals(kind);
+        }
+
+        public boolean isArray() {
+            return "tab".equals(kind);
+        }
+
+        @Override
+        public String toString() {
+            if (isTemporary) {
+                return String.format("[TEMP] %s (%s)", value, type);
+            }
+            String kindLabel = switch (kind) {
+                case "var" -> "Variable";
+                case "cst" -> "Constant";
+                case "meth" -> "Method";
+                case "tab" -> "Array";
+                default -> kind;
+            };
+            return String.format("%s = %s (%s, %s)", identifier, value, kindLabel, type);
+        }
+    }
 
     /**
      * Represents a heap entry for arrays.
@@ -55,14 +56,14 @@ public class JajaCodeDebug {
      * @param elementType   Type of elements
      * @param elements      Values of the elements
      */
-        public record HeapInfo(String identifier, int baseAddress, int size, int allocatedSize, Type elementType,
-                               List<Object> elements) {
+    public record HeapInfo(String identifier, int baseAddress, int size, int allocatedSize, Type elementType,
+                           List<Object> elements) {
 
         @Override
-            public String toString() {
-                return String.format("%s[%d] @ addr=%d (alloc=%d) : %s", identifier, size, baseAddress, allocatedSize, elements);
-            }
+        public String toString() {
+            return String.format("%s[%d] @ addr=%d (alloc=%d) : %s", identifier, size, baseAddress, allocatedSize, elements);
         }
+    }
 
     /**
      * Complete snapshot of the memory state at a given moment.
@@ -74,54 +75,54 @@ public class JajaCodeDebug {
      * @param currentContext     Execution context (method name or null)
      * @param recursionDepth     Recursion depth
      */
-        public record MemorySnapshot(int programCounter, String currentInstruction, List<VariableInfo> stackState,
-                                     List<HeapInfo> heapState, String currentContext, int recursionDepth) {
+    public record MemorySnapshot(int programCounter, String currentInstruction, List<VariableInfo> stackState,
+                                 List<HeapInfo> heapState, String currentContext, int recursionDepth) {
 
-            public List<VariableInfo> getVariablesOnly() {
-                return stackState.stream().filter(v -> !v.isTemporary() && v.isVariable()).toList();
-            }
-
-            public List<VariableInfo> getConstantsOnly() {
-                return stackState.stream().filter(v -> !v.isTemporary() && v.isConstant()).toList();
-            }
-
-            public List<VariableInfo> getMethodsOnly() {
-                return stackState.stream().filter(v -> !v.isTemporary() && v.isMethod()).toList();
-            }
-
-            public List<VariableInfo> getArraysOnly() {
-                return stackState.stream().filter(v -> !v.isTemporary() && v.isArray()).toList();
-            }
-
-            public List<VariableInfo> getTemporariesOnly() {
-                return stackState.stream().filter(VariableInfo::isTemporary).toList();
-            }
-
-            @Override
-            public String toString() {
-                StringBuilder sb = new StringBuilder();
-                sb.append("═══════════════════════════════════════════════════════════\n");
-                sb.append(String.format(" PC: %d → %s\n", programCounter, currentInstruction));
-                sb.append(String.format(" Context: %s (recursion depth: %d)\n", currentContext != null ? currentContext : "main", recursionDepth));
-                sb.append("═══════════════════════════════════════════════════════════\n");
-
-                sb.append("\n┌─── STACK (top to bottom) ───\n");
-                for (VariableInfo v : stackState) {
-                    sb.append("│ ").append(v).append("\n");
-                }
-                sb.append("└─────────────────────────────────────\n");
-
-                if (!heapState.isEmpty()) {
-                    sb.append("\n┌─── HEAP ───\n");
-                    for (HeapInfo h : heapState) {
-                        sb.append("│ ").append(h).append("\n");
-                    }
-                    sb.append("└──────────────────\n");
-                }
-
-                return sb.toString();
-            }
+        public List<VariableInfo> getVariablesOnly() {
+            return stackState.stream().filter(v -> !v.isTemporary() && v.isVariable()).toList();
         }
+
+        public List<VariableInfo> getConstantsOnly() {
+            return stackState.stream().filter(v -> !v.isTemporary() && v.isConstant()).toList();
+        }
+
+        public List<VariableInfo> getMethodsOnly() {
+            return stackState.stream().filter(v -> !v.isTemporary() && v.isMethod()).toList();
+        }
+
+        public List<VariableInfo> getArraysOnly() {
+            return stackState.stream().filter(v -> !v.isTemporary() && v.isArray()).toList();
+        }
+
+        public List<VariableInfo> getTemporariesOnly() {
+            return stackState.stream().filter(VariableInfo::isTemporary).toList();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("═══════════════════════════════════════════════════════════\n");
+            sb.append(String.format(" PC: %d → %s\n", programCounter, currentInstruction));
+            sb.append(String.format(" Context: %s (recursion depth: %d)\n", currentContext != null ? currentContext : "main", recursionDepth));
+            sb.append("═══════════════════════════════════════════════════════════\n");
+
+            sb.append("\n┌─── STACK (top to bottom) ───\n");
+            for (VariableInfo v : stackState) {
+                sb.append("│ ").append(v).append("\n");
+            }
+            sb.append("└─────────────────────────────────────\n");
+
+            if (!heapState.isEmpty()) {
+                sb.append("\n┌─── HEAP ───\n");
+                for (HeapInfo h : heapState) {
+                    sb.append("│ ").append(h).append("\n");
+                }
+                sb.append("└──────────────────\n");
+            }
+
+            return sb.toString();
+        }
+    }
 
     // ========================================================================
     // MÉTHODES PRINCIPALES DE DEBUG
@@ -144,12 +145,12 @@ public class JajaCodeDebug {
         return new MemorySnapshot(programCounter, currentInstruction, stackState, heapState, context, recursionDepth);
     }
 
-   /**
-    * Capture only the stack state.
-    *
-    * @param stacks The Stacks instance
-    * @return List of VariableInfo from top to bottom of the stack
-    */
+    /**
+     * Capture only the stack state.
+     *
+     * @param stacks The Stacks instance
+     * @return List of VariableInfo from top to bottom of the stack
+     */
     public static List<VariableInfo> captureStackState(Stacks stacks) {
         List<VariableInfo> result = new ArrayList<>();
         List<Stacks.Quad> quads = stacks.getStackFromTopToBottom();
@@ -234,13 +235,13 @@ public class JajaCodeDebug {
         return stacks.getValue(identifier);
     }
 
-   /**
-    * Retrieves all variables from a specific scope.
-    *
-    * @param stacks The Stacks instance
-    * @param scope  The scope to filter (e.g., "global", "fact@int")
-    * @return List of variables in that scope
-    */
+    /**
+     * Retrieves all variables from a specific scope.
+     *
+     * @param stacks The Stacks instance
+     * @param scope  The scope to filter (e.g., "global", "fact@int")
+     * @return List of variables in that scope
+     */
     public static List<VariableInfo> getVariablesInScope(Stacks stacks, String scope) {
         List<VariableInfo> result = new ArrayList<>();
         List<Stacks.Quad> quads = stacks.getStackFromTopToBottom();
