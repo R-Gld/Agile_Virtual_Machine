@@ -1,7 +1,7 @@
 package fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.exceptions;
 
 /**
- * Exception levée lors d'une incompatibilité de types
+ * Exception when a type mismatch occurs in JajaCode.
  */
 public class TypeMismatchException extends JajaCodeRuntimeException {
 

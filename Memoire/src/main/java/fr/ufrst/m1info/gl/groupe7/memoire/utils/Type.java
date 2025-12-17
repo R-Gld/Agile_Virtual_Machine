@@ -5,7 +5,7 @@ public enum Type {
     BOOLEEN ("boolean"),
     STRING ("String"),
     VOID ("void"),
-    ANY ("any");  // Type pour la variable de classe
+    ANY ("any");  // type for Class variable
 
     private final String name;
 

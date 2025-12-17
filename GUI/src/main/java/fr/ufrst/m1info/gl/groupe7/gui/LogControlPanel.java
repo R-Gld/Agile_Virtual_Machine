@@ -10,18 +10,18 @@ import javafx.scene.layout.HBox;
 
 /**
  * LogControlPanel
- * Composant graphique permettant de contrôler les niveaux de log en temps réel.
+ * UI component allowing real-time control of log levels.
  *
- * Fonctionnalités :
- * - Sélection du niveau global (TRACE, DEBUG, INFO, WARN, ERROR, OFF)
- * - Changements appliqués immédiatement sans redémarrage
+ * Features:
+ * - Select global log level (TRACE, DEBUG, INFO, WARN, ERROR, OFF)
+ * - Changes applied immediately without restarting
  */
 public class LogControlPanel extends HBox {
 
     private final ComboBox<String> levelSelector;
 
     /**
-     * Crée un panneau de contrôle des logs avec sélecteur de niveau.
+     * Creates a log control panel with a level selector.
      */
     public LogControlPanel() {
         this.setSpacing(10);
@@ -33,14 +33,14 @@ public class LogControlPanel extends HBox {
         Label label = new Label("Niveau de log:");
         label.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
 
-        // ComboBox pour sélection du niveau
+        // ComboBox for level selection
         levelSelector = new ComboBox<>();
         levelSelector.getItems().addAll("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF");
-        levelSelector.setValue("INFO"); // Valeur par défaut
+        levelSelector.setValue("INFO"); // Default value
         levelSelector.setStyle("-fx-font-size: 11;");
         levelSelector.setPrefWidth(100);
 
-        // Action : appliquer le niveau sélectionné
+        // Action: apply the selected level
         levelSelector.setOnAction(e -> {
             String selectedLevel = levelSelector.getValue();
             if (selectedLevel != null) {
@@ -49,7 +49,7 @@ public class LogControlPanel extends HBox {
             }
         });
 
-        // Assemblage du panneau
+        // Assemble the panel
         this.getChildren().addAll(label, levelSelector);
     }
 }
