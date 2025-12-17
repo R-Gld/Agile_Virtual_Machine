@@ -5,6 +5,7 @@ import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class EntetesNode extends AstEntetes {
 
@@ -59,7 +60,7 @@ public class EntetesNode extends AstEntetes {
             return "entetes (" + entete.toStringTree() + ")";
         }
 
-        return "entetes (" + entete.toStringTree() + "," + entetes.toStringTree() + ")";
+        return "entetes (" + Objects.requireNonNull(entete).toStringTree() + "," + entetes.toStringTree() + ")";
 
     }
 }
