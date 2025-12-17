@@ -112,7 +112,6 @@ public class JajaCodeInterpreter implements Runnable {
      */
     public boolean step() {
         ensureInitialized();
-        // You must implement step() inside JajaCodeInterpreterVisitor
         return interpreteur.step();
     }
 
@@ -144,5 +143,68 @@ public class JajaCodeInterpreter implements Runnable {
         return interpreteur.getCurrentInstructionIndex();
     }
 
-    // === End of added methods ===
+    // === Debug methods for GUI ===
+
+   /**
+    * Capture the full memory state (stack and heap) for the UI.
+    * To be used during step-by-step execution.
+    *
+    * @return A complete snapshot of the memory state, or null if not initialized
+    */
+    public JajaCodeDebug.MemorySnapshot captureMemoryState() {
+        if (!initialized || stacks == null) {
+            return null;
+        }
+        int pc = interpreteur.getCurrentInstructionIndex();
+        String instruction = interpreteur.getCurrentInstructionText();
+        return JajaCodeDebug.captureMemoryState(stacks, pc, instruction);
+    }
+
+    /**
+     * Returns information about a specific variable.
+     *
+     * @param identifier The variable identifier (e.g., "x@global")
+     * @return VariableInfo or null if not found
+     */
+    public JajaCodeDebug.VariableInfo getVariableInfo(String identifier) {
+        if (!initialized || stacks == null) {
+            return null;
+        }
+        return JajaCodeDebug.getVariableInfo(stacks, identifier);
+    }
+
+    /**
+         * Retrieves the value of a variable.
+         *
+         * @param identifier The variable identifier (e.g., "x@global")
+         * @return The value or null if not found
+         */
+    public Object getVariableValue(String identifier) {
+        if (!initialized || stacks == null) {
+            return null;
+        }
+        return JajaCodeDebug.getVariableValue(stacks, identifier);
+    }
+
+   /**
+    * Retrieves information about an array, including its elements.
+    *
+    * @param arrayIdentifier The identifier of the array
+    * @return HeapInfo or null if not found
+    */
+    public JajaCodeDebug.HeapInfo getArrayInfo(String arrayIdentifier) {
+        if (!initialized || stacks == null) {
+            return null;
+        }
+        return JajaCodeDebug.getArrayInfo(stacks, arrayIdentifier);
+    }
+
+    /**
+     * Returns the Stacks instance for direct access if needed.
+     *
+     * @return The Stacks instance or null if not initialized
+     */
+    public Stacks getStacks() {
+        return stacks;
+    }
 }
