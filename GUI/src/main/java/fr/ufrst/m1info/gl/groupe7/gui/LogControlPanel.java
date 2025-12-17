@@ -11,7 +11,7 @@ import javafx.scene.layout.HBox;
 /**
  * LogControlPanel
  * UI component allowing real-time control of log levels.
- *
+ * <p>
  * Features:
  * - Select global log level (TRACE, DEBUG, INFO, WARN, ERROR, OFF)
  * - Changes applied immediately without restarting
