@@ -1,0 +1,103 @@
+package fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja;
+
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Test;
+
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaLexer;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.gen.minijaja.MiniJajaParser;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode; // Assurez-vous d'importer AstNode
+
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Walker;
+
+/**
+ * Test qui parse un programme, construit l'AST via le Visitor,
+ * affiche l'AST et le dump de la table des symboles.
+ */
+public class DebugeParsingETC {
+
+  @Test
+  public void DebugeParsing() {
+    Stacks stacks = new Stacks();
+    String program = """
+        class ConstTest {//1
+          final int GLOBAL_CST = 100;//2
+          final boolean FLAG = true;//3 
+          int x = 0;
+          void constBool(boolean input) {
+            final boolean TRUE_CST = true;
+            final boolean FALSE_CST = false;
+            boolean result;
+            if (TRUE_CST && input) {
+              result = TRUE_CST;
+            } else {
+              result = FALSE_CST;
+            };
+          
+          };
+          
+          main{
+            constBool(FLAG);
+             x = GLOBAL_CST;
+            }
+        
+        }
+        """;
+
+    //System.out.println("===== 💬 PROGRAMME SOURCE 💬 =====");
+    //System.out.println(program);
+    //System.out.println("==================================");
+
+    // 1) Initialisation
+    CharStream cs = CharStreams.fromString(program);
+    MiniJajaLexer lexer = new MiniJajaLexer(cs);
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    MiniJajaParser parser = new MiniJajaParser(tokens);
+
+    // Créez le Visitor en lui passant la table
+    MiniJajaInterpreterVisitor visitor = new MiniJajaInterpreterVisitor();
+
+    // 2) Lancement du parsing pour obtenir l'arbre d'analyse (ParseTree)
+    ParseTree tree = parser.classe();
+
+    // 3) Construction de l'AST en appelant visitor.visit(tree)
+    AstNode astRoot = visitor.visit(tree);
+
+
+    // 4) Affichage de l'AST
+    System.out.println("\n===== 🌳 ARBRE SYNTAXIQUE ABSTRAIT (AST) 🌳 =====");
+    if (astRoot != null) {
+      // Utilise la méthode toStringTree() corrigée
+      // 4) Affichage de l'AST
+    Debug debug = new Debug(Debug.Mode.DISABLED);
+    debug.addBreakPoint(19    ); // Exemple de breakpoint
+    System.out.println(astRoot.toStringTree());
+    Walker walker = new Walker(astRoot, stacks, debug, null);
+    walker.walk();
+    System.out.println(debug.getCurrentLine());
+    //stacks.printStack();
+
+    } else {
+      System.out.println("ERREUR: L'AST est null.");
+    }
+    System.out.println("==============================================");
+
+    System.out.println("\n✅ Test terminé avec succès !");
+
+  }
+  
+  /**
+   * Main method to run the debugger interactively from the terminal.
+   * Run with: mvn exec:java -pl LexerParser -Dexec.mainClass="fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.DebugeParsingETC"
+   */
+  public static void main(String[] args) {
+    DebugeParsingETC debugParsingETC = new DebugeParsingETC();
+    debugParsingETC.DebugeParsing();
+   
+  }
+
+}

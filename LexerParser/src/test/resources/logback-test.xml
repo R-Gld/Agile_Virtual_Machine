@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Configuration pour les tests du LexerParser -->
+    <!-- Les sorties de programme (ecrire/ecrireln via logger.info) -->
+    <!-- doivent aller vers System.out pour être capturées par les tests -->
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- Pattern minimal: juste le message, sans newline automatique -->
+            <!-- Le newline est géré par le code (ecrireln ajoute \n explicitement si nécessaire) -->
+            <pattern>%msg</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Niveau INFO pour capturer les sorties de programme (ecrire/ecrireln) -->
+    <!-- mais masquer les DEBUG -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

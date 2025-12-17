@@ -1,0 +1,850 @@
+package fr.ufrst.m1info.gl.groupe7.gui;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import fr.ufrst.m1info.gl.groupe7.compiler.Compiler;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.errors.DiagnosticCollector;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeDebug;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.jajacode.JajaCodeInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaDebugger;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.MiniJajaInterpreter;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.walker.Debug;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+import fr.ufrst.m1info.gl.groupe7.memoire.logging.GuiAppender;
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.geometry.Orientation;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+
+// Breakpoint support
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * JavaFX App
+ */
+public class App extends Application {
+
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
+
+    public static final String MINI_JAJA_NAME = "MiniJaja";
+    public static final String JAJA_CODE_NAME = "JajaCode";
+
+    private Stage appStage;
+    private MyCodeArea mjjCodeArea;
+    private MyCodeArea jjcCodeArea;
+    private ChoiceBox<String> fileToRun;
+    private ToggleButton darkMode;
+
+    private Button stepButton;
+    private Button stopButton;
+    private Button continueButton;
+    // Debug minijaja
+    private MiniJajaDebugHandler mjjDebugHandler;
+
+    // List of element in memory to show to gui
+    ObservableList<StackModel> memoryList;
+
+    /**
+     * Console used to display messages (debug, info, errors)
+     */
+    private ConsoleOutput console;
+
+    /**
+     * Simple debug state (active flag and current line)
+     */
+    private boolean debugMode = false;
+    private int debugCurrentLine = -1;
+
+    /**
+     * Breakpoints snapshot used during debug session
+     */
+    private final Set<Integer> debugBreakpoints = new HashSet<>();
+
+    /**
+     * From which editor are we debugging?
+     * MINIJAJA → mjjCodeArea
+     * JAJACODE → jjcCodeArea
+     */
+    private enum DebugSource {
+        MINIJAJA, JAJACODE
+    }
+
+    private DebugSource debugSource = DebugSource.MINIJAJA;
+
+    private JajaCodeDebugHandler debugHandler;
+    private TableView<JajaCodeDebug.VariableInfo> stackTable;
+    private TableView<JajaCodeDebug.HeapInfo> heapTable;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setName("app-worker");
+        return t;
+    });
+
+    @Override
+    public void start(Stage stage) {
+        appStage = stage;
+
+        // Structure de l'interface :
+        BorderPane root = new BorderPane();
+        HBox titleBar = buildTitleBar();
+        HBox topMenu = buildMenu();
+        HBox toolbar = buildToolbar();
+        VBox topContainer = new VBox(titleBar, topMenu, toolbar);
+        root.setTop(topContainer);
+
+        // Editors
+        String codeSample = "class C {\n\tint x = 0;\n\n\tmain {\n\t\tx = 12;\n\t}\n}";
+        mjjCodeArea = new MyCodeArea("mjj-code", codeSample, MyCodeArea.Language.MINIJAJA);
+        jjcCodeArea = new MyCodeArea("jjc-code", MyCodeArea.Language.JAJACODE);
+        jjcCodeArea.disable();
+
+        // Wrapper for MiniJaja area with title bar
+        VBox miniWrapper = new VBox();
+        miniWrapper.setSpacing(0);
+
+        HBox miniTitleBar = new HBox();
+        miniTitleBar.getStyleClass().add("panel-titlebar");
+        // Fixed height for MiniJaja bar
+        miniTitleBar.setMinHeight(26);
+        miniTitleBar.setPrefHeight(26);
+        miniTitleBar.setMaxHeight(26);
+
+        Label mjjLabel = new Label(MINI_JAJA_NAME);
+        mjjLabel.getStyleClass().add("panel-title-label");
+
+        Region mjjSpacer = new Region();
+        HBox.setHgrow(mjjSpacer, Priority.ALWAYS);
+
+        miniTitleBar.getChildren().addAll(mjjLabel, mjjSpacer);
+        miniWrapper.getChildren().addAll(miniTitleBar, mjjCodeArea);
+        VBox.setVgrow(mjjCodeArea, Priority.ALWAYS);
+
+        // Wrapper for JajaCode area with title bar and Clear button
+        VBox jajaWrapper = new VBox();
+        jajaWrapper.setSpacing(0);
+
+        HBox jajaTitleBar = new HBox();
+        jajaTitleBar.getStyleClass().add("panel-titlebar");
+        jajaTitleBar.setMinHeight(26);
+        jajaTitleBar.setPrefHeight(26);
+        jajaTitleBar.setMaxHeight(26);
+
+        Label jjcLabel = new Label(JAJA_CODE_NAME);
+        jjcLabel.getStyleClass().add("panel-title-label");
+
+        Region jajaSpacer = new Region();
+        HBox.setHgrow(jajaSpacer, Priority.ALWAYS);
+
+        Button clearJajaButton = new Button("Clear");
+        clearJajaButton.getStyleClass().add("panel-title-button");
+        clearJajaButton.setTooltip(new Tooltip("Clear JajaCode output"));
+        clearJajaButton.setOnAction(e -> jjcCodeArea.loadText(""));
+
+        jajaTitleBar.getChildren().addAll(jjcLabel, jajaSpacer, clearJajaButton);
+        jajaWrapper.getChildren().addAll(jajaTitleBar, jjcCodeArea);
+        VBox.setVgrow(jjcCodeArea, Priority.ALWAYS);
+
+        SplitPane editorSplitPane = new SplitPane(miniWrapper, jajaWrapper);
+
+        // Memory View
+        SplitPane memoryView = buildMemoryView();
+
+        // Horizontal split: Editors | Memory View
+        SplitPane contentSplitPane = new SplitPane(editorSplitPane, memoryView);
+        contentSplitPane.setDividerPositions(0.7);
+
+        // Console
+        this.console = new ConsoleOutput("console");
+        this.console.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 0 0;");
+
+        GuiAppender.setGuiConsole(this.console);
+        logger.info("GUI application started successfully");
+
+        // Vertical split: Content | Console
+        SplitPane mainSplitPane = new SplitPane(contentSplitPane, this.console);
+        mainSplitPane.setOrientation(Orientation.VERTICAL);
+        mainSplitPane.setDividerPositions(0.75);
+
+        root.setCenter(mainSplitPane);
+
+        // --- Drag and Drop ---
+        root.setOnDragOver(event -> {
+            if (event.getGestureSource() != root && event.getDragboard().hasFiles()) {
+                // Accept the drop only if one of the files is a .mjj or .jjc file
+                boolean canAccept = event.getDragboard().getFiles().stream().anyMatch(file -> {
+                    String name = file.getName().toLowerCase();
+                    return name.endsWith(".mjj") || name.endsWith(".jjc");
+                });
+                if (canAccept) {
+                    event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+                }
+            }
+            event.consume();
+        });
+
+        root.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                // Find the first valid file and load it.
+                db.getFiles().stream().filter(file -> file.getName().toLowerCase().endsWith(".mjj") || file.getName().toLowerCase().endsWith(".jjc")).findFirst().ifPresent(this::loadFileContent);
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+
+        // Scene + styles
+        Scene scene = new Scene(root, 1150, 720);
+
+        String themeCss = Objects.requireNonNull(getClass().getResource("/theme.css")).toExternalForm();
+        scene.getStylesheets().add(themeCss);
+        root.getStyleClass().add("theme-light");
+
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    /**
+     * Stop the application.
+     *
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        executor.shutdownNow();
+    }
+
+    private HBox buildTitleBar() {
+        HBox titleBar = new HBox();
+        titleBar.setSpacing(8);
+        titleBar.getStyleClass().add("app-titlebar");
+
+        Label titleLabel = new Label("MiniJaja IDE");
+        titleLabel.getStyleClass().add("app-title-label");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        titleBar.getChildren().addAll(titleLabel);
+
+        final double[] dragDelta = new double[2];
+        titleBar.setOnMousePressed(e -> {
+            dragDelta[0] = appStage.getX() - e.getScreenX();
+            dragDelta[1] = appStage.getY() - e.getScreenY();
+        });
+        titleBar.setOnMouseDragged(e -> {
+            appStage.setX(e.getScreenX() + dragDelta[0]);
+            appStage.setY(e.getScreenY() + dragDelta[1]);
+        });
+
+        return titleBar;
+    }
+
+    /**
+     * Fonction pour construire le menu de l'ihm
+     *
+     * @return MenuBar le menu de l'application
+     */
+    private HBox buildMenu() {
+        HBox hbox = new HBox();
+        hbox.getStyleClass().add("top-strip");
+
+        hbox.setSpacing(10);
+        hbox.setStyle("-fx-padding: 2 12 2 12;");
+        MenuBar menuBar = new MenuBar();
+
+        Menu fileMenu = new Menu("File");
+        menuBar.getMenus().add(fileMenu);
+
+        MenuItem saveItem = new MenuItem("Save");
+        MenuItem openItem = new MenuItem("Open");
+        openItem.setOnAction(e -> loadFile());
+
+        saveItem.setOnAction(e -> saveFile());
+
+        fileMenu.getItems().addAll(saveItem, openItem);
+
+        hbox.getChildren().add(menuBar);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        hbox.getChildren().add(spacer);
+        /* Log Control Panel */
+        LogControlPanel logControlPanel = new LogControlPanel();
+        hbox.getChildren().add(logControlPanel);
+        // load moon icon
+        java.net.URL moonUrl = getClass().getResource("/icons/moon.png");
+        if (moonUrl == null) {
+            throw new IllegalStateException("Resource /icons/moon.png not found on classpath");
+        }
+        ImageView moonIcon = new ImageView(new Image(moonUrl.toExternalForm()));
+        moonIcon.setFitWidth(16);
+        moonIcon.setFitHeight(16);
+        moonIcon.setPreserveRatio(true);
+
+        // load sun icon
+        java.net.URL sunUrl = getClass().getResource("/icons/sun.png");
+        if (sunUrl == null) {
+            throw new IllegalStateException("Resource /icons/sun.png not found on classpath");
+        }
+        ImageView sunIcon = new ImageView(new Image(sunUrl.toExternalForm()));
+        sunIcon.setFitWidth(16);
+        sunIcon.setFitHeight(16);
+        sunIcon.setPreserveRatio(true);
+
+        darkMode = new ToggleButton();
+        darkMode.setText(null);
+        darkMode.setGraphic(moonIcon);
+
+        darkMode.setOnAction(e -> {
+            if (appStage != null && appStage.getScene() != null) {
+                // The root pane is a BorderPane, as defined in the start() method.
+                Pane rootPane = (Pane) appStage.getScene().getRoot();
+                if (darkMode.isSelected()) {
+                    rootPane.getStyleClass().remove("theme-light");
+                    rootPane.getStyleClass().add("theme-dark");
+                    darkMode.setGraphic(sunIcon);
+                } else {
+                    rootPane.getStyleClass().remove("theme-dark");
+                    rootPane.getStyleClass().add("theme-light");
+                    darkMode.setGraphic(moonIcon);
+                }
+            }
+        });
+
+        hbox.getChildren().add(darkMode);
+
+        return hbox;
+    }
+
+    private HBox buildToolbar() {
+        HBox hbox = new HBox();
+        hbox.setSpacing(10);
+        hbox.setStyle("-fx-padding: 4 12 4 12;");
+        hbox.setId("debug-toolbar");
+
+        Button buildButton = new Button("");
+        buildButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/build.png")).toExternalForm()));
+        buildButton.setOnAction(e -> compile());
+        buildButton.setTooltip(new Tooltip("Compile file"));
+        hbox.getChildren().add(buildButton);
+
+        /* Select file to be interpreted */
+        fileToRun = new ChoiceBox<>();
+        fileToRun.getItems().addAll(MINI_JAJA_NAME, "Jajacode");
+        fileToRun.setValue(MINI_JAJA_NAME);
+        hbox.getChildren().add(fileToRun);
+
+        /* Execute button */
+        Button runButton = new Button("");
+        runButton.setGraphic(new ImageView(Objects.requireNonNull(getClass().getResource("/icons/threadRunning.png")).toExternalForm()));
+        runButton.setTooltip(new Tooltip("Run"));
+        runButton.setOnAction(e -> run());
+
+        hbox.getChildren().add(runButton);
+
+        // Added section: debug controls (icons only, no text)
+        /*
+         * Simple debug control bar with icons only: Start Debug / Step / Stop
+         */
+
+        // Debug Buttons
+        Button debugButton = new Button();
+        stepButton = new Button();
+        stopButton = new Button();
+        continueButton = new Button();
+
+        debugButton.setTooltip(new Tooltip("Start debug on current file"));
+        ImageView debugIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/bug.png")), 20, 20, true, true));
+        debugButton.setGraphic(debugIcon);
+        hbox.getChildren().add(debugButton);
+        debugButton.setOnAction(e -> startDebugEnhanced());
+
+        stepButton.setTooltip(new Tooltip("Step to next line"));
+        stepButton.setDisable(true);
+        ImageView stepIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/next.png")), 20, 20, true, true));
+        stepButton.setGraphic(stepIcon);
+        hbox.getChildren().add(stepButton);
+        stepButton.setOnAction(e -> stepDebugEnhanced());
+
+        continueButton.setTooltip(new Tooltip("Continue to next breakpoint"));
+        continueButton.setDisable(true);
+        ImageView continueIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/fast-forward.png")), 20, 20, true, true));
+        continueButton.setGraphic(continueIcon);
+        hbox.getChildren().add(continueButton);
+        continueButton.setOnAction(e -> continueDebug());
+
+        stopButton.setTooltip(new Tooltip("Stop debug mode"));
+        stopButton.setDisable(true);
+        ImageView stopIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/stop.png")), 20, 20, true, true));
+        stopButton.setGraphic(stopIcon);
+        hbox.getChildren().add(stopButton);
+        stopButton.setOnAction(e -> stopDebugWithReset());
+
+        return hbox;
+    }
+
+    /**
+     * Fonction pour gerer l'ouverture d'un fichier
+     */
+    private void loadFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("."));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter(MINI_JAJA_NAME, "*.mjj"), new FileChooser.ExtensionFilter(JAJA_CODE_NAME, "*.jjc"));
+        File file = fileChooser.showOpenDialog(appStage);
+        loadFileContent(file);
+    }
+
+    /**
+     * Reads the content of a given file and loads it into the appropriate editor.
+     *
+     * @param file The file to load.
+     */
+    private void loadFileContent(File file) {
+        if (file == null) {
+            return;
+        }
+
+        /* Lecture du fichier selectionner */
+        StringBuilder fileContent = new StringBuilder();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                fileContent.append(scanner.nextLine());
+                fileContent.append("\n");
+            }
+        } catch (FileNotFoundException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur lors de l'ouverture du fichier : ");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+            return;
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Impossible de lire le fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+            return;
+        }
+
+        /* Chargement du texte dans l'interface */
+        String name = file.getName().toLowerCase();
+        String content = fileContent.toString();
+
+        if (name.endsWith(".mjj")) {
+            mjjCodeArea.loadText(content);
+            fileToRun.setValue(MINI_JAJA_NAME);
+        } else if (name.endsWith(".jjc")) {
+            jjcCodeArea.loadText(content);
+            fileToRun.setValue("Jajacode");
+        }
+
+        if (console != null) {
+            console.printMessage("File loaded: " + file.getName());
+        }
+    }
+
+    /**
+     * Sauvegarde du contenu de la code area dans un fichier
+     */
+    private void saveFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter(MINI_JAJA_NAME, "*.mjj"), new FileChooser.ExtensionFilter(JAJA_CODE_NAME, "*.jjc"));
+        File file = fileChooser.showSaveDialog(appStage);
+        if (file == null) return;
+
+        try {
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(mjjCodeArea.getText());
+            fileWriter.close();
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur lors de la sauvegarde du fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Impossible de sauvegarder le fichier");
+            alert.setContentText(e.toString());
+            alert.showAndWait();
+        }
+
+        if (console != null) {
+            console.printMessage("File saved: " + file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * Fonction utiliser pour appeler les methodes necessaires à la compilation du
+     * minijaja
+     * Ecris le resultat de la compilation dans la zone prévu pour le jajacode
+     */
+    private void compile() {
+        // On lit le texte sur le thread FX
+        String code = mjjCodeArea.getText();
+
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() {
+                Compiler compiler = new Compiler(code, Compiler.Destination.STRING, null);
+                String compilerOutput = compiler.compileToString();
+                logger.debug("Starting compilation task...");
+                logger.debug("MiniJaja code length: {} characters", code.length());
+                logger.debug("Instruction jajacode générée :");
+                logger.debug("{}", compilerOutput);
+                return compilerOutput;
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
+            String compileResult = task.getValue();
+            jjcCodeArea.loadText(compileResult);
+
+            if (console != null) {
+                console.printMessage("Compilation finished.");
+            }
+        });
+
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
+            if (console != null) {
+                console.printMessage("Compilation failed: " + ex.getMessage());
+            }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur de compilation");
+            alert.setHeaderText("Une erreur est survenue pendant la compilation");
+            alert.setContentText(ex.toString());
+            alert.showAndWait();
+        });
+
+        executor.submit(task);
+    }
+
+    /**
+     * Fonction utiliser pour interpreter le minijaja ou le jajacode présent
+     */
+    private void run() {
+        // On lit ce qu’il faut sur le thread FX
+        String choice = fileToRun.getValue();
+        String mjjText = mjjCodeArea.getText();
+        String jjcText = jjcCodeArea.getText();
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                try {
+                    switch (choice) {
+                        case MINI_JAJA_NAME: {
+                            MiniJajaInterpreter interpreter = new MiniJajaInterpreter(mjjText, new DiagnosticCollector());
+                            interpreter.run();
+                            break;
+                        }
+                        case JAJA_CODE_NAME: {
+                            String[] lines = jjcText.split("\\n");
+                            StringBuilder result = new StringBuilder();
+                            for (int i = 0; i < lines.length; i++) {
+                                result.append(i + 1).append(" ").append(lines[i]).append("\n");
+                            }
+                            JajaCodeInterpreter jjcInterpreter = new JajaCodeInterpreter(result.toString(), new DiagnosticCollector());
+                            jjcInterpreter.run();
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(ev -> {
+            if (console != null) {
+                if (MINI_JAJA_NAME.equals(choice)) {
+                    console.printMessage("MiniJaja executed.");
+                } else {
+                    console.printMessage("JajaCode executed.");
+                }
+            }
+        });
+
+        task.setOnFailed(ev -> {
+            Throwable ex = task.getException();
+            if (console != null) {
+                console.printMessage("Execution failed: " + ex.getMessage());
+            }
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur d'exécution");
+            alert.setHeaderText("Une erreur est survenue pendant l'exécution");
+            alert.setContentText(ex.toString());
+            alert.showAndWait();
+        });
+
+        executor.submit(task);
+    }
+
+    // DEBUG (Start / Step / Stop) pour JajaCode avec JajaCodeDebugHandler
+
+    /**
+     * Continue button jumps from breakpoint to breakpoint.
+     */
+    private void continueDebug() {
+        if (!debugMode) return;
+
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                Set<Integer> breakpoints = mjjCodeArea.getBreakpoints();
+                mjjDebugHandler.continueDebug(breakpoints);
+                if (!mjjDebugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        } else {
+            if (debugHandler != null) {
+                debugBreakpoints.clear();
+                debugBreakpoints.addAll(jjcCodeArea.getBreakpoints());
+                debugHandler.continueDebug(debugBreakpoints);
+                if (!debugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        }
+    }
+
+    /**
+     * Stops debug mode.
+     */
+    private void stopDebug() {
+        if (!debugMode) {
+            return;
+        }
+
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                mjjDebugHandler.stop();
+                mjjDebugHandler = null;
+            }
+        } else {
+            if (debugHandler != null) {
+                debugHandler.stop();
+                debugHandler = null;
+            }
+        }
+
+        debugMode = false;
+        debugCurrentLine = -1;
+
+        if (console != null) {
+            console.printMessage("[DEBUG] Debug mode stopped.");
+        }
+        stepButton.setDisable(true);
+        stopButton.setDisable(true);
+        continueButton.setDisable(true);
+    }
+
+    /**
+     * Starts debug mode - determines whether to debug MiniJaja or JajaCode.
+     */
+    private void startDebugEnhanced() {
+        if (debugMode) {
+            return;
+        }
+
+        String choice = fileToRun.getValue();
+
+        if ("MiniJaja".equals(choice)) {
+            // Debug MiniJaja directly
+            startMiniJajaDebug();
+        } else {
+            // Debug JajaCode
+            startJajaCodeDebug();
+        }
+    }
+
+    /**
+     * Starts MiniJaja debug session.
+     */
+    private void startMiniJajaDebug() {
+        String code = mjjCodeArea.getText();
+        Set<Integer> breakpoints = mjjCodeArea.getBreakpoints();
+
+        if (breakpoints.isEmpty()) {
+            console.printMessage("[DEBUG MJJ] Warning: No breakpoints set. Add breakpoints by clicking on line numbers.");
+        }
+
+        mjjDebugHandler = new MiniJajaDebugHandler(console, mjjCodeArea, stackTable, heapTable);
+        mjjDebugHandler.start(code, breakpoints);
+
+        if (!mjjDebugHandler.isRunning()) {
+            return;
+        }
+
+        debugMode = true;
+        debugSource = DebugSource.MINIJAJA;
+        stepButton.setDisable(false);
+        stopButton.setDisable(false);
+        continueButton.setDisable(false);
+    }
+
+    /**
+     * Starts JajaCode debug session.
+     */
+    private void startJajaCodeDebug() {
+        String codeToDebug = jjcCodeArea.getText();
+
+        // Prepare JajaCode with line numbers (interpreter expects "1 init" format)
+        String[] lines = codeToDebug.split("\\n");
+        StringBuilder numberedCode = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            numberedCode.append(i + 1).append(" ").append(lines[i]).append("\n");
+        }
+
+        // Initialize handler with tables
+        debugHandler = new JajaCodeDebugHandler(console, jjcCodeArea, stackTable, heapTable);
+        debugHandler.start(numberedCode.toString());
+
+        if (!debugHandler.isRunning()) {
+            return; // Failed to start
+        }
+
+        debugMode = true;
+        debugSource = DebugSource.JAJACODE;
+        stepButton.setDisable(false);
+        stopButton.setDisable(false);
+        continueButton.setDisable(false);
+    }
+
+    /**
+     * Steps through execution one instruction at a time.
+     */
+    private void stepDebugEnhanced() {
+        if (!debugMode) {
+            return;
+        }
+
+        if (debugSource == DebugSource.MINIJAJA) {
+            if (mjjDebugHandler != null) {
+                mjjDebugHandler.step();
+                if (!mjjDebugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        } else {
+            if (debugHandler != null) {
+                debugHandler.step();
+                if (!debugHandler.isRunning()) {
+                    stopDebugWithReset();
+                }
+            }
+        }
+    }
+
+    /**
+     * Stops debug mode and resets the current line highlight.
+     */
+    private void stopDebugWithReset() {
+        DebugSource currentSource = debugSource;
+        stopDebug();
+        if (currentSource == DebugSource.MINIJAJA) {
+            mjjCodeArea.highlightLine(-1);
+        } else {
+            jjcCodeArea.highlightLine(-1);
+        }
+    }
+
+    /**
+     * Builds the memory view panel with Stack and Heap tables.
+     */
+    private SplitPane buildMemoryView() {
+        // Stack Table
+        stackTable = new TableView<>();
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> idCol = new TableColumn<>("Identifier");
+        idCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().identifier()));
+        idCol.setPrefWidth(120);
+
+        TableColumn<JajaCodeDebug.VariableInfo, Object> valCol = new TableColumn<>("Value");
+        valCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().value()));
+        valCol.setPrefWidth(80);
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> kindCol = new TableColumn<>("Kind");
+        kindCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().kind()));
+        kindCol.setPrefWidth(60);
+
+        TableColumn<JajaCodeDebug.VariableInfo, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().type())));
+        typeCol.setPrefWidth(70);
+
+        stackTable.getColumns().addAll(idCol, valCol, kindCol, typeCol);
+        stackTable.setPlaceholder(new Label("Stack is empty - Start debugging to see memory"));
+
+        Label stackLabel = new Label("Stack");
+        stackLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5;");
+        VBox stackBox = new VBox(stackLabel, stackTable);
+        VBox.setVgrow(stackTable, Priority.ALWAYS);
+
+        // Heap Table
+        heapTable = new TableView<>();
+
+        TableColumn<JajaCodeDebug.HeapInfo, String> heapIdCol = new TableColumn<>("Array");
+        heapIdCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().identifier()));
+        heapIdCol.setPrefWidth(100);
+
+        TableColumn<JajaCodeDebug.HeapInfo, Integer> addrCol = new TableColumn<>("Addr");
+        addrCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().baseAddress()));
+        addrCol.setPrefWidth(50);
+
+        TableColumn<JajaCodeDebug.HeapInfo, Integer> sizeCol = new TableColumn<>("Size");
+        sizeCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().size()));
+        sizeCol.setPrefWidth(50);
+
+        TableColumn<JajaCodeDebug.HeapInfo, String> elementsCol = new TableColumn<>("Elements");
+        elementsCol.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().elements().toString()));
+        elementsCol.setPrefWidth(150);
+
+        heapTable.getColumns().addAll(heapIdCol, addrCol, sizeCol, elementsCol);
+        heapTable.setPlaceholder(new Label("Heap is empty"));
+
+        Label heapLabel = new Label("Heap (Arrays)");
+        heapLabel.setStyle("-fx-font-weight: bold; -fx-padding: 5;");
+        VBox heapBox = new VBox(heapLabel, heapTable);
+        VBox.setVgrow(heapTable, Priority.ALWAYS);
+
+        SplitPane memoryPane = new SplitPane(stackBox, heapBox);
+        memoryPane.setOrientation(Orientation.VERTICAL);
+        memoryPane.setDividerPositions(0.7);
+
+        return memoryPane;
+    }
+
+    public static void main(String[] args) {
+        launch();
+    }
+
+}
+

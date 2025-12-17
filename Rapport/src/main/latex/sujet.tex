@@ -1,0 +1,26 @@
+\section{Sujet}
+
+Ce rapport présente la réalisation d'un environnement de développement complet pour les langages MiniJaja et JajaCode, réalisé dans le cadre du Master 1 Informatique. Ce projet intègre les phases d'analyse lexicale, syntaxique, de contrôle de type et de génération de code.\\
+
+Le système articule un langage source impératif et typé (MiniJaja) avec un langage cible orienté pile (JajaCode).\\
+
+Le projet ne se limite pas seulement à de la traduction syntaxique, l'enjeu était de pouvoir concevoir un langage, le compiler et observer les états mémoires de ce dernier en l'interprétant. Conformément au cahier des charges, l'objectif est de garantir la commutativité du diagramme de concordance : l'interprétation directe du code source doit produire un état mémoire final strictement identique à celui obtenu après sa compilation et son exécution.\\
+
+Le projet intègre donc une gestion de la mémoire, orchestrant l'allocation dynamique dans le Tas (Heap) et l'empilement des contextes dans la Pile (Stack).\\
+
+Mémoire qui peut être visualisé au sein d'une interface graphique via le mode `debug`, en consultant ainsi pas à pas un programme Minijaja ou Jajacode.\\
+
+Pour répondre à ce projet, l'architecture logicielle repose sur l'outil ANTLR et le design pattern visiteur. La fiabilité de l'ensemble est assurée par une stratégie de tests unitaires et d'intégration, menée dans le cadre d'une méthodologie Agile.
+
+Pour mener à bien ce développement, nous avons utilisé un ensemble d'outils :
+\begin{itemize}
+    \item \textbf{Jira} pour la gestion de projet agile et le suivi des tâches.
+    \item \textbf{GitLab} pour le versionnement du code et la CI/CD.
+    \item \textbf{IntelliJ IDEA} comme environnement de développement principal (avec des marginaux sous VSCode).
+    \item \textbf{Nexus} pour la gestion des artefacts et des dépendances Maven.
+    \item \textbf{SonarQube} pour l'analyse de la qualité du code.
+\end{itemize}
+
+\subsection{ANTLR vs JavaCC}
+
+Le choix technique de l'outil d'analyse syntaxique s'est porté sur ANTLR, en alternative à JavaCC suggéré par le sujet. Ce choix a été motivé par le simple fait du confort de l'outil qui nous paraissait plus abordable que JavaCC niveau implémentation au sein de l'architecture.

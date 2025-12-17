@@ -1,0 +1,10 @@
+init
+push(w)
+new(x@global, int, var, 0)
+push(5)
+store(x@global)
+push(0)
+swap
+pop
+pop
+jcstop

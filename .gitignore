@@ -1,7 +1,8 @@
 .idea/
-.idea
 **/target/
 .mvn/
 **/*.class
 **/.DS_Store
 **/dependency-reduced-pom.xml
+.claude/
+/*/logs/minijaja.log

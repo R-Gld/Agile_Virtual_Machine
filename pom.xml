@@ -16,17 +16,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
-        <mockito.version>5.14.2</mockito.version>
+        <mockito.version>5.20.0</mockito.version>
+
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>
-            IHM/**,
-            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/LexerParser/jajacode/JajaCodeInterpreter.java,
+            GUI/**,
+            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/jajacode/JajaCodeInterpreter.java,
+            LexerParser/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/minijaja/MiniJajaCompiler.java,
         </sonar.exclusions>
     </properties>
 
     <dependencies>
-        <!-- JUnit 5 -->
+        <!-- Cucumber -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>7.28.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit-platform-engine</artifactId>
+            <version>7.28.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- JUnit -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -40,10 +56,40 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <version>1.13.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito -->
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.14.0</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.17</version>
         </dependency>
     </dependencies>
 
@@ -141,16 +187,27 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>3.1.1</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseProfiles>release</releaseProfiles>
+                    <scmCommentPrefix>[Release] </scmCommentPrefix>
+                    <goals>deploy</goals>
+                    <checkModificationExcludeList>pom.xml,pom.xml.releaseBackup,release.properties</checkModificationExcludeList>
+                </configuration>
             </plugin>
         </plugins>
     </build>
 
     <!-- List of all modules -->
     <modules>
-        <module>IHM</module>
+        <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
-        <module>compiler</module>
+        <module>CLI</module>
+        <module>ASTExporter</module>
+        <module>CoverageReport</module>
+        <module>Rapport</module>
     </modules>
 
     <scm>

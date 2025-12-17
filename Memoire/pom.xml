@@ -12,50 +12,12 @@
 
     <!-- Module information -->
     <artifactId>Memoire</artifactId>
-    <version>1.1-SNAPSHOT</version>
     <name>Memoire</name>
     <url>https://disc.univ-fcomte.fr/cr700-gitlab/projet-amv-2025/groupe-7/</url>
-
-    <!-- Project settings -->
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
-        <junit.jupiter.version>5.13.4</junit.jupiter.version>
-    </properties>
-
-    <!-- Dependencies -->
-    <dependencies>
-
-        <!-- JUnit 5 core API -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- JUnit 5 parameterized tests -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- JUnit 5 engine (runner) -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
 
 
     <!-- Build configuration -->
     <build>
-
         <!-- Default plugin management (from the parent project) -->
         <pluginManagement>
             <plugins>
@@ -92,14 +54,13 @@
 
         <!-- Plugins actually used in this module -->
         <plugins>
-            <!-- Compiler Plugin for Java 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>${maven.compiler.release}</source>
+                    <target>${maven.compiler.release}</target>
                 </configuration>
             </plugin>
 

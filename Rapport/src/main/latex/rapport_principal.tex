@@ -1,0 +1,269 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, trees, shapes}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{subcaption}
+
+% Imports additionnels pour MiniJaja_Realisation.tex
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{colortbl}
+\usepackage{amsmath}
+\usepackage{minted}
+
+% Couleurs personnalisées pour Annexe_Res_tests
+\definecolor{successgreen}{RGB}{40,167,69}
+\definecolor{warningyellow}{RGB}{255,193,7}
+\definecolor{dangered}{RGB}{220,53,69}
+\definecolor{infoblue}{RGB}{23,162,184}
+\definecolor{headerblue}{RGB}{0,123,255}
+
+% Couleurs personnalisées pour MiniJaja_Realisation
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{errorred}{rgb}{0.8,0.1,0.1}
+\definecolor{warningorange}{rgb}{0.9,0.5,0}
+
+% Geometry
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=3cm,
+    bottom=3cm,
+    headheight=15pt
+}
+
+% Listings configuration for code
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    tabsize=4
+}
+
+% Style personnalisé pour MiniJaja_Realisation
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+% YAML language definition for listings
+\lstdefinelanguage{yaml}{
+    keywords={true,false,null,yes,no,on,off},
+    keywordstyle=\color{blue}\bfseries,
+    keywords=[2]{stage,script,image,tags,before_script,after_script,artifacts,
+                 cache,rules,needs,variables,when,retry,default,stages,
+                 include,extends,only,except,allow_failure,timeout,coverage,
+                 services,dependencies,trigger,parallel,resource_group,
+                 environment,deployment,pages,interruptible,retry,release},
+    keywordstyle=[2]\color{purple}\bfseries,
+    sensitive=true,
+    comment=[l]{\#},
+    commentstyle=\color{green!60!black}\itshape,
+    morestring=[b]',
+    morestring=[b]",
+    stringstyle=\color{orange},
+    literate=
+        {-\ }{{\textcolor{blue}{-\ }}}{2}
+        {>}{{\textcolor{red}{>}}}{1}
+        {|}{{\textcolor{red}{|}}}{1}
+        {:\ }{{\textcolor{red}{:\ }}}{2}
+        {\ -\ }{{\textcolor{blue}{\ -\ }}}{3}
+        {\$\{}{{\textcolor{teal}{\$\{}}}{2}
+        {\}}{{\textcolor{teal}{\}}}}{1}
+        {\$}{{\textcolor{teal}{\$}}}{1}
+        {||}{{\textcolor{purple}{||}}}{2}
+        {\&\&}{{\textcolor{purple}{\&\&}}}{2}
+        {==}{{\textcolor{purple}{==}}}{2}
+        {!=}{{\textcolor{purple}{!=}}}{2},
+    basicstyle=\ttfamily\small\color{black},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2
+}
+
+% Enhanced XML language definition for listings
+\lstdefinelanguage{enhancedxml}{
+    basicstyle=\ttfamily\small\color{black},
+    morestring=[b]",
+    morestring=[s]{>}{<},
+    morecomment=[s]{<?}{?>},
+    morecomment=[s]{<!--}{-->},
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{orange},
+    identifierstyle=\color{blue},
+    keywordstyle=\color{purple}\bfseries,
+    morekeywords={xmlns,version,type,encoding,id,url,name,value,phase,goal,
+                  configuration,execution,executions,plugin,plugins,build,
+                  project,dependencies,dependency,groupId,artifactId,
+                  version,scope,properties,property,repository,repositories,
+                  distributionManagement,snapshotRepository,server,servers,
+                  username,password,tagNameFormat,autoVersionSubmodules,
+                  releaseProfiles,scmCommentPrefix,goals},
+    sensitive=true,
+    alsoletter={:,-},
+    literate=
+        {<}{{\textcolor{red}{<}}}{1}
+        {>}{{\textcolor{red}{>}}}{1}
+        {</}{{\textcolor{red}{</}}}{2}
+        {/>}{{\textcolor{red}{/>}}}{2}
+        {<?}{{\textcolor{purple}{<?}}}{2}
+        {?>}{{\textcolor{purple}{?>}}}{2}
+        {\$\{env.}{{\textcolor{teal}{\$\{env.}}}{6}
+        {\$\{project.}{{\textcolor{teal}{\$\{project.}}}{10}
+        {\}}{{\textcolor{teal}{\}}}}{1},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4
+}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Rapport de Projet - Groupe 7}
+\lhead{MiniJAJA}
+\rfoot{Page \thepage}
+
+% Title information
+\title{
+    \textbf{Rapport de Projet}\\
+    \large{MiniJAJA - Compilateur et Interpréteur}\\
+    \large{Groupe 7}
+}
+\author{
+    Romain GALLAND \and
+    Lucas LAURET \and
+    Félix RIAT \and
+    Léo MAUGERI \and
+    Théo VALFREY \and
+    Ahmed DJEMAOUI \and
+    Javad AFSHAR
+}
+\date{\today}
+
+\begin{document}
+
+    \begin{titlepage}
+        \centering
+
+        % Logos en haut
+        \vspace*{1cm}
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=0.45\textwidth]{images/logo_universite.png}
+            \hspace{1cm}
+            \includegraphics[width=0.35\textwidth]{images/logo_ufr.png}
+        \end{figure}
+
+        \vspace{2cm}
+
+        % Titre principal
+        {\Huge \textbf{Rapport de Projet}}\\[0.5cm]
+        {\Large MiniJAJA - Compilateur et Interpréteur}\\[0.3cm]
+        {\Large Groupe 7}
+
+        \vspace{2cm}
+
+        % Informations du projet
+        \begin{flushleft}
+        \large
+        \textbf{Master 1 Informatique}\\
+        Génie Logiciel\\
+        Année Universitaire 2024-2025
+        \end{flushleft}
+
+        \vfill
+
+        % Auteurs
+        \begin{flushleft}
+        \large
+        \textbf{Équipe :}\\[0.3cm]
+        Romain GALLAND\\
+        Lucas LAURET\\
+        Félix RIAT\\
+        Léo MAUGERI\\
+        Théo VALFREY\\
+        Ahmed DJEMAOUI\\
+        Javad AFSHAR
+        \end{flushleft}
+
+        \vspace{1cm}
+
+        % Date
+        \begin{flushleft}
+        \large
+        \today
+        \end{flushleft}
+
+    \end{titlepage}
+    \newpage
+
+    \tableofcontents
+    \newpage
+
+    \include{sujet}
+    \newpage
+
+    \include{contraintes_fonctionnelles}
+    \newpage
+
+    \include{decomposition_logiciel}
+    \newpage
+
+    \include{MiniJaja_Realisation}
+    \newpage
+
+    \include{jeux_test}
+    \newpage
+
+    \include{Annexe_Res_tests}
+    \newpage
+
+    \include{equipe}
+    \newpage
+
+    \include{agile}
+    \newpage
+
+    \include{outils_suivi}
+    \newpage
+
+    \include{retro}
+    \newpage
+
+\end{document}

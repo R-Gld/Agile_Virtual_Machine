@@ -1,0 +1,437 @@
+package fr.ufrst.m1info.gl.groupe7.memoire;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Heap (with HeapEntry)
+ * ---------------------------------------------------------------------------
+ * Implements a 256-cell buddy-system memory manager.
+ * Each block is represented by a Node containing a HeapEntry.
+ */
+public class Heap {
+
+    private static final Logger logger = LoggerFactory.getLogger(Heap.class);
+
+    private static final int HEAP_SIZE = 256;
+    private static final int TABLE_SIZE = 97;
+
+    private final Object[] memory;
+    private final Node[] table;
+    private int freeCount = 0;
+
+    /** Node representing a free or allocated block inside the hash table. */
+    private static class Node {
+        HeapEntry entry;  // describes the block
+        Node next;
+
+        Node(HeapEntry entry) {
+            this.entry = entry;
+        }
+
+        @Override
+        public String toString() {
+            return entry.toString();
+        }
+    }
+
+    // =========================================================================
+    // ========================== CONSTRUCTOR ==================================
+    // =========================================================================
+
+    public Heap() {
+        this.memory = new Object[HEAP_SIZE];
+        this.table = new Node[TABLE_SIZE];
+        // Start with one big free block (256)
+        HeapEntry root = new HeapEntry("FREE_BLOCK", 0, HEAP_SIZE, null, true);
+        put(new Node(root));
+    }
+
+    // =========================================================================
+    // ============================= HASHING ===================================
+    // =========================================================================
+
+    private int hash(int size) {
+        return size % TABLE_SIZE;
+    }
+
+    // =========================================================================
+    // ====================== HASH TABLE MANAGEMENT ============================
+    // =========================================================================
+
+    private void put(Node block) {
+        int index = hash(block.entry.getSize());
+        logger.debug("index table allocated: {}block.entry.getSize() :{}", index, block.entry.getSize());
+        block.next = table[index];
+        table[index] = block;
+        if(block.entry.isFree()){
+            freeCount++;
+        }
+    }
+
+    private Node remove(int size) {
+        int index = hash(size);
+        Node current = table[index];
+        Node prev = null;
+
+        while (current != null) {
+            if (current.entry.getSize() == size && current.entry.isFree()) {
+                if (prev == null)
+                    table[index] = current.next;
+                else
+                    prev.next = current.next;
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
+
+                current.next = null;
+                return current;
+            }
+            prev = current;
+            current = current.next;
+        }
+        return null;
+    }
+
+    private Node findBlock(int minSize) {
+        int size = minSize;
+        while (size <= HEAP_SIZE) {
+            int index = hash(size);
+            Node current = table[index];
+            while (current != null) {
+                if (current.entry.getSize() == size && current.entry.isFree())
+                    return current;
+                current = current.next;
+            }
+            size *= 2;
+        }
+        return null;
+    }
+
+    // =========================================================================
+    // ============================= ALLOCATE ==================================
+    // =========================================================================
+
+    /**
+     * Allocates a new HeapEntry for a given ID and size.
+     * Splits larger blocks if necessary.
+     */
+    public HeapEntry allocate(String id, int requestedSize, Object ref) {
+        if (requestedSize <= 0 ) return null;
+        if(requestedSize > HEAP_SIZE){
+            logger.debug("overflow more than heap_size {}", id);
+            return null;
+        }
+
+        int blockSize = 1;
+        while (blockSize < requestedSize) blockSize *= 2;
+
+        Node block = findBlock(blockSize);
+        if (block == null) {
+            logger.debug("Error: not enough memory for {}", id);
+            return null;
+        }
+
+        remove(block.entry.getSize());
+
+        // Split recursively
+        while (block.entry.getSize() > blockSize) {
+            int half = block.entry.getSize() / 2;
+            HeapEntry buddyEntry = new HeapEntry("FREE_BLOCK",
+                    block.entry.getAddress() + half,
+                    half,
+                    null,
+                    true);
+            put(new Node(buddyEntry));
+            block.entry = new HeapEntry("FREE_BLOCK",
+                    block.entry.getAddress(),
+                    half,
+                    null,
+                    true);
+        }
+
+        // Allocate final block
+        HeapEntry allocated = new HeapEntry(id, block.entry.getAddress(), blockSize, ref, false);
+        put(new Node(allocated));
+        logger.debug("-> Allocated {} ({} cells) at address {}", id, blockSize, allocated.getAddress());
+
+        return allocated;
+    }
+
+    // =========================================================================
+    // ================================ FREE ===================================
+    // =========================================================================
+    /**
+     * Removes an allocated HeapEntry (free == false) from the hash table.
+     * Matching is done by address + size (and id as tie-breaker) instead of object identity.
+     *
+     * @param entry a HeapEntry describing the block to remove (may be a different instance)
+     * @return true if removed, false if not found
+     */
+    private boolean removeAllocatedEntry(HeapEntry entry) {
+        if (entry == null) return false;
+        int newIndex =1;
+        while (newIndex < entry.getSize()) {
+            newIndex*=2;
+        }
+        logger.debug(" newIndex {}", newIndex);
+        int index = hash(newIndex);
+        logger.debug(" Index remove allocated {}", index);
+        Node current = table[index];
+        Node prev = null;
+
+        // Preferential pass: scan expected bucket first (fast path)
+        while (current != null) {
+            HeapEntry h = current.entry;
+            if (!h.isFree() && h.getAddress() == entry.getAddress() && h.getSize() == entry.getSize()
+                    && (h.getId().equals(entry.getId()) || entry.getId() == null || h.getId() == null)) {
+                // found a matching allocated block => remove it
+                if (prev == null) table[index] = current.next;
+                else prev.next = current.next;
+                current.next = null;
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
+                 // keep same counting semantics as put()
+                logger.debug("-> Removed allocated HeapEntry [{}] at addr={}", h.getId(), h.getAddress());
+                return true;
+            }
+            prev = current;
+            current = current.next;
+        }
+
+        // Fallback: sometimes the block may live in another bucket (robustness)
+        return removeEntryByAddressAndSize(entry);
+    }
+    /**
+     * Generic remove: remove a node matching the given entry (by address+size+id) anywhere in the table.
+     * Useful as a fallback if the bucket computed by hash(size) didn't contain the node.
+     */
+    private boolean removeEntryByAddressAndSize(HeapEntry entry) {
+        if (entry == null) return false;
+
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node current = table[i];
+            Node prev = null;
+            while (current != null) {
+                HeapEntry h = current.entry;
+                if (h.getAddress() == entry.getAddress() && h.getSize() == entry.getSize()
+                        && (h.getId().equals(entry.getId()) || entry.getId() == null || h.getId() == null)) {
+                    // remove node
+                    if (prev == null) table[i] = current.next;
+                    else prev.next = current.next;
+                    current.next = null;
+                    if(current.entry.isFree()){
+                        freeCount--;
+                    }
+                    logger.debug("-> Removed HeapEntry (fallback) [{}] at addr={} from bucket {}", h.getId(), h.getAddress(), i);
+                    return true;
+                }
+                prev = current;
+                current = current.next;
+            }
+        }
+        // nothing found
+        logger.debug("⚠️ removeEntryByAddressAndSize: not found addr={} size={} id={}", entry.getAddress(), entry.getSize(), entry.getId());
+        return false;
+    }
+    /**
+     * Removes a specific HeapEntry from the hash table of allocated/free blocks.
+     * Kept for compatibility and debugging.
+     */
+    private boolean removeEntry(HeapEntry entry) {
+        if (entry == null) return false;
+
+        int index = hash(entry.getSize());
+        Node current = table[index];
+        Node prev = null;
+
+        while (current != null) {
+            if (current.entry == entry) {
+                // Remove the node from the linked list (object identity)
+                if (prev == null) table[index] = current.next;
+                else prev.next = current.next;
+                current.next = null;
+                if(current.entry.isFree()){
+                    freeCount--;
+                }
+                logger.debug("-> Removed (by identity) HeapEntry [{}] from bucket {}", entry.getId(), index);
+                return true;
+            }
+            prev = current;
+            current = current.next;
+        }
+
+        logger.debug("⚠️ removeEntry (by identity) did not find: {}", entry);
+        return false;
+    }
+
+    /**
+     * Free a heap entry and reorganize the memory.
+     * - Removes the entry from the allocated list.
+     * - Creates a free block.
+     * - Merges adjacent free blocks to reduce fragmentation.
+     */
+    public void free(HeapEntry entry) {
+        if (entry == null) return;
+
+
+        boolean removed = this.removeAllocatedEntry(entry);
+        if (!removed) {
+            logger.debug("⚠️ Entry not found in allocated blocks: {}", entry.getId());
+            return;
+        }
+
+
+        HeapEntry freeEntry = new HeapEntry(
+                "FREE_BLOCK",
+                entry.getAddress(),
+                entry.getSize(),
+                null,   // pas de valeur
+                true    // indique que c'est libre
+        );
+
+        logger.debug("← Freed block [{}] addr={} size={}", entry.getId(), entry.getAddress(), entry.getSize());
+
+
+        Node newFreeNode = new Node(freeEntry);
+        Node mergedNode = merge(newFreeNode);
+        put(mergedNode);
+    }
+
+
+    /** Recursive buddy merge. */
+    private Node merge(Node block) {
+        int size =1;
+        while (size<block.entry.getSize()) {
+            size*=2;
+        }
+
+        int buddyIndex = block.entry.getAddress() ^ size;
+
+
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node current = table[i];
+            Node prev = null;
+
+            while (current != null) {
+                HeapEntry buddy = current.entry;
+                if (buddy.isFree() && buddy.getSize() == size && buddy.getAddress() == buddyIndex) {
+
+                    if (prev == null) table[i] = current.next;
+                    else prev.next = current.next;
+                    if(current.entry.isFree()){
+                        freeCount--;
+                    }
+
+
+                    int mergedAddr = Math.min(block.entry.getAddress(), buddyIndex);
+                    HeapEntry merged = new HeapEntry("FREE_BLOCK", mergedAddr, size * 2, null, true);
+
+
+                    return merge(new Node(merged));
+                }
+                prev = current;
+                current = current.next;
+            }
+        }
+
+        return block;
+    }
+
+    // =========================================================================
+    // =============================== DEBUG ===================================
+    // =========================================================================
+
+    public void printHeap() {
+        StringBuilder sb = new StringBuilder("\n=== Current Heap State ===\n");
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node node = table[i];
+            if (node != null) {
+                sb.append("Bucket[").append(i).append("] -> ");
+                while (node != null) {
+                    sb.append(node.entry).append(" \n");
+                    node = node.next;
+                }
+                sb.append("\n");
+            }
+        }
+        sb.append("==========================\n");
+        logger.debug(sb.toString());
+    }
+
+    public int getFreeCount() {
+        return freeCount;
+    }
+
+    public Object read(int address) {
+        if (address < 0 || address >= HEAP_SIZE) {
+            throw new IndexOutOfBoundsException("Heap.read: address out of bounds: " + address);
+        }
+        return memory[address];
+    }
+
+    /**
+     * Write a value into a raw heap cell address.
+     * (Performs bounds checking to avoid invalid access.)
+     */
+    public void write(int address, Object value) {
+        if (address < 0 || address >= HEAP_SIZE) {
+            throw new IndexOutOfBoundsException("Heap.write: address out of bounds: " + address);
+        }
+        memory[address] = value;
+        // Debug log
+        logger.debug("[HEAP WRITE] address={}  stored_value={}  ({})",
+                address,
+                value,
+                (value != null ? value.getClass().getSimpleName() : "null"));
+    }
+
+    public void releaseReference(HeapEntry entry) {
+        if (entry == null) return;
+
+        entry.decrementRef();
+        if (entry.getRefCount() == 0) {
+            free(entry);
+        }
+    }
+
+    public HeapEntry getEntryNotFree(int baseAddress) {
+
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node node = table[i];
+            while (node != null) {
+                HeapEntry entry = node.entry;
+
+                if (!entry.isFree() && entry.getAddress() == baseAddress) {
+                    return entry;
+                }
+
+                node = node.next;
+            }
+        }
+        return null;
+    }
+
+    public HeapEntry getEntry(int baseAddress) {
+
+        for (int i = 0; i < TABLE_SIZE; i++) {
+            Node node = table[i];
+            while (node != null) {
+                HeapEntry entry = node.entry;
+
+                if ( entry.getAddress() == baseAddress) {
+                    return entry;
+                }
+
+                node = node.next;
+            }
+        }
+        return null;
+    }
+
+    public Object[] getMemory() {
+        return memory;
+    }
+
+}

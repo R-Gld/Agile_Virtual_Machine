@@ -4,6 +4,7 @@ stages:
   - sonarqube-check
   - package
   - deploy
+  - release
 
 default:
   image: maven:3.9.9-eclipse-temurin-21-alpine
@@ -11,11 +12,17 @@ default:
     - avm_groupe7
   before_script:
     - chmod +x settings.sh && ./settings.sh
+  retry:
+    max: 2
+    when:
+      - api_failure
+      - script_failure
+      - unknown_failure
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  MAVEN_CLI_OPTS: "-B -V -ntp -T 1C -s .settings.xml --fail-at-end"
-  MAVEN_HEADLESS_OPTS: "-Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw -Dprism.text=t2k -Dheadless=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp -s .settings.xml --fail-at-end"
+  MAVEN_CLI_OPTS: "${MAVEN_CLI_OPTS_SINGLE_THREAD} -T 1C"
 
 cache:
   key: "m2-${CI_COMMIT_REF_SLUG}"
@@ -23,7 +30,6 @@ cache:
   paths:
     - .m2/repository
   when: on_success
-
 
 check-envvars:
   stage: .pre
@@ -49,11 +55,28 @@ build:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} clean compile
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+
+build-rapport:
+  stage: build
+  image: ghcr.io/r-gld/maven-with-texlive:latest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == 'main'
+    - if: $CI_COMMIT_BRANCH == 'dev'
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+  script:
+    - mvn -pl 'Rapport' clean compile
+    - cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
   artifacts:
     paths:
-      - '**/target/'
+      - rapport_principal.pdf
+    name: "rapport-${CI_COMMIT_SHORT_SHA}"
     expire_in: 1 week
+  allow_failure: true
+
 
 test:
   stage: test
@@ -62,16 +85,20 @@ test:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  needs:
+    - build
   script:
-    - mvn ${MAVEN_CLI_OPTS} -pl '!IHM' jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport,!Rapport' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
-      junit: '**/target/surefire-reports/TEST-*.xml'
+      junit: "**/target/surefire-reports/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: '**/target/site/jacoco/jacoco.xml'
+        path: "**/target/site/jacoco/jacoco.xml"
     paths:
-      - '**/target/'
+      - "**/target/surefire-reports/TEST-*.xml"
+      - "**/target/site/jacoco/jacoco.xml"
+      - "**/target/classes/"
     expire_in: 1 week
 
 testIHM:
@@ -81,22 +108,26 @@ testIHM:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
+  needs:
+    - build
   before_script:
     - chmod +x settings.sh && ./settings.sh
     - apk add xvfb libx11-dev xvfb-run gtk+3.0
     - export DISPLAY=:99
     - Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
   script:
-    - mvn clean install -DskipTests
-    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'IHM' ${MAVEN_HEADLESS_OPTS} jacoco:prepare-agent test jacoco:report
+    - mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
+    - xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
   artifacts:
     reports:
-      junit: '**/target/surefire-reports/TEST-*.xml'
+      junit: "**/target/surefire-reports/TEST-*.xml"
       coverage_report:
         coverage_format: jacoco
-        path: '**/target/site/jacoco/jacoco.xml'
+        path: "**/target/site/jacoco/jacoco.xml"
     paths:
-      - '**/target/'
+      - "**/target/surefire-reports/TEST-*.xml"
+      - "**/target/site/jacoco/jacoco.xml"
+      - "**/target/classes/"
     expire_in: 1 week
 
 package:
@@ -107,10 +138,10 @@ package:
     - if: $CI_COMMIT_BRANCH == 'main'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
   artifacts:
     paths:
-      - '**/target/*.jar'
+      - "**/target/*.jar"
     expire_in: 1 week
   needs:
     - test
@@ -119,8 +150,8 @@ package:
 sonarqube-check:
   stage: sonarqube-check
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+    GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
   cache:
     key: "sonar-cache"
     policy: pull-push
@@ -130,9 +161,10 @@ sonarqube-check:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'dev'
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
-  allow_failure: true
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar -Dsonar.projectKey=avm-2025-groupe-7 -Dsonar.projectName='avm-2025-groupe-7'
+  #  allow_failure: true # Uncomment this line to not fail the pipeline if the SonarQube analysis fails
   needs:
+    - build
     - test
     - testIHM
 
@@ -145,13 +177,45 @@ deploy:
   needs:
     - package
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests deploy
+    - mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests deploy
 
-deploy:manual:
-  stage: .pre
-  retry: 2
+release:prepare:
+  stage: release
   rules:
-    - when: manual
-      allow_failure: true
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  before_script:
+    - chmod +x settings.sh && ./settings.sh
+    - apk add git openssh-client
+    - git config --global user.email "ci@groupe7.fr"
+    - git config --global user.name "CI Release Bot"
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - cp "${GITLAB_SSH_PRIVATE_KEY}" ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa disc.univ-fcomte.fr >> ~/.ssh/known_hosts
+    - git remote set-url origin git@disc.univ-fcomte.fr:projet-amv-2025/groupe-7.git
+    - git fetch --all
+    - git checkout ${CI_COMMIT_BRANCH}
+    - git pull origin ${CI_COMMIT_BRANCH}
   script:
-    - mvn ${MAVEN_CLI_OPTS} -DskipTests package deploy
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' release:clean release:prepare -DpushChanges=true -Darguments="-DskipTests"
+  after_script:
+    - git push --tags
+  artifacts:
+    paths:
+      - release.properties
+      - pom.xml.releaseBackup
+    expire_in: 1 day
+  allow_failure: false
+
+release:perform:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == 'main'
+      when: manual
+  needs:
+    - release:prepare
+  script:
+    - mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' release:perform -Darguments="-DskipTests"
+  allow_failure: false

@@ -1,0 +1,96 @@
+class ComplexError {
+    int matrix[10];
+    final int SIZE = 10;
+    final int THRESHOLD = 50;
+    int globalSum = 0;
+    
+    int fibonacci(int n) {
+        int result;
+        if (2>n) {
+            result = n;
+        } else {
+            result = fibonacci(n - 1) + fibonacci(n - 2);
+        };
+        return result;
+    };
+    
+    int factorial(int n) {
+        int result;
+        if (2>n) {
+            result = 1;
+        } else {
+            result = n * factorial(n - 1);
+        };
+        return result;
+    };
+    
+    int compute(int a, int b) {
+        int r;
+        int fib;
+        int fact;
+        fib = fibonacci(a);
+        fact = factorial(b);
+        r = fib * fact / (a - b);
+        return r;
+    };
+    
+    int processArray(int start, int end) {
+        int sum;
+        int i;
+        int val;
+        sum = 0;
+        i = start;
+        while (end>i) {
+            val = matrix[i];
+            if (val > THRESHOLD) {
+                sum = sum + val * 2;
+            } else {
+                sum = sum + val;
+            };
+            i = i + 1;
+        };
+        return sum;
+    };
+    
+    int dangerousCalc(int x, int y, int z) {
+        int temp;
+        int result;
+        temp = x * y + z;
+        result = temp / (x - y);
+        return result;
+    };
+    
+    main {
+        int i;
+        int a;
+        int b;
+        int c;
+        int result1;
+        int result2;
+        int result3;
+        final int LOCAL_CST = 25;
+        
+        i = 0;
+        while (SIZE>i) {
+            matrix[i] = i * 7 + 3;
+            i = i + 1;
+        };
+        
+        a = 5;
+        b = 8;
+        c = fibonacci(6);
+        writeln(c);
+        
+        result1 = factorial(5);
+        writeln(result1);
+        
+        result2 = processArray(0, SIZE);
+        globalSum = result2;
+        writeln(globalSum);
+        
+        a = LOCAL_CST;
+        b = LOCAL_CST;
+        result3 = dangerousCalc(a, b, 100);
+        writeln(result3);
+    }
+}

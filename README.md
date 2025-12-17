@@ -107,4 +107,5 @@ Le projet s’appuie sur une démarche **Agile** (type *Scrum*) : développement
 - **Léo MAUGERI**
 - **Félix RIAT**
 - **Théo VALFREY**
-- **Ahmed DJEMAOUI**
+- **Ahmed DJEMAOUI** 
+- **Javad AFSHAR**

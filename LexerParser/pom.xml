@@ -7,43 +7,15 @@
     </parent>
 
     <artifactId>LexerParser</artifactId>
-    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>LexerParser</name>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <antlr.outputdirectory>${project.basedir}/src/main/java/fr/ufrst/m1info/gl/groupe7/${project.artifactId}/gen/</antlr.outputdirectory>
+        <antlr.outputdirectory>${project.basedir}/src/main/java/fr/ufrst/m1info/gl/groupe7/lexerparser/gen/</antlr.outputdirectory>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.14.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.14.2</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
@@ -82,24 +54,6 @@
             </plugin>
 
             <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.2</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${project.basedir}/src/main/java/fr/ufrst/m1info/gl/groupe7/LexerParser/gen</directory>
-                        </fileset>
-                        <fileset>
-                            <directory>${project.basedir}/src/main/java</directory>
-                            <includes>
-                                <include>*.tokens</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-maven-plugin</artifactId>
                 <version>4.13.2</version>
@@ -121,7 +75,7 @@
                     <execution>
                         <id>generate-jajacode</id>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/antlr4/fr/ufrst/m1info/gl/groupe7/LexerParser/gen/jajacode</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/antlr4/fr/ufrst/m1info/gl/groupe7/lexerparser/gen/jajacode</sourceDirectory>
                         </configuration>
                     </execution>
                 </executions>
