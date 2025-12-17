@@ -10,5 +10,7 @@ public record rMethode(MethodeNode methode) {
 
     }
 
-
+    public String toStringTree() {
+        return "Retrait méthode";
+    }
 }

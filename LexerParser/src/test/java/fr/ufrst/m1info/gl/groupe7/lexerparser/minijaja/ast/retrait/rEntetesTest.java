@@ -41,12 +41,12 @@ class rEntetesTest {
     // ===== toStringTree tests =====
 
     @Test
-    void toStringTree_returnsEmptyString() {
+    void toStringTree_returnsRetrait() {
         EnteteNode entete = new EnteteNode(new IdentNode("x"), Type.ENTIER);
         EntetesNode entetes = new EntetesNode(entete, null);
         rEntetes rEntetes = new rEntetes(entetes);
         
-        assertEquals("", rEntetes.toStringTree());
+        assertEquals("retrait Entetes", rEntetes.toStringTree());
     }
 
     // ===== interpret tests =====
