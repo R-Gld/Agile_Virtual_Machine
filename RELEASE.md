@@ -8,14 +8,14 @@ Ce document décrit le processus de création de releases pour le projet MiniJAJ
 
 Les variables suivantes doivent être configurées dans **Settings > CI/CD > Variables** :
 
-| Variable | Description | Protected | Masked |
-|----------|-------------|-----------|--------|
-| `MAVEN_ENT_USERNAME` | Username pour Nexus | Oui | Non |
-| `MAVEN_ENT_PASSWORD` | Password pour Nexus | Oui | Oui |
-| `MAVEN_MASTER_PASSWORD` | Master password Maven | Oui | Oui |
-| `SONAR_HOST_URL` | URL SonarQube | Non | Non |
-| `SONAR_TOKEN` | Token SonarQube | Oui | Oui |
-| `GITLAB_SSH_PRIVATE_KEY` | Clé SSH pour push Git | Oui | Oui |
+| Variable                 | Description           | Protected | Masked |
+|--------------------------|-----------------------|-----------|--------|
+| `MAVEN_ENT_USERNAME`     | Username pour Nexus   | Oui       | Non    |
+| `MAVEN_ENT_PASSWORD`     | Password pour Nexus   | Oui       | Oui    |
+| `MAVEN_MASTER_PASSWORD`  | Master password Maven | Oui       | Oui    |
+| `SONAR_HOST_URL`         | URL SonarQube         | Non       | Non    |
+| `SONAR_TOKEN`            | Token SonarQube       | Oui       | Oui    |
+| `GITLAB_SSH_PRIVATE_KEY` | Clé SSH pour push Git | Oui       | Oui    |
 
 ### Configuration de la clé SSH
 

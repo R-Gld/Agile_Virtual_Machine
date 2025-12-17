@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+    <!-- Disable Logback's internal status messages -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
     <!-- ==================================================================== -->
     <!-- APPENDERS: Define where and how log messages are output             -->
     <!-- ==================================================================== -->

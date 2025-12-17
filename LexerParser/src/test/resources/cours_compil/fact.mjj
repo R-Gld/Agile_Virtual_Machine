@@ -21,7 +21,9 @@ class factorielle{
     
     main {
         int res=fact(x);
-        write ("x(5040) = ");
+        write ("x(");
+        write(x);
+        write(") = ");
 		writeln(res);
         pause(); // res = 5040
     }

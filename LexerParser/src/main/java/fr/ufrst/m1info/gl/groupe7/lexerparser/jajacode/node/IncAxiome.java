@@ -65,7 +65,7 @@ public class IncAxiome implements JajaAxiome {
         Object currentValue = ctx.getStacks().getValue(scopedIdent);
 
         // Existence check
-        if (currentValue == null && !ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+        if (currentValue == null && ctx.getStacks().findQuad(scopedIdent) == null) {
             throw new UndefinedSymbolException(scopedIdent, JajaCodeInstr.INC.toString(), ctx.getInstructionCounter());
         }
 
@@ -78,7 +78,7 @@ public class IncAxiome implements JajaAxiome {
         int newValue = (Integer) currentValue + (Integer) incrementQuad.value;
 
         // 6. Update memory
-        boolean success = ctx.getStacks().affecterVal(scopedIdent, newValue);
+        boolean success = ctx.getStacks().affecterValJJC(scopedIdent, newValue);
 
         if (!success) {
             throw new AssignmentException(scopedIdent, "assignment failed", "INC", ctx.getInstructionCounter());
@@ -108,7 +108,7 @@ public class IncAxiome implements JajaAxiome {
             // Si on est en récursivité (niveau > 1), chercher la variable scopée
             if (recursionLevel > 1) {
                 String scopedIdent = ident + "$" + (recursionLevel - 1);
-                if (ctx.getStacks().getSymbolTable().contains(scopedIdent)) {
+                if (ctx.getStacks().findQuad(scopedIdent) != null) {
                     return scopedIdent;
                 }
             }
