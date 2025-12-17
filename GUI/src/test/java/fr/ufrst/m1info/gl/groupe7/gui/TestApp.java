@@ -92,9 +92,9 @@ class TestApp {
     @Test
     void testBorderPaneHasBottomConsole() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
-        // Console is now inside mainSplitPane, not at bottom
+        // Console is now inside hbox in mainSplitPane, not at bottom
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        assertInstanceOf(ConsoleOutput.class, mainSplitPane.getItems().get(1), "Console doit être dans mainSplitPane");
+        assertInstanceOf(HBox.class, mainSplitPane.getItems().get(1), "Console doit être dans mainSplitPane");
     }
 
     @Test
@@ -211,7 +211,8 @@ class TestApp {
     void testConsoleHasCorrectId() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
+        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
+        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
         assertEquals("console", console.getId(), "Console doit avoir l'ID 'console'");
     }
 
@@ -378,7 +379,8 @@ class TestApp {
         VBox vbox = (VBox) root.getTop();
         HBox toolbar = (HBox) vbox.getChildren().get(2);
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
+        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
+        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
 
         java.util.List<Button> buttons = toolbar.getChildren().stream()
                 .filter(node -> node instanceof Button)
@@ -541,7 +543,8 @@ class TestApp {
     void testConsoleHasStyling() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
+        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
+        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
 
         String style = console.getStyle();
         assertNotNull(style, "Console should have style applied");
@@ -961,7 +964,8 @@ class TestApp {
     void testConsoleHasProperStyling() {
         BorderPane root = (BorderPane) stage.getScene().getRoot();
         SplitPane mainSplitPane = (SplitPane) root.getCenter();
-        ConsoleOutput console = (ConsoleOutput) mainSplitPane.getItems().get(1);
+        HBox bottom = (HBox) mainSplitPane.getItems().get(1);
+        ConsoleOutput console = (ConsoleOutput) bottom.getChildren().get(0);
 
         assertNotNull(console, "Console should exist");
         assertEquals("console", console.getId(), "Console should have correct ID");
