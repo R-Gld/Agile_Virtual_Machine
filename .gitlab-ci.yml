@@ -166,7 +166,7 @@ sonarqube-check:
   needs:
     - build
     - test
-    - testIHM
+    - testIHM 
 
 deploy:
   stage: deploy
