@@ -196,19 +196,6 @@
                     <checkModificationExcludeList>pom.xml,pom.xml.releaseBackup,release.properties</checkModificationExcludeList>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>report-aggregate</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-aggregate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -217,7 +204,7 @@
         <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
-        <module>compiler</module>
+        <module>Compiler</module>
         <module>ASTExporter</module>
         <module>CoverageReport</module>
         <module>Rapport</module>
