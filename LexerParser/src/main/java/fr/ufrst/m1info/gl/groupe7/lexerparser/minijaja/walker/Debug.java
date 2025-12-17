@@ -82,7 +82,7 @@ public class Debug {
     }
     
     /**
-     * Constructs a new Debug controller with a specified initial mode.
+     * Constructs a new Debug controller with a specified initil mode.
      *
      * @param mode The initial {@link Mode} for the debugger.
      */
@@ -269,7 +269,7 @@ public class Debug {
                 case "v", "vars", "symbols" -> {
                     // Print current symbol table
                     logger.debug("\n SYMBOL TABLE:");
-                    stacks.printSymbolTable();
+                    stacks.printSymbolTable();  
                 }
                 case "b", "breakpoints" -> {
                     // List all breakpoints
@@ -282,6 +282,9 @@ public class Debug {
                     paused = false;
                     scanner.close();
                     return false; // Signal to stop execution
+                }case "h", "help" -> {
+                    // Print help menu
+                    printHelp();
                 }
                 
                 default -> {
@@ -329,6 +332,26 @@ public class Debug {
         logger.debug(" AST:  " + truncate(node.toStringTree(), 80));
         logger.debug(" Context: " + (stacks.isInMethodContext() ? stacks.getCurrentContext() : "main"));
         logger.debug("═".repeat(60));
+    }
+
+    private void printHelp() {
+        System.err.println("""
+            
+            ╔══════════════════════════════════════════════════════════╗
+            ║                    DEBUG COMMANDS                        ║
+            ╠══════════════════════════════════════════════════════════╣
+            ║  s, step      - Execute next node (step into)            ║
+            ║  c, continue  - Continue step-by-step                    ║
+            ║  n, next      - Run until next breakpoint                ║
+            ║  p, print     - Print current stack                      ║
+            ║  v, vars      - Print symbol table                       ║
+            ║  b, breakpoints - List all breakpoints                   ║
+            ║  b <line>     - Add breakpoint at line                   ║
+            ║  -<line>      - Remove breakpoint at line                ║
+            ║  q, quit      - Stop execution                           ║
+            ║  h, help      - Show this help                           ║
+            ╚══════════════════════════════════════════════════════════╝
+            """);
     }
     
    

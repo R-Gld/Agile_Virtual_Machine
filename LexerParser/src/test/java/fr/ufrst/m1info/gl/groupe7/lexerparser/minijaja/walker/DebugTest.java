@@ -9,6 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode;
+import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
+
 /**
  * Unit tests for the Debug class.
  * Tests breakpoint management, mode control, and execution control.
@@ -295,11 +298,11 @@ class DebugTest {
         void setListenerSetsListener() {
             Debug.DebugListener listener = new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node, 
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node, 
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() {}
             };
@@ -321,11 +324,11 @@ class DebugTest {
             final boolean[] called = {false};
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { called[0] = true; }
             });
@@ -340,11 +343,11 @@ class DebugTest {
             final boolean[] called = {false};
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { called[0] = true; }
             });
@@ -359,11 +362,11 @@ class DebugTest {
             final boolean[] called = {false};
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { called[0] = true; }
             });
@@ -378,11 +381,11 @@ class DebugTest {
             final boolean[] called = {false};
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { called[0] = true; }
             });
@@ -437,14 +440,14 @@ class DebugTest {
             
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {
                     listenerCalled[0] = true;
                     lineReported[0] = line;
                 }
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() {}
             });
@@ -635,11 +638,11 @@ class DebugTest {
             final boolean[] called = {false};
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { called[0] = true; }
             });
@@ -657,22 +660,22 @@ class DebugTest {
             
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { callCount[0] += 1; }
             });
             
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { callCount[0] += 10; }
             });
@@ -688,11 +691,11 @@ class DebugTest {
             
             debug.setListener(new Debug.DebugListener() {
                 @Override
-                public void onBreakpoint(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                         fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onBreakpoint(int line, AstNode node,
+                                         Stacks stacks) {}
                 @Override
-                public void onStep(int line, fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode node,
-                                   fr.ufrst.m1info.gl.groupe7.memoire.Stacks stacks) {}
+                public void onStep(int line, AstNode node,
+                                   Stacks stacks) {}
                 @Override
                 public void onResume() { resumeCount[0]++; }
             });
@@ -790,8 +793,8 @@ class DebugTest {
     /**
      * Creates a simple mock AstNode for testing.
      */
-    private fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode createMockNode() {
-        return new fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.AstNode() {
+    private AstNode createMockNode() {
+        return new AstNode() {
             @Override
             public String toStringTree() {
                 return "MockNode";
@@ -802,7 +805,7 @@ class DebugTest {
     /**
      * Creates a simple mock Stacks for testing.
      */
-    private fr.ufrst.m1info.gl.groupe7.memoire.Stacks createMockStacks() {
-        return new fr.ufrst.m1info.gl.groupe7.memoire.Stacks();
+    private Stacks createMockStacks() {
+        return new Stacks();
     }
 }
