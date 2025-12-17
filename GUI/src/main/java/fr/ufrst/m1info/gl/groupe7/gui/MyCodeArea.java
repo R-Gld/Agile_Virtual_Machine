@@ -852,8 +852,7 @@ public class MyCodeArea extends AnchorPane {
         if (language == Language.MINIJAJA) {
             if (prefix != null) {
                 String text = codeArea.getText();
-                int caretPosition = codeArea.getCaretPosition();
-                int start = caretPosition;
+                int start = codeArea.getCaretPosition();
                 while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
                     start--;
                 }
@@ -888,12 +887,11 @@ public class MyCodeArea extends AnchorPane {
             }
 
             // 2) variables (scope-aware, ordered)
-            boolean addVariables = false;
+            boolean addVariables;
             if (semanticListener != null && prefix != null) {
                 // Determine whether we are in a declaration context (after a type)
                 String text = codeArea.getText();
-                int caretPosition = codeArea.getCaretPosition();
-                int start = caretPosition;
+                int start = codeArea.getCaretPosition();
                 while (start > 0 && Character.isJavaIdentifierPart(text.charAt(start - 1))) {
                     start--;
                 }
