@@ -6,7 +6,7 @@
     <!-- Parent project information -->
     <groupId>fr.ufrst.m1info.gl.groupe7</groupId>
     <artifactId>MiniJAJA</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>MiniJAJA</name>
@@ -204,7 +204,7 @@
         <module>GUI</module>
         <module>Memoire</module>
         <module>LexerParser</module>
-        <module>Compiler</module>
+        <module>CLI</module>
         <module>ASTExporter</module>
         <module>CoverageReport</module>
         <module>Rapport</module>

@@ -29,4 +29,11 @@ public record rVar(AstNode variable) {
 
 
     }
+
+
+
+    public String toStringStree() {
+        return "Retrait Var";
+    }
+
 }
