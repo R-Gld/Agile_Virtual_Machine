@@ -6,10 +6,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
-public record rVar(AstNode var) {
+public record rVar(AstNode variable) {
 
     public void interpret(Stacks stacks) {
-        AstNode node = var;
+        AstNode node = variable;
         String name = "";
 
         if (node instanceof VarNode) {
