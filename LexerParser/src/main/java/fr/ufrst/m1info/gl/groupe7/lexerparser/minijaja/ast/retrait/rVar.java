@@ -6,19 +6,10 @@ import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.tableau.TableauNode;
 import fr.ufrst.m1info.gl.groupe7.lexerparser.minijaja.ast.var.VarNode;
 import fr.ufrst.m1info.gl.groupe7.memoire.Stacks;
 
-public class rVar {
-    private final  AstNode var;
-
-
-    public rVar( AstNode var) {
-        this.var = var;
-    }
-    public  AstNode getVar() {
-        return var;
-    }
+public record rVar(AstNode variable) {
 
     public void interpret(Stacks stacks) {
-        AstNode node = var;
+        AstNode node = variable;
         String name = "";
 
         if (node instanceof VarNode) {
@@ -36,7 +27,10 @@ public class rVar {
             stacks.retirerDecl(name);
         }
 
+
     }
+
+
 
     public String toStringStree() {
         return "Retrait Var";
