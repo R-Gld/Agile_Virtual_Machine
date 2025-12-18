@@ -27,6 +27,10 @@ public record rVar(AstNode var) {
             stacks.retirerDecl(name);
         }
 
-
     }
+
+    public String toStringStree() {
+        return "Retrait Var";
+    }
+
 }
