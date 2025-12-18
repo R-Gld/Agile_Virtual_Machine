@@ -39,6 +39,7 @@ public class RetraitTest {
         assertEquals(varNode, rvar.variable());
     }
 
+
     @Test
     void testRVar_InterpretRemovesVariable() {
         // Declare a variable first
