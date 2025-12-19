@@ -284,18 +284,18 @@ public class MiniJajaCompilerVisitor {
      * @throws NullPointerException if node is null
      */
     private void visitSi(SiNode node) {
-        // Rule [csi]: n ⊢ si(e, iss, iss1) ⇒ {(pe ⊕D if(addr)) ⊕ (piss1 ⊕D goto(fin)) ⊕ piss, ...}
-        // According to [csi], if condition is TRUE, we jump to the iss block (else)
-        // So we generate: condition, if(addr_then), else_code, goto(fin), then_code
-        // This inverts the order so that the THEN block is executed when the condition is TRUE
+        // Rule [csi]: Compile if-then-else statement
+        // Structure when no else: condition, NOT, IF(afterThen), [then]
+        // Structure with else:    condition, NOT, IF(elseStart), [then], GOTO(end), [else]
+        //
+        // Logic:
+        // - If condition is TRUE:  NOT(TRUE)=FALSE, IF does not jump, execute then
+        // - If condition is FALSE: NOT(FALSE)=TRUE, IF jumps to else (or after then)
 
         // Evaluate the condition
         if (node.getExpressionNode() != null) {
             visitExpression(node.getExpressionNode());
         }
-
-        // Get the current address AFTER the condition
-        int addrAfterCondition = jjcBuilder.getCurrentAddress();
 
         // Compile the then block in a temporary builder to calculate its size
         MiniJajaCompilerVisitor thenVisitor = createChildVisitor();
@@ -313,25 +313,55 @@ public class MiniJajaCompilerVisitor {
             elseSize = elseVisitor.getJajaCodeBuilder().getInstructionsAsList().size();
         }
 
-        // Calculate addresses according to [csi]
-        // Structure: IF(thenAddr), [else], GOTO(endAddr), [then]
-        // if jumps to then when condition is true
-        int elseStartAddr = addrAfterCondition + 1;
-        int thenAddr = elseStartAddr + elseSize + (hasElse ? 1 : 0); // +1 for GOTO
-        int endAddr = thenAddr + thenSize;
+        // Get the current address AFTER the condition (before NOT)
+        int addrAfterCondition = jjcBuilder.getCurrentAddress();
 
-        // Generate IF that jumps to THEN when condition is true
-        jjcBuilder.addInstruction(IF, thenAddr);
-
-        // Compile the ELSE block first (executed when condition is false)
         if (hasElse) {
-            visit(node.getInstructionsNode2());
-            jjcBuilder.addInstruction(GOTO, endAddr);
-        }
+            // With else: condition, NOT, IF(elseStart), [then], GOTO(end), [else]
+            // Calculate addresses:
+            // - NOT is at addrAfterCondition
+            // - IF is at addrAfterCondition + 1
+            // - then starts at addrAfterCondition + 2
+            // - GOTO is at addrAfterCondition + 2 + thenSize
+            // - else starts at addrAfterCondition + 2 + thenSize + 1
+            // - end is at addrAfterCondition + 2 + thenSize + 1 + elseSize
+            int thenStartAddr = addrAfterCondition + 2;
+            int gotoAddr = thenStartAddr + thenSize;
+            int elseStartAddr = gotoAddr + 1;
+            int endAddr = elseStartAddr + elseSize;
 
-        // Compile the THEN block next (executed when condition is true via jump)
-        if (node.getInstructionsNode() != null) {
-            visit(node.getInstructionsNode());
+            // Generate: NOT, IF(elseStart)
+            jjcBuilder.addInstruction(NOT);
+            jjcBuilder.addInstruction(IF, elseStartAddr);
+
+            // Compile the THEN block
+            if (node.getInstructionsNode() != null) {
+                visit(node.getInstructionsNode());
+            }
+
+            // Generate GOTO(end)
+            jjcBuilder.addInstruction(GOTO, endAddr);
+
+            // Compile the ELSE block
+            visit(node.getInstructionsNode2());
+        } else {
+            // No else: condition, NOT, IF(afterThen), [then]
+            // Calculate addresses:
+            // - NOT is at addrAfterCondition
+            // - IF is at addrAfterCondition + 1
+            // - then starts at addrAfterCondition + 2
+            // - afterThen is at addrAfterCondition + 2 + thenSize
+            int thenStartAddr = addrAfterCondition + 2;
+            int afterThenAddr = thenStartAddr + thenSize;
+
+            // Generate: NOT, IF(afterThen)
+            jjcBuilder.addInstruction(NOT);
+            jjcBuilder.addInstruction(IF, afterThenAddr);
+
+            // Compile the THEN block
+            if (node.getInstructionsNode() != null) {
+                visit(node.getInstructionsNode());
+            }
         }
     }
 
@@ -1122,7 +1152,10 @@ public class MiniJajaCompilerVisitor {
      * Compile une liste d'expressions selon la règle [clistexp] :
      * n ⊢ listexp(e, lexp) ⇒ {plexp ⊕ pe, ne + nlexp}
      * <p>
-     * Note: Le reste de la liste (plexp) est compilé AVANT l'expression courante (pe).
+     * Note: Pour que les arguments correspondent aux paramètres avec les bonnes depths,
+     * on compile l'expression courante (pe) AVANT le reste de la liste (plexp).
+     * Cela permet que le premier argument soit à la profondeur la plus grande (depth=n)
+     * et le dernier argument à depth=1, correspondant à l'ordre des paramètres.
      */
     private void visitListExp(ListExpNode node) {
         if (node == null) return;
@@ -1132,14 +1165,14 @@ public class MiniJajaCompilerVisitor {
             return;
         }
 
-        // D'abord compiler le reste de la liste (plexp)
-        if (node.getListExp() != null) {
-            visitListExp(node.getListExp());
-        }
-
-        // Ensuite compiler l'expression courante (pe)
+        // D'abord compiler l'expression courante (pe) - le premier argument
         if (node.getExp() != null) {
             visitExpression(node.getExp());
+        }
+
+        // Ensuite compiler le reste de la liste (plexp) - les arguments suivants
+        if (node.getListExp() != null) {
+            visitListExp(node.getListExp());
         }
     }
 
