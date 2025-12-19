@@ -38,18 +38,7 @@ public class MiniJajaSymbolListener extends MiniJajaParserBaseListener {
         }
     }
 
-    private static class PersistedScope {
-        final int start;
-        final int end;
-        final Set<String> variables;
-        final boolean hadInstruction;
-
-        PersistedScope(int start, int end, Set<String> variables, boolean hadInstruction) {
-            this.start = start;
-            this.end = end;
-            this.variables = variables;
-            this.hadInstruction = hadInstruction;
-        }
+    private record PersistedScope(int start, int end, Set<String> variables, boolean hadInstruction) {
     }
 
     private final Deque<Scope> scopes = new ArrayDeque<>();

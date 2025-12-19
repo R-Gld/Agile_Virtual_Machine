@@ -220,17 +220,18 @@ Feature: JajaCode Compilation and Interpretation
 4 load(x@global)
 5 push(5)
 6 sup
-7 if(11)
-8 push(0)
-9 store(x@global)
-10 goto(13)
-11 push(1)
-12 store(x@global)
-13 push(0)
-14 swap
-15 pop
+7 not
+8 if(12)
+9 push(1)
+10 store(x@global)
+11 goto(14)
+12 push(0)
+13 store(x@global)
+14 push(0)
+15 swap
 16 pop
-17 jcstop
+17 pop
+18 jcstop
       """
 
   @compilation
@@ -466,8 +467,8 @@ Feature: JajaCode Compilation and Interpretation
 9 add
 10 swap
 11 return
-12 push(2)
-13 push(1)
+12 push(1)
+13 push(2)
 14 invoke(add)
 15 swap
 16 pop
@@ -623,30 +624,32 @@ Feature: JajaCode Compilation and Interpretation
     Then the compilation should succeed
     And the JajaCode should contain the following sequence:
       """
-      1 init
+1 init
 2 push(10)
 3 new(x@global, int, var, 0)
 4 load(x@global)
 5 push(5)
 6 sup
-7 if(11)
-8 push(0)
-9 store(x@global)
-10 goto(20)
-11 load(x@global)
-12 push(8)
-13 sup
-14 if(18)
-15 push(2)
-16 store(x@global)
-17 goto(20)
-18 push(1)
-19 store(x@global)
+7 not
+8 if(20)
+9 load(x@global)
+10 push(8)
+11 sup
+12 not
+13 if(17)
+14 push(1)
+15 store(x@global)
+16 goto(19)
+17 push(2)
+18 store(x@global)
+19 goto(22)
 20 push(0)
-21 swap
-22 pop
-23 pop
-24 jcstop
+21 store(x@global)
+22 push(0)
+23 swap
+24 pop
+25 pop
+26 jcstop
       """
 
   @compilation
@@ -704,23 +707,29 @@ push(0)
     Then the compilation should succeed
     And the JajaCode instructions should contain:
       """
-      push(0)
+init
+push(0)
 new(i@global, int, var, 0)
 push(10)
 load(i@global)
 sup
 not
-if(18)
+if(19)
 push(1)
 inc(i@global)
 load(i@global)
 push(5)
 cmp
-if(15)
+not
+if(18)
 push(10)
 store(i@global)
 goto(4)
 push(0)
+swap
+pop
+pop
+jcstop
         """
 
   @compilation
@@ -745,14 +754,18 @@ push(0)
     Then the compilation should succeed
     And the JajaCode instructions should contain:
       """
-      push(5)
+init
+push(5)
 new(fact, int, meth, 0)
-goto(23)
+goto(24)
 new(n@fact@int, int, var, 1)
 load(n@fact@int)
 push(0)
 cmp
-if(19)
+not
+if(13)
+push(1)
+goto(21)
 load(n@fact@int)
 load(n@fact@int)
 push(1)
@@ -761,13 +774,19 @@ invoke(fact)
 swap
 pop
 mul
-goto(20)
-push(1)
 push(0)
 swap
 return
 push(5)
 invoke(fact)
+swap
+pop
+pop
+push(0)
+swap
+pop
+pop
+jcstop
 """
 
   @compilation
@@ -788,7 +807,8 @@ invoke(fact)
     Then the compilation should succeed
     And the JajaCode instructions should contain:
       """
-      push(5)
+      init
+push(5)
 new(compute, int, meth, 0)
 goto(19)
 new(c@compute@int, int, var, 1)
@@ -805,10 +825,22 @@ swap
 pop
 swap
 return
-push(3)
-push(2)
 push(1)
+push(2)
+push(3)
 invoke(compute)
+swap
+pop
+swap
+pop
+swap
+pop
+pop
+push(0)
+swap
+pop
+pop
+jcstop
 """
 
   @compilation
@@ -829,7 +861,8 @@ invoke(compute)
     Then the compilation should succeed
     And the JajaCode instructions should contain:
       """
-      push(3)
+init
+push(3)
 newarray(t@global, int)
 push(w)
 new(res@global, int, var, 0)
@@ -846,6 +879,12 @@ aload(t@global)
 add
 store(res@global)
 push(0)
+swap
+pop
+swap
+pop
+pop
+jcstop
       """
 
   @compilation
@@ -878,46 +917,59 @@ push(0)
     Then the compilation should succeed
     And the JajaCode instructions should contain:
       """
-      push(5)
+init
+push(5)
 new(even, boolean, meth, 0)
-goto(21)
+goto(22)
 new(n@even@boolean, int, var, 1)
 load(n@even@boolean)
 push(0)
 cmp
-if(17)
+not
+if(13)
+push(true)
+goto(19)
 load(n@even@boolean)
 push(1)
 sub
 invoke(odd)
 swap
 pop
-goto(18)
-push(true)
 push(false)
 swap
 return
-push(24)
+push(25)
 new(odd, boolean, meth, 0)
-goto(40)
+goto(42)
 new(n@odd@boolean, int, var, 1)
 load(n@odd@boolean)
 push(0)
 cmp
-if(36)
+not
+if(33)
+push(false)
+goto(39)
 load(n@odd@boolean)
 push(1)
 sub
 invoke(even)
 swap
 pop
-goto(37)
-push(false)
 push(true)
 swap
 return
 push(4)
 invoke(even)
+swap
+pop
+pop
+push(0)
+swap
+pop
+swap
+pop
+pop
+jcstop
         """
 
   @compilation

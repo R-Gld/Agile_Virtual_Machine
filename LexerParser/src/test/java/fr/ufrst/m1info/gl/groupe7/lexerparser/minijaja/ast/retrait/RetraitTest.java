@@ -36,8 +36,9 @@ public class RetraitTest {
         rVar rvar = new rVar(varNode);
         
         assertNotNull(rvar);
-        assertEquals(varNode, rvar.getVar());
+        assertEquals(varNode, rvar.variable());
     }
+
 
     @Test
     void testRVar_InterpretRemovesVariable() {
@@ -218,7 +219,7 @@ public class RetraitTest {
         rMethode rmeth = new rMethode(methNode);
         
         assertNotNull(rmeth);
-        assertEquals(methNode, rmeth.getMethode());
+        assertEquals(methNode, rmeth.methode());
     }
 
     @Test
