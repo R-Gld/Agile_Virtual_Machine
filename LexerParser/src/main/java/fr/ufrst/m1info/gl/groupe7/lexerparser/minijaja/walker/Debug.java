@@ -272,7 +272,7 @@ public class Debug {
                 }
                 case "v", "vars", "symbols" -> {
                     // Print current symbol table
-                   System.out.println("\n SYMBOL TABLE:");
+                    System.out.println("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();
                 }
                 case "b", "breakpoints" -> // List all breakpoints
