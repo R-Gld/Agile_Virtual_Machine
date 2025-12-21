@@ -1,0 +1,216 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ['*']
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp --fail-at-end"
+  MAVEN_CLI_OPTS: "-B -V -ntp --fail-at-end -T 1C"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Build with Maven
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+
+  build-rapport:
+    name: Build Rapport PDF
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/r-gld/maven-with-texlive:latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'rapport'))
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Build rapport
+        run: |
+          mvn ${MAVEN_CLI_OPTS} -pl 'Rapport' clean compile
+          cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
+
+      - name: Upload rapport PDF
+        uses: actions/upload-artifact@v6
+        with:
+          name: rapport-${{ github.sha }}
+          path: rapport_principal.pdf
+          retention-days: 7
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: build
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Run tests with Jacoco
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport,!Rapport' jacoco:prepare-agent test jacoco:report
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results
+          path: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/site/jacoco/jacoco.xml
+            **/target/classes/
+          retention-days: 7
+
+  testIHM:
+    name: GUI Tests
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: build
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Install Xvfb and dependencies
+        run: apk add xvfb libx11-dev xvfb-run gtk+3.0
+
+      - name: Start Xvfb
+        run: |
+          export DISPLAY=:99
+          Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
+
+      - name: Install LexerParser module
+        run: mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser,CLI' -am install -DskipTests
+
+      - name: Run GUI tests
+        run: xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
+
+      - name: Upload GUI test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: testIHM-results
+          path: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/site/jacoco/jacoco.xml
+            **/target/classes/
+          retention-days: 7
+
+  package-and-quality:
+    name: Package & Quality Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: [build, test, testIHM]
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Install Git
+        run: apk add --no-cache git
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}
+          restore-keys: m2-
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: test-results
+          path: .
+
+      - name: Download GUI test artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: testIHM-results
+          path: .
+
+      - name: Package JARs
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: jars
+          path: "**/target/*.jar"
+          retention-days: 7
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v5
+        with:
+          path: .sonar/cache
+          key: sonar-${{ github.ref_name }}
+          restore-keys: sonar-
+
+      - name: Run SonarQube analysis
+        env:
+          SONAR_USER_HOME: .sonar
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        run: |
+          mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar \
+            -Dsonar.projectKey=avm-2025-groupe-7 \
+            -Dsonar.projectName='avm-2025-groupe-7'
