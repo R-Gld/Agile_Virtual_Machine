@@ -159,6 +159,36 @@ jobs:
             **/target/classes/
           retention-days: 7
 
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: [test, testIHM]
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Package JARs
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: jars
+          path: "**/target/*.jar"
+          retention-days: 7
+
   sonarqube:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
@@ -197,33 +227,3 @@ jobs:
           mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar \
             -Dsonar.projectKey=avm-2025-groupe-7 \
             -Dsonar.projectName='avm-2025-groupe-7'
-
-  package:
-    name: Package
-    runs-on: ubuntu-latest
-    container:
-      image: maven:3.9.9-eclipse-temurin-21-alpine
-    needs: [test, testIHM]
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Cache Maven packages
-        uses: actions/cache@v5
-        with:
-          path: .m2/repository
-          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            m2-${{ github.ref_name }}-
-            m2-
-
-      - name: Package JARs
-        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
-
-      - name: Upload JAR artifacts
-        uses: actions/upload-artifact@v6
-        with:
-          name: jars
-          path: "**/target/*.jar"
-          retention-days: 7
