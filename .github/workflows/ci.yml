@@ -1,0 +1,318 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ['*']
+  pull_request:
+    branches: [main, dev]
+
+env:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_CLI_OPTS_SINGLE_THREAD: "-B -V -ntp -s .settings.xml --fail-at-end"
+  MAVEN_CLI_OPTS: "-B -V -ntp -s .settings.xml --fail-at-end -T 1C"
+
+jobs:
+  check-envvars:
+    name: Check Environment Variables
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Check required secrets
+        run: |
+          if [[ -z "${{ secrets.MAVEN_ENT_PASSWORD }}" ]] \
+          || [[ -z "${{ secrets.MAVEN_ENT_USERNAME }}" ]] \
+          || [[ -z "${{ secrets.MAVEN_MASTER_PASSWORD }}" ]] \
+          || [[ -z "${{ secrets.SONAR_HOST_URL }}" ]] \
+          || [[ -z "${{ secrets.SONAR_TOKEN }}" ]]; then
+            echo "Missing required secrets"
+            exit 1
+          fi
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Build with Maven
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' clean compile
+
+  build-rapport:
+    name: Build Rapport PDF
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/r-gld/maven-with-texlive:latest
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Build rapport
+        run: |
+          mvn -pl 'Rapport' clean compile
+          cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
+
+      - name: Upload rapport PDF
+        uses: actions/upload-artifact@v6
+        with:
+          name: rapport-${{ github.sha }}
+          path: rapport_principal.pdf
+          retention-days: 7
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: build
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Run tests with Jacoco
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!GUI,!CoverageReport,!Rapport' jacoco:prepare-agent test jacoco:report
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-results
+          path: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/site/jacoco/jacoco.xml
+            **/target/classes/
+          retention-days: 7
+
+  testIHM:
+    name: GUI Tests
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: build
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Install Xvfb and dependencies
+        run: apk add xvfb libx11-dev xvfb-run gtk+3.0
+
+      - name: Start Xvfb
+        run: |
+          export DISPLAY=:99
+          Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
+
+      - name: Install LexerParser module
+        run: mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
+
+      - name: Run GUI tests
+        run: xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
+
+      - name: Upload GUI test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: testIHM-results
+          path: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/site/jacoco/jacoco.xml
+            **/target/classes/
+          retention-days: 7
+
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: [build, test, testIHM]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v5
+        with:
+          path: .sonar/cache
+          key: sonar-cache-${{ hashFiles('**/pom.xml') }}
+          restore-keys: sonar-cache-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Run SonarQube analysis
+        env:
+          SONAR_USER_HOME: .sonar
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar \
+            -Dsonar.projectKey=avm-2025-groupe-7 \
+            -Dsonar.projectName='avm-2025-groupe-7'
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: [test, testIHM]
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Package JARs
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests package
+
+      - name: Upload JAR artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: jars
+          path: "**/target/*.jar"
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Nexus
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9.9-eclipse-temurin-21-alpine
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: .m2/repository
+          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            m2-${{ github.ref_name }}-
+            m2-
+
+      - name: Setup Maven settings
+        env:
+          MAVEN_ENT_USERNAME: ${{ secrets.MAVEN_ENT_USERNAME }}
+          MAVEN_ENT_PASSWORD: ${{ secrets.MAVEN_ENT_PASSWORD }}
+          MAVEN_MASTER_PASSWORD: ${{ secrets.MAVEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x settings.sh
+          ./settings.sh
+
+      - name: Deploy to Nexus
+        run: mvn ${MAVEN_CLI_OPTS} -pl '!Rapport' -DskipTests deploy
