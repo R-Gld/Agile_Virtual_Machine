@@ -173,10 +173,8 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .m2/repository
-          key: m2-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            m2-${{ github.ref_name }}-
-            m2-
+          key: m2-${{ github.ref_name }}
+          restore-keys: m2-
 
       - name: Download test artifacts
         uses: actions/download-artifact@v7
