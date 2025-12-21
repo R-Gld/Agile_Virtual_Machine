@@ -276,7 +276,7 @@ public class Debug {
                     stacks.printSymbolTable();
                 }
                 case "b", "breakpoints" -> // List all breakpoints
-                        logger.debug("\n BREAKPOINTS: " + breakPoints);
+                        logger.debug("\n BREAKPOINTS: {}", breakPoints);
                 case "q", "quit", "exit" -> {
                     // Quit debugging session
                     stop();
