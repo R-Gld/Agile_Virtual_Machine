@@ -64,7 +64,7 @@ jobs:
 
       - name: Build rapport
         run: |
-          mvn -pl 'Rapport' clean compile
+          mvn ${MAVEN_CLI_OPTS} -pl 'Rapport' clean compile
           cp Rapport/target/latex/rapport_principal.pdf rapport_principal.pdf
 
       - name: Upload rapport PDF
