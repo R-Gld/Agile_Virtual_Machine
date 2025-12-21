@@ -76,5 +76,8 @@ cat <<EOF > settings-security.xml
 </settingsSecurity>
 EOF
 
+# Create .m2 directory if it doesn't exist
+mkdir -p "$HOME/.m2"
+
 # Move settings-security.xml to the .m2 directory of the runner's container
 mv settings-security.xml "$HOME"/.m2/settings-security.xml
