@@ -197,6 +197,9 @@ jobs:
     needs: [check-envvars, build, test, testIHM]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
     steps:
+      - name: Install Git
+        run: apk add --no-cache git
+
       - name: Checkout code
         uses: actions/checkout@v6
         with:
