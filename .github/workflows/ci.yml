@@ -239,7 +239,7 @@ jobs:
         env:
           SONAR_USER_HOME: .sonar
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
         run: |
           mvn ${MAVEN_CLI_OPTS_SINGLE_THREAD} -pl '!Rapport' -DskipTests sonar:sonar \
             -Dsonar.projectKey=avm-2025-groupe-7 \
