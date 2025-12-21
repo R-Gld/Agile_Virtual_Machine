@@ -228,6 +228,18 @@ jobs:
           key: sonar-cache-${{ hashFiles('**/pom.xml') }}
           restore-keys: sonar-cache-
 
+      - name: Download test artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: test-results
+          path: .
+
+      - name: Download GUI test artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: testIHM-results
+          path: .
+
       - name: Run SonarQube analysis
         env:
           SONAR_USER_HOME: .sonar
