@@ -204,8 +204,10 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .sonar/cache
-          key: sonar-cache-${{ hashFiles('**/pom.xml') }}
-          restore-keys: sonar-cache-
+          key: sonar-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            sonar-${{ github.ref_name }}-
+            sonar-
 
       - name: Run SonarQube analysis
         env:
