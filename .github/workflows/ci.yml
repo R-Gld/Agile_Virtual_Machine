@@ -193,7 +193,7 @@ jobs:
     steps:
       - name: Check required secrets
         run: |
-          if [[ -z "${{ secrets.SONAR_HOST_URL }}" ]] \
+          if [[ -z "${{ env.SONAR_HOST_URL }}" ]] \
           || [[ -z "${{ secrets.SONAR_TOKEN }}" ]]; then
             echo "Missing required SonarQube secrets"
             exit 1
