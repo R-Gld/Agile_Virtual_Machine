@@ -87,7 +87,7 @@ public class JajaCodeDebugHandler {
         if (!isRunning || interpreter == null || executor == null) return;
         executor.submit(() -> {
             try {
-                boolean hasMore = true;
+                boolean hasMore;
                 boolean hitBreakpoint = false;
 
                 // Step at least once to move past current instruction/breakpoint

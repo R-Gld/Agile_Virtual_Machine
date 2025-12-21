@@ -272,11 +272,11 @@ public class Debug {
                 }
                 case "v", "vars", "symbols" -> {
                     // Print current symbol table
-                   System.out.println("\n SYMBOL TABLE:");
+                    System.out.println("\n SYMBOL TABLE:");
                     stacks.printSymbolTable();
                 }
                 case "b", "breakpoints" -> // List all breakpoints
-                        logger.debug("\n BREAKPOINTS: " + breakPoints);
+                        logger.debug("\n BREAKPOINTS: {}", breakPoints);
                 case "q", "quit", "exit" -> {
                     // Quit debugging session
                     stop();
