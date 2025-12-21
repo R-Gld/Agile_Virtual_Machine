@@ -143,7 +143,7 @@ jobs:
           Xvfb $DISPLAY -screen 0 1400x900x24 +extension RANDR &
 
       - name: Install LexerParser module
-        run: mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser' -am install -DskipTests
+        run: mvn ${MAVEN_CLI_OPTS} -pl 'LexerParser,CLI' -am install -DskipTests
 
       - name: Run GUI tests
         run: xvfb-run -a mvn ${MAVEN_CLI_OPTS} -pl 'GUI' jacoco:prepare-agent test jacoco:report
